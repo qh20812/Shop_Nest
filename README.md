@@ -14,34 +14,53 @@ ShopNest là nền tảng thương mại điện tử hiện đại, hỗ trợ 
 - Quản lý bảo mật, token, lịch sử hoạt động
 
 ## Công nghệ sử dụng (Tech Stack)
-- **Backend**: ASP.NET Core 9.0 Web API
-- **ORM**: Entity Framework Core 8.0
-- **Database**: MySQL (Pomelo.EntityFrameworkCore.MySql)
-- **Authentication**: JWT, BCrypt.Net
-- **API Docs**: Swagger (Swashbuckle.AspNetCore)
-- **Realtime**: SignalR (dự kiến)
-- **Frontend**: (để trống, sẽ bổ sung sau)
+- **Backend**: Laravel (PHP)
+- **Database**: MySQL
+- **Authentication**: Laravel Sanctum/JWT
+- **API Docs**: Laravel Swagger/OpenAPI
+- **Frontend**: ReactJS + TypeScript
+- **Realtime**: Pusher hoặc Laravel Echo (dự kiến)
+- **UI Framework**: (Tùy chọn, ví dụ: Ant Design, Material UI)
 
 ## Hướng dẫn cài đặt & chạy
+
+### Backend (Laravel)
 1. Clone repo về máy:
    ```sh
    git clone <repo-url>
    ```
-2. Cài đặt .NET 9.0 SDK và MySQL
-3. Cấu hình chuỗi kết nối trong `appsettings.json`
-4. Chạy migration và seed database:
+2. Cài đặt PHP, Composer và MySQL
+3. Cài đặt các package:
    ```sh
-   dotnet ef database update
-   dotnet run --seed-data
+   composer install
    ```
-5. Chạy ứng dụng:
+4. Tạo file `.env` và cấu hình chuỗi kết nối database
+5. Chạy migration và seed database:
    ```sh
-   dotnet run
+   php artisan migrate --seed
    ```
-6. Truy cập Swagger UI tại: `http://localhost:<port>/swagger`
+6. Khởi động server:
+   ```sh
+   php artisan serve
+   ```
+
+### Frontend (React + TypeScript)
+1. Di chuyển vào thư mục frontend:
+   ```sh
+   cd frontend
+   ```
+2. Cài đặt các package:
+   ```sh
+   npm install
+   ```
+3. Khởi động ứng dụng:
+   ```sh
+   npm run dev
+   ```
+4. Truy cập giao diện tại: `http://localhost:3000`
 
 ## Hướng dẫn sử dụng
-- Đăng ký tài khoản, đăng nhập và sử dụng các API qua Swagger UI
+- Đăng ký tài khoản, đăng nhập và sử dụng các API qua Swagger UI hoặc giao diện React
 - (Sẽ bổ sung hướng dẫn chi tiết cho từng vai trò sau)
 
 ## Ảnh chụp màn hình / GIF / Video
@@ -55,4 +74,4 @@ ShopNest là nền tảng thương mại điện tử hiện đại, hỗ trợ 
 - **Tác giả**: Huỳnh Ngọc Quí
 - **GitHub**: [https://github.com/1h20812](https://github.com/1h20812)
 - **Số điện thoại**: 0393769711
-- **Email**: 1h20812@gmail.com
+- **Email**: [qh20812@gmail.com](mailto:qh20812@gmail.com)

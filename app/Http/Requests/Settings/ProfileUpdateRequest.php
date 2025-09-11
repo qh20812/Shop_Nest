@@ -14,10 +14,16 @@ class ProfileUpdateRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    public function authorize(): bool{
+        return true;
+    }
     public function rules(): array
     {
         return [
             'username' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string','max:255'],
+            'last_name' => ['required', 'string','max:255'],
+            'phone_number' => ['required', 'string','max:20'],
 
             'email' => [
                 'required',

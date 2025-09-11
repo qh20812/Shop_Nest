@@ -41,20 +41,66 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                     >
                         {({ processing, recentlySuccessful, errors }) => (
                             <>
+
+                                <div className='grid gap-2'>
+                                    <Label htmlFor='username'>Username</Label>
+                                    <Input
+                                        id="username"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.username as string}
+                                        name="username"
+                                        required
+                                        autoComplete="username"
+                                        placeholder="Username"
+                                    />
+                                    <InputError className="mt-2" message={errors.username} />
+                                </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
+                                    <Label htmlFor="first_name">First Name</Label>
 
                                     <Input
-                                        id="name"
+                                        id="first_name"
                                         className="mt-1 block w-full"
-                                        defaultValue={auth.user.name}
-                                        name="name"
+                                        defaultValue={auth.user.first_name as string}
+                                        name="first_name"
                                         required
-                                        autoComplete="name"
+                                        autoComplete="given-name"
                                         placeholder="Full name"
                                     />
 
-                                    <InputError className="mt-2" message={errors.name} />
+                                    <InputError className="mt-2" message={errors.first_name} />
+                                </div>
+
+                                <div className='grid gap-2'>
+                                    <Label htmlFor='last_name'>Last Name</Label>
+
+                                    <Input
+                                        id="last_name"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.last_name as string}
+                                        name="last_name"
+                                        required
+                                        autoComplete="family-name"
+                                        placeholder="Last name"
+                                    />
+
+                                    <InputError className="mt-2" message={errors.last_name} />
+                                </div>
+
+                                <div className='grid gap-2'>
+                                    <Label htmlFor='phone_number'>Phone Number</Label>
+
+                                    <Input
+                                        id="phone_number"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.phone_number as string}
+                                        name="phone_number"
+                                        required
+                                        autoComplete="tel"
+                                        placeholder="Phone number"
+                                    />
+
+                                    <InputError className="mt-2" message={errors.phone_number} />
                                 </div>
 
                                 <div className="grid gap-2">

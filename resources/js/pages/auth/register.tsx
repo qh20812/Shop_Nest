@@ -12,7 +12,7 @@ import AuthLayout from '@/layouts/auth-layout';
 
 export default function Register() {
     return (
-        <AuthLayout title="Create an account" description="Enter your details below to create your account">
+        <AuthLayout title="Tạo tài khoản" description="Nhập thông tin của bạn bên dưới để tạo tài khoản">
             <Head title="Register" />
             <Form
                 {...RegisteredUserController.store.form()}
@@ -23,23 +23,49 @@ export default function Register() {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                            <div className='grid gap-2'>
+                                <Label htmlFor='username'>Tên đăng nhập</Label>
                                 <Input
-                                    id="name"
+                                    id="username"
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    autoComplete="username"
+                                    name="username"
+                                    placeholder="Vui lòng nhập tên đăng nhập"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="first_name">Họ & Tên Đệm</Label>
+                                <Input
+                                    id="first_name"
                                     type="text"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
+                                    name="first_name"
+                                    placeholder="Vui lòng nhập họ và tên đệm"
                                 />
-                                <InputError message={errors.name} className="mt-2" />
+                                <InputError message={errors.first_name} className="mt-2" />
                             </div>
-
+                            <div className='grid gap-2'>
+                                <Label htmlFor="last_name">Tên</Label>
+                                <Input
+                                    id="last_name"
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    autoComplete="name"
+                                    name="last_name"
+                                    placeholder="Vui lòng nhập tên"
+                                />
+                                <InputError message={errors.last_name} className="mt-2" />
+                            </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Địa Chỉ Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -51,9 +77,8 @@ export default function Register() {
                                 />
                                 <InputError message={errors.email} />
                             </div>
-
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">Mật Khẩu</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -61,13 +86,13 @@ export default function Register() {
                                     tabIndex={3}
                                     autoComplete="new-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder="Vui lòng nhập mật khẩu"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">Confirm password</Label>
+                                <Label htmlFor="password_confirmation">Xác Nhận Mật Khẩu</Label>
                                 <Input
                                     id="password_confirmation"
                                     type="password"
@@ -75,21 +100,21 @@ export default function Register() {
                                     tabIndex={4}
                                     autoComplete="new-password"
                                     name="password_confirmation"
-                                    placeholder="Confirm password"
+                                    placeholder="Vui lòng nhập lại mật khẩu"
                                 />
                                 <InputError message={errors.password_confirmation} />
                             </div>
 
                             <Button type="submit" className="mt-2 w-full" tabIndex={5}>
                                 {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                Create account
+                                Tạo tài khoản
                             </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
+                            Bạn đã có tài khoản?{' '}
                             <TextLink href={login()} tabIndex={6}>
-                                Log in
+                                Đăng nhập
                             </TextLink>
                         </div>
                     </>

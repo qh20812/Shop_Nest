@@ -14,6 +14,16 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Quản lý Danh mục',
+        href: '/admin/categories',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Quản lý Thương hiệu',
+        href: '/admin/brands',
+        icon: LayoutGrid,
+    }
 ];
 
 // const footerNavItems: NavItem[] = [

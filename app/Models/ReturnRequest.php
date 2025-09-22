@@ -9,6 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ReturnRequest extends Model
 {
     use HasFactory;
+
+    /**
+     * Chỉ định rõ tên bảng mà model này sử dụng.
+     *
+     * @var string
+     */
+    protected $table = 'returns';
+
     protected $primaryKey = 'return_id';
     protected $fillable = [
         'order_id',

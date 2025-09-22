@@ -25,13 +25,13 @@ class UserSeeder extends Seeder
         ]);
         $admin->roles()->attach($adminRole);
 
-        // Tạo 5 người bán
-        User::factory(5)->create()->each(function ($user) use ($sellerRole) {
+        // Tạo 20 người bán
+        User::factory(20)->create()->each(function ($user) use ($sellerRole) {
             $user->roles()->attach($sellerRole);
         });
 
-        // Tạo 20 khách hàng
-        User::factory(20)->create()->each(function ($user) use ($customerRole) {
+        // Tạo 100 khách hàng
+        User::factory(100)->create()->each(function ($user) use ($customerRole) {
             $user->roles()->attach($customerRole);
         });
     }

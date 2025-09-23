@@ -1,8 +1,6 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
-
-// Giả định bạn có một layout cho trang Admin
-// import AdminLayout from '@/Layouts/AdminLayout';
+import AppLayout from '@/layouts/app/AppLayout';
 
 // Định nghĩa kiểu dữ liệu cho props `products`
 interface Product {
@@ -25,9 +23,7 @@ interface Props {
 
 export default function ProductIndex({ products }: Props) {
     return (
-        <>
-            {/* Nếu có Layout, hãy bọc nội dung trong đó */}
-            {/* <AdminLayout> */}
+        <AppLayout>
             <Head title="Quản lý Sản phẩm" />
             
             <div className="container mx-auto p-4">
@@ -58,7 +54,6 @@ export default function ProductIndex({ products }: Props) {
                     </table>
                 </div>
             </div>
-            {/* </AdminLayout> */}
-        </>
+        </AppLayout>
     );
 }

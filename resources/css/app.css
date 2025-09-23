@@ -1,251 +1,66 @@
-@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
+@import 'tailwindcss';
 @plugin 'tailwindcss-animate';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-@custom-variant dark (&:is(.dark *));
-
-@theme {
-    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; /* Thay font chính bằng Poppins */
-
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-}
 
 :root {
-    --background: #eee; /* --grey từ mẫu */
-    --foreground: #363949; /* --dark từ mẫu */
-    --card: #f6f6f9; /* --light */
-    --card-foreground: #363949;
-    --popover: #f6f6f9;
-    --popover-foreground: #363949;
-    --primary: #1976d2;
-    --primary-foreground: #f6f6f9;
-    --secondary: #eee;
-    --secondary-foreground: #aaaaaa; /* --dark-grey */
-    --muted: #eee;
-    --muted-foreground: #aaaaaa;
-    --accent: #eee;
-    --accent-foreground: #363949;
-    --destructive: #d32f2f; /* --danger */
-    --destructive-foreground: #fecdd3; /* --light-danger */
-    --border: #eee;
-    --input: #eee;
-    --ring: #aaaaaa;
-    --chart-1: #fbc02d; /* --warning */
-    --chart-2: #fff2c6; /* --light-warning */
-    --chart-3: #388e3c; /* --success */
-    --chart-4: #bbf7d0; /* --light-success */
-    --chart-5: #d32f2f;
-    --radius: 0.5rem; /* Điều chỉnh radius nhỏ hơn để giống mẫu */
-    --sidebar: #f6f6f9; /* --light */
-    --sidebar-foreground: #363949; /* --dark */
-    --sidebar-primary: #1976d2;
-    --sidebar-primary-foreground: #f6f6f9;
-    --sidebar-accent: #eee; /* --grey cho active */
-    --sidebar-accent-foreground: #388e3c; /* --success cho active text */
-    --sidebar-border: #eee;
-    --sidebar-ring: #aaaaaa;
     --light: #f6f6f9;
+    --primary: #1976D2;
+    --light-primary: #CFE8FF;
+    --grey: #eee;
+    --dark-grey: #AAAAAA;
+    --dark: #363949;
+    --danger: #D32F2F;
+    --light-danger: #FECDD3;
+    --warning: #FBC02D;
+    --light-warning: #FFF2C6;
+    --success: #388E3C;
+    --light-success: #BBF7D0;
 }
 
 .dark {
-    --background: #25252c; /* --grey dark */
-    --foreground: #fbfbfb; /* --dark dark */
-    --card: #181a1e; /* --light dark */
-    --card-foreground: #fbfbfb;
-    --popover: #181a1e;
-    --popover-foreground: #fbfbfb;
-    --primary: #fbfbfb;
-    --primary-foreground: #181a1e;
-    --secondary: #25252c;
-    --secondary-foreground: #fbfbfb;
-    --muted: #25252c;
-    --muted-foreground: #aaaaaa;
-    --accent: #25252c;
-    --accent-foreground: #fbfbfb;
-    --destructive: #d32f2f;
-    --destructive-foreground: #fecdd3;
-    --border: #25252c;
-    --input: #25252c;
-    --ring: #aaaaaa;
-    --chart-1: #fbc02d;
-    --chart-2: #fff2c6;
-    --chart-3: #388e3c;
-    --chart-4: #bbf7d0;
-    --chart-5: #d32f2f;
-    --sidebar: #181a1e; /* --light dark */
-    --sidebar-foreground: #fbfbfb;
-    --sidebar-primary: #fbfbfb;
-    --sidebar-primary-foreground: #fbfbfb;
-    --sidebar-accent: #25252c; /* --grey dark cho active */
-    --sidebar-accent-foreground: #fbfbfb;
-    --sidebar-border: #25252c;
-    --sidebar-ring: #aaaaaa;
     --light: #181a1e;
+    --grey: #25252c;
+    --dark: #fbfbfb;
 }
 
 @layer base {
     * {
-        @apply border-border;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    html {
+        overflow: hidden;
+    }
+
+    li {
+        list-style: none;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+    .bx {
+        font-size: 1..7rem;
     }
 
     body {
-        @apply bg-background text-foreground;
-    }
-
-    [data-sidebar="sidebar"] {
-        background: var(--sidebar);
-        transition: all 0.3s ease; /* Transition giống mẫu */
-        position: relative; /* Giống mẫu */
-        top: 0;
-        left: 0;
-        height: 100%;
-        z-index: 2000;
+        background: var(--grey);
         overflow-x: hidden;
-        scrollbar-width: none;
     }
 
-    [data-sidebar="sidebar"]::-webkit-scrollbar {
-        display: none;
-    }
-
-    [data-state="collapsed"] {
-        width: 60px !important; /* Collapse width giống mẫu */
-    }
-
-    [data-sidebar="menu-item"] {
-        height: 48px;
-        background: transparent;
-        margin-left: 6px;
-        border-radius: 48px 0 0 48px;
-        padding: 4px;
+    .content {
         position: relative;
-    }
-
-    [data-sidebar="menu-item"].active {
-        background: var(--sidebar-accent);
-    }
-
-    [data-sidebar="menu-item"].active::before {
-        content: "";
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        top: -40px;
-        right: 0;
-        box-shadow: 20px 20px 0 var(--sidebar-accent);
-        z-index: -1;
-    }
-
-    [data-sidebar="menu-item"].active::after {
-        content: "";
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        bottom: -40px;
-        right: 0;
-        box-shadow: 20px -20px 0 var(--sidebar-accent);
-        z-index: -1;
-    }
-
-    [data-sidebar="menu-button"] {
-        width: 100%;
-        height: 100%;
-        background: var(--sidebar);
-        display: flex;
-        align-items: center;
-        border-radius: 48px;
-        font-size: 16px;
-        color: var(--sidebar-foreground);
-        white-space: nowrap;
-        overflow-x: hidden;
+        width: calc(100% - 230px);
+        left: 230px;
         transition: all 0.3s ease;
     }
-
-    [data-sidebar="menu-item"].active [data-sidebar="menu-button"] {
-        color: var(--sidebar-accent-foreground); /* --success */
-    }
-
-    [data-state="collapsed"] [data-sidebar="menu-button"] {
-        width: calc(48px - (4px * 2));
-    }
-
-    [data-sidebar="menu-button"] svg {
-        min-width: calc(60px - ((4px + 6px) * 2));
-        display: flex;
-        font-size: 1.6rem;
-        justify-content: center;
-    }
-
-    /* Logout color */
-    [data-sidebar="menu-button"].logout {
-        color: var(--destructive);
-    }
-
-    /* Fix overlap: Thêm padding-left cho nội dung để sidebar fixed không che */
-    [data-slot="sidebar-inset"] {
-        padding-left: var(--sidebar-width);
-        transition: padding-left 0.3s ease;
-    }
-
-    /* Khi collapsed, giảm padding-left */
-    .group/sidebar-wrapper[data-state="collapsed"] [data-slot="sidebar-inset"] {
-        padding-left: var(--sidebar-width-icon);
-    }
-
-    /* Bỏ width/left không cần thiết vì inset là relative/flex-1 */
-    .group/sidebar-wrapper[data-state="collapsed"] [data-slot="sidebar-inset"] {
-        width: auto; /* Giữ full width */
-        left: 0;
-    }
+    
 }

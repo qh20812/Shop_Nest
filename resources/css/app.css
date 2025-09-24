@@ -5,6 +5,12 @@
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
+/* Import other CSS files */
+@import url('./Navbar.css');
+@import url('./Sidebar.css');
+@import url('./Head.css');
+@import url('./Insights.css');
+
 
 :root {
     --light: #f6f6f9;

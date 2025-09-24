@@ -12,5 +12,5 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::resource('products', ProductController::class);
     Route::get('/dashboard',function(){
         return Inertia::render('Admin/Dashboard/Index');
-    });
+    })->name('dashboard');
 });

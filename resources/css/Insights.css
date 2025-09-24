@@ -1,5 +1,3 @@
-@import url('resources/css/app.css');
-
 .insights{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

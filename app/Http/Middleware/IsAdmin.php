@@ -16,9 +16,15 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->roles()->where('name','Admin')->exists()) {
+        if(!Auth::check()){
+            return redirect()->route('login')->with('error','Bạn cần đăng nhập để truy cập trang này');
+        }
+        if(!Auth::users()->isAdmin()){
+            return redirect()->route('dashboard')->with('error','Bạn không có quyền truy cập trang này');
+        }
+        if(Auth::users()->isAdmin()){
             return $next($request);
         }
-        return redirect()->route('dashboard')->with('error', 'Bạn không có quyền truy cập vào khu vực này.');
+        return redirect()->route('dashboard')->with('error','Bạn không có quyền truy cập trang này');
     }
 }

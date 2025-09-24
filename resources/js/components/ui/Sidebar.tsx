@@ -1,7 +1,15 @@
 import '@/../css/Sidebar.css';
 import '@/../css/app.css';
 
-export default function Sidebar() {
+interface SidebarProps {
+  items: Array<{
+    icon: string;
+    label: string;
+    href: string;
+  }>;
+}
+
+export default function Sidebar({ items }: SidebarProps) {
   return (
     <div className="sidebar">
       <a href="#" className='logo'>
@@ -9,12 +17,14 @@ export default function Sidebar() {
         <div className='logo-name'><span>Shop</span>Nest</div>
       </a>
       <ul className="side-menu">
-        <li><a href="#"><i className='bx bxs-dashboard'></i>Bảng điều khiển</a></li>
-        <li><a href="#"><i className='bx bxs-shopping-bag-alt'></i>Sản phẩm</a></li>
-        <li><a href="#"><i className='bx bxs-user-detail'></i>Người dùng</a></li>
-        <li><a href="#"><i className='bx bxs-category'></i>Danh mục</a></li>
-        <li><a href="#"><i className='bx bxs-truck'></i>Đơn hàng</a></li>
-        <li><a href="#"><i className='bx bxs-cog'></i>Cài đặt</a></li>
+        {items.map((item, index)=>(
+          <li key={index}>
+            <a href={item.href || '#'}>
+              <i className={`bx ${item.icon}`}></i>
+              {item.label}
+            </a>
+          </li>
+        ))}
       </ul>
       <ul className='side-menu'>
         <li>

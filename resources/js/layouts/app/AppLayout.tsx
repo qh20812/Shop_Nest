@@ -5,12 +5,17 @@ import Main from '@/components/Main';
 
 interface AppLayoutProps {
     children: React.ReactNode;
+    sidebarItems: Array<{
+      icon: string;
+      label: string;
+      href: string;
+    }>;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout({ children, sidebarItems }: AppLayoutProps) {
   return (
     <>
-        <Sidebar />
+        <Sidebar items={sidebarItems} />
         <div className='content'>
             <Navbar />
             <Main>

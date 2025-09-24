@@ -1,0 +1,50 @@
+@import url('resources/css/app.css');
+
+.insights{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-gap: 24px;
+    margin-top: 36px;
+}
+.insights li{
+    padding: 24px;
+    background: var(--light);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    grid-gap: 24px;
+    cursor: pointer;
+}
+.insights li .bx{
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    font-size: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.insights li:nth-child(1) .bx{
+    background: var(--light-primary);
+    color: var(--primary);
+}
+.insights li:nth-child(2) .bx{
+    background: var(--light-warning);
+    color: var(--warning);
+}
+.insights li:nth-child(3) .bx{
+    background: var(--light-success);
+    color: var(--success);
+}
+.insights li:nth-child(4) .bx{
+    background: var(--light-danger);
+    color: var(--danger);
+}
+.insights li .info h3{
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+}
+.insights li .info p{
+color: var(--dark);
+}

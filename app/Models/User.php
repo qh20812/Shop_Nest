@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -57,9 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserAddress::class);
     }
-    public function roles(): BelongsToMany
+    public function role(): BelongsToMany
     {
-        return $this->belongsToMany((Role::class), 'role_user');
+        return $this->belongsToMany(Role::class, 'role_user');
     }
     public function products(): HasMany
     {
@@ -68,5 +69,9 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id');
+    }
+    public function isAdmin(): bool
+    {
+        return $this->role()->where('name', 'Admin')->exists();
     }
 }

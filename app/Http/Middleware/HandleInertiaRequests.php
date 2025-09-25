@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -46,6 +48,25 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'locale' => App::getLocale(),
+            'translations' => $this->getTranslations(),
         ];
+    }
+
+    /**
+     * Get translations for current locale
+     *
+     * @return array
+     */
+    private function getTranslations(): array
+    {
+        $locale = App::getLocale();
+        $path = lang_path("{$locale}.json");
+        
+        if (File::exists($path)) {
+            return json_decode(File::get($path), true) ?? [];
+        }
+        
+        return [];
     }
 }

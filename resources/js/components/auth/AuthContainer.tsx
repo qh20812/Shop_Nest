@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
 import TogglePanel from './TogglePanel';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 interface AuthContainerProps {
   defaultActive?: boolean;
@@ -26,6 +27,11 @@ export default function AuthContainer({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-gray-200 to-indigo-300">
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+      
       <div 
         className={`relative bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl min-h-[480px] ${
           isActive ? 'active' : ''

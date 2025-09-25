@@ -1,8 +1,10 @@
 import React from 'react';
 import { useForm } from '@inertiajs/react';
 import { Mail, Lock, Github, Facebook } from 'lucide-react';
+import { useTranslation } from '../../lib/i18n';
 
 export default function SignUpForm() {
+  const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     name: '',
     email: '',
@@ -20,7 +22,7 @@ export default function SignUpForm() {
   return (
     <div className="bg-white flex items-center justify-center flex-col px-10 h-full">
       <form onSubmit={onSubmit} className="flex flex-col items-center w-full">
-        <h1 className="text-2xl font-bold mb-6">Create Account</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('Create Account')}</h1>
         
         {/* Social Icons */}
         <div className="flex gap-3 mb-4">
@@ -38,13 +40,13 @@ export default function SignUpForm() {
           </a>
         </div>
         
-        <span className="text-xs text-gray-600 mb-4">or use your email for registration</span>
+        <span className="text-xs text-gray-600 mb-4">{t('or use your email for registration')}</span>
         
         {/* Name Input */}
         <div className="w-full mb-2">
           <input
             type="text"
-            placeholder="Name"
+            placeholder={t('Name')}
             value={data.name}
             onChange={(e) => setData('name', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -59,7 +61,7 @@ export default function SignUpForm() {
         <div className="w-full mb-2">
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('Email')}
             value={data.email}
             onChange={(e) => setData('email', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -74,7 +76,7 @@ export default function SignUpForm() {
         <div className="w-full mb-2">
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t('Password')}
             value={data.password}
             onChange={(e) => setData('password', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -89,7 +91,7 @@ export default function SignUpForm() {
         <div className="w-full mb-2">
           <input
             type="password"
-            placeholder="Confirm Password"
+            placeholder={t('Confirm Password')}
             value={data.password_confirmation}
             onChange={(e) => setData('password_confirmation', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -105,7 +107,7 @@ export default function SignUpForm() {
           disabled={processing}
           className="bg-indigo-600 text-white text-sm py-3 px-11 border border-transparent rounded-lg font-semibold tracking-wider uppercase mt-3 cursor-pointer hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {processing ? 'Signing Up...' : 'Sign Up'}
+          {processing ? `${t('Sign Up')}...` : t('Sign Up')}
         </button>
       </form>
     </div>

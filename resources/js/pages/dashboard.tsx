@@ -1,8 +1,10 @@
 import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { useTranslation } from '../lib/i18n';
 
 export default function Dashboard() {
   const { post } = useForm();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     post('/logout');
@@ -15,15 +17,24 @@ export default function Dashboard() {
           <div className="max-w-md mx-auto">
             <div className="divide-y divide-gray-200">
               <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Welcome to Dashboard</h1>
-                <p>You have successfully logged in!</p>
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('Welcome to Dashboard')}</h1>
+                <p>{t('You have successfully logged in!')}</p>
                 
-                <button 
-                  onClick={handleLogout}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
-                >
-                  Logout
-                </button>
+                <div className="flex gap-4">
+                  <a 
+                    href="/admin/dashboard" 
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+                  >
+                    {t('Admin Dashboard')}
+                  </a>
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
+                  >
+                    {t('Logout')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

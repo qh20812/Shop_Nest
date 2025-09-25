@@ -1,6 +1,7 @@
 import React from 'react';
 import { useForm } from '@inertiajs/react';
 import { Mail, Lock, Github, Facebook } from 'lucide-react';
+import { useTranslation } from '../../lib/i18n';
 
 interface SignInFormProps {
   status?: string;
@@ -8,6 +9,7 @@ interface SignInFormProps {
 }
 
 export default function SignInForm({ status, canResetPassword = false }: SignInFormProps) {
+  const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     email: '',
     password: '',
@@ -24,7 +26,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
   return (
     <div className="bg-white flex items-center justify-center flex-col px-10 h-full">
       <form onSubmit={onSubmit} className="flex flex-col items-center w-full">
-        <h1 className="text-2xl font-bold mb-6">Sign In</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('Sign In')}</h1>
         
         {/* Social Icons */}
         <div className="flex gap-3 mb-4">
@@ -42,7 +44,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
           </a>
         </div>
         
-        <span className="text-xs text-gray-600 mb-4">or use your email password</span>
+        <span className="text-xs text-gray-600 mb-4">{t('or use your email password')}</span>
         
         {status && (
           <div className="mb-4 text-sm font-medium text-green-600">
@@ -54,7 +56,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
         <div className="w-full mb-2">
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('Email')}
             value={data.email}
             onChange={(e) => setData('email', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -69,7 +71,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
         <div className="w-full mb-2">
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t('Password')}
             value={data.password}
             onChange={(e) => setData('password', e.target.value)}
             className="bg-gray-200 border-0 my-2 px-4 py-3 text-sm rounded-lg w-full outline-none focus:ring-2 focus:ring-indigo-500"
@@ -90,7 +92,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
             className="mr-2"
           />
           <label htmlFor="remember" className="text-sm text-gray-600">
-            Remember me
+            {t('Remember me')}
           </label>
         </div>
         
@@ -99,7 +101,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
             href="/forgot-password" 
             className="text-gray-700 text-sm no-underline my-4 hover:text-indigo-600 transition-colors"
           >
-            Forget Your Password?
+            {t('Forget Your Password?')}
           </a>
         )}
         
@@ -108,7 +110,7 @@ export default function SignInForm({ status, canResetPassword = false }: SignInF
           disabled={processing}
           className="bg-indigo-600 text-white text-sm py-3 px-11 border border-transparent rounded-lg font-semibold tracking-wider uppercase mt-3 cursor-pointer hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {processing ? 'Signing In...' : 'Sign In'}
+          {processing ? `${t('Sign In')}...` : t('Sign In')}
         </button>
       </form>
     </div>

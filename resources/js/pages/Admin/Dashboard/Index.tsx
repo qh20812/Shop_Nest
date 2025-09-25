@@ -9,6 +9,7 @@ export default function Index() {
     {icon: 'bxs-user-detail', label: 'Người dùng', href: '/admin/users'},
     {icon: 'bxs-category', label: 'Danh mục', href: '/admin/categories'},
     {icon: 'bxs-truck', label: 'Đơn hàng', href: '/admin/orders'},
+    {icon: 'bxs-truck', label: 'Trả hàng', href: '/admin/returns'},
     {icon: 'bxs-cog', label: 'Cài đặt', href: '/admin/settings'},
   ];
   const insightsData = [

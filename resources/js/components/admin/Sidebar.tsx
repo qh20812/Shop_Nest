@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import '@/../css/Sidebar.css';
+import '@/../css/Page.css';
 
 interface SidebarItem {
   icon: string;

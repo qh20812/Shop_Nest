@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState } from "react";
 import { usePage, router } from "@inertiajs/react";
 
@@ -20,6 +20,7 @@ interface PageProps {
   user: User;
   roles: Role[];
   errors: Record<string, string>;
+  [key: string]: unknown;
 }
 
 export default function Edit() {

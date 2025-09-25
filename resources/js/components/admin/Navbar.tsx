@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '@/../css/Navbar.css';
+import '@/../css/Page.css';
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -56,6 +57,8 @@ export default function Navbar({ onToggleSidebar, onToggleDarkMode, isDarkMode }
         onChange={onToggleDarkMode}
       />
       <label htmlFor="theme-toggle" className="theme-toggle"></label>
+
+      <LanguageSwitcher />
       
       <a href="#" className="notif">
         <i className='bx bx-bell'></i>

@@ -1,5 +1,5 @@
 import React from 'react';
-import '@/../css/Insights.css';
+import '@/../css/Page.css';
 
 interface InsightItem {
   icon: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import '@/../css/Head.css';
+import '@/../css/Page.css';
 
 interface BreadcrumbItem {
   label: string;

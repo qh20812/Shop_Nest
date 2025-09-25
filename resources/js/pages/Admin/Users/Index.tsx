@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState, useEffect } from "react";
 import { Link, usePage, router } from "@inertiajs/react";
 
@@ -24,6 +24,7 @@ interface PageProps {
   roles: string[];
   filters: { search?: string; role?: string; status?: string };
   flash?: { success?: string; error?: string };
+  [key: string]: unknown;
 }
 
 export default function Index() {

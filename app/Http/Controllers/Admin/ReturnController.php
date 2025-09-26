@@ -46,15 +46,14 @@ class ReturnController extends Controller
      * Xem chi tiết một yêu cầu trả hàng.
      * Bao gồm lý do, sản phẩm yêu cầu trả, thông tin đơn hàng, và lịch sử trao đổi (nếu có).
      */
-    public function show(ReturnRequest $returnRequest)
+    public function show($id)
     {
-        // Tải chi tiết yêu cầu trả hàng cùng các mối quan hệ cần thiết
-        $returnRequest->load([
+        $returnRequest = ReturnRequest::with([
             'order.customer',
             'order.items.product', // Tải sản phẩm liên quan đến từng item trong đơn hàng
             'customer',
             // 'messages.sender' // Nếu có hệ thống tin nhắn cho yêu cầu trả hàng, tương tự Dispute
-        ]);
+        ])->findOrFail($id);
 
         return Inertia::render('Admin/Returns/Show', [
             'returnRequest' => $returnRequest,
@@ -65,8 +64,10 @@ class ReturnController extends Controller
      * Cập nhật trạng thái của yêu cầu trả hàng.
      * Đây là hành động chính của Admin, ví dụ: chuyển từ "Đang chờ xử lý" sang "Chấp nhận" hoặc "Từ chối".
      */
-    public function update(Request $request, ReturnRequest $returnRequest)
+    public function update(Request $request, $id)
     {
+        $returnRequest = ReturnRequest::findOrFail($id);
+        
         $validated = $request->validate([
             'status' => ['required', 'integer', Rule::in([1, 2, 3, 4, 5])], // Các trạng thái hợp lệ
             'admin_note' => ['nullable', 'string', 'max:1000'], // Ghi chú của admin

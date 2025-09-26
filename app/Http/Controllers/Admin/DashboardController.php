@@ -1,42 +1,68 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Product;
-use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
-class AdminDashboardController extends Controller
+class DashboardController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $stats = $this->getStatsCardsData();
         $recentOrders = $this->getRecentOrders();
         $newUsers = $this->getNewUsers();
-        $salesChart = $this->getSalesChartData();
+        // $salesChart = $this->getSalesChartData();
 
-        return view('admin.dashboard', compact('stats', 'recentOrders', 'newUsers', 'salesChart'));
+        // Sửa lại để trả về Inertia Response
+        return Inertia::render('Admin/Dashboard/Index', [
+            'stats' => $stats,
+            'recentOrders' => $recentOrders,
+            'newUsers' => $newUsers,
+            // 'salesChart' => $salesChart,
+        ]);
     }
 
-    private function getStatsCardsData()
+    private function getStatsCardsData(): array
     {
-        return [
-            'total_revenue' => Order::where('status', 'completed')->sum('total_price'),
-            'total_orders' => Order::count(),
-            'new_users' => User::whereDate('created_at', '>=', now()->subWeek())->count(),
-            'new_products' => Product::whereDate('created_at', '>=', now()->subWeek())->count(),
-        ];
+        try {
+            return [
+                'total_revenue' => Order::where('status', 3)->sum('total_amount') ?? 0,
+                'total_orders' => Order::count(),
+                'new_users' => User::whereDate('created_at', '>=', now()->subWeek())->count(),
+                'total_products' => Product::count(),
+            ];
+        } catch (\Exception $e) {
+            // Return default values if database error occurs
+            return [
+                'total_revenue' => 0,
+                'total_orders' => 0,
+                'new_users' => 0,
+                'total_products' => 0,
+            ];
+        }
     }
 
     private function getRecentOrders()
     {
-        return Order::latest()->take(10)->get();
+        try {
+            return Order::with('customer')->latest()->take(5)->get();
+        } catch (\Exception $e) {
+            return collect([]); // Return empty collection
+        }
     }
 
     private function getNewUsers()
     {
-        return User::latest()->take(10)->get();
+        try {
+            return User::latest()->take(5)->get(['id', 'username', 'created_at']);
+        } catch (\Exception $e) {
+            return collect([]); // Return empty collection
+        }
     }
 
     private function getSalesChartData()

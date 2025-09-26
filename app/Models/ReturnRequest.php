@@ -29,7 +29,7 @@ class ReturnRequest extends Model
     protected $table = 'returns';
 
     protected $primaryKey = 'return_id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'order_id',
@@ -67,5 +67,13 @@ class ReturnRequest extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'return_id';
     }
 }

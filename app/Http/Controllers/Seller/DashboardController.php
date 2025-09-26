@@ -18,12 +18,15 @@ class DashboardController extends Controller
 
         $shopStats = $this->getShopStats($seller->id);
         $recentOrders = $this->getRecentShopOrders($seller->id);
-        // ... các logic khác
+        $topSellingProducts = $this->getTopSellingProducts();
+        $stockAlerts = $this->getStockAlerts();
 
         // Giả sử bạn có một trang dashboard cho Seller
         return Inertia::render('Seller/Dashboard/Index', [
             'shopStats' => $shopStats,
             'recentOrders' => $recentOrders,
+            'topSellingProducts' => $topSellingProducts,
+            'stockAlerts' => $stockAlerts,
         ]);
     }
 

@@ -92,9 +92,7 @@ class UserController extends Controller
         if ($user->id === Auth::id()) {
             return back()->with('error', 'Bạn không thể tự vô hiệu hoá chính mình.');
         }
-
         $user->update(['is_active' => false]);
-
         return redirect()->route('admin.users.index')->with('success', 'Vô hiệu hoá người dùng thành công.');
     }
 }

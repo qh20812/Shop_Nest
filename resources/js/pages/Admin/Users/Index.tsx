@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Head, usePage, router, Link } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
 import FilterPanel from "@/components/admin/FilterPanel";
 import DataTable from "@/components/admin/DataTable";
@@ -8,6 +8,7 @@ import Pagination from "@/components/admin/users/Pagination";
 import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Avatar from '@/components/ui/Avatar';
+import ActionButtons, { ActionConfig } from '@/components/admin/ActionButtons';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 
@@ -190,49 +191,24 @@ export default function Index() {
       header: "Actions",
       cell: (user: User) => {
         const isCurrentUser = user.id === currentUserId;
-        return (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <Link
-              href={`/admin/users/${user.id}/edit`}
-              style={{
-                padding: "4px 12px",
-                borderRadius: "16px",
-                background: "var(--light-primary)",
-                color: "var(--primary)",
-                textDecoration: "none",
-                fontSize: "12px",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-            >
-              <i className="bx bx-edit"></i>
-              {t("Edit")}
-            </Link>
-            <button
-              onClick={() => handleDelete(user.id)}
-              disabled={isCurrentUser}
-              style={{
-                padding: "4px 12px",
-                borderRadius: "16px",
-                background: isCurrentUser ? "var(--grey)" : "var(--light-danger)",
-                color: isCurrentUser ? "var(--dark-grey)" : "var(--danger)",
-                border: "none",
-                fontSize: "12px",
-                fontWeight: "500",
-                cursor: isCurrentUser ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                opacity: isCurrentUser ? 0.6 : 1,
-              }}
-            >
-              <i className="bx bx-trash"></i>
-              {t("Inactive")}
-            </button>
-          </div>
-        );
+        const actions: ActionConfig[] = [
+          {
+            type: 'link',
+            href: `/admin/users/${user.id}/edit`,
+            variant: 'primary',
+            icon: 'bx bx-edit',
+            label: t("Edit")
+          },
+          {
+            type: 'button',
+            onClick: () => handleDelete(user.id),
+            variant: 'danger',
+            icon: 'bx bx-trash',
+            label: t("Inactive"),
+            disabled: isCurrentUser
+          }
+        ];
+        return <ActionButtons actions={actions} />;
       }
     }
   ];

@@ -1,9 +1,12 @@
-import { Link, router, usePage, Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { router, usePage, Head } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';
 import FilterPanel from '../../../components/admin/FilterPanel';
 import DataTable from '../../../components/admin/DataTable';
 import Pagination from '../../../components/admin/users/Pagination';
+import Toast from '../../../components/admin/users/Toast';
+import ConfirmationModal from '../../../components/ui/ConfirmationModal';
+import ActionButtons, { type ActionConfig } from '../../../components/admin/ActionButtons';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
@@ -29,21 +32,64 @@ export default function Index() {
 
     const [search, setSearch] = useState(filters.search || '');
 
+    // Toast state
+    const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+    // Confirmation modal state
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        categoryId: number | null;
+        categoryName: string;
+    }>({
+        isOpen: false,
+        categoryId: null,
+        categoryName: "",
+    });
+
+    // Listen for flash messages from backend
+    useEffect(() => {
+        if (flash?.success) {
+            setToast({ type: "success", message: flash.success });
+        } else if (flash?.error) {
+            setToast({ type: "error", message: flash.error });
+        }
+    }, [flash]);
+
     const applyFilters = () => {
         router.get('/admin/categories', { search }, { preserveState: true });
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Bạn có chắc muốn xoá danh mục này?')) {
-            router.delete(`/admin/categories/${id}`);
+    const handleDelete = (category: Category) => {
+        setConfirmModal({
+            isOpen: true,
+            categoryId: category.category_id,
+            categoryName: category.name,
+        });
+    };
+
+    const handleConfirmDelete = () => {
+        if (confirmModal.categoryId) {
+            router.delete(`/admin/categories/${confirmModal.categoryId}`);
         }
+    };
+
+    const handleCloseModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            categoryId: null,
+            categoryName: "",
+        });
+    };
+
+    const handleCloseToast = () => {
+        setToast(null);
     };
 
     // Define columns for DataTable
     const categoryColumns = [
         {
             header: "ID",
-            accessorKey: "id" as keyof Category
+            cell: (category: Category) => `#${category.category_id}`
         },
         {
             header: "Category Name",
@@ -59,25 +105,40 @@ export default function Index() {
         },
         {
             header: "Actions",
-            cell: (category: Category) => (
-                <div>
-                    <Link href={`/admin/categories/${category.category_id}/edit`} className="mr-2 text-blue-600">
-                        {t('Edit')}
-                    </Link>
-                    <button onClick={() => handleDelete(category.category_id)} className="text-red-600">
-                        {t('Delete')}
-                    </button>
-                </div>
-            )
+            cell: (category: Category) => {
+                const actions: ActionConfig[] = [
+                    {
+                        type: 'link',
+                        href: `/admin/categories/${category.category_id}/edit`,
+                        variant: 'primary',
+                        icon: 'bx bx-edit',
+                        label: t('Edit')
+                    },
+                    {
+                        type: 'button',
+                        onClick: () => handleDelete(category),
+                        variant: 'danger',
+                        icon: 'bx bx-trash',
+                        label: t('Delete')
+                    }
+                ];
+                return <ActionButtons actions={actions} />;
+            }
         }
     ];
 
     return (
         <AppLayout>
             <Head title={t("Category Management")} />
-            {/* Thông báo */}
-            {flash?.success && <div className="mb-3 rounded bg-green-100 p-2 text-green-700">{flash.success}</div>}
-            {flash?.error && <div className="mb-3 rounded bg-red-100 p-2 text-red-700">{flash.error}</div>}
+            
+            {/* Toast notification */}
+            {toast && (
+                <Toast
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={handleCloseToast}
+                />
+            )}
 
             {/* Header và Bộ lọc */}
             <FilterPanel
@@ -113,6 +174,15 @@ export default function Index() {
 
             {/* Phân trang */}
             <Pagination links={categories.links} />
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmDelete}
+                title={t("Confirm Category Deletion")}
+                message={`${t("Are you sure you want to delete category")} "${confirmModal.categoryName}"? ${t("This action cannot be undone.")}`}
+            />
         </AppLayout>
     );
 }

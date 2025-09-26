@@ -7,6 +7,8 @@ interface ActionButtonProps {
   icon?: string;
   children: React.ReactNode;
   disabled?: boolean;
+  loading?: boolean;
+  form?: string;
 }
 
 export default function ActionButton({
@@ -16,15 +18,19 @@ export default function ActionButton({
   icon,
   children,
   disabled = false,
+  loading = false,
+  form,
 }: ActionButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
       className={`btn btn-${variant}`}
+      form={form}
     >
-      {icon && <i className={`${icon}`}></i>}
+      {loading && <i className="bx bx-loader-alt bx-spin" style={{ marginRight: '8px' }}></i>}
+      {!loading && icon && <i className={`${icon}`}></i>}
       {children}
     </button>
   );

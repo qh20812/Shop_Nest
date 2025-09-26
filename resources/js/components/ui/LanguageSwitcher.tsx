@@ -1,7 +1,6 @@
 import React from 'react';
 import { router } from '@inertiajs/react';
 import { useTranslation } from '../../lib/i18n';
-import { Globe } from 'lucide-react';
 
 export default function LanguageSwitcher() {
   const { locale } = useTranslation();
@@ -14,32 +13,65 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="relative inline-block text-left">
-      <div className="flex items-center space-x-2">
-        <Globe className="w-4 h-4 text-gray-600" />
-        <div className="flex space-x-1">
-          <button
-            onClick={() => switchLanguage('vi')}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              locale === 'vi'
-                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
-            }`}
-          >
-            Tiếng Việt
-          </button>
-          <span className="text-gray-400">|</span>
-          <button
-            onClick={() => switchLanguage('en')}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              locale === 'en'
-                ? 'bg-indigo-100 text-indigo-700 font-medium'
-                : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
-            }`}
-          >
-            English
-          </button>
-        </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <button
+          onClick={() => switchLanguage('vi')}
+          style={{
+            padding: '8px 12px',
+            fontSize: '14px',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            background: locale === 'vi' ? 'var(--primary)' : 'transparent',
+            color: locale === 'vi' ? 'white' : 'var(--dark-grey)',
+            fontWeight: locale === 'vi' ? '500' : '400',
+          }}
+          onMouseEnter={(e) => {
+            if (locale !== 'vi') {
+              e.currentTarget.style.background = 'var(--grey)';
+              e.currentTarget.style.color = 'var(--primary)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (locale !== 'vi') {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--dark-grey)';
+            }
+          }}
+        >
+          Tiếng Việt
+        </button>
+        <span style={{ color: 'var(--dark-grey)', fontSize: '14px' }}>|</span>
+        <button
+          onClick={() => switchLanguage('en')}
+          style={{
+            padding: '8px 12px',
+            fontSize: '14px',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            background: locale === 'en' ? 'var(--primary)' : 'transparent',
+            color: locale === 'en' ? 'white' : 'var(--dark-grey)',
+            fontWeight: locale === 'en' ? '500' : '400',
+          }}
+          onMouseEnter={(e) => {
+            if (locale !== 'en') {
+              e.currentTarget.style.background = 'var(--grey)';
+              e.currentTarget.style.color = 'var(--primary)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (locale !== 'en') {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'var(--dark-grey)';
+            }
+          }}
+        >
+          English
+        </button>
       </div>
     </div>
   );

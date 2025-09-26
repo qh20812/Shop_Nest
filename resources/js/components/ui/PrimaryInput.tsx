@@ -10,12 +10,13 @@ interface PrimaryInputProps {
   name: string;
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  type?: 'text' | 'email' | 'select';
+  type?: 'text' | 'email' | 'password' | 'select';
   error?: string;
   placeholder?: string;
   options?: Option[];
   required?: boolean;
   disabled?: boolean;
+  autoComplete?: string;
 }
 
 export default function PrimaryInput({
@@ -29,6 +30,7 @@ export default function PrimaryInput({
   options = [],
   required = false,
   disabled = false,
+  autoComplete,
 }: PrimaryInputProps) {
   return (
     <div className="form-group">
@@ -59,6 +61,7 @@ export default function PrimaryInput({
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
+          autoComplete={autoComplete}
           className={`form-input-field ${error ? 'error' : ''} ${disabled ? 'disabled' : ''}`}
         />
       )}

@@ -20,7 +20,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { icon: 'bx bx-receipt', label: t('Orders'), href: '/admin/orders' },
     { icon: 'bx bx-analyse', label: t('Analytics'), href: '/admin/analytics' },
     { icon: 'bx bx-message-square-dots', label: t('Tickets'), href: '/admin/tickets' },
-    { icon: 'bx bx-cog', label: t('Settings'), href: '/admin/settings' },
+    { icon: 'bx bx-cog', label: t('Settings'), href: '/settings' },
   ];
   const [isSidebarClosed, setIsSidebarClosed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);

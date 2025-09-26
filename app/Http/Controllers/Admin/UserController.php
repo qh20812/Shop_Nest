@@ -30,8 +30,8 @@ class UserController extends Controller
                 });
             })
             ->when($request->input('role'), function ($query, $role) {
-                // Lọc theo vai trò (role)
-                $query->whereHas('roles', fn ($q) => $q->where('name', $role));
+                // Lọc theo vai trò (role) - query JSON column based on current locale
+                $query->whereHas('roles', fn ($q) => $q->where('name->' . app()->getLocale(), $role));
             })
             ->when($request->filled('status'), function ($query) use ($request) {
                 // Lọc theo trạng thái (active/inactive)
@@ -43,7 +43,7 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'roles' => Role::all()->pluck('name'), // Gửi danh sách tên role cho bộ lọc ở frontend
+            'roles' => Role::all()->map->name, // Map over collection to get translated role names for current locale
             'filters' => $filters,
         ]);
     }

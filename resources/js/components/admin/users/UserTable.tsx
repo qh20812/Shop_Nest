@@ -5,7 +5,7 @@ import Avatar from '@/components/ui/Avatar';
 
 interface Role {
   id: number;
-  name: string;
+  name: Record<string, string>; // Translation object with locale keys
 }
 
 interface User {
@@ -37,7 +37,7 @@ interface UserTableProps {
 }
 
 export default function UserTable({ users, onDelete }: UserTableProps) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { auth } = usePage<PageProps>().props;
     const currentUserId = auth.user.id;
   return (
@@ -93,22 +93,25 @@ export default function UserTable({ users, onDelete }: UserTableProps) {
                     </td>
                   <td>{user.email}</td>
                   <td>
-                    {user.roles.map((role, index) => (
-                      <span
-                        key={role.id}
-                        style={{
-                          fontSize: "10px",
-                          padding: "4px 8px",
-                          borderRadius: "12px",
-                          background: role.name === "Admin" ? "var(--light-danger)" : "var(--light-primary)",
-                          color: role.name === "Admin" ? "var(--danger)" : "var(--primary)",
-                          fontWeight: "600",
-                          marginRight: index < user.roles.length - 1 ? "4px" : "0"
-                        }}
-                      >
-                        {role.name}
-                      </span>
-                    ))}
+                    {user.roles.map((role, index) => {
+                      const roleName = role.name[locale] || role.name['en'];
+                      return (
+                        <span
+                          key={role.id}
+                          style={{
+                            fontSize: "10px",
+                            padding: "4px 8px",
+                            borderRadius: "12px",
+                            background: roleName === "Admin" || roleName === "Quản trị viên" ? "var(--light-danger)" : "var(--light-primary)",
+                            color: roleName === "Admin" || roleName === "Quản trị viên" ? "var(--danger)" : "var(--primary)",
+                            fontWeight: "600",
+                            marginRight: index < user.roles.length - 1 ? "4px" : "0"
+                          }}
+                        >
+                          {roleName}
+                        </span>
+                      );
+                    })}
                   </td>
                   <td>
                     <span 

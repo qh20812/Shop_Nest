@@ -45,7 +45,13 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'first_name' => $request->user()->first_name,
+                    'last_name' => $request->user()->last_name,
+                    'email' => $request->user()->email,
+                    'roles' => $request->user()->loadMissing('roles')->roles->map(fn ($role) => ['name' => $role->name]),
+                ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => App::getLocale(),

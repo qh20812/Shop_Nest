@@ -12,7 +12,7 @@ import { useTranslation } from '../../../lib/i18n';
 
 interface Role {
   id: number;
-  name: string;
+  name: Record<string, string>; // Translation object with locale keys
 }
 
 interface User {

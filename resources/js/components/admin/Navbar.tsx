@@ -8,6 +8,7 @@ interface User {
   first_name: string;
   last_name: string;
   email: string;
+  roles: { name: string }[];
 }
 
 interface NavbarProps {
@@ -89,7 +90,29 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         onClick={() => setIsProfileOpen(!isProfileOpen)}
       >
         {props.auth?.user ? (
-          <Avatar user={props.auth.user} size={36} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* User Name and Role Block */}
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ 
+                fontWeight: 600, 
+                fontSize: '14px', 
+                margin: 0, 
+                color: 'var(--dark)',
+                lineHeight: '1.2'
+              }}>
+                {props.auth.user.first_name} {props.auth.user.last_name}
+              </p>
+              <small style={{ 
+                fontSize: '12px', 
+                color: 'var(--dark-grey)',
+                lineHeight: '1.2'
+              }}>
+                {props.auth.user.roles?.[0]?.name || 'Member'}
+              </small>
+            </div>
+            {/* Avatar */}
+            <Avatar user={props.auth.user} size={36} />
+          </div>
         ) : (
           <img src="/logo.svg" alt="Profile" />
         )}

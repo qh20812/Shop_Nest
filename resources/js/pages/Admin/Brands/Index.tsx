@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';
+import Pagination from '../../../components/admin/users/Pagination';
 
 interface Brand {
     id: number;
@@ -102,18 +103,7 @@ export default function Index() {
                 </table>
 
                 {/* Phân trang */}
-                <div className="mt-4">
-                    {brands.links.map((link) => (
-                        <button
-                            key={link.url || link.label}
-                            disabled={!link.url}
-                            className={`mr-1 border px-2 py-1 ${link.active ? 'bg-blue-500 text-white' : ''}`}
-                            onClick={() => link.url && router.get(link.url)}
-                        >
-                            {link.label}
-                        </button>
-                    ))}
-                </div>
+                <Pagination links={brands.links} />
             </div>
         </AppLayout>
     );

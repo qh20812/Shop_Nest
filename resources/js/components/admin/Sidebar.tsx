@@ -31,7 +31,7 @@ export default function Sidebar({ items, isClosed }: SidebarProps) {
       
       <ul className="side-menu">
         {items.map((item, index) => (
-          <li key={index} className={url === item.href ? 'active' : ''}>
+          <li key={index} className={url.startsWith(item.href) ? 'active' : ''}>
             <Link href={item.href}>
               <i className={`bx ${item.icon}`}></i>
               {item.label}
@@ -42,22 +42,7 @@ export default function Sidebar({ items, isClosed }: SidebarProps) {
       
       <ul className="side-menu">
         <li>
-          <button onClick={handleLogout} className="logout" style={{
-            width: '100%',
-            height: '100%',
-            background: 'var(--light)',
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: '48px',
-            fontSize: '16px',
-            color: 'var(--danger)',
-            whiteSpace: 'nowrap',
-            overflowX: 'hidden',
-            transition: 'all 0.3s ease',
-            border: 'none',
-            cursor: 'pointer',
-            textDecoration: 'none'
-          }}>
+          <button onClick={handleLogout} className="logout">
             <i className='bx bx-log-out-circle'></i>
             Logout
           </button>

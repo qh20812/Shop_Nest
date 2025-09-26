@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
 import Navbar from '@/components/admin/Navbar';
+import { useTranslation } from '../../lib/i18n';
 
 interface AppLayoutProps {
     children: React.ReactNode;
-    sidebarItems: Array<{
-      icon: string;
-      label: string;
-      href: string;
-    }>;
 }
 
-export default function AppLayout({ children, sidebarItems }: AppLayoutProps) {
+export default function AppLayout({ children }: AppLayoutProps) {
+  const { t } = useTranslation();
+
+  // Admin sidebar items - tập trung tại đây
+  const adminSidebarItems = [
+    { icon: 'bx bxs-dashboard', label: t('Dashboard'), href: '/admin/dashboard' },
+    { icon: 'bx bx-user', label: t('Users'), href: '/admin/users' },
+    { icon: 'bx bx-package', label: t('Products'), href: '/admin/products' },
+    { icon: 'bx bx-category', label: t('Categories'), href: '/admin/categories' },
+    { icon: 'bx bx-store', label: t('Brands'), href: '/admin/brands' },
+    { icon: 'bx bx-receipt', label: t('Orders'), href: '/admin/orders' },
+    { icon: 'bx bx-analyse', label: t('Analytics'), href: '/admin/analytics' },
+    { icon: 'bx bx-message-square-dots', label: t('Tickets'), href: '/admin/tickets' },
+    { icon: 'bx bx-cog', label: t('Settings'), href: '/admin/settings' },
+  ];
   const [isSidebarClosed, setIsSidebarClosed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -55,7 +65,7 @@ export default function AppLayout({ children, sidebarItems }: AppLayoutProps) {
   return (
     <>
       <Sidebar 
-        items={sidebarItems} 
+        items={adminSidebarItems} 
         isClosed={isSidebarClosed}
       />
       <div className="content">

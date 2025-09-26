@@ -1,42 +1,90 @@
 import React from 'react';
 import AppLayout from '@/layouts/app/AppLayout';
-import Head from '@/components/admin/Head';
+import Header from '@/components/admin/Header';
 import Insights from '@/components/admin/Insights';
 import { useTranslation } from '../../../lib/i18n';
+import { usePage } from '@inertiajs/react';
 import '@/../css/app.css';
 import '@/../css/Page.css';
+import {Head} from '@inertiajs/react';
 
+// Định nghĩa TypeScript interfaces
+interface Stats {
+  total_revenue: number;
+  total_orders: number;
+  new_users: number;
+  total_products: number;
+}
+
+interface Customer {
+  username: string;
+}
+
+interface Order {
+  id: number;
+  order_number?: string;
+  created_at: string;
+  status: number;
+  customer: Customer;
+}
+
+interface User {
+  id: number;
+  username: string;
+  created_at: string;
+}
+
+interface DashboardProps {
+  stats: Stats;
+  recentOrders: Order[];
+  newUsers: User[];
+  [key: string]: unknown;
+}
 
 export default function Index() {
   const { t } = useTranslation();
-  const sidebarItems = [
-    { icon: 'bxs-dashboard', label: t('Dashboard'), href: '/admin/dashboard' },
-    { icon: 'bx-store-alt', label: t('Shop'), href: '/admin/products' },
-    { icon: 'bx-analyse', label: t('Analytics'), href: '/admin/analytics' },
-    { icon: 'bx-message-square-dots', label: t('Tickets'), href: '/admin/tickets' },
-    { icon: 'bx-group', label: t('Users'), href: '/admin/users' },
-    { icon: 'bx-cog', label: t('Settings'), href: '/admin/settings' },
-  ];
+  const { stats, recentOrders, newUsers } = usePage<DashboardProps>().props;
 
   const breadcrumbs = [
     { label: t('Analytics'), href: '#' },
     { label: t('Shop'), href: '#', active: true },
   ];
 
+  // Tạo insightsData từ stats động
   const insightsData = [
-    { icon: 'bx-calendar-check', value: '1,074', label: t('Paid Order') },
-    { icon: 'bx-show-alt', value: '3,944', label: t('Site Visit') },
-    { icon: 'bx-line-chart', value: '14,721', label: t('Searches') },
-    { icon: 'bx-dollar-circle', value: '$6,742', label: t('Total Sales') },
+    { icon: 'bx-calendar-check', value: stats.total_orders.toString(), label: t('Total Orders') },
+    { icon: 'bx-show-alt', value: stats.new_users.toString(), label: t('New Users') },
+    { icon: 'bx-line-chart', value: stats.total_products.toString(), label: t('Total Products') },
+    { icon: 'bx-dollar-circle', value: `$${stats.total_revenue.toLocaleString()}`, label: t('Total Revenue') },
   ];
+
+  // Helper function để chuyển đổi status thành className và text
+  const getOrderStatus = (status: number) => {
+    switch (status) {
+      case 1:
+        return { className: 'pending', text: t('Pending') };
+      case 2:
+        return { className: 'process', text: t('Processing') };
+      case 3:
+        return { className: 'completed', text: t('Completed') };
+      default:
+        return { className: 'pending', text: t('Pending') };
+    }
+  };
+
+  // Helper function để format ngày
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
 
   const handleDownloadCSV = () => {
     console.log('Download CSV clicked');
   };
 
   return (
-    <AppLayout sidebarItems={sidebarItems}>
-      <Head 
+    <AppLayout>
+      <Head title={t('Dashboard')} />
+      <Header
         title={t('Dashboard')}
         breadcrumbs={breadcrumbs}
         reportButton={{
@@ -65,63 +113,63 @@ export default function Index() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <img src="/logo.svg" alt="User" />
-                  <p>John Doe</p>
-                </td>
-                <td>14-08-2023</td>
-                <td><span className="status completed">{t('Completed')}</span></td>
-              </tr>
-              <tr>
-                <td>
-                  <img src="/logo.svg" alt="User" />
-                  <p>Jane Smith</p>
-                </td>
-                <td>14-08-2023</td>
-                <td><span className="status pending">{t('Pending')}</span></td>
-              </tr>
-              <tr>
-                <td>
-                  <img src="/logo.svg" alt="User" />
-                  <p>Bob Johnson</p>
-                </td>
-                <td>14-08-2023</td>
-                <td><span className="status process">{t('Processing')}</span></td>
-              </tr>
+              {recentOrders && recentOrders.length > 0 ? (
+                recentOrders.map((order) => {
+                  const orderStatus = getOrderStatus(order.status);
+                  return (
+                    <tr key={order.id}>
+                      <td>
+                        <img src="/logo.svg" alt="User" />
+                        <p>{order.customer?.username || 'N/A'}</p>
+                      </td>
+                      <td>{formatDate(order.created_at)}</td>
+                      <td>
+                        <span className={`status ${orderStatus.className}`}>
+                          {orderStatus.text}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={3} style={{ textAlign: 'center', padding: '20px' }}>
+                    {t('No recent orders')}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="reminders">
           <div className="header">
-            <i className='bx bx-note'></i>
-            <h3>{t('Reminders')}</h3>
+            <i className='bx bx-user-plus'></i>
+            <h3>{t('New Users')}</h3>
             <i className='bx bx-filter'></i>
-            <i className='bx bx-plus'></i>
+            <i className='bx bx-search'></i>
           </div>
           <ul className="task-list">
-            <li className="completed">
-              <div className="task-title">
-                <i className='bx bx-check-circle'></i>
-                <p>{t('Start Our Meeting')}</p>
-              </div>
-              <i className='bx bx-dots-vertical-rounded'></i>
-            </li>
-            <li className="completed">
-              <div className="task-title">
-                <i className='bx bx-check-circle'></i>
-                <p>{t('Analyse Our Site')}</p>
-              </div>
-              <i className='bx bx-dots-vertical-rounded'></i>
-            </li>
-            <li className="not-completed">
-              <div className="task-title">
-                <i className='bx bx-x-circle'></i>
-                <p>{t('Play Football')}</p>
-              </div>
-              <i className='bx bx-dots-vertical-rounded'></i>
-            </li>
+            {newUsers && newUsers.length > 0 ? (
+              newUsers.map((user) => (
+                <li key={user.id} className="completed">
+                  <div className="task-title">
+                    <i className='bx bx-user'></i>
+                    <p>{user.username}</p>
+                  </div>
+                  <small style={{ color: 'var(--dark-grey)', fontSize: '12px' }}>
+                    {formatDate(user.created_at)}
+                  </small>
+                </li>
+              ))
+            ) : (
+              <li className="not-completed">
+                <div className="task-title">
+                  <i className='bx bx-info-circle'></i>
+                  <p>{t('No new users')}</p>
+                </div>
+              </li>
+            )}
           </ul>
         </div>
       </div>

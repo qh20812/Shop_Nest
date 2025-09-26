@@ -1,6 +1,7 @@
-// @ts-nocheck
+
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import AppLayout from '../../../layouts/app/AppLayout';
 
 interface User {
     id: number;
@@ -29,6 +30,7 @@ interface PageProps {
     };
     filters: { search?: string; status?: string };
     flash?: { success?: string; error?: string };
+    [key: string]: unknown;
 }
 
 export default function Index() {
@@ -60,12 +62,13 @@ export default function Index() {
     };
 
     return (
-        <div>
-            <h1 className="mb-4 text-xl font-bold">Quản lý Yêu cầu Trả hàng</h1>
+        <AppLayout>
+            <div>
+                <h1 className="mb-4 text-xl font-bold">Quản lý Yêu cầu Trả hàng</h1>
 
-            {/* Thông báo */}
-            {flash?.success && <div className="mb-3 rounded bg-green-100 p-2 text-green-700">{flash.success}</div>}
-            {flash?.error && <div className="mb-3 rounded bg-red-100 p-2 text-red-700">{flash.error}</div>}
+                {/* Thông báo */}
+                {flash?.success && <div className="mb-3 rounded bg-green-100 p-2 text-green-700">{flash.success}</div>}
+                {flash?.error && <div className="mb-3 rounded bg-red-100 p-2 text-red-700">{flash.error}</div>}
 
             {/* Bộ lọc */}
             <div className="mb-4">
@@ -149,6 +152,7 @@ export default function Index() {
                     </button>
                 ))}
             </div>
-        </div>
+            </div>
+        </AppLayout>
     );
 }

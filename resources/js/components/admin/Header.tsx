@@ -17,7 +17,7 @@ interface HeadProps {
   };
 }
 
-export default function Head({ title, breadcrumbs, reportButton }: HeadProps) {
+export default function Header({ title, breadcrumbs, reportButton }: HeadProps) {
   return (
     <div className="header">
       <div className="left">

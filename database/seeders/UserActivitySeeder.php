@@ -15,7 +15,7 @@ class UserActivitySeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users; 
         $products = Product::all();
         $categories = Category::all();
         $searchTerms = ['iphone 15 pro max', 'áo thun nam', 'kem chống nắng la roche posay', 'sách đắc nhân tâm', 'giày nike air force 1'];

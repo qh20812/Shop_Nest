@@ -13,7 +13,7 @@ class DisputeSeeder extends Seeder
     {
         // Chỉ lấy các đơn hàng có ít nhất 1 item và có status phù hợp
         $orders = Order::whereHas('items')->whereIn('status', [2, 3, 4])->with('customer', 'items.variant.product')->get();
-        $admins = Role::where('name', 'Admin')->first()->users;
+        $admins = Role::where('name->en', 'Admin')->first()?->users;
 
         if ($orders->count() < 30 || $admins->isEmpty()) {
              $this->command->info('Không đủ đơn hàng hoặc admin để tạo khiếu nại.');

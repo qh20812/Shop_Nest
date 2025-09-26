@@ -11,9 +11,9 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Role::where('name', 'Admin')->first();
-        $sellerRole = Role::where('name', 'Seller')->first();
-        $customerRole = Role::where('name', 'Customer')->first();
+        $adminRole = Role::where('name->en', 'Admin')->first();
+        $sellerRole = Role::where('name->en', 'Seller')->first();
+        $customerRole = Role::where('name->en', 'Customer')->first();
 
         // Tạo SUPER ADMIN
         $admin = User::factory()->create([

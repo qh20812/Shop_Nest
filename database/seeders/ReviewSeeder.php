@@ -11,7 +11,7 @@ class ReviewSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users;
         $products = Product::all();
 
         if ($customers->isEmpty() || $products->isEmpty()) {

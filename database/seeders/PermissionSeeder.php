@@ -32,8 +32,8 @@ class PermissionSeeder extends Seeder
         $this->command->info('Permissions created successfully.');
 
         // Gán quyền cho Roles
-        $adminRole = Role::where('name', 'Admin')->first();
-        $sellerRole = Role::where('name', 'Seller')->first();
+        $adminRole = Role::where('name->en', 'Admin')->first();
+        $sellerRole = Role::where('name->en', 'Seller')->first();
 
         // Admin có tất cả các quyền
         $adminRole->permissions()->sync(Permission::all());

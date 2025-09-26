@@ -10,8 +10,8 @@ class ChatSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
-        $sellers = Role::where('name', 'Seller')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users; // Sửa ở đây
+        $sellers = Role::where('name->en', 'Seller')->first()?->users; // Sửa ở đây
 
         // Tạo 50 phòng chat giữa khách hàng và người bán
         for ($i = 0; $i < 50; $i++) {

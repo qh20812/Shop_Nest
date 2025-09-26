@@ -15,7 +15,7 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $sellers = Role::where('name', 'Seller')->first()->users;
+        $sellers = Role::where('name->en', 'Seller')->first()?->users;
         $categories = Category::whereNotNull('parent_category_id')->get(); // Chỉ lấy danh mục con
         $brands = Brand::all();
         $attributes = Attribute::with('values')->get();

@@ -11,7 +11,7 @@ class CartSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users;
         $variants = ProductVariant::where('stock_quantity', '>', 0)->get();
 
         if ($variants->isEmpty()) return;

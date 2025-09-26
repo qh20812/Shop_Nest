@@ -6,6 +6,7 @@ import UserFilters from "@/components/admin/users/UserFilters";
 import UserTable from "@/components/admin/users/UserTable";
 import Pagination from "@/components/admin/users/Pagination";
 import Toast from "@/components/admin/users/Toast";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 
@@ -45,6 +46,17 @@ export default function Index() {
   // Toast state
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    userId: number | null;
+    userName: string;
+  }>({
+    isOpen: false,
+    userId: null,
+    userName: "",
+  });
+
   // Khi có flash từ backend thì hiển thị toast
   useEffect(() => {
     if (flash?.success) {
@@ -59,9 +71,28 @@ export default function Index() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm(t("Do you really want to disable this user?"))) {
-      router.delete(`/admin/users/${id}`);
+    const user = users.data.find(u => u.id === id);
+    const userName = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
+    
+    setConfirmModal({
+      isOpen: true,
+      userId: id,
+      userName: userName,
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmModal.userId) {
+      router.delete(`/admin/users/${confirmModal.userId}`);
     }
+  };
+
+  const handleCloseModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      userId: null,
+      userName: "",
+    });
   };
 
   const handleCloseToast = () => {
@@ -100,6 +131,15 @@ export default function Index() {
 
       {/* Phân trang */}
       <Pagination links={users.links} />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        title={t("Confirm User Deactivation")}
+        message={`${t("Are you sure you want to deactivate user")} "${confirmModal.userName}"? ${t("This action will prevent them from accessing the system.")}`}
+      />
     </AppLayout>
   );
 }

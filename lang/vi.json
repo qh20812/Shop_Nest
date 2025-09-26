@@ -69,5 +69,18 @@
     "Search by name or email...": "Tìm kiếm theo tên hoặc email...",
     "User Management": "Quản lý người dùng",
     "Edit User": "Chỉnh sửa người dùng",
-    "Admin": "Quản trị"
+    "Admin": "Quản trị",
+    "User Information": "Thông tin User",
+    "Last Name": "Họ",
+    "Enter your last name": "Nhập họ",
+    "First Name": "Tên",
+    "Enter your first name": "Nhập tên",
+    "Enter your email": "Nhập email",
+    "Cancel": "Hủy",
+    "Update": "Cập nhật",
+    "You": "Bạn",
+    "Confirm": "Xác nhận",
+    "Confirm User Deactivation": "Xác nhận vô hiệu hóa người dùng",
+    "Are you sure you want to deactivate user": "Bạn có chắc chắn muốn vô hiệu hóa người dùng",
+    "This action will prevent them from accessing the system.": "Hành động này sẽ ngăn họ truy cập vào hệ thống."
 }

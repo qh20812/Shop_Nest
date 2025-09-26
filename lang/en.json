@@ -69,5 +69,18 @@
     "Search by name or email...": "Search by name or email...",
     "User Management": "User Management",
     "Edit User": "Edit User",
-    "Admin": "Admin"
+    "Admin": "Admin",
+    "User Information": "User Information",
+    "Last Name": "Last Name",
+    "Enter your last name": "Enter your last name",
+    "First Name": "First Name",
+    "Enter your first name": "Enter your first name",
+    "Enter your email": "Enter your email",
+    "Cancel": "Cancel",
+    "Update": "Update",
+    "You": "You",
+    "Confirm": "Confirm",
+    "Confirm User Deactivation": "Confirm User Deactivation",
+    "Are you sure you want to deactivate user": "Are you sure you want to deactivate user",
+    "This action will prevent them from accessing the system.": "This action will prevent them from accessing the system."
 }

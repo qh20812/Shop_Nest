@@ -73,12 +73,11 @@ class UserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'is_active' => 'required|boolean',
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,id', // Đảm bảo mỗi role id gửi lên đều tồn tại
+            'role_id' => 'required|integer|exists:roles,id',
         ]);
 
         $user->update($validated);
-        $user->roles()->sync($validated['roles']);
+        $user->roles()->sync([$validated['role_id']]);
 
         return redirect()->route('admin.users.index')->with('success', 'Cập nhật người dùng thành công.');
     }

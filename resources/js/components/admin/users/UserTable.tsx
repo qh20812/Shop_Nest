@@ -1,6 +1,7 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { useTranslation } from '../../../lib/i18n';
+import Avatar from '@/components/ui/Avatar';
 
 interface Role {
   id: number;
@@ -16,6 +17,20 @@ interface User {
   roles: Role[];
 }
 
+interface AuthUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface PageProps {
+  auth: {
+    user: AuthUser;
+  };
+  [key: string]: unknown;
+}
+
 interface UserTableProps {
   users: User[];
   onDelete: (id: number) => void;
@@ -23,6 +38,8 @@ interface UserTableProps {
 
 export default function UserTable({ users, onDelete }: UserTableProps) {
     const { t } = useTranslation();
+    const { auth } = usePage<PageProps>().props;
+    const currentUserId = auth.user.id;
   return (
     <div className="bottom-data">
       <div className="orders">
@@ -43,33 +60,37 @@ export default function UserTable({ users, onDelete }: UserTableProps) {
           </thead>
           <tbody>
             {users.length > 0 ? (
-              users.map((user) => (
-                <tr key={user.id}>
-                  <td>#{user.id}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div 
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "50%",
-                          background: "var(--primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "var(--light)",
-                          fontWeight: "600"
-                        }}
-                      >
-                        {user.first_name.charAt(0).toUpperCase()}
+              users.map((user) => {
+                const isCurrentUser = user.id === currentUserId;
+                
+                return (
+                  <tr key={user.id}>
+                    <td>#{user.id}</td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <Avatar user={user} />
+                        <div>
+                          <p style={{ fontWeight: "500", margin: 0 }}>
+                            {user.first_name} {user.last_name}
+                            {isCurrentUser && (
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  padding: "2px 6px",
+                                  borderRadius: "8px",
+                                  background: "var(--light-success)",
+                                  color: "var(--success)",
+                                  fontWeight: "600",
+                                  marginLeft: "8px",
+                                }}
+                              >
+                                ({t('You')})
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p style={{ fontWeight: "500", margin: 0 }}>
-                          {user.first_name} {user.last_name}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
                   <td>{user.email}</td>
                   <td>
                     {user.roles.map((role, index) => (
@@ -118,18 +139,20 @@ export default function UserTable({ users, onDelete }: UserTableProps) {
                       </Link>
                       <button
                         onClick={() => onDelete(user.id)}
+                        disabled={isCurrentUser}
                         style={{
                           padding: "4px 12px",
                           borderRadius: "16px",
-                          background: "var(--light-danger)",
-                          color: "var(--danger)",
+                          background: isCurrentUser ? "var(--grey)" : "var(--light-danger)",
+                          color: isCurrentUser ? "var(--dark-grey)" : "var(--danger)",
                           border: "none",
                           fontSize: "12px",
                           fontWeight: "500",
-                          cursor: "pointer",
+                          cursor: isCurrentUser ? "not-allowed" : "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: "4px"
+                          gap: "4px",
+                          opacity: isCurrentUser ? 0.6 : 1,
                         }}
                       >
                         <i className="bx bx-trash"></i>
@@ -138,7 +161,8 @@ export default function UserTable({ users, onDelete }: UserTableProps) {
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={6} style={{ textAlign: "center", padding: "24px", color: "var(--dark-grey)" }}>

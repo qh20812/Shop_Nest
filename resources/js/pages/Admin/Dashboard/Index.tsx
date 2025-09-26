@@ -4,6 +4,7 @@ import Header from '@/components/admin/Header';
 import Insights from '@/components/admin/Insights';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
+import { formatNumber } from '@/lib/utils';
 import '@/../css/app.css';
 import '@/../css/Page.css';
 import {Head} from '@inertiajs/react';
@@ -52,10 +53,30 @@ export default function Index() {
 
   // Tạo insightsData từ stats động
   const insightsData = [
-    { icon: 'bx-calendar-check', value: stats.total_orders.toString(), label: t('Total Orders') },
-    { icon: 'bx-show-alt', value: stats.new_users.toString(), label: t('New Users') },
-    { icon: 'bx-line-chart', value: stats.total_products.toString(), label: t('Total Products') },
-    { icon: 'bx-dollar-circle', value: `$${stats.total_revenue.toLocaleString()}`, label: t('Total Revenue') },
+    { 
+      icon: 'bx-calendar-check', 
+      value: stats.total_orders.toLocaleString(), 
+      label: t('Total Orders'),
+      tooltip: `Total ${stats.total_orders} orders`
+    },
+    { 
+      icon: 'bx-user-plus', 
+      value: stats.new_users.toLocaleString(), 
+      label: t('New Users'),
+      tooltip: `Total ${stats.new_users} new users`
+    },
+    { 
+      icon: 'bx-package', 
+      value: stats.total_products.toLocaleString(), 
+      label: t('Total Products'),
+      tooltip: `Total ${stats.total_products} products`
+    },
+    { 
+      icon: 'bx-dollar-circle', 
+      value: formatNumber(stats.total_revenue), 
+      label: t('Total Revenue'),
+      tooltip: `$${stats.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    },
   ];
 
   // Helper function để chuyển đổi status thành className và text

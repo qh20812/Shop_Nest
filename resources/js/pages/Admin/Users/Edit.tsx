@@ -8,7 +8,7 @@ import Header from '../../../components/admin/Header';
 
 interface Role {
   id: number;
-  name: string;
+  name: Record<string, string>; // Translation object with locale keys
 }
 
 interface User {

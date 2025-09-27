@@ -6,7 +6,7 @@ import PrimaryInput from "@/components/ui/PrimaryInput";
 
 interface Role {
   id: number;
-  name: string;
+  name: Record<string, string>; // Translation object with locale keys
 }
 
 interface User {
@@ -68,7 +68,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
     router.put(`/admin/users/${user.id}`, values);
   };
   
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   return (
     <div className="bottom-data">
@@ -88,6 +88,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
               onChange={handleChange}
               error={errors.first_name}
               placeholder={t("Enter your last name")}
+              disabled
               required
             />
 
@@ -98,6 +99,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
               onChange={handleChange}
               error={errors.last_name}
               placeholder={t("Enter your first name")}
+              disabled
               required
             />
           </div>
@@ -110,6 +112,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
             onChange={handleChange}
             error={errors.email}
             placeholder={t("Enter your email")}
+            disabled
             required
           />
 
@@ -143,7 +146,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
                 const isSelected = values.role_id === role.id;
                 const isHovered = hoveredRole === role.id;
                 const isDisabled = isEditingSelf || isSelected;
-                
+                const roleName = role.name[locale] || role.name['en'];
                 return (
                   <label
                     key={role.id}
@@ -184,7 +187,7 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
                         accentColor: "var(--primary)",
                       }}
                     />
-                    <span>{role.name}</span>
+                    <span>{roleName}</span>
                   </label>
                 );
               })}

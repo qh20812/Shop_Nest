@@ -28,11 +28,11 @@ class CategoryManagementTest extends TestCase
 
         // 2. Tạo một user Admin
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->vi', 'Admin')->first());
 
         // 3. Tạo một user Customer thông thường
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->vi', 'Customer')->first());
     }
 
     /**

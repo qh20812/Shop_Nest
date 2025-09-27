@@ -103,6 +103,7 @@ export default function Profile() {
                   onChange={(e) => setData('username', e.target.value)}
                   error={errors.username}
                   placeholder={t('Enter your username')}
+                  disabled
                   required
                 />
 

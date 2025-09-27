@@ -1,4 +1,5 @@
 import React from 'react';
+import InputError from './InputError';
 
 interface Option {
   value: string | number;
@@ -66,7 +67,7 @@ export default function PrimaryInput({
         />
       )}
       
-      {error && <span className="form-error">{error}</span>}
+      <InputError message={error} />
     </div>
   );
 }

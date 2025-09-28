@@ -12,6 +12,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
+
+    const STATUS_PENDING = 1;
+    const STATUS_PROCESSING = 2;
+    const STATUS_SHIPPED = 3;
+    const STATUS_DELIVERED = 4;
+    const STATUS_CANCELLED = 5;
+
     protected $primaryKey = 'order_id';
     protected $fillable = [
         'customer_id',
@@ -46,7 +53,7 @@ class Order extends Model
     {
         return $this->belongsToMany(
             Promotion::class,
-            'order_promotion',   
+            'order_promotion',
             'order_id',
             'promotion_id'
         )->withPivot('discount_applied');

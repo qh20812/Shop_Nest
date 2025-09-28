@@ -17,4 +17,10 @@ class Category extends Model
         'parent_category_id',
         'is_active'
     ];
+
+    protected $casts = [
+        'name' => 'json',
+        'description' => 'json',
+        'is_active' => 'boolean',
+    ];
 }

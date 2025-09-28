@@ -6,6 +6,8 @@ import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import ActionButton from '@/components/ui/ActionButton';
 import DocumentViewer from '@/components/admin/shippers/DocumentViewer';
+import ShipperInfoCard from '@/components/admin/shippers/ShipperInfoCard';
+import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 
@@ -53,17 +55,6 @@ export default function Show() {
     const { t } = useTranslation();
     const { shipper, flash } = usePage<PageProps>().props;
 
-    // Helper function to get translated status text
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'pending': return t('Pending');
-            case 'approved': return t('Approved');
-            case 'rejected': return t('Rejected');
-            case 'suspended': return t('Suspended');
-            default: return status;
-        }
-    };
-    
     const [isUpdating, setIsUpdating] = useState(false);
     
     // Toast state
@@ -102,18 +93,14 @@ export default function Show() {
         }
     }, [flash]);
 
-    const getStatusClass = (status: string) => {
+    // Helper function to get translated status text for confirmation modals
+    const getStatusText = (status: string) => {
         switch (status) {
-            case 'approved':
-                return 'status completed';
-            case 'pending':
-                return 'status pending';
-            case 'suspended':
-                return 'status process';
-            case 'rejected':
-                return 'status pending'; // Using pending style for rejected
-            default:
-                return 'status pending';
+            case 'pending': return t('Pending');
+            case 'approved': return t('Approved');
+            case 'rejected': return t('Rejected');
+            case 'suspended': return t('Suspended');
+            default: return status;
         }
     };
 
@@ -190,11 +177,11 @@ export default function Show() {
 
             <div className="bottom-data">
                 {/* Personal Information Card */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-user"></i>
-                        <h3>{t('Personal Information')}</h3>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                <ShipperInfoCard 
+                    title={t('Personal Information')} 
+                    icon="bx bx-user"
+                    actionButtons={
+                        <>
                             {shipper.shipper_profile.status === 'pending' && (
                                 <>
                                     <ActionButton
@@ -222,8 +209,9 @@ export default function Show() {
                                     {isUpdating ? t('Updating...') : t('Suspend')}
                                 </ActionButton>
                             )}
-                        </div>
-                    </div>
+                        </>
+                    }
+                >
                     <div style={{ padding: '20px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                             <div>
@@ -248,20 +236,14 @@ export default function Show() {
                             </div>
                             <div>
                                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t('Status')}</label>
-                                <span className={getStatusClass(shipper.shipper_profile.status)}>
-                                    {getStatusText(shipper.shipper_profile.status)}
-                                </span>
+                                <StatusBadge status={shipper.shipper_profile.status} />
                             </div>
                         </div>
                     </div>
-                </div>
+                </ShipperInfoCard>
 
                 {/* Vehicle Information Card */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-car"></i>
-                        <h3>{t('Vehicle Details')}</h3>
-                    </div>
+                <ShipperInfoCard title={t('Vehicle Details')} icon="bx bx-car">
                     <div style={{ padding: '20px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                             <div>
@@ -274,14 +256,10 @@ export default function Show() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </ShipperInfoCard>
 
                 {/* Documents Card */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-file"></i>
-                        <h3>{t('Submitted Documents')}</h3>
-                    </div>
+                <ShipperInfoCard title={t('Submitted Documents')} icon="bx bx-file">
                     <div style={{ padding: '20px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                             <div>
@@ -400,7 +378,7 @@ export default function Show() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </ShipperInfoCard>
             </div>
 
             {/* Toast Notification */}

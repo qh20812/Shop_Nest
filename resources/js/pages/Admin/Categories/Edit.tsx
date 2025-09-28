@@ -12,34 +12,41 @@ interface Category {
     description?: { en?: string; vi?: string };
     parent_category_id?: number | null;
     is_active: boolean;
+    image_url?: string;
 }
 
 interface PageProps {
+    category: Category;
     parentCategories: Category[];
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
-export default function Create() {
+export default function Edit() {
     const { t } = useTranslation();
-    const { parentCategories, flash } = usePage<PageProps>().props;
+    const { category, parentCategories, flash } = usePage<PageProps>().props;
 
     const { data, setData, post, processing, errors } = useForm({
-        name: { en: '', vi: '' },
-        description: { en: '', vi: '' },
-        parent_category_id: '',
-        is_active: true,
+        _method: 'PUT',
+        name: category.name || { en: '', vi: '' },
+        description: {
+            en: category.description?.en || '',
+            vi: category.description?.vi || ''
+        },
+        parent_category_id: category.parent_category_id?.toString() || '',
+        is_active: category.is_active ?? true,
         image: null,
+        image_url: category.image_url || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/admin/categories');
+        post(`/admin/categories/${category.category_id}`);
     };
 
     return (
         <AppLayout>
-            <Head title={t('Create Category')} />
+            <Head title={t('Edit Category')} />
             
             {/* Toast notification */}
             {flash?.error && (
@@ -51,11 +58,11 @@ export default function Create() {
             )}
 
             <Header
-                title={t('Create New Category')}
+                title={t('Edit Category')}
                 breadcrumbs={[
                     { label: t('Dashboard'), href: '/admin/dashboard' },
                     { label: t('Categories'), href: '/admin/categories' },
-                    { label: t('Create'), href: '/admin/categories/create', active: true },
+                    { label: t('Edit'), href: `/admin/categories/${category.category_id}/edit`, active: true },
                 ]}
             />
 
@@ -66,7 +73,7 @@ export default function Create() {
                 processing={processing}
                 parentCategories={parentCategories}
                 onSubmit={handleSubmit}
-                submitLabel={t("Create Category")}
+                submitLabel={t("Update Category")}
             />
         </AppLayout>
     );

@@ -8,17 +8,16 @@ class CategoryFactory extends Factory
 {
     public function definition(): array
     {
-        // Sử dụng một mảng các danh mục thực tế để dữ liệu có ý nghĩa hơn
-        $categories = [
-            'Thời trang Nam', 'Thời trang Nữ', 'Điện thoại & Phụ kiện', 'Thiết bị điện tử',
-            'Máy tính & Laptop', 'Máy ảnh & Máy quay phim', 'Đồng hồ', 'Giày dép Nam',
-            'Giày dép Nữ', 'Túi ví', 'Mẹ & Bé', 'Nhà cửa & Đời sống', 'Sắc đẹp',
-            'Sức khỏe', 'Thể thao & Du lịch', 'Sách', 'Đồ chơi'
-        ];
-
         return [
-            'name' => $this->faker->unique()->randomElement($categories),
-            'description' => fake()->sentence(),
+            'name' => [
+                'en' => $this->faker->words(2, true),
+                'vi' => $this->faker->words(2, true),
+            ],
+            'description' => [
+                'en' => $this->faker->sentence(),
+                'vi' => fake()->sentence(),
+            ],
+            'image_url' => 'https://via.placeholder.com/600x400.png/00aa88?text=Category',
             'is_active' => true,
         ];
     }

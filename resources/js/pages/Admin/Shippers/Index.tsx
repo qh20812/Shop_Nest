@@ -8,6 +8,7 @@ import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Avatar from '@/components/ui/Avatar';
 import ActionButtons, { ActionConfig } from '@/components/admin/ActionButtons';
+import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 interface ShipperProfile {
@@ -88,21 +89,7 @@ export default function Index() {
         setToast(null);
     };
 
-    const getStatusClass = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return 'status completed';
-            case 'pending':
-                return 'status pending';
-            case 'suspended':
-                return 'status process';
-            case 'rejected':
-                return 'status pending'; // Using pending style for rejected
-            default:
-                return 'status pending';
-        }
-    };
-
+    // Helper function to get translated status text for filter options
     const getStatusText = (status: string) => {
         switch (status) {
             case 'approved':
@@ -158,9 +145,7 @@ export default function Index() {
         {
             header: t('Status'),
             cell: (shipper: Shipper) => (
-                <span className={getStatusClass(shipper.shipper_profile.status)}>
-                    {getStatusText(shipper.shipper_profile.status)}
-                </span>
+                <StatusBadge status={shipper.shipper_profile.status} />
             )
         },
         {

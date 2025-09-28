@@ -7,13 +7,18 @@ import Pagination from '../../../components/admin/users/Pagination';
 import Toast from '../../../components/admin/users/Toast';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ActionButtons, { type ActionConfig } from '../../../components/admin/ActionButtons';
+import StatusBadge from '../../../components/ui/StatusBadge';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
     category_id: number;
-    name: string;
-    description?: string;
+    name: { en: string; vi: string };
+    description?: { en?: string; vi?: string } | null;
+    parent_category_id?: number | null;
+    is_active: boolean;
     created_at: string;
+    deleted_at?: string | null;
+    image_url?: string | null;
 }
 
 interface PageProps {
@@ -21,16 +26,17 @@ interface PageProps {
         data: Category[];
         links: { url: string | null; label: string; active: boolean }[];
     };
-    filters: { search?: string };
+    filters: { search?: string; status?: string };
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
 export default function Index() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { categories = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || '');
 
     // Toast state
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -40,10 +46,16 @@ export default function Index() {
         isOpen: boolean;
         categoryId: number | null;
         categoryName: string;
+        action: 'hide' | 'restore' | 'forceDelete' | null;
+        title: string;
+        message: string;
     }>({
         isOpen: false,
         categoryId: null,
         categoryName: "",
+        action: null,
+        title: "",
+        message: "",
     });
 
     // Listen for flash messages from backend
@@ -56,20 +68,62 @@ export default function Index() {
     }, [flash]);
 
     const applyFilters = () => {
-        router.get('/admin/categories', { search }, { preserveState: true });
+        router.get('/admin/categories', { search, status }, { preserveState: true });
     };
 
-    const handleDelete = (category: Category) => {
+    const getCategoryName = (category: Category): string => {
+        return category.name[locale as keyof typeof category.name] || category.name['en'] || 'Unnamed Category';
+    };
+
+    const handleHide = (category: Category) => {
+        const categoryName = getCategoryName(category);
         setConfirmModal({
             isOpen: true,
             categoryId: category.category_id,
-            categoryName: category.name,
+            categoryName,
+            action: 'hide',
+            title: t("Confirm Hide Category"),
+            message: `${t("Are you sure you want to hide category")} "${categoryName}"? ${t("This will make it invisible to users but can be restored later.")}`
         });
     };
 
-    const handleConfirmDelete = () => {
-        if (confirmModal.categoryId) {
-            router.delete(`/admin/categories/${confirmModal.categoryId}`);
+    const handleRestore = (category: Category) => {
+        const categoryName = getCategoryName(category);
+        setConfirmModal({
+            isOpen: true,
+            categoryId: category.category_id,
+            categoryName,
+            action: 'restore',
+            title: t("Confirm Restore Category"),
+            message: `${t("Are you sure you want to restore category")} "${categoryName}"? ${t("This will make it visible to users again.")}`
+        });
+    };
+
+    const handleForceDelete = (category: Category) => {
+        const categoryName = getCategoryName(category);
+        setConfirmModal({
+            isOpen: true,
+            categoryId: category.category_id,
+            categoryName,
+            action: 'forceDelete',
+            title: t("Confirm Permanent Deletion"),
+            message: `${t("Are you sure you want to permanently delete category")} "${categoryName}"? ${t("This action cannot be undone!")}`
+        });
+    };
+
+    const handleConfirmAction = () => {
+        if (!confirmModal.categoryId || !confirmModal.action) return;
+
+        switch (confirmModal.action) {
+            case 'hide':
+                router.delete(`/admin/categories/${confirmModal.categoryId}`);
+                break;
+            case 'restore':
+                router.patch(`/admin/categories/${confirmModal.categoryId}/restore`);
+                break;
+            case 'forceDelete':
+                router.delete(`/admin/categories/${confirmModal.categoryId}/force-delete`);
+                break;
         }
     };
 
@@ -78,6 +132,9 @@ export default function Index() {
             isOpen: false,
             categoryId: null,
             categoryName: "",
+            action: null,
+            title: "",
+            message: "",
         });
     };
 
@@ -92,36 +149,81 @@ export default function Index() {
             cell: (category: Category) => `#${category.category_id}`
         },
         {
-            header: "Category Name",
-            accessorKey: "name" as keyof Category
+            header: t("Category Name"),
+            cell: (category: Category) => {
+                const categoryName = category.name[locale as keyof typeof category.name] || category.name['en'];
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img 
+                            src={category.image_url || `https://via.placeholder.com/40?text=${categoryName.charAt(0)}`} 
+                            alt={categoryName} 
+                            style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} 
+                        />
+                        <span>{categoryName}</span>
+                    </div>
+                );
+            }
         },
         {
-            header: "Description", 
-            cell: (category: Category) => category.description || t('No description')
+            header: t("Description"), 
+            cell: (category: Category) => {
+                const description = category.description?.[locale as keyof typeof category.description] || category.description?.['en'];
+                return description || t('No description');
+            }
         },
         {
-            header: "Created Date",
+            header: t("Status"),
+            cell: (category: Category) => (
+                <StatusBadge status={category.deleted_at ? 'hidden' : (category.is_active ? 'active' : 'inactive')} />
+            )
+        },
+        {
+            header: t("Created Date"),
             accessorKey: "created_at" as keyof Category
         },
         {
-            header: "Actions",
+            header: t("Actions"),
             cell: (category: Category) => {
-                const actions: ActionConfig[] = [
-                    {
-                        type: 'link',
-                        href: `/admin/categories/${category.category_id}/edit`,
-                        variant: 'primary',
-                        icon: 'bx bx-edit',
-                        label: t('Edit')
-                    },
-                    {
-                        type: 'button',
-                        onClick: () => handleDelete(category),
-                        variant: 'danger',
-                        icon: 'bx bx-trash',
-                        label: t('Delete')
-                    }
-                ];
+                const actions: ActionConfig[] = [];
+                
+                if (category.deleted_at) {
+                    // Category is hidden - show Restore and Delete Permanently
+                    actions.push(
+                        {
+                            type: 'button',
+                            onClick: () => handleRestore(category),
+                            variant: 'primary',
+                            icon: 'bx bx-refresh',
+                            label: t('Restore')
+                        },
+                        {
+                            type: 'button',
+                            onClick: () => handleForceDelete(category),
+                            variant: 'danger',
+                            icon: 'bx bx-trash',
+                            label: t('Delete Permanently')
+                        }
+                    );
+                } else {
+                    // Category is active - show Edit and Hide
+                    actions.push(
+                        {
+                            type: 'link',
+                            href: `/admin/categories/${category.category_id}/edit`,
+                            variant: 'primary',
+                            icon: 'bx bx-edit',
+                            label: t('Edit')
+                        },
+                        {
+                            type: 'button',
+                            onClick: () => handleHide(category),
+                            variant: 'danger',
+                            icon: 'bx bx-hide',
+                            label: t('Hide')
+                        }
+                    );
+                }
+                
                 return <ActionButtons actions={actions} />;
             }
         }
@@ -142,20 +244,33 @@ export default function Index() {
 
             {/* Header và Bộ lọc */}
             <FilterPanel
-                title="Category Management"
+                title={t("Category Management")}
                 breadcrumbs={[
-                    { label: "Dashboard", href: "/admin/dashboard" },
-                    { label: "Categories", href: "/admin/categories", active: true }
+                    { label: t("Dashboard"), href: "/admin/dashboard" },
+                    { label: t("Categories"), href: "/admin/categories", active: true }
                 ]}
                 searchConfig={{
                     value: search,
                     onChange: setSearch,
-                    placeholder: "Search by name..."
+                    placeholder: t("Search by name...")
                 }}
+                filterConfigs={[
+                    {
+                        value: status,
+                        onChange: setStatus,
+                        label: t("-- All Categories --"),
+                        options: [
+                            { value: "", label: t("All Categories") },
+                            { value: "active", label: t("Active Categories") },
+                            { value: "inactive", label: t("Inactive Categories") },
+                            { value: "trashed", label: t("Hidden Categories") }
+                        ]
+                    }
+                ]}
                 buttonConfigs={[
                     {
                         href: "/admin/categories/create",
-                        label: "Add Category",
+                        label: t("Add Category"),
                         icon: "bx-plus",
                         color: "success"
                     }
@@ -167,9 +282,9 @@ export default function Index() {
             <DataTable
                 columns={categoryColumns}
                 data={categories.data}
-                headerTitle="Category List"
+                headerTitle={t("Category List")}
                 headerIcon="bx-list-ul"
-                emptyMessage="No categories found"
+                emptyMessage={t("No categories found")}
             />
 
             {/* Phân trang */}
@@ -179,9 +294,9 @@ export default function Index() {
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
                 onClose={handleCloseModal}
-                onConfirm={handleConfirmDelete}
-                title={t("Confirm Category Deletion")}
-                message={`${t("Are you sure you want to delete category")} "${confirmModal.categoryName}"? ${t("This action cannot be undone.")}`}
+                onConfirm={handleConfirmAction}
+                title={confirmModal.title}
+                message={confirmModal.message}
             />
         </AppLayout>
     );

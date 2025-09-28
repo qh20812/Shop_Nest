@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::resource('categories', CategoryController::class)->except(['show', 'create', 'edit']);
+    Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::patch('/categories/{id}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
+    Route::delete('/categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('categories.forceDelete');
     Route::resource('brands', BrandController::class)->except(['show', 'create', 'edit']);
     Route::resource('products', ProductController::class);
     Route::resource('users',UserController::class)->except(['create','store','show']);

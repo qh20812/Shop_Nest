@@ -6,6 +6,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
+use App\Services\ExchangeRateService;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -56,6 +57,10 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => App::getLocale(),
             'translations' => $this->getTranslations(),
+            'currency' => [
+                'code' => App::getLocale() === 'vi' ? 'VND' : 'USD',
+                'rates' => ExchangeRateService::getHardcodedRates(),
+            ],
         ];
     }
 

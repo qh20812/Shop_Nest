@@ -4,7 +4,7 @@ import Header from '@/components/admin/Header';
 import Insights from '@/components/admin/Insights';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
-import { formatNumber } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import '@/../css/app.css';
 import '@/../css/Page.css';
 import {Head} from '@inertiajs/react';
@@ -35,16 +35,22 @@ interface User {
   created_at: string;
 }
 
+interface Currency {
+  code: string;
+  rates: Record<string, number>;
+}
+
 interface DashboardProps {
   stats: Stats;
   recentOrders: Order[];
   newUsers: User[];
+  currency: Currency;
   [key: string]: unknown;
 }
 
 export default function Index() {
-  const { t } = useTranslation();
-  const { stats, recentOrders, newUsers } = usePage<DashboardProps>().props;
+  const { t, locale } = useTranslation();
+  const { stats, recentOrders, newUsers, currency } = usePage<DashboardProps>().props;
 
   const breadcrumbs = [
     { label: t('Analytics'), href: '#' },
@@ -73,9 +79,20 @@ export default function Index() {
     },
     { 
       icon: 'bx-dollar-circle', 
-      value: formatNumber(stats.total_revenue), 
+      value: formatCurrency(stats.total_revenue, { 
+        from: 'USD', 
+        to: currency.code, 
+        rates: currency.rates, 
+        locale, 
+        abbreviate: true 
+      }),
       label: t('Total Revenue'),
-      tooltip: `$${stats.total_revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      tooltip: formatCurrency(stats.total_revenue, { 
+        from: 'USD', 
+        to: currency.code, 
+        rates: currency.rates, 
+        locale 
+      })
     },
   ];
 

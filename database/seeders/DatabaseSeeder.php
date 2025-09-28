@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class, // <-- Mới
             UserSeeder::class,
+            ShipperSeeder::class, // <-- Add ShipperSeeder after UserSeeder
 
             // 2. Product Catalog
             CategorySeeder::class,

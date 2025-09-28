@@ -22,6 +22,10 @@ class RoleSeeder extends Seeder
                 'name' => ['en' => 'Customer', 'vi' => 'Khách hàng'],
                 'description' => ['en' => 'User who can buy products', 'vi' => 'Người dùng có thể mua sản phẩm'],
             ],
+            [
+                'name' => ['en' => 'Shipper', 'vi' => 'Người giao hàng'],
+                'description' => ['en' => 'User who delivers orders', 'vi' => 'Người dùng thực hiện giao đơn hàng'],
+            ],
         ];
 
         foreach ($roles as $roleData) {

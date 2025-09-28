@@ -14,6 +14,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const adminSidebarItems = [
     { icon: 'bx bxs-dashboard', label: t('Dashboard'), href: '/admin/dashboard' },
     { icon: 'bx bx-user', label: t('Users'), href: '/admin/users' },
+    { icon: 'bi bi-truck', label: t('Shippers'), href: '/admin/shippers' },
     { icon: 'bx bx-package', label: t('Products'), href: '/admin/products' },
     { icon: 'bx bx-category', label: t('Categories'), href: '/admin/categories' },
     { icon: 'bx bx-store', label: t('Brands'), href: '/admin/brands' },

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Role;
@@ -77,5 +78,21 @@ class User extends Authenticatable
     public function roles():BelongsToMany
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * Get the shipper profile associated with the user.
+     */
+    public function shipperProfile(): HasOne
+    {
+        return $this->hasOne(ShipperProfile::class);
+    }
+
+    /**
+     * Check if user has the Shipper role.
+     */
+    public function isShipper(): bool
+    {
+        return $this->role()->where('name->en', 'Shipper')->exists();
     }
 }

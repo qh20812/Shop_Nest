@@ -64,7 +64,7 @@ class BrandController extends Controller
             'brand' => $brand
         ]);
     }
-
+    
     public function update(UpdateBrandRequest $request, $id)
     {
         $brand = Brand::findOrFail($id);

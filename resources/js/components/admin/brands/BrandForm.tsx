@@ -4,6 +4,7 @@ import ActionButton from '../../ui/ActionButton';
 import { useTranslation } from '../../../lib/i18n';
 
 interface BrandFormData {
+    _method?: string;
     name: string;
     description: string;
     logo: File | null;

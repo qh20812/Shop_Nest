@@ -15,6 +15,7 @@ interface Brand {
 }
 
 interface BrandFormData {
+    _method: string;
     name: string;
     description: string;
     logo: File | null;
@@ -31,6 +32,7 @@ export default function Edit() {
     const { brand } = usePage<PageProps>().props;
     
     const { data, setData, post, processing, errors } = useForm<BrandFormData>({
+        _method: 'PUT',
         name: brand.name,
         description: brand.description || '',
         logo: null,
@@ -41,7 +43,6 @@ export default function Edit() {
         e.preventDefault();
         post(`/admin/brands/${brand.brand_id}`, {
             forceFormData: true,
-            method: 'put',
         });
     };
 

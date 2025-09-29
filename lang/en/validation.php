@@ -208,6 +208,17 @@ return [
         'parent_id' => 'parent category',
         'image_url' => 'category image',
         'title' => 'title',
+        
+        // Promotion fields
+        'starts_at' => 'start date',
+        'expires_at' => 'expiry date',
+        'usage_limit_per_user' => 'usage limit per user',
+        'minimum_order_value' => 'minimum order value',
+        'max_discount_amount' => 'maximum discount amount',
+        'product_ids' => 'products',
+        'category_ids' => 'categories',
+        'shipper_id' => 'shipper',
+        'reason' => 'reason',
         'content' => 'content',
         'price' => 'price',
         'quantity' => 'quantity',

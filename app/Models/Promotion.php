@@ -41,4 +41,30 @@ class Promotion extends Model
             'order_id'            // Khóa ngoại của Order trong bảng trung gian
         )->withPivot('discount_applied');
     }
+
+    /**
+     * The products that belong to the promotion.
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'promotion_products',
+            'promotion_id',
+            'product_id'
+        );
+    }
+
+    /**
+     * The categories that belong to the promotion.
+     */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Category::class,
+            'promotion_categories',
+            'promotion_id',
+            'category_id'
+        );
+    }
 }

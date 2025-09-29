@@ -208,6 +208,17 @@ return [
         'parent_id' => 'danh mục cha',
         'image_url' => 'hình ảnh danh mục',
         'title' => 'tiêu đề',
+        
+        // Promotion fields
+        'starts_at' => 'ngày bắt đầu',
+        'expires_at' => 'ngày hết hạn',
+        'usage_limit_per_user' => 'giới hạn sử dụng mỗi người',
+        'minimum_order_value' => 'giá trị đơn hàng tối thiểu',
+        'max_discount_amount' => 'số tiền giảm giá tối đa',
+        'product_ids' => 'sản phẩm',
+        'category_ids' => 'danh mục',
+        'shipper_id' => 'người giao hàng',
+        'reason' => 'lý do',
         'content' => 'nội dung',
         'price' => 'giá',
         'quantity' => 'số lượng',

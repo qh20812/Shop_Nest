@@ -139,8 +139,6 @@ export default function Index() {
           <div className="header">
             <i className='bx bx-receipt'></i>
             <h3>{t('Recent Orders')}</h3>
-            <i className='bx bx-filter'></i>
-            <i className='bx bx-search'></i>
           </div>
           <table>
             <thead>
@@ -184,8 +182,6 @@ export default function Index() {
           <div className="header">
             <i className='bx bx-user-plus'></i>
             <h3>{t('New Users')}</h3>
-            <i className='bx bx-filter'></i>
-            <i className='bx bx-search'></i>
           </div>
           <ul className="task-list">
             {newUsers && newUsers.length > 0 ? (

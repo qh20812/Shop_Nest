@@ -31,6 +31,7 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'shipping_address_id',
+        'shipper_id',
         'notes'
     ];
     public function customer(): BelongsTo
@@ -44,6 +45,11 @@ class Order extends Model
     public function shippingAddress(): BelongsTo
     {
         return $this->belongsTo(UserAddress::class, 'shipping_address_id');
+    }
+
+    public function shipper(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipper_id');
     }
 
     /**

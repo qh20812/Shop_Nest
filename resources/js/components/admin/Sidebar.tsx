@@ -23,7 +23,7 @@ export default function Sidebar({ items, isClosed }: SidebarProps) {
   return (
     <div className={`sidebar ${isClosed ? 'close' : ''}`}>
       <Link href="/" className="logo">
-        <i className='bx bx-code-alt'></i>
+        <i className='bx bi-basket2-fill'></i>
         <div className="logo-name">
           <span>Shop</span>Nest
         </div>

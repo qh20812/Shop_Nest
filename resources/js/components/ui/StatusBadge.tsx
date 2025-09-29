@@ -21,6 +21,8 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
                 return 'status pending'; // Using pending style for rejected
             case 'active':
                 return 'status completed';
+            case 'inactive':
+                return 'status pending';
             case 'hidden':
                 return 'status process';
             default:
@@ -36,6 +38,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
             case 'rejected': return t('Rejected');
             case 'suspended': return t('Suspended');
             case 'active': return t('Active');
+            case 'inactive': return t('Inactive');
             case 'hidden': return t('Hidden');
             default: return status;
         }

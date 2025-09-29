@@ -22,7 +22,7 @@ class UpdateBrandRequest extends FormRequest
      */
     public function rules(): array
     {
-        $brandId = $this->route('brand')->brand_id;
+        $brandId = $this->route('brand');
         return [
             'name' => [
                 'required',
@@ -31,6 +31,8 @@ class UpdateBrandRequest extends FormRequest
                 Rule::unique('brands', 'name')->ignore($brandId, 'brand_id'),
             ],
             'description' => 'nullable|string|max:1000',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:1024',
+            'is_active' => 'nullable|boolean',
         ];
     }
 }

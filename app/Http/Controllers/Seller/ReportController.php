@@ -74,7 +74,7 @@ class ReportController extends Controller
 
         return Inertia::render('Seller/Reports/Products', [
             'topProducts' => $topProducts,
-            'lowStockProducts' => $lowStockProducts,
+            'lowStockProducts' => $lowStockProducts,// 10 sản phẩm còn ít hàng
         ]);
     }
 }

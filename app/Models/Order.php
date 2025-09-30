@@ -12,6 +12,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends Model
 {
     use HasFactory, SoftDeletes;
+
+    // Trạng thái đơn hàng 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_CONFIRMED = 'confirmed';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_DELIVERED = 'delivered';
+    public const STATUS_COMPLETED = 'completed';
+
+    // Trạng thái thanh toán
+    public const PAYMENT_STATUS_UNPAID = 'unpaid';
+    public const PAYMENT_STATUS_PAID = 'paid';
+    public const PAYMENT_STATUS_REFUNDED = 'refunded';
+
     protected $primaryKey = 'order_id';
     protected $fillable = [
         'customer_id',
@@ -46,7 +59,7 @@ class Order extends Model
     {
         return $this->belongsToMany(
             Promotion::class,
-            'order_promotion',   
+            'order_promotion',
             'order_id',
             'promotion_id'
         )->withPivot('discount_applied');

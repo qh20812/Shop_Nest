@@ -53,10 +53,10 @@ class ProductSeeder extends Seeder
 
                     // Gán thuộc tính cho biến thể
                     if ($color) {
-                        $variant->attributes()->attach($color->attribute_value_id);
+                        $variant->attributeValues()->attach($color->attribute_value_id);
                     }
                     if ($size) {
-                        $variant->attributes()->attach($size->attribute_value_id);
+                        $variant->attributeValues()->attach($size->attribute_value_id);
                     }
                 }
             }

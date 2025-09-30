@@ -8,78 +8,117 @@ use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+
 
 class ProductController extends Controller
 {
     /**
-     * Hiển thị danh sách sản phẩm
+     * Display a listing of products for admin moderation
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'brand', 'seller'])
+        $query = Product::with(['category', 'brand', 'seller', 'images']);
+
+        // Filter by search (product name)
+        if ($request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by category
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by brand
+        if ($request->brand_id) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        // Filter by status
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Get products with variant count, total stock, and price range
+        $products = $query->withCount('variants')
+            ->withSum('variants', 'stock_quantity')
+            ->with(['variants' => function($query) {
+                $query->select('product_id', 'price')
+                      ->orderBy('price');
+            }])
             ->latest()
-            ->paginate(10);
-            
+            ->paginate(10)
+            ->withQueryString();
+
+        // Get filter data
+        $categories = Category::select('category_id', 'name')->get();
+        $brands = Brand::select('brand_id', 'name')->get();
+
         return Inertia::render('Admin/Products/Index', [
-            'products' => $products
+            'products' => $products,
+            'categories' => $categories,
+            'brands' => $brands,
+            'filters' => $request->only(['search', 'category_id', 'brand_id', 'status']),
         ]);
     }
 
     /**
-     * Hiển thị form tạo sản phẩm mới
+     * Update product status (approve, reject, activate, deactivate)
      */
-    public function create()
+    public function updateStatus(Request $request, Product $product)
     {
-        return Inertia::render('Admin/Products/Create', [
-            'categories' => Category::all(),
-            'brands' => Brand::all(),
+        $request->validate([
+            'status' => 'required|integer|in:1,2,3', // 1=pending, 2=active, 3=inactive
         ]);
+
+        $product->update([
+            'status' => $request->status
+        ]);
+
+        $statusMessages = [
+            1 => 'Product status changed to pending.',
+            2 => 'Product approved and activated successfully.',
+            3 => 'Product deactivated successfully.',
+        ];
+
+        return redirect()->route('admin.products.index')
+            ->with('success', $statusMessages[$request->status]);
     }
 
     /**
-     * Lưu sản phẩm mới vào database
+     * Display the specified product
      */
-    public function store(StoreProductRequest $request)
+    public function show(Product $product)
     {
-        // Gán seller_id là admin đang đăng nhập (hoặc logic khác nếu cần)
-        $productData = array_merge($request->validated(), ['seller_id' => Auth::id()]);
+        // Eager-load all necessary relationships with proper nesting
+        $product->load([
+            'category',
+            'brand', 
+            'images',
+            'variants' => function($query) {
+                $query->with(['attributeValues' => function($subQuery) {
+                    $subQuery->with('attribute');
+                }]);
+            },
+            'reviews.user'
+        ]);
 
-        Product::create($productData);
-
-        return redirect()->route('admin.products.index')->with('success', 'Tạo sản phẩm thành công.');
-    }
-
-    /**
-     * Hiển thị form chỉnh sửa sản phẩm
-     */
-    public function edit(Product $product)
-    {
-        return Inertia::render('Admin/Products/Edit', [
+        return Inertia::render('Admin/Products/Show', [
             'product' => $product,
-            'categories' => Category::all(),
-            'brands' => Brand::all(),
         ]);
     }
 
     /**
-     * Cập nhật thông tin sản phẩm
-     */
-    public function update(UpdateProductRequest $request, Product $product)
-    {
-        $product->update($request->validated());
-
-        return redirect()->route('admin.products.index')->with('success', 'Cập nhật sản phẩm thành công.');
-    }
-
-    /**
-     * Xóa sản phẩm (soft delete)
+     * Soft delete product (admin can remove products)
      */
     public function destroy(Product $product)
     {
         $product->delete();
 
-        return redirect()->route('admin.products.index')->with('success', 'Xóa sản phẩm thành công.');
+        return redirect()->route('admin.products.index')->with('success', 'Product removed successfully.');
     }
 }

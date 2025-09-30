@@ -18,7 +18,8 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::delete('/categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('categories.forceDelete');
     Route::resource('brands', BrandController::class)->except(['show']);
     Route::patch('/brands/{brand}/restore', [BrandController::class, 'restore'])->name('brands.restore');
-    Route::resource('products', ProductController::class)->except(['show']);
+    Route::resource('products', ProductController::class)->except(['create', 'store', 'edit', 'update']);
+    Route::patch('/products/{product}/status', [ProductController::class, 'updateStatus'])->name('products.updateStatus');
     Route::resource('users',UserController::class)->except(['create','store','show']);
     Route::resource('returns',ReturnController::class)->only(['index','show','update']);
     

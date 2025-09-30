@@ -49,7 +49,14 @@ export default function DataTable<T>({
                       {column.cell 
                         ? column.cell(row) 
                         : column.accessorKey 
-                        ? String(row[column.accessorKey])
+                        ? (() => {
+                            const value = row[column.accessorKey];
+                            // Handle objects by checking if it's a translatable object
+                            if (typeof value === 'object' && value !== null) {
+                              return '[Object]'; // Safe fallback for objects
+                            }
+                            return String(value || '');
+                          })()
                         : ''
                       }
                     </td>

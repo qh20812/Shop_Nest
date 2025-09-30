@@ -29,12 +29,17 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-    public function attributes(): BelongsToMany
+    /**
+     * Get the attribute values associated with this product variant.
+     */
+    public function attributeValues(): BelongsToMany
     {
         return $this->belongsToMany(
             AttributeValue::class,
             'attribute_value_product_variant',
             'product_variant_id',
+            'attribute_value_id',
+            'variant_id',
             'attribute_value_id'
         );
     }

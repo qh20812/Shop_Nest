@@ -2,68 +2,38 @@ import React, { useState } from 'react';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
 import TogglePanel from './TogglePanel';
-import LanguageSwitcher from '../ui/LanguageSwitcher';
+import '../../../css/AuthPage.css';
 
 interface AuthContainerProps {
-  defaultActive?: boolean;
-  status?: string;
-  canResetPassword?: boolean;
+  defaultMode?: 'signin' | 'signup';
 }
 
-export default function AuthContainer({ 
-  defaultActive = false, 
-  status, 
-  canResetPassword = false 
-}: AuthContainerProps) {
-  const [isActive, setIsActive] = useState(defaultActive);
+export default function AuthContainer({ defaultMode = 'signin' }: AuthContainerProps) {
+  const [isActive, setIsActive] = useState(defaultMode === 'signup');
 
-  const handleSignInClick = () => {
-    setIsActive(false);
-  };
-
-  const handleSignUpClick = () => {
-    setIsActive(true);
+  const handleToggle = (mode: 'signin' | 'signup') => {
+    setIsActive(mode === 'signup');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-gray-200 to-indigo-300">
-      {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-50">
-        <LanguageSwitcher />
-      </div>
-      
-      <div 
-        className={`relative bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-4xl min-h-[480px] ${
-          isActive ? 'active' : ''
-        }`}
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-      >
-        {/* Sign Up Form */}
-        <div className={`absolute top-0 left-0 w-1/2 h-full transition-all duration-600 ease-in-out ${
-          isActive 
-            ? 'translate-x-full opacity-100 z-10' 
-            : 'opacity-0 z-0'
-        }`}>
-          <SignUpForm />
-        </div>
-
-        {/* Sign In Form */}
-        <div className={`absolute top-0 left-0 w-1/2 h-full transition-all duration-600 ease-in-out z-20 ${
-          isActive ? 'translate-x-full' : ''
-        }`}>
-          <SignInForm status={status} canResetPassword={canResetPassword} />
-        </div>
-
-        {/* Toggle Panel */}
-        <div className={`absolute top-0 left-1/2 w-1/2 h-full overflow-hidden transition-all duration-600 ease-in-out z-[1000] ${
-          isActive 
-            ? '-translate-x-full rounded-r-[150px] rounded-bl-[100px]' 
-            : 'rounded-l-[150px] rounded-br-[100px]'
-        }`}>
+    <div className={`container ${isActive ? 'active' : ''}`} id="container">
+      <SignUpForm />
+      <SignInForm />
+      <div className="toggle-container">
+        <div className="toggle">
           <TogglePanel 
-            isActive={isActive}
-            onSignInClick={handleSignInClick}
-            onSignUpClick={handleSignUpClick}
+            type="left" 
+            title="Welcome Back!"
+            description="Enter your personal details to use all of site features"
+            buttonText="Sign In"
+            onClick={() => handleToggle('signin')}
+          />
+          <TogglePanel 
+            type="right" 
+            title="Hello, Friend!"
+            description="Register with your personal details to use all of site features"
+            buttonText="Sign Up"
+            onClick={() => handleToggle('signup')}
           />
         </div>
       </div>

@@ -3,11 +3,8 @@ import AuthContainer from '../../components/auth/AuthContainer';
 
 export default function Register() {
   return (
-    <AuthContainer 
-      defaultActive={true}
-    />
+    <div>
+      <AuthContainer defaultMode="signup" />
+    </div>
   );
 }
-
-// Không sử dụng layout
-Register.layout = (page: React.ReactElement) => page;

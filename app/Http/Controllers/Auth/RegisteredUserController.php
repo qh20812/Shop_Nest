@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Mail\WelcomeEmail;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,29 +31,53 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        $request->validate([
-            'username' => 'required|string|max:255|unique:users,username',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone_number' => 'nullable|string|max:20|unique:users,phone_number',
-            'email' => 'required|string|lowercase|email|max:255|unique:users,email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        // Generate unique username
+        $username = $this->generateUniqueUsername();
 
+        // Create user with validated data
         $user = User::create([
-            'username' => $request->username,
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
+            'username' => $username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'is_active' => true,
+            // Note: first_name, last_name, phone_number will be null initially
+            // These can be updated later in ProfileController
         ]);
 
+        // Fire the registered event
         event(new Registered($user));
 
+        // Send welcome email
+        // try {
+        //     Mail::to($user->email)->send(new WelcomeEmail($user));
+        // } catch (\Exception $e) {
+        //     // Log email error but don't fail registration
+        //     Log::warning('Failed to send welcome email', [
+        //         'user_id' => $user->id,
+        //         'email' => $user->email,
+        //         'error' => $e->getMessage()
+        //     ]);
+        // }
+
+        // Log in the user
         Auth::login($user);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect to profile edit for completing profile information
+        return redirect()->route('verification.notice');
+    }
+
+    /**
+     * Generate a unique username
+     */
+    private function generateUniqueUsername(): string
+    {
+        do {
+            $username = 'user_' . Str::random(8);
+            $exists = User::where('username', $username)->exists();
+        } while ($exists);
+
+        return $username;
     }
 }

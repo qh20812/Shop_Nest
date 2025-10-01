@@ -7,6 +7,7 @@ interface AuthInputProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
+  required?: boolean;
 }
 
 export default function AuthInput({ 

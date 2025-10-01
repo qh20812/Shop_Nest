@@ -6,7 +6,7 @@ interface AuthSocialIconsProps {
 
 export default function AuthSocialIcons({ baseHref = '/auth/google' }: AuthSocialIconsProps) {
   const socialLinks = [
-    { href: baseHref, icon: 'fa-brands fa-google-plus-g', label: 'Google' },
+    { href: baseHref, icon: 'bi bi-google', label: 'Google' },
   ];
 
   return (

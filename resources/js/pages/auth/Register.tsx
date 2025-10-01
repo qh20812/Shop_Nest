@@ -1,9 +1,10 @@
 import React from 'react';
 import AuthContainer from '../../components/auth/AuthContainer';
+import '../../../css/AuthPage.css';
 
 export default function Register() {
   return (
-    <div>
+    <div className="auth-page">
       <AuthContainer defaultMode="signup" />
     </div>
   );

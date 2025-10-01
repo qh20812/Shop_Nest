@@ -5,7 +5,7 @@ import Insights from '@/components/admin/Insights';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/utils';
-import '@/../css/app.css';
+// import '@/../css/app.css';
 import '@/../css/Page.css';
 import {Head} from '@inertiajs/react';
 

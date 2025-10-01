@@ -95,4 +95,26 @@ class User extends Authenticatable
     {
         return $this->role()->where('name->en', 'Shipper')->exists();
     }
+
+    /**
+     * Generate a unique username.
+     * Note: Username can be updated later in ProfileController with uniqueness validation.
+     */
+    public static function generateUniqueUsername(): string
+    {
+        do {
+            $username = 'user_' . \Illuminate\Support\Str::random(8);
+            $exists = static::where('username', $username)->exists();
+        } while ($exists);
+
+        return $username;
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
+    }
 }

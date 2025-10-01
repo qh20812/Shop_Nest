@@ -10,6 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Role;
+use App\Models\Order;
+use App\Models\Wishlist;
+use App\Models\Review;
+use App\Models\UserAddress;
+use App\Models\Product;
+use App\Models\ShipperProfile;
 
 class User extends Authenticatable
 {
@@ -57,7 +63,7 @@ class User extends Authenticatable
     }
     public function addresses(): HasMany
     {
-        return $this->hasMany(UserAddress::class);
+        return $this->hasMany(UserAddress::class, 'user_id');
     }
     public function role(): BelongsToMany
     {
@@ -94,5 +100,17 @@ class User extends Authenticatable
     public function isShipper(): bool
     {
         return $this->role()->where('name->en', 'Shipper')->exists();
+    }
+
+    // User có nhiều wishlist
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'user_id');
+    }
+
+    // User có nhiều review
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class, 'user_id');
     }
 }

@@ -19,6 +19,11 @@ class Order extends Model
     const STATUS_DELIVERED = 4;
     const STATUS_CANCELLED = 5;
 
+    // Trạng thái thanh toán
+    public const PAYMENT_STATUS_UNPAID = 'unpaid';
+    public const PAYMENT_STATUS_PAID = 'paid';
+    public const PAYMENT_STATUS_REFUNDED = 'refunded';
+
     protected $primaryKey = 'order_id';
     protected $fillable = [
         'customer_id',

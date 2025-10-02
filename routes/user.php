@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\OrderController;
+use App\Http\Controllers\User\ReviewController;
 
 Route::middleware(['auth', 'verified'])
     ->prefix('dashboard/orders')
@@ -27,4 +28,20 @@ Route::middleware(['auth', 'verified'])
 
         // Theo dõi đơn hàng
         Route::get('{order}/track', [OrderController::class, 'trackDelivery'])->name('track');
+    });
+Route::middleware(['auth', 'verified'])
+    ->prefix('dashboard/reviews')
+    ->as('user.reviews.')
+    ->group(function () {
+        // Danh sách review
+        Route::get('/', [ReviewController::class, 'index'])->name('index');
+
+        // Form viết review (theo order + product)
+        Route::get('create/{order}/{product}', [ReviewController::class, 'create'])->name('create');
+
+        // Lưu review
+        Route::post('{order}/{product}', [ReviewController::class, 'store'])->name('store');
+
+        // Xem chi tiết review
+        Route::get('{review}', [ReviewController::class, 'show'])->name('show');
     });

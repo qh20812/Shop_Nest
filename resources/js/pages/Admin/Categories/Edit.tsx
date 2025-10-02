@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import Header from '../../../components/admin/Header';
+import Header from '../../../components/ui/Header';
 import CategoryForm from '../../../components/admin/categories/CategoryForm';
 import Toast from '../../../components/admin/users/Toast';
 import { useTranslation } from '../../../lib/i18n';

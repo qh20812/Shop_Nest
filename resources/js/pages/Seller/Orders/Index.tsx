@@ -1,6 +1,6 @@
-// @ts-nocheck
-import DataTable from '@/components/admin/DataTable';
-import FilterPanel from '@/components/admin/FilterPanel';
+
+import DataTable from '@/components/ui/DataTable';
+import FilterPanel from '@/components/ui/FilterPanel';
 import Pagination from '@/components/admin/users/Pagination';
 import Toast from '@/components/admin/users/Toast';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -29,6 +29,7 @@ interface PageProps {
     };
     filters: { search?: string; status?: string };
     flash?: { success?: string; error?: string };
+    [key: string]: unknown;
 }
 
 // Helper hiển thị trạng thái

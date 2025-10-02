@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import SettingsLayout from '@/layouts/settings/SettingLayout';
 import SettingsCard from '@/components/settings/SettingsCard';
 import PrimaryInput from '@/components/ui/PrimaryInput';
 import ActionButton from '@/components/ui/ActionButton';
+import AvatarUpload from '@/components/ui/AvatarUpload';
 
 interface User {
   id: number;
@@ -13,6 +14,8 @@ interface User {
   last_name: string;
   email: string;
   phone_number: string;
+  avatar?: string;
+  avatar_url?: string;
 }
 
 interface PageProps {
@@ -25,18 +28,36 @@ interface PageProps {
 export default function Profile() {
   const { user } = usePage<PageProps>().props;
   const { t } = useTranslation();
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
+  const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
     username: user.username,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
     phone_number: user.phone_number,
+    avatar: null as File | null,
+    remove_avatar: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    patch('/settings/profile');
+    
+    // Update data with avatar before submit
+    if (avatarFile) {
+      setData('avatar', avatarFile);
+    }
+
+    post('/settings/profile', {
+      method: 'patch',
+      forceFormData: true,
+    });
+  };
+
+  const handleAvatarChange = (file: File | null) => {
+    setAvatarFile(file);
+    setData('avatar', file);
+    setData('remove_avatar', file === null);
   };
 
   return (
@@ -91,6 +112,15 @@ export default function Profile() {
         >
           <form id="profile-form" onSubmit={handleSubmit}>
             <div style={{ padding: '24px 0' }}>
+              {/* Avatar Section */}
+              <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
+                <AvatarUpload
+                  user={user}
+                  onAvatarChange={handleAvatarChange}
+                  disabled={processing}
+                />
+              </div>
+
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 

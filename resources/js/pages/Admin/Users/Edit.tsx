@@ -4,7 +4,7 @@ import { Head, usePage } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
 import UserEditForm from "../../../components/admin/users/UserEditForm";
 import { useTranslation } from '../../../lib/i18n';
-import Header from '../../../components/admin/Header';
+import Header from '../../../components/ui/Header';
 
 interface Role {
   id: number;

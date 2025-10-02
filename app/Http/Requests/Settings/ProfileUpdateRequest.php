@@ -43,6 +43,13 @@ class ProfileUpdateRequest extends FormRequest
                 'string',
                 'regex:/^(0[3|5|7|8|9])+([0-9]{8})\b$/',
             ],
+            'avatar' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,gif',
+                'max:2048', // 2MB max
+            ],
+            'remove_avatar' => ['nullable', 'boolean'],
         ];
     }
 }

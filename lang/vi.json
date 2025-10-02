@@ -70,8 +70,7 @@
     "Inactive": "Vô hiệu hóa",
     "Edit": "Sửa",
     "Active": "Hoạt động",
-    "All Roles": "Tất cả vai trò",
-    "All Statuses": "Tất cả trạng thái",
+    "-- All Roles --": " -- Tất cả vai trò --",
     "Search by name or email...": "Tìm kiếm theo tên hoặc email...",
     "User Management": "Quản lý người dùng",
     "Edit User": "Chỉnh sửa người dùng",
@@ -284,5 +283,8 @@
     "Reviews": "Đánh giá",
     "No description available": "Không có mô tả",
     "No reviews yet": "Chưa có đánh giá",
-    "Be the first to review this product!": "Hãy là người đầu tiên đánh giá sản phẩm này!"
+    "Be the first to review this product!": "Hãy là người đầu tiên đánh giá sản phẩm này!",
+    "Profile Picture": "Ảnh đại diện",
+    "or": "hoặc",
+    "max": "tối đa"
 }

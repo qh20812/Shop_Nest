@@ -42,6 +42,8 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'is_active' => true,
+            'provider' => 'manual', // Manual registration
+            'avatar' => null, // Manual users start with null avatar (will show initials)
             // Note: first_name, last_name, phone_number will be null initially
             // These can be updated later in ProfileController
         ]);

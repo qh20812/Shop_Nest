@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import AppLayout from "../../../layouts/app/AppLayout";
-import Header from "@/components/admin/Header";
+import Header from "@/components/ui/Header";
 import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import ActionButton from '@/components/ui/ActionButton';

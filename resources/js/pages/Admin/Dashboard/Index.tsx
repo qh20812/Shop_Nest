@@ -1,7 +1,7 @@
 import React from 'react';
 import AppLayout from '@/layouts/app/AppLayout';
-import Header from '@/components/admin/Header';
-import Insights from '@/components/admin/Insights';
+import Header from '@/components/ui/Header';
+import Insights from '@/components/ui/Insights';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/utils';

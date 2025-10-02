@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { Head, usePage, router } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
-import FilterPanel from "@/components/admin/FilterPanel";
-import DataTable from "@/components/admin/DataTable";
+import FilterPanel from "@/components/ui/FilterPanel";
+import DataTable from "@/components/ui/DataTable";
 import Pagination from "@/components/admin/users/Pagination";
 import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Avatar from '@/components/ui/Avatar';
-import ActionButtons, { ActionConfig } from '@/components/admin/ActionButtons';
+import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 
@@ -241,16 +241,16 @@ export default function Index() {
           {
             value: role,
             onChange: setRole,
-            label: "-- All Roles --",
+            label: t("-- All Roles --"),
             options: roles.map(r => ({ value: r, label: r }))
           },
           {
             value: status,
             onChange: setStatus,
-            label: "-- All Statuses --",
+            label: t("-- All Statuses --"),
             options: [
-              { value: "1", label: "Active" },
-              { value: "0", label: "Inactive" }
+              { value: "1", label: t("Active") },
+              { value: "0", label: t("Inactive") }
             ]
           }
         ]}

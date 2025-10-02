@@ -70,8 +70,7 @@
     "Inactive": "Inactive",
     "Edit": "Edit",
     "Active": "Active",
-    "All Roles": "All Roles",
-    "All Statuses": "All Statuses",
+    "-- All Roles --": " -- All Roles --",
     "Search by name or email...": "Search by name or email...",
     "User Management": "User Management",
     "Edit User": "Edit User",
@@ -284,5 +283,8 @@
     "Reviews": "Reviews",
     "No description available": "No description available",
     "No reviews yet": "No reviews yet",
-    "Be the first to review this product!": "Be the first to review this product!"
+    "Be the first to review this product!": "Be the first to review this product!",
+    "Profile Picture": "Profile Picture",
+    "or": "or",
+    "max": "max"
 }

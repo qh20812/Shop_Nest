@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/admin/Sidebar';
-import Navbar from '@/components/admin/Navbar';
+import Sidebar from '@/components/ui/Sidebar';
+import Navbar from '@/components/ui/Navbar';
 import { useTranslation } from '../../lib/i18n';
 
 interface AppLayoutProps {

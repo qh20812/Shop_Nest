@@ -7,6 +7,10 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/welcome', function () {
+    return Inertia::render('welcome');
+})->name('welcome');
+
 // Language switching route
 Route::post('/language', function () {
     $locale = request('locale');

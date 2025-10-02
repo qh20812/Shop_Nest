@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: shopnest-app
+    container_name: shopnest-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: Shop_Nest_DB
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: Shop_Nest_DB
+      MYSQL_ROOT_PASSWORD: newpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+volumes:  
+  dbdata:

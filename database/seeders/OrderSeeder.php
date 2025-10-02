@@ -13,7 +13,7 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users;
         $variants = ProductVariant::all();
 
         foreach ($customers as $customer) {

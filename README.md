@@ -24,40 +24,29 @@ ShopNest là nền tảng thương mại điện tử hiện đại, hỗ trợ 
 
 ## Hướng dẫn cài đặt & chạy
 
-### Backend (Laravel)
-1. Clone repo về máy:
-   ```sh
+1. **Yêu cầu trước**:
+   - PHP >= 8.0
+   - Composer
+   - MySQL
+   - Node.js & npm/yarn
+   - (Tùy chọn) Docker & Docker Compose
+2. **Clone repository**:
+   ```bash
    git clone <repo-url>
    ```
-2. Cài đặt PHP, Composer và MySQL
-3. Cài đặt các package:
-   ```sh
+3. **Cài đặt**:
+   ```bash
+   cd shop_nest
    composer install
-   ```
-4. Tạo file `.env` và cấu hình chuỗi kết nối database
-5. Chạy migration và seed database:
-   ```sh
    php artisan migrate --seed
    ```
-6. Khởi động server:
-   ```sh
-   php artisan serve
+4. **Cấu hình môi trường**:
+   - Sao chép `.env.example` thành `.env`
+   - Cập nhật thông tin database, mail, v.v trong `.env`
+5. **Chạy dự án**:
+   ```bash
+   composer run dev
    ```
-
-### Frontend (React + TypeScript)
-1. Di chuyển vào thư mục frontend:
-   ```sh
-   cd frontend
-   ```
-2. Cài đặt các package:
-   ```sh
-   npm install
-   ```
-3. Khởi động ứng dụng:
-   ```sh
-   npm run dev
-   ```
-4. Truy cập giao diện tại: `http://localhost:3000`
 
 ## Hướng dẫn sử dụng
 - Đăng ký tài khoản, đăng nhập và sử dụng các API qua Swagger UI hoặc giao diện React
@@ -71,7 +60,10 @@ ShopNest là nền tảng thương mại điện tử hiện đại, hỗ trợ 
 - Đã hoàn thiện database, seed data, sẵn sàng phát triển API và frontend
 
 ## Tác giả & Liên hệ
-- **Tác giả**: Huỳnh Ngọc Quí
-- **GitHub**: [https://github.com/1h20812](https://github.com/1h20812)
+- **Tác giả**: Team ShopNest bao gồm 3 thành viên
+  - Huỳnh Ngọc Quí - Leader - Fullstack Developer
+  - Vương Khánh Nhân - Fullstack Developer
+  - Trần Diệu Vỹ - Fullstack Developer
+- **GitHub**: [https://github.com/qh20812](https://github.com/qh20812)
 - **Số điện thoại**: 0393769711
 - **Email**: [qh20812@gmail.com](mailto:qh20812@gmail.com)

@@ -72,18 +72,25 @@ class OrderController extends Controller
         ];
 
         $paymentStatusOptions = [
-            'pending' => 'Pending',
-            'paid' => 'Paid',
-            'failed' => 'Failed',
-            'refunded' => 'Refunded',
-            'partially_refunded' => 'Partially Refunded'
+            Order::PAYMENT_STATUS_UNPAID => 'Unpaid',
+            Order::PAYMENT_STATUS_PAID => 'Paid',
+            Order::PAYMENT_STATUS_FAILED => 'Failed',
+            Order::PAYMENT_STATUS_REFUNDED => 'Refunded'
         ];
 
         return Inertia::render('Admin/Orders/Index', [
             'orders' => $orders,
             'filters' => $request->only(['status', 'payment_status', 'from_date', 'to_date', 'search']),
             'statusOptions' => $statusOptions,
-            'paymentStatusOptions' => $paymentStatusOptions
+            'paymentStatusOptions' => $paymentStatusOptions,
+            'currency' => 'VND',
+            'exchangeRates' => [
+                'VND' => 25000,
+                'USD' => 1,
+                'EUR' => 0.85,
+                'GBP' => 0.73,
+                'JPY' => 110
+            ]
         ]);
     }
 
@@ -146,7 +153,7 @@ class OrderController extends Controller
                 // Update order with shipper assignment
                 $order->update([
                     'shipper_id' => $request->shipper_id,
-                    'status' => 'assigned_to_shipper'
+                    'status' => Order::STATUS_SHIPPED // Set to shipped when assigned to shipper
                 ]);
 
                 // Create shipment journey record if the table exists
@@ -210,9 +217,10 @@ class OrderController extends Controller
                 $paidAmount = $this->calculatePaidAmount($order);
                 
                 if ($newRefundedAmount >= $paidAmount) {
-                    $order->update(['payment_status' => 'refunded']);
+                    $order->update(['payment_status' => Order::PAYMENT_STATUS_REFUNDED]);
                 } else {
-                    $order->update(['payment_status' => 'partially_refunded']);
+                    // For partially refunded, we might need to add a new constant or use existing one
+                    $order->update(['payment_status' => Order::PAYMENT_STATUS_REFUNDED]);
                 }
             });
 

@@ -1,7 +1,7 @@
 
 import DataTable from '@/components/ui/DataTable';
 import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/admin/users/Pagination';
+import Pagination from '@/components/ui/Pagination';
 import Toast from '@/components/admin/users/Toast';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';

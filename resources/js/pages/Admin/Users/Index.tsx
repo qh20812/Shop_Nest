@@ -4,7 +4,7 @@ import { Head, usePage, router } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
 import FilterPanel from "@/components/ui/FilterPanel";
 import DataTable from "@/components/ui/DataTable";
-import Pagination from "@/components/admin/users/Pagination";
+import Pagination from "@/components/ui/Pagination";
 import Toast from "@/components/admin/users/Toast";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Avatar from '@/components/ui/Avatar';
@@ -78,6 +78,24 @@ export default function Index() {
       setToast({ type: "error", message: flash.error });
     }
   }, [flash]);
+
+  // Auto-apply search filter on typing (debounced)
+  useEffect(() => {
+    const delayTimer = setTimeout(() => {
+      if (search !== filters.search) {
+        router.get("/admin/users", {
+          search: search || undefined,
+          role: role || undefined,
+          status: status || undefined
+        }, {
+          preserveState: true,
+          preserveScroll: true,
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayTimer);
+  }, [search, filters.search, role, status]);
 
   const applyFilters = () => {
     router.get("/admin/users", { search, role, status }, { preserveState: true });

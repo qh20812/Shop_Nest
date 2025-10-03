@@ -68,21 +68,21 @@ export default function Index() {
     }, [flash]);
 
     // Auto-apply search filter on typing (debounced)
-    useEffect(() => {
-        const delayTimer = setTimeout(() => {
-            if (search !== filters.search) {
-                router.get('/admin/categories', {
-                    search: search || undefined,
-                    status: status || undefined
-                }, {
-                    preserveState: true,
-                    preserveScroll: true,
-                });
-            }
-        }, 500);
+    // useEffect(() => {
+    //     const delayTimer = setTimeout(() => {
+    //         if (search !== filters.search) {
+    //             router.get('/admin/categories', {
+    //                 search: search || undefined,
+    //                 status: status || undefined
+    //             }, {
+    //                 preserveState: true,
+    //                 preserveScroll: true,
+    //             });
+    //         }
+    //     }, 500);
 
-        return () => clearTimeout(delayTimer);
-    }, [search, filters.search, status]);
+    //     return () => clearTimeout(delayTimer);
+    // }, [search, filters.search, status]);
 
     const applyFilters = () => {
         router.get('/admin/categories', { search, status }, { preserveState: true });

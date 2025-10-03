@@ -105,23 +105,23 @@ export default function Index() {
     }, [flash]);
 
     // Auto-apply search filter on typing (debounced)
-    useEffect(() => {
-        const delayTimer = setTimeout(() => {
-            if (search !== filters.search || categoryId !== filters.category_id || brandId !== filters.brand_id || status !== filters.status) {
-                router.get('/admin/products', {
-                    search: search || undefined,
-                    category_id: categoryId || undefined,
-                    brand_id: brandId || undefined,
-                    status: status || undefined
-                }, {
-                    preserveState: true,
-                    preserveScroll: true,
-                });
-            }
-        }, 500);
+    // useEffect(() => {
+    //     const delayTimer = setTimeout(() => {
+    //         if (search !== filters.search || categoryId !== filters.category_id || brandId !== filters.brand_id || status !== filters.status) {
+    //             router.get('/admin/products', {
+    //                 search: search || undefined,
+    //                 category_id: categoryId || undefined,
+    //                 brand_id: brandId || undefined,
+    //                 status: status || undefined
+    //             }, {
+    //                 preserveState: true,
+    //                 preserveScroll: true,
+    //             });
+    //         }
+    //     }, 500);
 
-        return () => clearTimeout(delayTimer);
-    }, [search, categoryId, brandId, status, filters.search, filters.category_id, filters.brand_id, filters.status]);
+    //     return () => clearTimeout(delayTimer);
+    // }, [search, categoryId, brandId, status, filters.search, filters.category_id, filters.brand_id, filters.status]);
 
     const applyFilters = () => {
         router.get('/admin/products', { search, category_id: categoryId, brand_id: brandId, status }, { preserveState: true });

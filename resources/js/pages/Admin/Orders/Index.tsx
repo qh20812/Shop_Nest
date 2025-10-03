@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import FilterPanel from '@/components/ui/FilterPanel';
@@ -93,24 +93,21 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
   };
 
   // Auto-apply search filter on typing (debounced)
-  useEffect(() => {
-    const delayTimer = setTimeout(() => {
-      if (search !== filters.search) {
-        router.get('/admin/orders', {
-          search: search || undefined,
-          status: status || undefined,
-          payment_status: paymentStatus || undefined,
-          from_date: fromDate || undefined,
-          to_date: toDate || undefined,
-        }, {
-          preserveState: true,
-          preserveScroll: true,
-        });
-      }
-    }, 500);
+  // useEffect(() => {
+  //   const delayTimer = setTimeout(() => {
+  //     if (search !== filters.search) {
+  //       router.get('/admin/orders', {
+          
+  //         search: search || undefined,
+  //       }, {
+  //         preserveState: true,
+  //         preserveScroll: true,
+  //       });
+  //     }
+  //   }, 500);
 
-    return () => clearTimeout(delayTimer);
-  }, [search, filters.search, status, paymentStatus, fromDate, toDate]);
+  //   return () => clearTimeout(delayTimer);
+  // }, [search, filters.search]);
 
   // Format currency using utils function with currency support
   const formatCurrency = (amount: string | number) => {

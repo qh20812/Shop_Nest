@@ -118,8 +118,8 @@ class User extends Authenticatable
         return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
     }
 
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(Review::class, 'user_id', 'id');
-    }
+    // public function reviews(): HasMany
+    // {
+    //     return $this->hasMany(Review::class, 'user_id', 'id');
+    // }
 }

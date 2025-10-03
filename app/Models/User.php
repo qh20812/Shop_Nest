@@ -118,4 +118,35 @@ class User extends Authenticatable
         return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
     }
 
+    /**
+     * Get the user's avatar URL or generate a placeholder.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->avatar) {
+            // If it's a Google avatar URL, return as is
+            if (str_starts_with($this->avatar, 'http')) {
+                return $this->avatar;
+            }
+            
+            // If it's a local file path, return storage URL
+            return asset('storage/' . $this->avatar);
+        }
+
+        // Generate avatar from first letter of name or username
+        $name = $this->first_name ?: $this->username;
+        $initial = strtoupper(substr($name, 0, 1));
+        
+        // Generate placeholder avatar URL using UI Avatars service
+        return "https://ui-avatars.com/api/?name=" . urlencode($initial) . 
+               "&color=fff&background=1976D2&size=100&rounded=true";
+    }
+
+    /**
+     * Check if user is registered via Google.
+     */
+    public function isGoogleUser(): bool
+    {
+        return $this->provider === 'google';
+    }
 }

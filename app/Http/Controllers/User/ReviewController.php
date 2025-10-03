@@ -57,7 +57,7 @@ class ReviewController extends Controller
     /**
      * Lưu review mới
      */
-    public function store(Request $request, $productId)
+    public function store(Request $request, $orderId, $productId)
     {
         $user = Auth::user();
 

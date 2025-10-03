@@ -25,17 +25,17 @@ class UserControllerTest extends TestCase
 
         // Tạo user với vai trò Admin
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->en', 'Admin')->first());
 
         // Tạo user với vai trò Customer
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
 
     /**
      * Test khách (chưa đăng nhập) không thể truy cập trang quản lý user.
      */
-    public function test_guest_cannot_access_user_management(): void
+    public function test_khach_chua_dang_nhap_khong_the_truy_cap_quan_ly_nguoi_dung(): void
     {
         $response = $this->get(route('admin.users.index'));
         $response->assertRedirect(route('login'));
@@ -44,7 +44,7 @@ class UserControllerTest extends TestCase
     /**
      * Test người dùng không phải Admin không thể truy cập.
      */
-    public function test_non_admin_cannot_access_user_management(): void
+    public function test_nguoi_dung_khong_phai_admin_khong_the_truy_cap_quan_ly_nguoi_dung(): void
     {
         $response = $this->actingAs($this->customer)->get(route('admin.users.index'));
         
@@ -55,7 +55,7 @@ class UserControllerTest extends TestCase
     /**
      * Test Admin có thể xem danh sách user thành công.
      */
-    public function test_admin_can_view_users_list(): void
+    public function test_admin_co_the_xem_danh_sach_nguoi_dung_thanh_cong(): void
     {
         $response = $this->actingAs($this->admin)->get(route('admin.users.index'));
 
@@ -66,7 +66,7 @@ class UserControllerTest extends TestCase
     /**
      * Test chức năng tìm kiếm user theo tên hoặc email.
      */
-    public function test_admin_can_search_users(): void
+    public function test_admin_co_the_tim_kiem_nguoi_dung_theo_ten_hoac_email(): void
     {
         // Tạo user với thông tin cụ thể để test tìm kiếm
         $searchUser = User::factory()->create([
@@ -92,7 +92,7 @@ class UserControllerTest extends TestCase
     /**
      * Test chức năng lọc user theo role.
      */
-    public function test_admin_can_filter_users_by_role(): void
+    public function test_admin_co_the_loc_nguoi_dung_theo_vai_tro(): void
     {
         $response = $this->actingAs($this->admin)
             ->get(route('admin.users.index', ['role' => 'Admin']));
@@ -103,7 +103,7 @@ class UserControllerTest extends TestCase
     /**
      * Test Admin có thể truy cập trang chỉnh sửa user.
      */
-    public function test_admin_can_view_edit_user_page(): void
+    public function test_admin_co_the_truy_cap_trang_chinh_sua_nguoi_dung(): void
     {
         $response = $this->actingAs($this->admin)
             ->get(route('admin.users.edit', $this->customer));
@@ -114,17 +114,17 @@ class UserControllerTest extends TestCase
     /**
      * Test Admin có thể cập nhật thông tin user thành công.
      */
-    public function test_admin_can_update_user_successfully(): void
+    public function test_admin_co_the_cap_nhat_thong_tin_nguoi_dung_thanh_cong(): void
     {
-        $customerRole = Role::where('name', 'Customer')->first();
-        $adminRole = Role::where('name', 'Admin')->first();
+        $customerRole = Role::where('name->en', 'Customer')->first();
+        $adminRole = Role::where('name->en', 'Admin')->first();
 
         $updateData = [
             'first_name' => 'Updated First',
             'last_name' => 'Updated Last',
             'email' => 'updated@example.com',
             'is_active' => true,
-            'roles' => [$adminRole->id], // Chuyển từ Customer thành Admin
+            'role_id' => $adminRole->id, // Sử dụng role_id thay vì roles array
         ];
 
         $response = $this->actingAs($this->admin)
@@ -147,7 +147,7 @@ class UserControllerTest extends TestCase
     /**
      * Test việc cập nhật sẽ thất bại nếu email trùng lặp.
      */
-    public function test_user_update_fails_with_duplicate_email(): void
+    public function test_cap_nhat_nguoi_dung_that_bai_khi_email_trung_lap(): void
     {
         $anotherUser = User::factory()->create(['email' => 'existing@example.com']);
 
@@ -156,7 +156,7 @@ class UserControllerTest extends TestCase
             'last_name' => 'Updated Last',
             'email' => 'existing@example.com', // Email đã tồn tại
             'is_active' => true,
-            'roles' => [Role::where('name', 'Customer')->first()->id],
+            'role_id' => Role::where('name->en', 'Customer')->first()->id,
         ];
 
         $response = $this->actingAs($this->admin)
@@ -168,26 +168,26 @@ class UserControllerTest extends TestCase
     /**
      * Test việc cập nhật sẽ thất bại nếu dữ liệu không hợp lệ.
      */
-    public function test_user_update_fails_with_invalid_data(): void
+    public function test_cap_nhat_nguoi_dung_that_bai_khi_du_lieu_khong_hop_le(): void
     {
         $updateData = [
             'first_name' => '', // Required field trống
             'last_name' => 'Updated Last',
             'email' => 'invalid-email', // Email không hợp lệ
             'is_active' => 'not-boolean', // Không phải boolean
-            'roles' => [999], // Role ID không tồn tại
+            'role_id' => 999, // Role ID không tồn tại
         ];
 
         $response = $this->actingAs($this->admin)
             ->put(route('admin.users.update', $this->customer), $updateData);
 
-        $response->assertSessionHasErrors(['first_name', 'email', 'is_active', 'roles.0']);
+        $response->assertSessionHasErrors(['first_name', 'email', 'is_active', 'role_id']);
     }
 
     /**
      * Test Admin có thể vô hiệu hóa user khác.
      */
-    public function test_admin_can_deactivate_other_user(): void
+    public function test_admin_co_the_vo_hieu_hoa_nguoi_dung_khac(): void
     {
         $response = $this->actingAs($this->admin)
             ->delete(route('admin.users.destroy', $this->customer));
@@ -203,7 +203,7 @@ class UserControllerTest extends TestCase
     /**
      * Test Admin không thể tự vô hiệu hóa tài khoản của chính mình.
      */
-    public function test_admin_cannot_deactivate_themselves(): void
+    public function test_admin_khong_the_tu_vo_hieu_hoa_tai_khoan_cua_chinh_minh(): void
     {
         $response = $this->actingAs($this->admin)
             ->delete(route('admin.users.destroy', $this->admin));
@@ -219,7 +219,7 @@ class UserControllerTest extends TestCase
     /**
      * Test lọc user theo trạng thái active/inactive.
      */
-    public function test_admin_can_filter_users_by_status(): void
+    public function test_admin_co_the_loc_nguoi_dung_theo_trang_thai(): void
     {
         // Tạo user inactive
         $inactiveUser = User::factory()->create(['is_active' => false]);

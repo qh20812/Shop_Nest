@@ -1,13 +1,15 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Customer;
 
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\Role;
 use App\Models\ProductVariant;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ReviewControllerTest extends TestCase
@@ -21,7 +23,13 @@ class ReviewControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Seed roles for proper functionality
+        $this->seed(RoleSeeder::class);
+        
+        // Create customer user
         $this->user = User::factory()->create();
+        $this->user->roles()->attach(Role::where('name->en', 'Customer')->first());
 
         $this->product = Product::factory()->create();
         $this->variant = ProductVariant::factory()->create([
@@ -29,8 +37,7 @@ class ReviewControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function it_returns_reviews_for_logged_in_user()
+    public function test_tra_ve_danh_gia_cho_nguoi_dung_da_dang_nhap()
     {
         Review::factory()->create([
             'user_id' => $this->user->id,
@@ -44,8 +51,7 @@ class ReviewControllerTest extends TestCase
                  ->assertJsonStructure(['data']);
     }
 
-    /** @test */
-    public function it_returns_empty_list_if_no_reviews()
+    public function test_tra_ve_danh_sach_rong_neu_khong_co_danh_gia()
     {
         $response = $this->actingAs($this->user)
             ->getJson('/dashboard/reviews');
@@ -54,15 +60,13 @@ class ReviewControllerTest extends TestCase
                  ->assertJson(['data' => []]);
     }
 
-    /** @test */
-    public function it_requires_authentication_for_index()
+    public function test_yeu_cau_xac_thuc_cho_danh_sach_danh_gia()
     {
         $response = $this->getJson('/dashboard/reviews');
         $response->assertStatus(401);
     }
 
-    /** @test */
-    public function it_can_create_review_form_if_order_and_product_valid()
+    public function test_co_the_tao_form_danh_gia_neu_don_hang_va_san_pham_hop_le()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -70,8 +74,8 @@ class ReviewControllerTest extends TestCase
             'order_id' => $order->order_id,
             'variant_id' => $this->variant->variant_id,
             'quantity' => 1,
-            'price' => 100000,
-            'total' => 100000,
+            'unit_price' => 100000,
+            'total_price' => 100000,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -81,8 +85,7 @@ class ReviewControllerTest extends TestCase
                  ->assertJsonStructure(['order', 'product']);
     }
 
-    /** @test */
-    public function it_fails_if_order_not_found()
+    public function test_that_bai_neu_khong_tim_thay_don_hang()
     {
         $response = $this->actingAs($this->user)
             ->getJson("/dashboard/reviews/create/999/{$this->product->product_id}");
@@ -90,8 +93,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
-    public function it_fails_if_order_not_belong_to_user()
+    public function test_that_bai_neu_don_hang_khong_thuoc_ve_nguoi_dung()
     {
         $otherUser = User::factory()->create();
         $order = Order::factory()->create(['customer_id' => $otherUser->id]);
@@ -102,8 +104,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
-    public function it_fails_if_product_not_found()
+    public function test_that_bai_neu_khong_tim_thay_san_pham()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -113,8 +114,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
-    public function it_fails_if_product_not_in_order()
+    public function test_that_bai_neu_san_pham_khong_co_trong_don_hang()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -124,8 +124,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
-    public function it_can_store_review_successfully()
+    public function test_co_the_luu_danh_gia_thanh_cong()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -133,8 +132,8 @@ class ReviewControllerTest extends TestCase
             'order_id' => $order->order_id,
             'variant_id' => $this->variant->variant_id,
             'quantity' => 1,
-            'price' => 100000,
-            'total' => 100000,
+            'unit_price' => 100000,
+            'total_price' => 100000,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -147,8 +146,7 @@ class ReviewControllerTest extends TestCase
                  ->assertJsonFragment(['is_approved' => false]);
     }
 
-    /** @test */
-    public function it_fails_if_already_reviewed_product()
+    public function test_that_bai_neu_da_danh_gia_san_pham()
     {
         Review::factory()->create([
             'user_id' => $this->user->id,
@@ -166,8 +164,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(400);
     }
 
-    /** @test */
-    public function it_requires_rating_when_storing()
+    public function test_yeu_cau_diem_danh_gia_khi_luu()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -177,8 +174,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function it_validates_rating_minimum_and_maximum()
+    public function test_kiem_tra_diem_danh_gia_toi_thieu_va_toi_da()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -191,8 +187,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function it_validates_comment_length()
+    public function test_kiem_tra_do_dai_binh_luan()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
         $longComment = str_repeat('a', 2001);
@@ -206,8 +201,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
-    public function it_allows_null_comment()
+    public function test_cho_phep_binh_luan_rong()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -220,8 +214,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(201);
     }
 
-    /** @test */
-    public function it_fails_if_product_does_not_exist()
+    public function test_that_bai_neu_san_pham_khong_ton_tai()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -231,8 +224,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
-    public function it_requires_authentication_for_store()
+    public function test_yeu_cau_xac_thuc_cho_luu_danh_gia()
     {
         $order = Order::factory()->create(['customer_id' => $this->user->id]);
 
@@ -240,8 +232,7 @@ class ReviewControllerTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
-    public function it_returns_review_detail_if_user_owns_it()
+    public function test_tra_ve_chi_tiet_danh_gia_neu_nguoi_dung_so_huu()
     {
         $review = Review::factory()->create([
             'user_id' => $this->user->id,
@@ -255,8 +246,7 @@ class ReviewControllerTest extends TestCase
                  ->assertJsonFragment(['review_id' => $review->review_id]);
     }
 
-    /** @test */
-    public function it_fails_if_review_does_not_exist_or_not_owned()
+    public function test_that_bai_neu_danh_gia_khong_ton_tai_hoac_khong_so_huu()
     {
         $otherReview = Review::factory()->create();
 

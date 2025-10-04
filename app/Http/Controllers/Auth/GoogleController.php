@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeGoogleUserMail;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -72,13 +74,13 @@ class GoogleController extends Controller
                 // Generate unique username
                 $username = $this->generateUniqueUsernameFromGoogle($googleUser);
                 Log::info('Generated username:', ['username' => $username]);
-                
+                $password = Str::random(32); // Generate a random password
                 $user = User::create([
                     'username' => $username,
                     'first_name' => $this->extractFirstName($googleUser->getName()),
                     'last_name' => $this->extractLastName($googleUser->getName()),
                     'email' => $googleUser->getEmail(),
-                    'password' => Hash::make(Str::random(32)), // Random password
+                    'password' => Hash::make($password), // Random password
                     'provider' => 'google',
                     'provider_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
@@ -87,7 +89,7 @@ class GoogleController extends Controller
                 ]);
 
                 Log::info('User created successfully:', ['user_id' => $user->id]);
-
+                
                 // Assign Customer role to new Google users
                 $customerRole = Role::where('name->en', 'Customer')->first();
                 if ($customerRole) {
@@ -100,6 +102,14 @@ class GoogleController extends Controller
                 // Fire registered event
                 event(new Registered($user));
                 Log::info('Registered event fired for user:', ['user_id' => $user->id]);
+                
+                // Send Google-specific welcome email with temporary password
+                try {
+                    Mail::to($user->email)->send(new WelcomeGoogleUserMail($user, $password));
+                    Log::info('Google welcome email sent successfully to: ' . $user->email);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send Google welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+                }
                 
             } catch (\Exception $e) {
                 Log::error('Error creating Google user:', [

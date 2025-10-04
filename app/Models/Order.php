@@ -70,4 +70,14 @@ class Order extends Model
             'promotion_id'
         )->withPivot('discount_applied');
     }
+
+    /**
+     * Get all transactions related to the order.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
+    }
 }

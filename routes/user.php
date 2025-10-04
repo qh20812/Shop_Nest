@@ -23,8 +23,20 @@ Route::middleware(['auth', 'verified'])
         // Tải hóa đơn PDF
         Route::get('{order}/invoice', [OrderController::class, 'downloadInvoice'])->name('invoice');
 
+        // Tạo đơn hàng mới
+        Route::post('/', [OrderController::class, 'store'])->name('store');
+
+        // Xác nhận đã nhận hàng
+        Route::post('{order}/confirm-delivery', [OrderController::class, 'confirmDelivery'])->name('confirm-delivery');
+
+        // Tạo review cho sản phẩm trong đơn hàng
+        Route::get('{order}/review/{product}', [OrderController::class, 'createReview'])->name('create-review');
+
         // Yêu cầu trả hàng
         Route::post('{order}/return', [OrderController::class, 'requestReturn'])->name('return');
+
+        // Hủy yêu cầu trả hàng
+        Route::post('{order}/return/{returnRequest}/cancel', [OrderController::class, 'cancelReturnRequest'])->name('cancel-return');
 
         // Theo dõi đơn hàng
         Route::get('{order}/track', [OrderController::class, 'trackDelivery'])->name('track');

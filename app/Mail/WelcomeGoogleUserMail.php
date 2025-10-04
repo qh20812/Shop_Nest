@@ -4,23 +4,32 @@ namespace App\Mail;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeEmail extends Mailable
+class WelcomeGoogleUserMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
+     * The user instance.
+     */
+    public User $user;
+
+    /**
+     * The generated password.
+     */
+    public string $password;
+
+    /**
      * Create a new message instance.
      */
-    public function __construct(
-        public User $user
-    ) {
-        //
+    public function __construct(User $user, string $password)
+    {
+        $this->user = $user;
+        $this->password = $password;
     }
 
     /**
@@ -29,7 +38,7 @@ class WelcomeEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Shop_Nest!',
+            subject: 'Welcome to Shop Nest - Your Account Details',
         );
     }
 
@@ -39,12 +48,11 @@ class WelcomeEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.welcome',
+            view: 'emails.welcome_google_user',
             with: [
                 'user' => $this->user,
-                'loginUrl' => route('login'),
-                'profileUrl' => route('profile.edit'),
-            ]
+                'password' => $this->password,
+            ],
         );
     }
 

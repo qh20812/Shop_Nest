@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -58,10 +59,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_active' => 'boolean',
         ];
     }
-    public function addresses(): HasMany
-    {
-        return $this->hasMany(UserAddress::class);
-    }
     public function role(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user');
@@ -70,9 +67,13 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'customer_id');
+        return $this->hasMany(Order::class, 'customer_id', 'id');
     }
     public function isAdmin(): bool
     {
@@ -151,5 +152,45 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isGoogleUser(): bool
     {
         return $this->provider === 'google';
+    }
+
+    /**
+     * Get user's wishlist items.
+     */
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    /**
+     * Get user's reviews.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Check if user is a seller.
+     */
+    public function isSeller(): bool
+    {
+        return $this->role()->where('name->en', 'Seller')->exists();
+    }
+
+    /**
+     * Check if user is a customer.
+     */
+    public function isCustomer(): bool
+    {
+        return $this->role()->where('name->en', 'Customer')->exists();
+    }
+
+    /**
+     * Get user's default address.
+     */
+    public function defaultAddress(): BelongsTo
+    {
+        return $this->belongsTo(UserAddress::class, 'default_address_id');
     }
 }

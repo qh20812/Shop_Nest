@@ -6,27 +6,34 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
 
-class UserAddress extends Model
+class Wishlist extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
-    'user_id',
-    'recipient_name',
-    'phone',
-    'address_line',
-    'ward',
-    'district',
-    'province',
-    'postal_code',
-    'is_default',
+        'user_id',
+        'product_id',
     ];
+
     protected $casts = [
-        'is_default' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    /**
+     * Get the user who owns the wishlist item.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the product in the wishlist.
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

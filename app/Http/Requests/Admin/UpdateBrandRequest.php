@@ -30,7 +30,7 @@ class UpdateBrandRequest extends FormRequest
                 'max:255',
                 Rule::unique('brands', 'name')->ignore($brandId, 'brand_id'),
             ],
-            'description' => 'nullable|string|max:1000',
+            'description' => 'nullable|string|max:10000', // Increased limit for HTML content
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:1024',
             'is_active' => 'nullable|boolean',
         ];

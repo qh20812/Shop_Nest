@@ -108,6 +108,7 @@
     "Confirm New Password": "Xác nhận mật khẩu mới",
     "Password updated successfully": "Cập nhật mật khẩu thành công",
     "Password Requirements": "Yêu cầu mật khẩu",
+    "New password cannot be the same as current password": "Mật khẩu mới không được trùng với mật khẩu hiện tại",
     "At least 8 characters long": "Ít nhất 8 ký tự",
     "Contains both uppercase and lowercase letters": "Chứa cả chữ hoa và chữ thường",
     "Contains at least one number": "Chứa ít nhất một số",

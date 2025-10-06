@@ -1,0 +1,94 @@
+/* Custom styles for ReactQuill Rich Text Editor */
+
+/* Override Quill's default styles to match our design system */
+.ql-toolbar {
+    border-top: 1px solid #d1d5db !important;
+    border-left: 1px solid #d1d5db !important;
+    border-right: 1px solid #d1d5db !important;
+    border-bottom: none !important;
+    background-color: #f9fafb !important;
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+}
+
+.ql-container {
+    border-bottom: 1px solid #d1d5db !important;
+    border-left: 1px solid #d1d5db !important;
+    border-right: 1px solid #d1d5db !important;
+    border-top: none !important;
+    border-bottom-left-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    font-family: inherit !important;
+}
+
+.ql-editor {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #374151 !important;
+    min-height: 120px !important;
+}
+
+.ql-editor.ql-blank::before {
+    color: #9ca3af !important;
+    font-style: italic !important;
+}
+
+/* Toolbar button styling */
+.ql-toolbar .ql-picker-label:hover,
+.ql-toolbar .ql-picker-label.ql-active,
+.ql-toolbar .ql-picker-item:hover,
+.ql-toolbar .ql-picker-item.ql-selected {
+    background-color: #e5e7eb !important;
+}
+
+.ql-toolbar button:hover,
+.ql-toolbar button:focus,
+.ql-toolbar button.ql-active {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+/* Error state styling */
+.rich-text-editor.error .ql-toolbar {
+    border-color: #ef4444 !important;
+}
+
+.rich-text-editor.error .ql-container {
+    border-color: #ef4444 !important;
+}
+
+/* Focus state */
+.ql-container.ql-snow {
+    border: 1px solid #d1d5db !important;
+}
+
+.ql-editor:focus {
+    outline: none !important;
+}
+
+.ql-toolbar.ql-snow + .ql-container.ql-snow {
+    border-top: none !important;
+}
+
+/* Make sure the editor content is properly formatted */
+.ql-editor h1, 
+.ql-editor h2, 
+.ql-editor h3 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.ql-editor h1 { font-size: 1.5em; }
+.ql-editor h2 { font-size: 1.3em; }
+.ql-editor h3 { font-size: 1.1em; }
+
+.ql-editor ul, 
+.ql-editor ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.ql-editor p {
+    margin: 0.5em 0;
+}

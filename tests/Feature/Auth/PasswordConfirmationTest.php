@@ -10,7 +10,7 @@ class PasswordConfirmationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_confirm_password_screen_can_be_rendered()
+    public function test_man_hinh_xac_nhan_mat_khau_co_the_hien_thi()
     {
         $user = User::factory()->create();
 
@@ -19,7 +19,7 @@ class PasswordConfirmationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_password_can_be_confirmed()
+    public function test_mat_khau_co_the_duoc_xac_nhan()
     {
         $user = User::factory()->create();
 
@@ -31,7 +31,7 @@ class PasswordConfirmationTest extends TestCase
         $response->assertSessionHasNoErrors();
     }
 
-    public function test_password_is_not_confirmed_with_invalid_password()
+    public function test_mat_khau_khong_duoc_xac_nhan_voi_mat_khau_sai()
     {
         $user = User::factory()->create();
 

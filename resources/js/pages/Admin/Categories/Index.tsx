@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';
 import FilterPanel from '../../../components/ui/FilterPanel';
 import DataTable from '../../../components/ui/DataTable';
-import Pagination from '../../../components/admin/users/Pagination';
+import Pagination from '../../../components/ui/Pagination';
 import Toast from '../../../components/admin/users/Toast';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ActionButtons, { type ActionConfig } from '../../../components/ui/ActionButtons';
@@ -34,6 +34,20 @@ interface PageProps {
 export default function Index() {
     const { t, locale } = useTranslation();
     const { categories = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
+
+    // Helper function to convert HTML to plain text
+    const htmlToPlainText = (html: string): string => {
+        if (!html) return '';
+        // Replace <br>, <p>, <li> with newline
+        let text = html.replace(/<\/?(br|p|li)>/gi, '\n');
+        // Remove all other HTML tags
+        text = text.replace(/<[^>]+>/g, '');
+        // Replace multiple newlines with single
+        text = text.replace(/\n{2,}/g, '\n');
+        // Decode HTML entities
+        text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        return text.trim();
+    };
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
@@ -66,6 +80,23 @@ export default function Index() {
             setToast({ type: "error", message: flash.error });
         }
     }, [flash]);
+
+    // Auto-apply search filter on typing (debounced)
+    // useEffect(() => {
+    //     const delayTimer = setTimeout(() => {
+    //         if (search !== filters.search) {
+    //             router.get('/admin/categories', {
+    //                 search: search || undefined,
+    //                 status: status || undefined
+    //             }, {
+    //                 preserveState: true,
+    //                 preserveScroll: true,
+    //             });
+    //         }
+    //     }, 500);
+
+    //     return () => clearTimeout(delayTimer);
+    // }, [search, filters.search, status]);
 
     const applyFilters = () => {
         router.get('/admin/categories', { search, status }, { preserveState: true });
@@ -168,7 +199,21 @@ export default function Index() {
             header: t("Description"), 
             cell: (category: Category) => {
                 const description = category.description?.[locale as keyof typeof category.description] || category.description?.['en'];
-                return description || t('No description');
+                if (!description) return t('No description');
+                
+                const plainText = htmlToPlainText(description);
+                const truncated = plainText.length > 50 ? `${plainText.substring(0, 50)}...` : plainText;
+                
+                return (
+                    <div style={{ 
+                        whiteSpace: "pre-line",
+                        maxWidth: "300px",
+                        lineHeight: "1.4",
+                        fontSize: "14px"
+                    }}>
+                        {truncated}
+                    </div>
+                );
             }
         },
         {

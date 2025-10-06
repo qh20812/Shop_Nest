@@ -26,15 +26,15 @@ class DashboardControllerTest extends TestCase
 
         // Tạo user với vai trò Admin
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->en', 'Admin')->first());
 
         // Tạo user với vai trò Seller
         $this->seller = User::factory()->create();
-        $this->seller->roles()->attach(Role::where('name', 'Seller')->first());
+        $this->seller->roles()->attach(Role::where('name->en', 'Seller')->first());
         
         // Tạo user với vai trò Customer
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
 
     /**
@@ -52,7 +52,7 @@ class DashboardControllerTest extends TestCase
      * Kịch bản 2: Người dùng không phải Admin (Seller, Customer) không thể truy cập.
      * @dataProvider nonAdminUsers
      */
-    public function test_khong_phai_admin_users_bi_chuyen_huong(string $role): void
+    public function test_nguoi_dung_khong_phai_admin_bi_chuyen_huong(string $role): void
     {
         $user = $this->{$role}; // Lấy user từ thuộc tính của class (e.g., $this->seller)
 

@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -11,7 +13,15 @@ class PasswordUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_password_update_page_is_displayed()
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Seed roles for proper functionality
+        $this->seed(RoleSeeder::class);
+    }
+
+    public function test_trang_cap_nhat_mat_khau_duoc_hien_thi()
     {
         $user = User::factory()->create();
 
@@ -22,7 +32,7 @@ class PasswordUpdateTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_password_can_be_updated()
+    public function test_mat_khau_co_the_duoc_cap_nhat()
     {
         $user = User::factory()->create();
 
@@ -42,7 +52,7 @@ class PasswordUpdateTest extends TestCase
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
     }
 
-    public function test_correct_password_must_be_provided_to_update_password()
+    public function test_phai_cung_cap_mat_khau_dung_de_cap_nhat_mat_khau()
     {
         $user = User::factory()->create();
 

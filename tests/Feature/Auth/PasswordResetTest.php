@@ -12,14 +12,14 @@ class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_reset_password_link_screen_can_be_rendered()
+    public function test_man_hinh_yeu_cau_dat_lai_mat_khau_co_the_hien_thi()
     {
         $response = $this->get(route('password.request'));
 
         $response->assertStatus(200);
     }
 
-    public function test_reset_password_link_can_be_requested()
+    public function test_co_the_yeu_cau_lien_ket_dat_lai_mat_khau()
     {
         Notification::fake();
 
@@ -30,7 +30,7 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class);
     }
 
-    public function test_reset_password_screen_can_be_rendered()
+    public function test_man_hinh_dat_lai_mat_khau_co_the_hien_thi()
     {
         Notification::fake();
 
@@ -47,7 +47,7 @@ class PasswordResetTest extends TestCase
         });
     }
 
-    public function test_password_can_be_reset_with_valid_token()
+    public function test_mat_khau_co_the_dat_lai_voi_token_hop_le()
     {
         Notification::fake();
 
@@ -71,7 +71,7 @@ class PasswordResetTest extends TestCase
         });
     }
 
-    public function test_password_cannot_be_reset_with_invalid_token(): void
+    public function test_mat_khau_khong_the_dat_lai_voi_token_khong_hop_le(): void
     {
         $user = User::factory()->create();
 

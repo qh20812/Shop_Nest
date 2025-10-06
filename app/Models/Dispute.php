@@ -29,4 +29,14 @@ class Dispute extends Model
     public function messages():HasMany{
         return $this->hasMany(DisputeMessage::class,'dispute_id');
     }
+
+    /**
+     * Get all transactions related to the dispute (by order_id).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
+    }
 }

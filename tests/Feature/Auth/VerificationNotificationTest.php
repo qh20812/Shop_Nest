@@ -12,7 +12,7 @@ class VerificationNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_sends_verification_notification(): void
+    public function test_gui_thong_bao_xac_minh(): void
     {
         Notification::fake();
 
@@ -27,7 +27,7 @@ class VerificationNotificationTest extends TestCase
         Notification::assertSentTo($user, VerifyEmail::class);
     }
 
-    public function test_does_not_send_verification_notification_if_email_is_verified(): void
+    public function test_khong_gui_thong_bao_xac_minh_neu_email_da_duoc_xac_minh(): void
     {
         Notification::fake();
 

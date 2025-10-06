@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PrimaryInput from '../../ui/PrimaryInput';
 import ActionButton from '../../ui/ActionButton';
+import RichTextEditor from '../../ui/RichTextEditor';
 import { useTranslation } from '../../../lib/i18n';
 
 interface BrandFormData {
@@ -69,20 +70,14 @@ export default function BrandForm({
                             required
                         />
 
-                        <div className="form-group">
-                            <label className="form-label">
-                                {t("Description")}
-                            </label>
-                            <textarea
-                                name="description"
-                                value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
-                                className={`form-input-field ${errors.description ? 'error' : ''}`}
-                                rows={3}
-                                placeholder={t("Enter brand description...")}
-                            />
-                            {errors.description && <div className="form-error">{errors.description}</div>}
-                        </div>
+                        <RichTextEditor
+                            label={t("Description")}
+                            value={data.description}
+                            onChange={(value) => setData('description', value)}
+                            error={errors.description}
+                            placeholder={t("Enter brand description...")}
+                            height="120px"
+                        />
 
                         <PrimaryInput
                             label={t("Status")}

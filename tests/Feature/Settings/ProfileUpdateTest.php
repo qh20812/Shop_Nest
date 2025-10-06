@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,7 +12,15 @@ class ProfileUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_page_is_displayed()
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Seed roles for proper functionality
+        $this->seed(RoleSeeder::class);
+    }
+
+    public function test_trang_ho_so_duoc_hien_thi()
     {
         $user = User::factory()->create();
 
@@ -21,14 +31,16 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_profile_information_can_be_updated()
+    public function test_thong_tin_ho_so_co_the_duoc_cap_nhat()
     {
         $user = User::factory()->create();
 
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'username' => 'Test User',
+                'username' => 'testuser123',
+                'first_name' => 'Test',
+                'last_name' => 'User',
                 'email' => 'test@example.com',
             ]);
 
@@ -38,19 +50,23 @@ class ProfileUpdateTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
+        $this->assertSame('testuser123', $user->username);
+        $this->assertSame('Test', $user->first_name);
+        $this->assertSame('User', $user->last_name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
+    public function test_trang_thai_xac_minh_email_khong_thay_doi_khi_email_khong_doi()
     {
         $user = User::factory()->create();
 
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'username' => 'SUPER_ADMIN',
+                'username' => 'superadmin123',
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
                 'email' => $user->email,
             ]);
 
@@ -61,7 +77,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account()
+    public function test_nguoi_dung_co_the_xoa_tai_khoan_cua_ho()
     {
         $user = User::factory()->create();
 
@@ -79,7 +95,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->fresh());
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account()
+    public function test_phai_cung_cap_mat_khau_dung_de_xoa_tai_khoan()
     {
         $user = User::factory()->create();
 

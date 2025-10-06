@@ -20,6 +20,7 @@ class ReturnRequest extends Model
     const STATUS_REJECTED = 3; // Đã từ chối
     const STATUS_REFUNDED = 4; // Đã hoàn tiền
     const STATUS_EXCHANGED = 5; // Đã đổi hàng
+    const STATUS_CANCELLED = 6; // Đã hủy (bởi khách hàng)
 
     /**
      * Chỉ định rõ tên bảng mà model này sử dụng.
@@ -67,6 +68,16 @@ class ReturnRequest extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    /**
+     * Get all transactions related to the return request (by order_id).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
     }
 
     /**

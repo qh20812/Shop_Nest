@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -9,23 +10,32 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered()
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Seed roles for proper registration flow
+        $this->seed(RoleSeeder::class);
+    }
+
+    public function test_man_hinh_dang_ky_co_the_hien_thi()
     {
         $response = $this->get(route('register'));
 
         $response->assertStatus(200);
     }
 
-    public function test_new_users_can_register()
+    public function test_nguoi_dung_moi_co_the_dang_ky()
     {
         $response = $this->post(route('register.store'), [
             'username' => 'SUPER_ADMIN',
             'email' => 'ngocquyhuynh4@gmail.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertAuthenticated(); // User is logged in after registration
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('success', 'Registration successful! Please log in.');
     }
 }

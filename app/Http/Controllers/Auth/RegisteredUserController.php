@@ -52,13 +52,18 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         // Send welcome email
-        
+        try {
+            Mail::to($user->email)->send(new WelcomeEmail($user));
+            Log::info('Welcome email sent successfully to: ' . $user->email);
+        } catch (\Exception $e) {
+            Log::error('Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
+        }
 
         // Log in the user
         Auth::login($user);
 
-        // Redirect to login page after registration
-        return redirect()->route('login')->with('success', 'Registration successful! Please log in.');
+        // Redirect to email verification page after registration
+        return redirect()->route('verification.notice')->with('status', 'Registration successful! Please verify your email.');
     }
 
     /**

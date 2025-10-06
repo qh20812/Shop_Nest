@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PrimaryInput from '../../ui/PrimaryInput';
 import ActionButton from '../../ui/ActionButton';
+import RichTextEditor from '../../ui/RichTextEditor';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
@@ -90,30 +91,26 @@ export default function CategoryForm({
 
                         {/* English Description */}
                         <div>
-                            <label className="form-label">{t('Description (English)')}</label>
-                            <textarea
-                                name="description_en"
+                            <RichTextEditor
+                                label={t('Description (English)')}
                                 value={data.description.en}
-                                onChange={(e) => setData('description', { ...data.description, en: e.target.value })}
-                                className={`form-input-field ${errors['description.en'] ? 'error' : ''}`}
-                                rows={3}
+                                onChange={(value) => setData('description', { ...data.description, en: value })}
+                                error={errors['description.en']}
                                 placeholder={t('Enter description in English...')}
+                                height="120px"
                             />
-                            {errors['description.en'] && <div className="input-error">{errors['description.en']}</div>}
                         </div>
 
                         {/* Vietnamese Description */}
                         <div>
-                            <label className="form-label">{t('Description (Vietnamese)')}</label>
-                            <textarea
-                                name="description_vi"
+                            <RichTextEditor
+                                label={t('Description (Vietnamese)')}
                                 value={data.description.vi}
-                                onChange={(e) => setData('description', { ...data.description, vi: e.target.value })}
-                                className={`form-input-field ${errors['description.vi'] ? 'error' : ''}`}
-                                rows={3}
+                                onChange={(value) => setData('description', { ...data.description, vi: value })}
+                                error={errors['description.vi']}
                                 placeholder={t('Enter description in Vietnamese...')}
+                                height="120px"
                             />
-                            {errors['description.vi'] && <div className="input-error">{errors['description.vi']}</div>}
                         </div>
 
                         {/* Parent Category */}

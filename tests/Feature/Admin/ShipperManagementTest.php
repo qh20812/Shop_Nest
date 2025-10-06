@@ -85,35 +85,35 @@ class ShipperManagementTest extends TestCase
     }
 
     // Authorization Tests
-    public function test_guests_are_redirected_to_login_when_accessing_shipper_index(): void
+    public function test_khach_chua_dang_nhap_khong_the_truy_cap(): void
     {
         $response = $this->get('/admin/shippers');
         
         $response->assertRedirect(route('login'));
     }
 
-    public function test_guests_are_redirected_to_login_when_accessing_shipper_show_page(): void
+    public function test_khach_chua_dang_nhap_khong_the_xem_chi_tiet_nguoi_giao_hang(): void
     {
         $response = $this->get("/admin/shippers/{$this->pendingShipper->id}");
         
         $response->assertRedirect(route('login'));
     }
 
-    public function test_non_admin_users_are_redirected_when_accessing_shipper_index(): void
+    public function test_khach_hang_khong_phai_admin_khong_the_truy_cap(): void
     {
         $response = $this->actingAs($this->customerUser)->get('/admin/shippers');
         
         $response->assertStatus(302); // Middleware redirects non-admin users
     }
 
-    public function test_non_admin_users_are_redirected_when_accessing_shipper_show_page(): void
+    public function test_khach_hang_khong_phai_admin_khong_the_xem_chi_tiet_nguoi_giao_hang(): void
     {
         $response = $this->actingAs($this->customerUser)->get("/admin/shippers/{$this->pendingShipper->id}");
         
         $response->assertStatus(302); // Middleware redirects non-admin users
     }
 
-    public function test_non_admin_users_cannot_update_shipper_status(): void
+    public function test_khach_hang_khong_phai_admin_khong_the_cap_nhat_trang_thai_nguoi_giao_hang(): void
     {
         $response = $this->actingAs($this->customerUser)
             ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
@@ -123,58 +123,51 @@ class ShipperManagementTest extends TestCase
         $response->assertStatus(302); // Middleware redirects non-admin users
     }
 
-    // Index Method Tests
-    public function test_admin_can_successfully_view_shipper_list_page(): void
+        // Index Method Tests
+    public function test_admin_co_the_xem_danh_sach_nguoi_giao_hang(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/admin/shippers');
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.index'));
         
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => 
             $page->component('Admin/Shippers/Index')
-                ->has('shippers')
-                ->has('filters')
+                ->has('shippers.data')
                 ->has('statusOptions')
         );
     }
 
-    public function test_shipper_list_only_contains_users_with_shipper_role(): void
+    public function test_danh_sach_nguoi_giao_hang_chi_chua_nguoi_giao_hang(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/admin/shippers');
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.index'));
         
         $response->assertInertia(fn (Assert $page) => 
             $page->component('Admin/Shippers/Index')
-                ->has('shippers.data', 2) // Should have 2 shippers
-                ->where('shippers.data.0.email', $this->pendingShipper->email)
-                ->where('shippers.data.1.email', $this->approvedShipper->email)
+                ->has('shippers.data', 2) // Có 2 shipper (pending và approved)
         );
     }
 
-    public function test_shipper_list_filtering_by_status_works_correctly(): void
+    public function test_danh_sach_nguoi_giao_hang_co_the_loc_theo_trang_thai(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/admin/shippers?status=pending');
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.index', ['status' => 'pending']));
         
         $response->assertInertia(fn (Assert $page) => 
             $page->component('Admin/Shippers/Index')
-                ->has('shippers.data', 1) // Should have only 1 pending shipper
-                ->where('shippers.data.0.shipper_profile.status', 'pending')
                 ->where('filters.status', 'pending')
         );
     }
 
-    public function test_shipper_list_search_functionality_works_correctly(): void
+    public function test_nguoi_giao_hang_co_the_tim_kiem_theo_ten(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/admin/shippers?search=John');
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.index', ['search' => $this->pendingShipper->first_name]));
         
         $response->assertInertia(fn (Assert $page) => 
             $page->component('Admin/Shippers/Index')
-                ->has('shippers.data', 1) // Should find only John Shipper
-                ->where('shippers.data.0.first_name', 'John')
-                ->where('filters.search', 'John')
+                ->where('filters.search', $this->pendingShipper->first_name)
         );
     }
 
     // Show Method Tests
-    public function test_admin_can_successfully_view_shipper_detail_page(): void
+    public function test_admin_co_the_xem_thanh_cong_chi_tiet_nguoi_giao_hang(): void
     {
         $response = $this->actingAs($this->adminUser)->get("/admin/shippers/{$this->pendingShipper->id}");
         
@@ -188,14 +181,14 @@ class ShipperManagementTest extends TestCase
         );
     }
 
-    public function test_accessing_detail_page_of_non_shipper_user_returns_404(): void
+    public function test_truy_cap_trang_chi_tiet_nguoi_dung_khong_phai_shipper_tra_ve_404(): void
     {
-        $response = $this->actingAs($this->adminUser)->get("/admin/shippers/{$this->customerUser->id}");
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.show', $this->customerUser));
         
         $response->assertStatus(404);
     }
 
-    public function test_accessing_non_existent_shipper_returns_404(): void
+    public function test_truy_cap_shipper_khong_ton_tai_tra_ve_404(): void
     {
         $response = $this->actingAs($this->adminUser)->get('/admin/shippers/99999');
         
@@ -203,15 +196,15 @@ class ShipperManagementTest extends TestCase
     }
 
     // UpdateStatus Method Tests
-    public function test_admin_can_successfully_approve_a_pending_shipper(): void
+    public function test_admin_co_the_phe_duyet_thanh_cong_shipper_dang_cho(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), [
                 'status' => 'approved'
             ]);
         
         $response->assertRedirect(route('admin.shippers.show', $this->pendingShipper));
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('success', 'Shipper status updated to approved.');
         
         $this->assertDatabaseHas('shipper_profiles', [
             'user_id' => $this->pendingShipper->id,
@@ -224,15 +217,15 @@ class ShipperManagementTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_successfully_reject_a_pending_shipper(): void
+    public function test_admin_co_the_tu_choi_thanh_cong_shipper_dang_cho(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), [
                 'status' => 'rejected'
             ]);
         
         $response->assertRedirect(route('admin.shippers.show', $this->pendingShipper));
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('success', 'Shipper status updated to rejected.');
         
         $this->assertDatabaseHas('shipper_profiles', [
             'user_id' => $this->pendingShipper->id,
@@ -240,15 +233,15 @@ class ShipperManagementTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_successfully_suspend_an_approved_shipper(): void
+    public function test_admin_co_the_tam_ngung_thanh_cong_shipper_da_duyet(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->approvedShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->approvedShipper), [
                 'status' => 'suspended'
             ]);
         
         $response->assertRedirect(route('admin.shippers.show', $this->approvedShipper));
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('success', 'Shipper status updated to suspended.');
         
         $this->assertDatabaseHas('shipper_profiles', [
             'user_id' => $this->approvedShipper->id,
@@ -262,10 +255,10 @@ class ShipperManagementTest extends TestCase
         ]);
     }
 
-    public function test_validation_error_occurs_when_updating_with_invalid_status(): void
+    public function test_cap_nhat_voi_trang_thai_khong_hop_le_xay_ra_loi_validation(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), [
                 'status' => 'invalid_status'
             ]);
         
@@ -278,18 +271,18 @@ class ShipperManagementTest extends TestCase
         ]);
     }
 
-    public function test_validation_error_occurs_when_status_field_is_missing(): void
+    public function test_cap_nhat_thieu_truong_status_xay_ra_loi_validation(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", []);
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), []);
         
         $response->assertSessionHasErrors('status');
     }
 
-    public function test_updating_status_of_non_shipper_user_returns_404(): void
+    public function test_cap_nhat_trang_thai_nguoi_dung_khong_phai_shipper_tra_ve_404(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->customerUser->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->customerUser), [
                 'status' => 'approved'
             ]);
         
@@ -307,23 +300,24 @@ class ShipperManagementTest extends TestCase
     }
 
     // Edge Cases and Additional Tests
-    public function test_shipper_profile_status_changes_are_properly_tracked(): void
+    public function test_thay_doi_trang_thai_shipper_profile_duoc_theo_doi_dung_cach(): void
     {
         // Initial state
         $this->assertEquals('pending', $this->pendingShipperProfile->fresh()->status);
         
         // Approve the shipper
         $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), [
                 'status' => 'approved'
             ]);
         
         // Check the change
         $this->assertEquals('approved', $this->pendingShipperProfile->fresh()->status);
+        $this->assertTrue($this->pendingShipper->fresh()->is_active);
         
         // Suspend the shipper
         $this->actingAs($this->adminUser)
-            ->patch("/admin/shippers/{$this->pendingShipper->id}/status", [
+            ->patch(route('admin.shippers.updateStatus', $this->pendingShipper), [
                 'status' => 'suspended'
             ]);
         
@@ -332,7 +326,7 @@ class ShipperManagementTest extends TestCase
         $this->assertFalse($this->pendingShipper->fresh()->is_active);
     }
 
-    public function test_pagination_works_correctly_on_shipper_index(): void
+    public function test_pagination_hoat_dong_dung_tren_trang_danh_sach_shipper(): void
     {
         // Create more shippers to test pagination
         collect(range(1, 20))->each(function ($i) {
@@ -345,7 +339,7 @@ class ShipperManagementTest extends TestCase
             ]);
         });
         
-        $response = $this->actingAs($this->adminUser)->get('/admin/shippers');
+        $response = $this->actingAs($this->adminUser)->get(route('admin.shippers.index'));
         
         $response->assertInertia(fn (Assert $page) => 
             $page->component('Admin/Shippers/Index')

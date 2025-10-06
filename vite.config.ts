@@ -20,4 +20,13 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+    optimizeDeps: {
+        include: ['@tinymce/tinymce-react'],
+        force: true
+    },
+    server: {
+        fs: {
+            allow: ['..']
+        }
+    }
 });

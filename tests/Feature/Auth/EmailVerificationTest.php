@@ -13,7 +13,7 @@ class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_email_verification_screen_can_be_rendered()
+    public function test_man_hinh_xac_minh_email_co_the_hien_thi()
     {
         $user = User::factory()->unverified()->create();
 
@@ -22,7 +22,7 @@ class EmailVerificationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_email_can_be_verified()
+    public function test_email_co_the_duoc_xac_minh()
     {
         $user = User::factory()->unverified()->create();
 
@@ -41,7 +41,7 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     }
 
-    public function test_email_is_not_verified_with_invalid_hash()
+    public function test_email_khong_duoc_xac_minh_voi_hash_khong_hop_le()
     {
         $user = User::factory()->unverified()->create();
 
@@ -56,7 +56,7 @@ class EmailVerificationTest extends TestCase
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
-    public function test_email_is_not_verified_with_invalid_user_id(): void
+    public function test_email_khong_duoc_xac_minh_voi_user_id_khong_hop_le(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
@@ -73,7 +73,7 @@ class EmailVerificationTest extends TestCase
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 
-    public function test_verified_user_is_redirected_to_dashboard_from_verification_prompt(): void
+    public function test_nguoi_dung_da_xac_minh_duoc_chuyen_huong_ve_dashboard(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => now(),
@@ -84,7 +84,7 @@ class EmailVerificationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
-    public function test_already_verified_user_visiting_verification_link_is_redirected_without_firing_event_again(): void
+    public function test_nguoi_dung_da_xac_minh_truy_cap_link_xac_minh_duoc_chuyen_huong_khong_kich_hoat_event(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => now(),

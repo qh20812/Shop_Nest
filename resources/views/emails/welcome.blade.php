@@ -62,7 +62,6 @@
         </ul>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ $profileUrl }}" class="button">Complete Profile</a>
             <a href="{{ $loginUrl }}" class="button">Login Now</a>
         </div>
         

@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ReturnRequest;
+use App\Models\UserAddress;
 use App\Services\ShippingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -83,6 +84,103 @@ class OrderController extends Controller
             'statusCounts' => $statusCounts,
             'totalSpent' => $totalSpent,
         ]);
+    }
+
+    /**
+     * Create a new order from cart items.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'shipping_address_id' => 'required|exists:user_addresses,id',
+            'payment_method' => 'required|string|in:cod,bank_transfer,paypal,vnpay',
+            'notes' => 'nullable|string|max:500',
+            'currency' => 'required|string|in:VND,USD',
+        ]);
+
+        // Get cart items
+        $cartItems = CartItem::where('user_id', $user->id)
+            ->with(['variant.product'])
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return back()->with('error', 'Your cart is empty.');
+        }
+
+        try {
+            DB::transaction(function () use ($user, $validated, $cartItems) {
+                // Calculate totals
+                $subtotal = 0;
+                $orderItems = [];
+
+                foreach ($cartItems as $cartItem) {
+                    $variant = $cartItem->variant;
+                    $product = $variant->product;
+
+                    // Check stock availability
+                    if ($variant->stock < $cartItem->quantity) {
+                        throw new \Exception("Insufficient stock for {$product->name}");
+                    }
+
+                    $unitPrice = $variant->price ?? $product->price;
+                    $totalPrice = $unitPrice * $cartItem->quantity;
+                    $subtotal += $totalPrice;
+
+                    $orderItems[] = [
+                        'variant_id' => $variant->variant_id,
+                        'quantity' => $cartItem->quantity,
+                        'unit_price' => $unitPrice,
+                        'total_price' => $totalPrice,
+                    ];
+                }
+
+                // Calculate shipping and total
+                $shippingFee = $this->calculateShippingFee($subtotal);
+                $totalAmount = $subtotal + $shippingFee;
+
+                // Create order
+                $order = Order::create([
+                    'customer_id' => $user->id,
+                    'order_number' => 'ORD-' . strtoupper(uniqid()),
+                    'status' => Order::STATUS_PENDING,
+                    'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+                    'payment_method' => $validated['payment_method'],
+                    'currency' => $validated['currency'],
+                    'subtotal' => $subtotal,
+                    'shipping_fee' => $shippingFee,
+                    'total_amount' => $totalAmount,
+                    'shipping_address_id' => $validated['shipping_address_id'],
+                    'notes' => $validated['notes'],
+                ]);
+
+                // Create order items and update stock
+                foreach ($orderItems as $item) {
+                    $order->items()->create([
+                        'variant_id' => $item['variant_id'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'total_price' => $item['total_price'],
+                    ]);
+
+                    // Reduce stock
+                    $variant = \App\Models\ProductVariant::find($item['variant_id']);
+                    $variant->decrement('stock', $item['quantity']);
+                }
+
+                // Clear cart
+                CartItem::where('user_id', $user->id)->delete();
+
+                session(['new_order_id' => $order->order_id]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Order creation failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('user.orders.show', session('new_order_id'))
+            ->with('success', 'Order created successfully!');
     }
 
     /**
@@ -240,6 +338,58 @@ class OrderController extends Controller
     }
 
     /**
+     * Confirm order delivery - mark as delivered by customer.
+     */
+    public function confirmDelivery(Order $order): RedirectResponse
+    {
+        $this->authorize('view', $order);
+
+        if ($order->status !== Order::STATUS_SHIPPED) {
+            return back()->with('error', 'Order cannot be confirmed as delivered at this stage.');
+        }
+
+        try {
+            $order->update([
+                'status' => Order::STATUS_DELIVERED,
+                'delivered_at' => now(),
+            ]);
+
+            // Log status change or trigger events if needed
+            // event(new OrderDelivered($order));
+
+            return back()->with('success', 'Order confirmed as delivered successfully!');
+        } catch (\Exception $e) {
+            Log::error('Order delivery confirmation failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
+            return back()->with('error', 'Could not confirm delivery.');
+        }
+    }
+
+    /**
+     * Create review for products in order.
+     */
+    public function createReview(Order $order, $productId)
+    {
+        $this->authorize('view', $order);
+
+        // Check if order is delivered
+        if ($order->status !== Order::STATUS_DELIVERED) {
+            return back()->with('error', 'You can only review products from delivered orders.');
+        }
+
+        // Check if product exists in order
+        $productInOrder = $order->items()
+            ->whereHas('variant.product', fn($q) => $q->where('product_id', $productId))
+            ->exists();
+
+        if (!$productInOrder) {
+            return back()->with('error', 'Product not found in this order.');
+        }
+
+        // Redirect to review creation page with order and product context
+        return redirect()->route('user.reviews.create', [$order->order_id, $productId]);
+    }
+
+    /**
      * Submit a return/refund request for an order.
      */
     public function requestReturn(Order $order, Request $request): RedirectResponse
@@ -293,6 +443,39 @@ class OrderController extends Controller
         return back()->with('success', 'Return request submitted successfully.');
     }
 
+    /**
+     * Cancel a return request if it's still pending.
+     */
+    public function cancelReturnRequest(Order $order, ReturnRequest $returnRequest): RedirectResponse
+    {
+        $this->authorize('view', $order);
+
+        // Verify return request belongs to this order and user
+        if ($returnRequest->order_id !== $order->order_id || $returnRequest->customer_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to return request.');
+        }
+
+        // Check if return request can be cancelled
+        if ($returnRequest->status !== ReturnRequest::STATUS_PENDING) {
+            return back()->with('error', 'Return request cannot be cancelled as it has already been processed.');
+        }
+
+        try {
+            $returnRequest->update([
+                'status' => ReturnRequest::STATUS_CANCELLED,
+                'admin_notes' => 'Cancelled by customer on ' . now()->format('Y-m-d H:i:s'),
+            ]);
+
+            return back()->with('success', 'Return request cancelled successfully.');
+        } catch (\Exception $e) {
+            Log::error('Return request cancellation failed', [
+                'return_request_id' => $returnRequest->id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->with('error', 'Could not cancel return request.');
+        }
+    }
+
     // --- Helper Methods ---
 
     private function canCancelOrder(Order $order): bool
@@ -309,6 +492,16 @@ class OrderController extends Controller
         return $order->status === Order::STATUS_DELIVERED
                && $order->delivered_at
                && $order->delivered_at->diffInDays(now()) <= 30;
+    }
+
+    private function calculateShippingFee(float $subtotal): float
+    {
+        // Simple shipping calculation - can be made more complex
+        if ($subtotal >= 500000) { // Free shipping for orders over 500k VND
+            return 0;
+        }
+        
+        return 30000; // Fixed shipping fee 30k VND
     }
 
     private function getTrackingInfo(Order $order): ?array

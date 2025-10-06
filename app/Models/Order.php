@@ -13,16 +13,17 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
-    const STATUS_PENDING = 1;
-    const STATUS_PROCESSING = 2;
-    const STATUS_SHIPPED = 3;
-    const STATUS_DELIVERED = 4;
-    const STATUS_CANCELLED = 5;
+    const STATUS_PENDING = 0;
+    const STATUS_PROCESSING = 1;
+    const STATUS_SHIPPED = 2;
+    const STATUS_DELIVERED = 3;
+    const STATUS_CANCELLED = 4;
 
     // Trạng thái thanh toán
-    public const PAYMENT_STATUS_UNPAID = 'unpaid';
-    public const PAYMENT_STATUS_PAID = 'paid';
-    public const PAYMENT_STATUS_REFUNDED = 'refunded';
+    public const PAYMENT_STATUS_UNPAID = 0;
+    public const PAYMENT_STATUS_PAID = 1;
+    public const PAYMENT_STATUS_FAILED = 2;
+    public const PAYMENT_STATUS_REFUNDED = 3;
 
     protected $primaryKey = 'order_id';
     protected $fillable = [
@@ -68,5 +69,15 @@ class Order extends Model
             'order_id',
             'promotion_id'
         )->withPivot('discount_applied');
+    }
+
+    /**
+     * Get all transactions related to the order.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
     }
 }

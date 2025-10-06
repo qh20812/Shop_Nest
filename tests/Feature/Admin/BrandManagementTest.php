@@ -23,30 +23,30 @@ class BrandManagementTest extends TestCase
         parent::setUp();
         $this->seed(RoleSeeder::class);
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->en', 'Admin')->first());
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
-    public function test_admin_can_access_brand_management_page(): void
+    public function test_admin_co_the_truy_cap_trang_quan_ly_thuong_hieu(): void
     {
         $response = $this->actingAs($this->admin)->get(route('admin.brands.index'));
         $response->assertStatus(200);
         $response->assertInertia(fn($page) => $page->component('Admin/Brands/Index'));
     }
-    public function test_admin_can_create_a_new_brand(): void
+    public function test_admin_co_the_tao_thuong_hieu_moi(): void
     {
         $brandData = ['name' => 'Apple', 'description' => 'Apple Inc.'];
         $this->actingAs($this->admin)->post(route('admin.brands.store'), $brandData);
         $this->assertDatabaseHas('brands', ['name' => 'Apple']);
     }
-    public function test_admin_can_update_a_brand(): void
+    public function test_admin_co_the_cap_nhat_thuong_hieu(): void
     {
         $brand = Brand::factory()->create();
         $updateData = ['name' => 'Samsung Updated'];
         $this->actingAs($this->admin)->put(route('admin.brands.update', $brand), $updateData);
         $this->assertDatabaseHas('brands', ['brand_id' => $brand->brand_id, 'name' => 'Samsung Updated']);
     }
-    public function test_admin_can_delete_a_brand(): void
+    public function test_admin_co_the_xoa_thuong_hieu(): void
     {
         $brand = Brand::factory()->create();
         $this->actingAs($this->admin)->delete(route('admin.brands.destroy', $brand));

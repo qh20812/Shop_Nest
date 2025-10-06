@@ -28,17 +28,17 @@ class CategoryManagementTest extends TestCase
 
         // 2. Tạo một user Admin
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name->vi', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->en', 'Admin')->first());
 
         // 3. Tạo một user Customer thông thường
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name->vi', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
 
     /**
      * Kịch bản 1: Khách hàng (không phải admin) không thể truy cập trang quản lý danh mục.
      */
-    public function test_customer_cannot_access_category_management_page(): void
+    public function test_khach_hang_khong_the_truy_cap_trang_quan_ly_danh_muc(): void
     {
         $response = $this->actingAs($this->customer)->get(route('admin.categories.index'));
 
@@ -50,7 +50,7 @@ class CategoryManagementTest extends TestCase
     /**
      * Kịch bản 2: Admin có thể truy cập trang quản lý danh mục.
      */
-    public function test_admin_can_access_category_management_page(): void
+    public function test_admin_co_the_truy_cap_trang_quan_ly_danh_muc(): void
     {
         // Tạo một vài danh mục mẫu
         Category::factory(3)->create();
@@ -67,11 +67,18 @@ class CategoryManagementTest extends TestCase
     /**
      * Kịch bản 3: Admin có thể tạo một danh mục mới với dữ liệu hợp lệ.
      */
-    public function test_admin_can_create_a_new_category(): void
+    public function test_admin_co_the_tao_danh_muc_moi_voi_du_lieu_hop_le(): void
     {
         $categoryData = [
-            'name' => 'Điện thoại & Phụ kiện',
-            'description' => 'Các loại điện thoại và phụ kiện đi kèm.',
+            'name' => [
+                'en' => 'Phones & Accessories',
+                'vi' => 'Điện thoại & Phụ kiện'
+            ],
+            'description' => [
+                'en' => 'Various types of phones and accessories.',
+                'vi' => 'Các loại điện thoại và phụ kiện đi kèm.'
+            ],
+            'is_active' => true,
         ];
 
         $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
@@ -82,33 +89,43 @@ class CategoryManagementTest extends TestCase
 
         // Khẳng định: Dữ liệu đã được lưu chính xác vào database
         $this->assertDatabaseHas('categories', [
-            'name' => 'Điện thoại & Phụ kiện',
+            'name->vi' => 'Điện thoại & Phụ kiện',
         ]);
     }
 
     /**
      * Kịch bản 4: Admin không thể tạo danh mục mới với tên bị bỏ trống.
      */
-    public function test_admin_cannot_create_category_with_missing_name(): void
+    public function test_admin_khong_the_tao_danh_muc_voi_ten_trong(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), [
-            'name' => '', // Dữ liệu không hợp lệ
+            'name' => ['en' => '', 'vi' => ''], // Dữ liệu không hợp lệ
+            'is_active' => true,
         ]);
 
         // Khẳng định: Bị lỗi validation cho trường 'name'
-        $response->assertSessionHasErrors('name');
+        $response->assertSessionHasErrors(['name.en', 'name.vi']);
     }
 
     /**
      * Kịch bản 5: Admin có thể cập nhật thông tin một danh mục.
      */
-    public function test_admin_can_update_a_category(): void
+    public function test_admin_co_the_cap_nhat_thong_tin_danh_muc(): void
     {
-        $category = Category::factory()->create(['name' => 'Tên Cũ']);
+        $category = Category::factory()->create([
+            'name' => ['en' => 'Old Name', 'vi' => 'Tên Cũ']
+        ]);
 
         $updateData = [
-            'name' => 'Tên Mới Cập Nhật',
-            'description' => 'Mô tả mới.',
+            'name' => [
+                'en' => 'Updated New Name',
+                'vi' => 'Tên Mới Cập Nhật'
+            ],
+            'description' => [
+                'en' => 'New description.',
+                'vi' => 'Mô tả mới.'
+            ],
+            'is_active' => true,
         ];
 
         $response = $this->actingAs($this->admin)->put(route('admin.categories.update', $category), $updateData);
@@ -120,14 +137,14 @@ class CategoryManagementTest extends TestCase
         // Khẳng định: Dữ liệu trong database đã được cập nhật
         $this->assertDatabaseHas('categories', [
             'category_id' => $category->category_id,
-            'name' => 'Tên Mới Cập Nhật',
+            'name->vi' => 'Tên Mới Cập Nhật',
         ]);
     }
 
     /**
      * Kịch bản 6: Admin có thể xóa một danh mục (soft delete).
      */
-    public function test_admin_can_delete_a_category(): void
+    public function test_admin_co_the_xoa_danh_muc(): void
     {
         $category = Category::factory()->create();
 
@@ -135,7 +152,7 @@ class CategoryManagementTest extends TestCase
         
         // Khẳng định: Chuyển hướng thành công
         $response->assertRedirect(route('admin.categories.index'));
-        $response->assertSessionHas('success', 'Xóa danh mục thành công.');
+        $response->assertSessionHas('success', 'Ẩn danh mục thành công.');
 
         // Khẳng định: Bản ghi đã được đánh dấu là xóa mềm trong database
         $this->assertSoftDeleted('categories', [

@@ -5,15 +5,10 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class NotOldPassword implements ValidationRule
 {
-    protected $user;
-
-    public function __construct($user)
-    {
-        $this->user = $user;
-    }
     /**
      * Run the validation rule.
      *
@@ -21,8 +16,11 @@ class NotOldPassword implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (Hash::check($value, $this->user->password)) {
-            $fail(__('The new password must be different from the current password.'));
+        $user = Auth::user();
+        
+        // Kiểm tra nếu mật khẩu mới trùng với mật khẩu hiện tại
+        if ($user && Hash::check($value, $user->password)) {
+            $fail(__('New password cannot be the same as current password'));
         }
     }
 }

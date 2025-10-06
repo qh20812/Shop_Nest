@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/react';
 import AuthButton from './AuthButton';
 import AuthSocialIcons from './AuthSocialIcons';
 import AuthInput from './AuthInput';
+import { useTranslation } from '../../lib/i18n';
 
 export default function SignInForm() {
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -10,6 +11,8 @@ export default function SignInForm() {
     password: '',
     remember: false,
   });
+
+  const { t } = useTranslation();
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +53,11 @@ export default function SignInForm() {
         
 
         <a href="/forgot-password" style={{ fontSize: '13px', textDecoration: 'none', margin: '15px 0 10px', color: '#333'}}>
-          Forgot Your Password?
+          {t('Forgot Your Password?')}
         </a>
 
         <AuthButton 
-          text={processing ? "Signing In..." : "Sign In"} 
+          text={processing ? t("Signing In...") : t("Sign In")} 
           type="submit"
           disabled={processing}
         />

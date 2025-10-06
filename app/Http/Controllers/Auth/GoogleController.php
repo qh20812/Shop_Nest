@@ -143,7 +143,7 @@ class GoogleController extends Controller
         // Check if user has Customer role
         if ($user->role()->where('name->en', 'Customer')->exists()) {
             Log::info('Redirecting Customer user to welcome page');
-            return redirect()->intended(route('welcome', absolute: false))
+            return redirect()->intended(route('home', absolute: false))
                 ->with('success', 'Login with Google successful!');
         }
         

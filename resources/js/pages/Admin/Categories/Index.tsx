@@ -35,6 +35,20 @@ export default function Index() {
     const { t, locale } = useTranslation();
     const { categories = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
 
+    // Helper function to convert HTML to plain text
+    const htmlToPlainText = (html: string): string => {
+        if (!html) return '';
+        // Replace <br>, <p>, <li> with newline
+        let text = html.replace(/<\/?(br|p|li)>/gi, '\n');
+        // Remove all other HTML tags
+        text = text.replace(/<[^>]+>/g, '');
+        // Replace multiple newlines with single
+        text = text.replace(/\n{2,}/g, '\n');
+        // Decode HTML entities
+        text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        return text.trim();
+    };
+
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
 
@@ -185,7 +199,21 @@ export default function Index() {
             header: t("Description"), 
             cell: (category: Category) => {
                 const description = category.description?.[locale as keyof typeof category.description] || category.description?.['en'];
-                return description || t('No description');
+                if (!description) return t('No description');
+                
+                const plainText = htmlToPlainText(description);
+                const truncated = plainText.length > 50 ? `${plainText.substring(0, 50)}...` : plainText;
+                
+                return (
+                    <div style={{ 
+                        whiteSpace: "pre-line",
+                        maxWidth: "300px",
+                        lineHeight: "1.4",
+                        fontSize: "14px"
+                    }}>
+                        {truncated}
+                    </div>
+                );
             }
         },
         {

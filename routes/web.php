@@ -4,12 +4,16 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('Home/Index');
 })->name('home');
 
-Route::get('/welcome', function () {
-    return Inertia::render('welcome');
-})->name('welcome');
+Route::get('/about', function () {
+    return Inertia::render('Home/About');
+})->name('about');
+
+Route::get('/contact', function () {
+    return Inertia::render('Home/Contact');
+})->name('contact');
 
 // Language switching route
 Route::post('/language', function () {

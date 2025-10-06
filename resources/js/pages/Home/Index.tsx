@@ -1,7 +1,8 @@
-
+import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import HomeLayout from '../../layouts/app/HomeLayout';
 
-export default function Welcome() {
+export default function Home() {
     // --- mock data ---
     const flashSales = [
         { id: 1, name: 'Tai nghe Bluetooth', image: 'https://cf.shopee.vn/file/2b74a9e2c8334f5a8cf63c568f9c9a5c_tn', price: 199000, discount: 30 },
@@ -36,32 +37,33 @@ export default function Welcome() {
     ];
 
     return (
-        <>
-            <Head title="Welcome" />
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white text-gray-800">
-
-                {/* Header */}
-                <h1 className="text-4xl font-bold text-blue-700 mb-4 mt-8">Welcome to My Shop</h1>
-                <p className="text-lg text-gray-600 mb-8">
-                    Khám phá những sản phẩm tuyệt vời và ưu đãi hấp dẫn!
-                </p>
-
-                {/* Login Button */}
-                <Link
-                    href="/login"
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300"
-                >
-                    Đăng nhập
-                </Link>
+        <HomeLayout>
+            <Head title="ShopNest - Trang chủ" />
+            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                {/* Welcome Section */}
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-blue-700 mb-4">Welcome to ShopNest</h1>
+                    <p className="text-lg text-gray-600 mb-8">
+                        Khám phá những sản phẩm tuyệt vời và ưu đãi hấp dẫn!
+                    </p>
+                    <Link
+                        href="/login"
+                        className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300"
+                    >
+                        Đăng nhập
+                    </Link>
+                </div>
 
                 {/* FLASH SALE */}
-                <section className="w-full max-w-7xl mt-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-4">🔥 Flash Sale</h2>
-                    <div className="grid grid-cols-5 gap-4">
+                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🔥 Flash Sale</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {flashSales.map(item => (
-                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all">
+                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all cursor-pointer">
                                 <img src={item.image} alt={item.name} className="object-cover w-full h-28 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium">{item.name}</h3>
+                                <h3 className="text-sm font-medium text-gray-800">{item.name}</h3>
                                 <p className="text-red-500 font-semibold mt-1">{item.price.toLocaleString()}₫</p>
                                 <span className="text-xs text-gray-500">Giảm {item.discount}%</span>
                             </div>
@@ -70,26 +72,26 @@ export default function Welcome() {
                 </section>
 
                 {/* CATEGORIES */}
-                <section className="w-full max-w-7xl mt-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-4">🏷️ Danh mục</h2>
-                    <div className="grid grid-cols-5 gap-4">
+                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🏷️ Danh mục</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {categories.map(cat => (
-                            <div key={cat.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer">
+                            <div key={cat.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all">
                                 <img src={cat.image} alt={cat.name} className="object-cover w-full h-24 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium">{cat.name}</h3>
+                                <h3 className="text-sm font-medium text-gray-800">{cat.name}</h3>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 {/* TOP SEARCH */}
-                <section className="w-full max-w-7xl mt-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-4">🔍 Tìm kiếm hàng đầu</h2>
-                    <div className="grid grid-cols-5 gap-4">
+                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🔍 Tìm kiếm hàng đầu</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {topSearches.map(s => (
-                            <div key={s.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3">
+                            <div key={s.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all">
                                 <img src={s.image} alt={s.title} className="object-cover w-full h-24 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium">{s.title}</h3>
+                                <h3 className="text-sm font-medium text-gray-800">{s.title}</h3>
                                 <p className="text-xs text-gray-500">{s.searches} lượt tìm</p>
                             </div>
                         ))}
@@ -97,24 +99,19 @@ export default function Welcome() {
                 </section>
 
                 {/* DAILY DISCOVER */}
-                <section className="w-full max-w-7xl mt-12 bg-white rounded-xl shadow-lg p-6 mb-20">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-4">💡 Gợi ý hôm nay</h2>
-                    <div className="grid grid-cols-5 gap-4">
+                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-6">💡 Gợi ý hôm nay</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {dailyDiscover.map(item => (
-                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all">
+                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all cursor-pointer">
                                 <img src={item.image} alt={item.name} className="object-cover w-full h-28 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium">{item.name}</h3>
+                                <h3 className="text-sm font-medium text-gray-800">{item.name}</h3>
                                 <p className="text-red-500 font-semibold mt-1">{item.price.toLocaleString()}₫</p>
                             </div>
                         ))}
                     </div>
                 </section>
-
-                {/* Footer */}
-                <footer className="text-sm text-gray-500 mb-6">
-                    © {new Date().getFullYear()} My Shop. All rights reserved.
-                </footer>
             </div>
-        </>
+        </HomeLayout>
     );
 }

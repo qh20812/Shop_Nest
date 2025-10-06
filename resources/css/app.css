@@ -37,7 +37,8 @@
     }
 
     html {
-        overflow: hidden;
+        overflow-x: hidden; /* Only hide horizontal overflow */
+        overflow-y: auto;   /* Allow vertical scrolling */
     }
 
     li {

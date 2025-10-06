@@ -49,8 +49,8 @@ export default function SignInForm() {
 
         
 
-        <a href="/forgot-password" style={{ fontSize: '13px', textDecoration: 'none', margin: '15px 0 10px', color: '#333' }}>
-          Forget Your Password?
+        <a href="/forgot-password" style={{ fontSize: '13px', textDecoration: 'none', margin: '15px 0 10px', color: '#333'}}>
+          Forgot Your Password?
         </a>
 
         <AuthButton 

@@ -1,195 +1,254 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import React from 'react';
+import Toast from '@/components/admin/users/Toast';
+import AppLayout from '@/layouts/app/AppLayout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
-// --- Kiểu dữ liệu ---
-interface User {
+// ==================== Type Definitions ====================
+
+interface Product {
+    id: number;
+    name: string;
+    variant?: string;
+    quantity: number;
+    price: number;
+}
+
+interface Customer {
     id: number;
     first_name: string;
     last_name: string;
-    email: string;
-    phone_number: string;
-}
-interface ShippingAddress {
-    full_name: string;
-    phone_number: string;
-    street: string;
-    ward: string;
-    district: string;
-    city: string;
-}
-interface Product {
-    product_id: number;
-    name: string;
-    seller_id: number;
-}
-interface ProductVariant {
-    variant_id: number;
-    product: Product;
-}
-interface OrderItem {
-    order_item_id: number;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    variant: ProductVariant;
-    description?: string; // thêm description
-}
-interface Order {
-    order_id: number;
-    order_number: string;
-    total_amount: number;
-    status: number;
-    created_at: string;
-    customer: User;
-    shippingAddress: ShippingAddress;
-    items: OrderItem[];
-}
-interface PageProps {
-    order: Order;
-    flash?: { success?: string };
-    auth: { user: { id: number } };
+    email?: string;
+    phone?: string;
 }
 
-// helper trạng thái
-const getStatusInfo = (status: number): { text: string; className: string } => {
-    switch (status) {
+interface Address {
+    address_line: string;
+    city: string;
+    state?: string;
+    postal_code?: string;
+}
+
+interface OrderHistory {
+    status: number;
+    note?: string;
+    created_at: string;
+}
+
+interface Order {
+    id: number;
+    order_number: string;
+    total_amount: number;
+    shipping_fee: number;
+    payment_method: string;
+    status: number;
+    created_at: string;
+    customer: Customer;
+    address: Address;
+    products: Product[];
+    history?: OrderHistory[];
+}
+
+// ✅ FIXED: define global PageProps for Inertia
+interface InertiaPageProps<T> {
+    props: T;
+}
+
+// ✅ Use type-safe PageProps
+interface PageProps {
+    order: Order;
+    flash?: { success?: string; error?: string };
+}
+
+// ==================== Status Helper ====================
+
+const getStatusInfo = (status: number) => {
+    switch (Number(status)) {
+        case 0:
+            return { text: 'Pending', className: 'bg-yellow-100 text-yellow-800' };
         case 1:
-            return { text: 'Đang chờ xử lý', className: 'text-yellow-600' };
+            return { text: 'Processing', className: 'bg-blue-100 text-blue-800' };
         case 2:
-            return { text: 'Đang xử lý', className: 'text-blue-600' };
+            return { text: 'Shipped', className: 'bg-indigo-100 text-indigo-800' };
         case 3:
-            return { text: 'Đã giao cho vận chuyển', className: 'text-indigo-600' };
+            return { text: 'Delivered', className: 'bg-green-100 text-green-800' };
         case 4:
-            return { text: 'Đã giao thành công', className: 'text-green-600' };
-        case 5:
-            return { text: 'Đã hủy', className: 'text-red-600' };
+            return { text: 'Cancelled', className: 'bg-red-100 text-red-800' };
         default:
-            return { text: 'Không xác định', className: 'text-gray-600' };
+            return { text: 'Unknown', className: 'bg-gray-100 text-gray-800' };
     }
 };
 
+const STATUS_OPTIONS = [
+    { value: 0, label: 'Pending' },
+    { value: 1, label: 'Processing' },
+    { value: 2, label: 'Shipped' },
+    { value: 3, label: 'Delivered' },
+    { value: 4, label: 'Cancelled' },
+];
+
+// ==================== Component ====================
+
 export default function Show() {
-    const { order, flash, auth } = usePage<PageProps>().props;
-    const sellerId = auth.user.id;
+    // ✅ No more TS error here
+    const page = usePage<{ order: Order; flash?: { success?: string; error?: string } }>();
+    const { order, flash } = page.props;
 
-    const sellerItems = order.items.filter((item) => item.variant.product.seller_id === sellerId);
+    const [status, setStatus] = useState(order.status);
+    const [loading, setLoading] = useState(false);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-    const { data, setData, put, processing, errors } = useForm({
-        status: order.status,
-    });
-
-    const handleStatusUpdate = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        put(route('seller.orders.updateStatus', order.order_id), {
-            preserveScroll: true,
-        });
+    const handleUpdateStatus = () => {
+        setLoading(true);
+        router.put(
+            `/seller/orders/${order.id}/status`,
+            { status },
+            {
+                preserveScroll: true,
+                onFinish: () => setLoading(false),
+                onSuccess: () => setToast({ type: 'success', message: 'Order status updated successfully!' }),
+                onError: () => setToast({ type: 'error', message: 'Failed to update order status.' }),
+            },
+        );
     };
 
-    const statusInfo = getStatusInfo(order.status);
+    const s = getStatusInfo(order.status);
 
     return (
-        <>
-            <Head title={`Chi tiết đơn hàng ${order.order_number}`} />
-            ```
-            <div className="container mx-auto p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Chi tiết đơn hàng: {order.order_number}</h1>
-                        <p className="text-sm text-gray-500">Ngày đặt: {new Date(order.created_at).toLocaleString('vi-VN')}</p>
+        <AppLayout>
+            <Head title={`Order #${order.order_number}`} />
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+            <main className="content-main">
+                <div className="header mb-6 flex items-center justify-between">
+                    <div className="left">
+                        <h1>Order #{order.order_number}</h1>
+                        <ul className="breadcrumb">
+                            <li>
+                                <Link href="/seller/dashboard">Dashboard</Link>
+                            </li>
+                            <li>
+                                <Link href="/seller/orders">Orders</Link>
+                            </li>
+                            <li>Details</li>
+                        </ul>
                     </div>
-                    <Link href={route('seller.orders.index')} className="text-blue-500 hover:underline">
-                        &larr; Quay lại danh sách
-                    </Link>
+                    <span className={`status-badge rounded-full px-3 py-1 text-sm font-medium ${s.className}`}>{s.text}</span>
                 </div>
 
-                {flash?.success && (
-                    <div className="mb-4 border-l-4 border-green-500 bg-green-100 p-4 text-green-700" role="alert">
-                        <p>{flash.success}</p>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    {/* Thông tin khách hàng */}
-                    <div className="space-y-6 md:col-span-1">
-                        <div className="rounded-lg bg-white p-4 shadow">
-                            <h3 className="mb-2 border-b pb-2 font-bold">Thông tin khách hàng</h3>
+                <div className="bottom-data space-y-6">
+                    {/* Customer Info + Address */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="card rounded-2xl bg-white p-6 shadow">
+                            <h3 className="mb-4 text-lg font-semibold">Customer Information</h3>
                             <p>
-                                {order.customer.first_name} {order.customer.last_name}
+                                <strong>Name:</strong> {order.customer.first_name} {order.customer.last_name}
                             </p>
-                            <p>{order.customer.email}</p>
-                            <p>{order.customer.phone_number}</p>
+                            {order.customer.email && (
+                                <p>
+                                    <strong>Email:</strong> {order.customer.email}
+                                </p>
+                            )}
+                            {order.customer.phone && (
+                                <p>
+                                    <strong>Phone:</strong> {order.customer.phone}
+                                </p>
+                            )}
                         </div>
-                        <div className="rounded-lg bg-white p-4 shadow">
-                            <h3 className="mb-2 border-b pb-2 font-bold">Địa chỉ giao hàng</h3>
-                            <p>{order.shippingAddress.full_name}</p>
-                            <p>{order.shippingAddress.phone_number}</p>
-                            <p>{`${order.shippingAddress.street}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.city}`}</p>
+
+                        <div className="card rounded-2xl bg-white p-6 shadow">
+                            <h3 className="mb-4 text-lg font-semibold">Shipping Address</h3>
+                            <p>{order.address?.address_line || '—'}</p>
+                            <p>
+                                {order.address
+                                    ? `${order.address.city || ''}, ${order.address.state || ''} ${order.address.postal_code || ''}`
+                                    : 'No address provided'}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Sản phẩm & trạng thái */}
-                    <div className="space-y-6 md:col-span-2">
-                        <div className="rounded-lg bg-white p-4 shadow">
-                            <h3 className="mb-2 border-b pb-2 font-bold">Sản phẩm của bạn trong đơn hàng</h3>
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="py-2 text-left">Sản phẩm</th>
-                                        <th className="py-2 text-left">Mô tả</th>
-                                        <th className="py-2 text-center">Số lượng</th>
-                                        <th className="py-2 text-right">Đơn giá</th>
-                                        <th className="py-2 text-right">Thành tiền</th>
+                    {/* Products */}
+                    <div className="card rounded-2xl bg-white p-6 shadow">
+                        <h3 className="mb-4 text-lg font-semibold">Products</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="p-2 text-left">Product</th>
+                                        <th className="p-2 text-left">Variant</th>
+                                        <th className="p-2 text-center">Qty</th>
+                                        <th className="p-2 text-right">Price</th>
+                                        <th className="p-2 text-right">Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sellerItems.map((item) => (
-                                        <tr key={item.order_item_id} className="border-b">
-                                            <td className="py-2">{item.variant.product.name}</td>
-                                            <td className="py-2">{item.description || '-'}</td>
-                                            <td className="py-2 text-center">{item.quantity}</td>
-                                            <td className="py-2 text-right">{item.unit_price.toLocaleString('vi-VN')} ₫</td>
-                                            <td className="py-2 text-right">{item.total_price.toLocaleString('vi-VN')} ₫</td>
+                                    {order.products?.map((p) => (
+                                        <tr key={p.id} className="border-t hover:bg-gray-50">
+                                            <td className="p-2">{p.name}</td>
+                                            <td className="p-2">{p.variant || '-'}</td>
+                                            <td className="p-2 text-center">{p.quantity}</td>
+                                            <td className="p-2 text-right">${p.price.toLocaleString('en-US')}</td>
+                                            <td className="p-2 text-right">${(p.price * p.quantity).toLocaleString('en-US')}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
+                    </div>
 
-                        <div className="rounded-lg bg-white p-4 shadow">
-                            <h3 className="mb-2 border-b pb-2 font-bold">Cập nhật trạng thái</h3>
-                            <p className="mb-4">
-                                Trạng thái hiện tại: <span className={`font-semibold ${statusInfo.className}`}>{statusInfo.text}</span>
-                            </p>
-                            <form onSubmit={handleStatusUpdate}>
-                                <div className="flex items-center space-x-4">
-                                    <select
-                                        value={data.status}
-                                        onChange={(e) => setData('status', parseInt(e.target.value))}
-                                        className="block w-full rounded-md border-gray-300 shadow-sm md:w-1/2"
-                                    >
-                                        {[1, 2, 3, 4, 5].map((id) => {
-                                            const s = getStatusInfo(id);
-                                            return (
-                                                <option key={id} value={id}>
-                                                    {s.text}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:bg-gray-400"
-                                    >
-                                        {processing ? 'Đang lưu...' : 'Cập nhật'}
-                                    </button>
-                                </div>
-                                {errors.status && <p className="mt-2 text-xs text-red-500">{errors.status}</p>}
-                            </form>
+                    {/* Payment Summary */}
+                    <div className="card max-w-md rounded-2xl bg-white p-6 shadow">
+                        <h3 className="mb-4 text-lg font-semibold">Payment Summary</h3>
+                        <p>
+                            <strong>Payment Method:</strong> {order.payment_method}
+                        </p>
+                        <p>
+                            <strong>Shipping Fee:</strong> ${order.shipping_fee.toLocaleString('en-US')}
+                        </p>
+                        <p className="mt-2 text-lg font-bold">Total: ${order.total_amount.toLocaleString('en-US')}</p>
+                    </div>
+
+                    {/* Update Status */}
+                    <div className="card rounded-2xl bg-white p-6 shadow">
+                        <h3 className="mb-4 text-lg font-semibold">Update Order Status</h3>
+                        <div className="flex flex-wrap gap-3">
+                            <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="form-input-field w-60">
+                                {STATUS_OPTIONS.map((s) => (
+                                    <option key={s.value} value={s.value}>
+                                        {s.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <button onClick={handleUpdateStatus} disabled={loading} className="btn btn-primary">
+                                {loading ? 'Updating...' : 'Update'}
+                            </button>
                         </div>
                     </div>
+
+                    {/* History */}
+                    {order.history && order.history.length > 0 && (
+                        <div className="card rounded-2xl bg-white p-6 shadow">
+                            <h3 className="mb-4 text-lg font-semibold">Order History</h3>
+                            <ul className="space-y-2">
+                                {order.history.map((h, index) => {
+                                    const info = getStatusInfo(h.status);
+                                    return (
+                                        <li key={index} className="flex justify-between border-b pb-1">
+                                            <span className={`rounded px-2 py-1 text-xs font-medium ${info.className}`}>{info.text}</span>
+                                            <span className="text-sm text-gray-500">{new Date(h.created_at).toLocaleString('en-US')}</span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    )}
+
+                    <div>
+                        <Link href="/seller/orders" className="btn btn-secondary">
+                            ← Back to Orders
+                        </Link>
+                    </div>
                 </div>
-            </div>
-        </>
+            </main>
+        </AppLayout>
     );
 }

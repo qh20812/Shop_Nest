@@ -97,7 +97,7 @@ export default function CategoryForm({
                                 onChange={(value) => setData('description', { ...data.description, en: value })}
                                 error={errors['description.en']}
                                 placeholder={t('Enter description in English...')}
-                                height="120px"
+                                height="200px"
                             />
                         </div>
 
@@ -109,7 +109,7 @@ export default function CategoryForm({
                                 onChange={(value) => setData('description', { ...data.description, vi: value })}
                                 error={errors['description.vi']}
                                 placeholder={t('Enter description in Vietnamese...')}
-                                height="120px"
+                                height="200px"
                             />
                         </div>
 

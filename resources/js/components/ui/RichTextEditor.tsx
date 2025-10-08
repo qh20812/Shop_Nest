@@ -17,7 +17,7 @@ export default function RichTextEditor({
     onChange,
     error,
     placeholder,
-    height = '150px'
+    height = '300px'
 }: RichTextEditorProps) {
     return (
         <div className="form-group">
@@ -45,10 +45,6 @@ export default function RichTextEditor({
             />
             
             {error && <div className="form-error">{error}</div>}
-            
-            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
-                💡 Rich text editor with full formatting support. Use the toolbar for formatting options.
-            </div>
         </div>
     );
 }

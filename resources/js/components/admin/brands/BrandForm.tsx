@@ -76,7 +76,7 @@ export default function BrandForm({
                             onChange={(value) => setData('description', value)}
                             error={errors.description}
                             placeholder={t("Enter brand description...")}
-                            height="120px"
+                            height="300px"
                         />
 
                         <PrimaryInput

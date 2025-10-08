@@ -71,12 +71,16 @@ class OrderController extends Controller
 
         // Giả sử model Order có các hằng số định nghĩa trạng thái
         $validated = $request->validate([
-            'status' => ['required', 'integer', Rule::in([
-                Order::STATUS_PENDING,
-                Order::STATUS_PROCESSING,
-                Order::STATUS_SHIPPED,
-                Order::STATUS_DELIVERED,
-                Order::STATUS_CANCELLED,
+            'status' => ['required', 'string', Rule::in([
+                'pending_confirmation',
+                'processing',
+                'pending_assignment',
+                'assigned_to_shipper',
+                'delivering',
+                'delivered',
+                'completed',
+                'cancelled',
+                'returned',
             ])],
         ]);
 

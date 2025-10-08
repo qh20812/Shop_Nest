@@ -19,10 +19,10 @@ class DashboardController extends Controller
 
         $orderStats = [
             'total_orders'      => $user->orders()->count(),
-            'pending_orders'    => $user->orders()->where('status', Order::STATUS_PENDING)->count(),
-            'shipped_orders'    => $user->orders()->where('status', Order::STATUS_SHIPPED)->count(),
-            'delivered_orders'  => $user->orders()->where('status', Order::STATUS_DELIVERED)->count(),       
-            'total_spent'       => $user->orders()->where('status', Order::STATUS_DELIVERED)->sum('total_amount'),
+            'pending_orders'    => $user->orders()->where('status', 'pending_confirmation')->count(),
+            'shipped_orders'    => $user->orders()->where('status', 'delivering')->count(),
+            'delivered_orders'  => $user->orders()->where('status', 'delivered')->count(),       
+            'total_spent'       => $user->orders()->where('status', 'delivered')->sum('total_amount'),
         ];
 
         $recentOrders = $user->orders()

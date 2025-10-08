@@ -28,7 +28,7 @@ class DisputeSeeder extends Seeder
                 'seller_id' => $order->items->first()->variant->product->seller_id,
                 'subject' => 'Khiếu nại về đơn hàng ' . $order->order_number,
                 'description' => fake()->paragraph,
-                'status' => fake()->numberBetween(1, 4),
+                'status' => fake()->randomElement(['open', 'under_review', 'resolved', 'closed']),
                 'type' => fake()->numberBetween(1, 3),
                 'assigned_admin_id' => $admins->random()->id,
             ]);

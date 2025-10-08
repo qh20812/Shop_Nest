@@ -19,10 +19,16 @@ class CategoryController extends Controller
     {
         $query = Category::latest();
         
-        // Filter by status (active or trashed)
-        if ($request->get('status') === 'trashed') {
+        // Filter by status
+        $status = $request->get('status');
+        if ($status === 'trashed') {
             $query->onlyTrashed();
+        } elseif ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
         }
+        // If no status filter or empty, show all non-trashed categories
         
         // Add search functionality if search parameter exists
         if ($request->filled('search')) {

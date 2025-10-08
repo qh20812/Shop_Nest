@@ -31,32 +31,32 @@ class OrderTestSeeder extends Seeder
         $orders = [
             [
                 'order_number' => 'ORD' . $timestamp . '1',
-                'status' => Order::STATUS_PENDING,
-                'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+                'status' => 'pending_confirmation',
+                'payment_status' => 'unpaid',
                 'total_amount' => 100000,
             ],
             [
                 'order_number' => 'ORD' . $timestamp . '2',
-                'status' => Order::STATUS_PROCESSING,
-                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'status' => 'processing',
+                'payment_status' => 'paid',
                 'total_amount' => 200000,
             ],
             [
                 'order_number' => 'ORD' . $timestamp . '3',
-                'status' => Order::STATUS_SHIPPED,
-                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'status' => 'delivering',
+                'payment_status' => 'paid',
                 'total_amount' => 150000,
             ],
             [
                 'order_number' => 'ORD' . $timestamp . '4',
-                'status' => Order::STATUS_DELIVERED,
-                'payment_status' => Order::PAYMENT_STATUS_PAID,
+                'status' => 'delivered',
+                'payment_status' => 'paid',
                 'total_amount' => 300000,
             ],
             [
                 'order_number' => 'ORD' . $timestamp . '5',
-                'status' => Order::STATUS_CANCELLED,
-                'payment_status' => Order::PAYMENT_STATUS_REFUNDED,
+                'status' => 'cancelled',
+                'payment_status' => 'refunded',
                 'total_amount' => 75000,
             ],
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReturnStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,17 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ReturnRequest extends Model
 {
     use HasFactory;
-
-    /**
-     * Các hằng số định nghĩa trạng thái của yêu cầu trả hàng.
-     */
-
-    const STATUS_PENDING = 1; // Đang chờ xử lý
-    const STATUS_APPROVED = 2; // Đã chấp nhận
-    const STATUS_REJECTED = 3; // Đã từ chối
-    const STATUS_REFUNDED = 4; // Đã hoàn tiền
-    const STATUS_EXCHANGED = 5; // Đã đổi hàng
-    const STATUS_CANCELLED = 6; // Đã hủy (bởi khách hàng)
 
     /**
      * Chỉ định rõ tên bảng mà model này sử dụng.
@@ -44,6 +34,10 @@ class ReturnRequest extends Model
         'admin_note', // sửa thành admin_note để khớp với controller
         'processed_at',
         'refunded_at'
+    ];
+
+    protected $casts = [
+        'status' => ReturnStatus::class,
     ];
 
     /**

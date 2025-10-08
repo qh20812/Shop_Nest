@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,9 +24,9 @@ class OrderFactory extends Factory
             'shipping_fee' => $shippingFee,
             'discount_amount' => 0,
             'total_amount' => $totalAmount,
-            'status' => fake()->numberBetween(1, 4), // Bắt đầu từ 1 để có đơn hàng hợp lệ
+            'status' => fake()->randomElement(OrderStatus::cases())->value,
             'payment_method' => fake()->numberBetween(1, 3),
-            'payment_status' => fake()->numberBetween(1, 2), // Bắt đầu từ 1
+            'payment_status' => fake()->randomElement(PaymentStatus::cases())->value,
             'shipping_address_id' => UserAddress::factory(),
             'notes' => fake()->sentence(),
             

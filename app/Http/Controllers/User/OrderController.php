@@ -71,7 +71,7 @@ class OrderController extends Controller
 
         // Aggregated data for the view
         $baseUserOrdersQuery = Order::where('customer_id', $user->id);
-        $totalSpent = (clone $baseUserOrdersQuery)->where('status', Order::STATUS_DELIVERED)->sum('total_amount');
+        $totalSpent = (clone $baseUserOrdersQuery)->where('status', 'delivered')->sum('total_amount');
         $statusCounts = (clone $baseUserOrdersQuery)
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
@@ -144,8 +144,8 @@ class OrderController extends Controller
                 $order = Order::create([
                     'customer_id' => $user->id,
                     'order_number' => 'ORD-' . strtoupper(uniqid()),
-                    'status' => Order::STATUS_PENDING,
-                    'payment_status' => Order::PAYMENT_STATUS_UNPAID,
+                    'status' => 'pending_confirmation',
+                    'payment_status' => 'unpaid',
                     'payment_method' => $validated['payment_method'],
                     'currency' => $validated['currency'],
                     'subtotal' => $subtotal,
@@ -221,7 +221,7 @@ class OrderController extends Controller
 
         try {
             DB::transaction(function () use ($order, $request) {
-                $order->update(['status' => Order::STATUS_CANCELLED]);
+                $order->update(['status' => 'cancelled']);
 
                 // Restore inventory
                 foreach ($order->items as $item) {
@@ -229,9 +229,9 @@ class OrderController extends Controller
                 }
 
                 // Process refund if already paid
-                if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
+                if ($order->payment_status->value === 'paid') {
                     // Trigger a refund service/job here
-                    $order->update(['payment_status' => Order::PAYMENT_STATUS_REFUNDED]);
+                    $order->update(['payment_status' => 'refunded']);
                 }
 
                 // Log status change
@@ -297,7 +297,7 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        if (!in_array($order->status, [Order::STATUS_DELIVERED])) {
+        if (!in_array($order->status->value, ['delivered'])) {
             abort(403, 'Invoice not available for this order status.');
         }
 
@@ -344,13 +344,13 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        if ($order->status !== Order::STATUS_SHIPPED) {
+        if ($order->status->value !== 'delivering') {
             return back()->with('error', 'Order cannot be confirmed as delivered at this stage.');
         }
 
         try {
             $order->update([
-                'status' => Order::STATUS_DELIVERED,
+                'status' => 'delivered',
                 'delivered_at' => now(),
             ]);
 
@@ -372,7 +372,7 @@ class OrderController extends Controller
         $this->authorize('view', $order);
 
         // Check if order is delivered
-        if ($order->status !== Order::STATUS_DELIVERED) {
+        if ($order->status->value !== 'delivered') {
             return back()->with('error', 'You can only review products from delivered orders.');
         }
 
@@ -427,7 +427,7 @@ class OrderController extends Controller
                     'return_number' => 'RTN-' . strtoupper(uniqid()),
                     'reason' => $validated['return_items'][0]['reason'], // Simplified
                     'description' => $validated['return_reason_detail'],
-                    'status' => ReturnRequest::STATUS_PENDING,
+                    'status' => 'pending',
                     'type' => 1, // 1: Refund
                 ]);
 
@@ -456,13 +456,13 @@ class OrderController extends Controller
         }
 
         // Check if return request can be cancelled
-        if ($returnRequest->status !== ReturnRequest::STATUS_PENDING) {
+        if ($returnRequest->status->value !== 'pending') {
             return back()->with('error', 'Return request cannot be cancelled as it has already been processed.');
         }
 
         try {
             $returnRequest->update([
-                'status' => ReturnRequest::STATUS_CANCELLED,
+                'status' => 'cancelled',
                 'admin_notes' => 'Cancelled by customer on ' . now()->format('Y-m-d H:i:s'),
             ]);
 
@@ -481,7 +481,7 @@ class OrderController extends Controller
     private function canCancelOrder(Order $order): bool
     {
         // Allow cancellation for pending/confirmed orders within a 2-hour window.
-        return in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_PROCESSING])
+        return in_array($order->status->value, ['pending_confirmation', 'processing'])
                && $order->created_at->diffInHours(now()) < 2;
     }
 
@@ -489,7 +489,7 @@ class OrderController extends Controller
     {
         // Allow returns for delivered orders within a 30-day window.
         // TODO: Could also check for non-returnable product categories.
-        return $order->status === Order::STATUS_DELIVERED
+        return $order->status->value === 'delivered'
                && $order->delivered_at
                && $order->delivered_at->diffInDays(now()) <= 30;
     }

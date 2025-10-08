@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DisputeStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,10 @@ class Dispute extends Model
         'assigned_admin_id',
         'resolution',
         'resolved_at'
+    ];
+
+    protected $casts = [
+        'status' => DisputeStatus::class,
     ];
     public function order():BelongsTo{
         return $this->belongsTo(Order::class,'order_id');

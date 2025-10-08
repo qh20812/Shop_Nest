@@ -62,20 +62,30 @@ class OrderController extends Controller
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(15);
 
+        // Calculate summary statistics for ALL orders (not just current page)
+        $pendingCount = Order::where('status', 'pending_confirmation')->count();
+        $completedCount = Order::whereIn('status', ['completed', 'delivered'])->count();
+        $cancelledCount = Order::whereIn('status', ['cancelled', 'returned'])->count();
+        $totalCount = Order::count();
+
         // Get filter options for the frontend
         $statusOptions = [
-            Order::STATUS_PENDING => 'Pending',
-            Order::STATUS_PROCESSING => 'Processing', 
-            Order::STATUS_SHIPPED => 'Shipped',
-            Order::STATUS_DELIVERED => 'Delivered',
-            Order::STATUS_CANCELLED => 'Cancelled'
+            'pending_confirmation' => 'Pending Confirmation',
+            'processing' => 'Processing', 
+            'pending_assignment' => 'Pending Assignment',
+            'assigned_to_shipper' => 'Assigned to Shipper',
+            'delivering' => 'Delivering',
+            'delivered' => 'Delivered',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            'returned' => 'Returned'
         ];
 
         $paymentStatusOptions = [
-            Order::PAYMENT_STATUS_UNPAID => 'Unpaid',
-            Order::PAYMENT_STATUS_PAID => 'Paid',
-            Order::PAYMENT_STATUS_FAILED => 'Failed',
-            Order::PAYMENT_STATUS_REFUNDED => 'Refunded'
+            'unpaid' => 'Unpaid',
+            'paid' => 'Paid',
+            'failed' => 'Failed',
+            'refunded' => 'Refunded'
         ];
 
         return Inertia::render('Admin/Orders/Index', [
@@ -83,6 +93,12 @@ class OrderController extends Controller
             'filters' => $request->only(['status', 'payment_status', 'from_date', 'to_date', 'search']),
             'statusOptions' => $statusOptions,
             'paymentStatusOptions' => $paymentStatusOptions,
+            'orderSummary' => [
+                'totalCount' => $totalCount,
+                'pendingCount' => $pendingCount,
+                'completedCount' => $completedCount,
+                'cancelledCount' => $cancelledCount,
+            ],
             'currency' => 'VND',
             'exchangeRates' => [
                 'VND' => 25000,
@@ -153,7 +169,7 @@ class OrderController extends Controller
                 // Update order with shipper assignment
                 $order->update([
                     'shipper_id' => $request->shipper_id,
-                    'status' => Order::STATUS_SHIPPED // Set to shipped when assigned to shipper
+                    'status' => 'assigned_to_shipper' // Set to assigned when assigned to shipper
                 ]);
 
                 // Create shipment journey record if the table exists
@@ -217,10 +233,10 @@ class OrderController extends Controller
                 $paidAmount = $this->calculatePaidAmount($order);
                 
                 if ($newRefundedAmount >= $paidAmount) {
-                    $order->update(['payment_status' => Order::PAYMENT_STATUS_REFUNDED]);
+                    $order->update(['payment_status' => 'refunded']);
                 } else {
                     // For partially refunded, we might need to add a new constant or use existing one
-                    $order->update(['payment_status' => Order::PAYMENT_STATUS_REFUNDED]);
+                    $order->update(['payment_status' => 'refunded']);
                 }
             });
 

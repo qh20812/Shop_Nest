@@ -9,12 +9,23 @@ interface PaginationLink {
 
 interface PaginationProps {
   links: PaginationLink[];
+  filters?: Record<string, string | number | boolean | undefined>;
+  preserveState?: boolean;
+  preserveScroll?: boolean;
 }
 
-export default function Pagination({ links }: PaginationProps) {
+export default function Pagination({ links, filters = {}, preserveState = true, preserveScroll = true }: PaginationProps) {
   const handlePageChange = (url: string | null) => {
     if (url) {
-      router.get(url);
+      // Remove undefined values from filters to clean up the URL
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')
+      );
+      
+      router.get(url, cleanFilters, {
+        preserveState,
+        preserveScroll,
+      });
     }
   };
 

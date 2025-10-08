@@ -37,7 +37,7 @@ class ProductFactory extends Factory
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
             'seller_id' => User::factory(),
-            'status' => fake()->numberBetween(1, 3),
+            'status' => fake()->randomElement(['draft', 'pending_approval', 'published']),
             'is_active' => true,
         ];
     }

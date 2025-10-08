@@ -23,13 +23,20 @@ export default function StatusBadge({ status, type = 'general' }: StatusBadgePro
                     default: return 'status pending';
                 }
             } else {
-                // Handle string status
+                // Handle string status (enum format)
                 switch (status) {
-                    case 'pending': return 'status pending';
+                    case 'pending_confirmation': return 'status pending';
                     case 'processing': return 'status process';
-                    case 'shipped': return 'status process';
+                    case 'pending_assignment': return 'status process';
+                    case 'assigned_to_shipper': return 'status process';
+                    case 'delivering': return 'status process';
                     case 'delivered': return 'status completed';
+                    case 'completed': return 'status completed';
                     case 'cancelled': return 'status pending';
+                    case 'returned': return 'status pending';
+                    // Legacy support
+                    case 'pending': return 'status pending';
+                    case 'shipped': return 'status process';
                     default: return 'status pending';
                 }
             }
@@ -91,14 +98,22 @@ export default function StatusBadge({ status, type = 'general' }: StatusBadgePro
                         return t('Unknown');
                 }
             } else {
-                // Handle string status
+                // Handle string status (enum format)
                 switch (status) {
-                    case 'pending': return t('Pending');
+                    case 'pending_confirmation': return t('Pending Confirmation');
                     case 'processing': return t('Processing');
-                    case 'shipped': return t('Shipped');
+                    case 'pending_assignment': return t('Pending Assignment');
+                    case 'assigned_to_shipper': return t('Assigned to Shipper');
+                    case 'delivering': return t('Delivering');
                     case 'delivered': return t('Delivered');
+                    case 'completed': return t('Completed');
                     case 'cancelled': return t('Cancelled');
+                    case 'returned': return t('Returned');
+                    // Legacy support
+                    case 'pending': return t('Pending Confirmation');
+                    case 'shipped': return t('Delivering');
                     default: 
+                        console.warn(`Unknown order status: ${status}`);
                         return t('Unknown');
                 }
             }

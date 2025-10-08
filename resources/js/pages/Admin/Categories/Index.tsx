@@ -333,7 +333,15 @@ export default function Index() {
             />
 
             {/* Phân trang */}
-            <Pagination links={categories.links} />
+            <Pagination 
+                links={categories.links}
+                filters={{
+                    search,
+                    status
+                }}
+                preserveState={true}
+                preserveScroll={true}
+            />
 
             {/* Confirmation Modal */}
             <ConfirmationModal

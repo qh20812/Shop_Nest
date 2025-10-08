@@ -24,7 +24,7 @@ class ReturnRequestFactory extends Factory
             'return_number' => 'RTN-' . $this->faker->unique()->randomNumber(8),
             'reason' => $this->faker->numberBetween(1, 5),
             'description' => $this->faker->paragraph(),
-            'status' => 1, // Default: Pending
+            'status' => 'pending', // Default: Pending
             'refund_amount' => $this->faker->randomFloat(2, 10, 1000),
             'type' => $this->faker->numberBetween(1, 2), // 1: Refund, 2: Exchange
             'admin_note' => null,

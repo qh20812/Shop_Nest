@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,19 +15,10 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
-    const STATUS_PENDING = 0;
-    const STATUS_PROCESSING = 1;
-    const STATUS_SHIPPED = 2;
-    const STATUS_DELIVERED = 3;
-    const STATUS_CANCELLED = 4;
 
-    // Trạng thái thanh toán
-    public const PAYMENT_STATUS_UNPAID = 0;
-    public const PAYMENT_STATUS_PAID = 1;
-    public const PAYMENT_STATUS_FAILED = 2;
-    public const PAYMENT_STATUS_REFUNDED = 3;
 
     protected $primaryKey = 'order_id';
+    
     protected $fillable = [
         'customer_id',
         'order_number',
@@ -39,6 +32,22 @@ class Order extends Model
         'shipping_address_id',
         'shipper_id',
         'notes'
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     */
+    protected $casts = [
+        'status' => OrderStatus::class,
+        'payment_status' => PaymentStatus::class,
+        'sub_total' => 'decimal:2',
+        'shipping_fee' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'exchange_rate' => 'decimal:6',
+        'total_amount_base' => 'decimal:2',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
     public function customer(): BelongsTo
     {

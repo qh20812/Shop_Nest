@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from '../../components/home/ui/Navbar';
 import Header from '../../components/home/ui/Header';
 import Footer from '../../components/home/ui/Footer';
+import '@/../css/Home.css';
 
 interface HomeLayoutProps {
     children: React.ReactNode;
@@ -9,7 +10,7 @@ interface HomeLayoutProps {
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="home-layout">
             {/* Navbar */}
             <Navbar />
             
@@ -17,7 +18,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
             <Header />
             
             {/* Main Content */}
-            <main className="bg-gray-50">
+            <main className="home-main">
                 {children}
             </main>
             

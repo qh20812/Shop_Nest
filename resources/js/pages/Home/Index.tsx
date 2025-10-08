@@ -1,116 +1,150 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import HomeLayout from '../../layouts/app/HomeLayout';
+import FlashSaleCarousel from '@/components/home/ui/FlashSaleCarousel';
 
 export default function Home() {
-    // --- mock data ---
-    const flashSales = [
-        { id: 1, name: 'Tai nghe Bluetooth', image: 'https://cf.shopee.vn/file/2b74a9e2c8334f5a8cf63c568f9c9a5c_tn', price: 199000, discount: 30 },
-        { id: 2, name: 'Chuột Gaming RGB', image: 'https://cf.shopee.vn/file/b9e63f48c4c424ea3fa3329d646b9e9c_tn', price: 259000, discount: 40 },
-        { id: 3, name: 'Bàn phím cơ', image: 'https://cf.shopee.vn/file/36e3ecdf6c6d7d3c8a6acb9a315dfb2e_tn', price: 489000, discount: 25 },
-        { id: 4, name: 'Ổ cắm điện thông minh', image: 'https://cf.shopee.vn/file/cc792cb0db9c0f084c9fd5c46a3d0de7_tn', price: 99000, discount: 10 },
-        { id: 5, name: 'Loa mini bluetooth', image: 'https://cf.shopee.vn/file/f8d067e8dfc2cf8cb4e045a33e4b7b14_tn', price: 149000, discount: 35 },
-    ];
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(14); // Default: 2 rows × 7 items per row
 
+    // Handle responsive items per page
+    useEffect(() => {
+        const updateItemsPerPage = () => {
+            const width = window.innerWidth;
+            if (width <= 480) {
+                setItemsPerPage(15); // 3 cols × 5 rows
+            } else if (width <= 768) {
+                setItemsPerPage(16); // 4 cols × 4 rows
+            } else {
+                setItemsPerPage(14); // 7 cols × 2 rows
+            }
+            setCurrentPage(0); // Reset to first page when changing layout
+        };
+
+        updateItemsPerPage();
+        window.addEventListener('resize', updateItemsPerPage);
+
+        return () => window.removeEventListener('resize', updateItemsPerPage);
+    }, []);
+
+    // All categories data
     const categories = [
-        { id: 1, name: 'Điện thoại', image: 'https://cf.shopee.vn/file/sg-11134201-7rd58-lp2h58nknzx3a3_tn' },
-        { id: 2, name: 'Laptop', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5f-lp2h58nknzx3a4_tn' },
-        { id: 3, name: 'Tai nghe', image: 'https://cf.shopee.vn/file/sg-11134201-7rd57-lp2h58nknzx3a5_tn' },
-        { id: 4, name: 'Đồng hồ', image: 'https://cf.shopee.vn/file/sg-11134201-7rd58-lp2h58nknzx3a6_tn' },
-        { id: 5, name: 'Gia dụng', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5e-lp2h58nknzx3a7_tn' },
+        { img: "https://down-vn.img.susercontent.com/file/687f3967b7c2fe6a134a2c11894eea4b@resize_w640_nl.webp", name: "Điện thoại" },
+        { img: "https://down-vn.img.susercontent.com/file/978b9e4cb61c611aaaf58664fae133c5@resize_w640_nl.webp", name: "Thời trang nữ" },
+        { img: "https://down-vn.img.susercontent.com/file/74ca517e1fa74dc4d974e5d03c3139de@resize_w640_nl.webp", name: "Thời trang nam" },
+        { img: "https://down-vn.img.susercontent.com/file/31234a27876fb89cd522d7e3db1ba5ca@resize_w640_nl.webp", name: "Giày dép" },
+        { img: "https://down-vn.img.susercontent.com/file/7abfbfee3c4844652b4a8245e473d857@resize_w640_nl.webp", name: "Điện tử" },
+        { img: "https://down-vn.img.susercontent.com/file/24b194a695ea59d384768b7b471d563f@resize_w640_nl.webp", name: "Đồ gia dụng" },
+        { img: "https://down-vn.img.susercontent.com/file/75ea42f9eca124e9cb3cde744c060e4d@resize_w640_nl.webp", name: "Sức khỏe" },
+        { img: "https://down-vn.img.susercontent.com/file/6cb7e633f8b63757463b676bd19a50e4@resize_w640_nl.webp", name: "Thể thao" },
+        { img: "https://down-vn.img.susercontent.com/file/c3f3edfaa9f6dafc4825b77d8449999d@resize_w640_nl.webp", name: "Phụ kiện" },
+        { img: "https://down-vn.img.susercontent.com/file/099edde1ab31df35bc255912bab54a5e@resize_w640_nl.webp", name: "Đồ chơi" },
+        { img: "https://down-vn.img.susercontent.com/file/36013311815c55d303b0e6c62d6a8139@resize_w640_nl.webp", name: "Đồ dùng học tập" },
+        { img: "https://down-vn.img.susercontent.com/file/ec14dd4fc238e676e43be2a911414d4d@resize_w640_nl.webp", name: "Làm đẹp" },
+        // Add more categories to demonstrate carousel
+        { img: "https://down-vn.img.susercontent.com/file/978b9e4cb61c611aaaf58664fae133c5@resize_w640_nl.webp", name: "Đồng hồ" },
+        { img: "https://down-vn.img.susercontent.com/file/687f3967b7c2fe6a134a2c11894eea4b@resize_w640_nl.webp", name: "Máy tính" },
+        { img: "https://down-vn.img.susercontent.com/file/74ca517e1fa74dc4d974e5d03c3139de@resize_w640_nl.webp", name: "Đồ nội thất" },
+        { img: "https://down-vn.img.susercontent.com/file/31234a27876fb89cd522d7e3db1ba5ca@resize_w640_nl.webp", name: "Xe cộ" },
+        { img: "https://down-vn.img.susercontent.com/file/7abfbfee3c4844652b4a8245e473d857@resize_w640_nl.webp", name: "Nhà cửa" },
+        { img: "https://down-vn.img.susercontent.com/file/24b194a695ea59d384768b7b471d563f@resize_w640_nl.webp", name: "Du lịch" },
     ];
 
-    const topSearches = [
-        { id: 1, title: 'Áo thun nam', searches: '50K+', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5i-lp2h58nknzx3a8_tn' },
-        { id: 2, title: 'Điện thoại iPhone', searches: '42K+', image: 'https://cf.shopee.vn/file/sg-11134201-7rd58-lp2h58nknzx3a9_tn' },
-        { id: 3, title: 'Son môi', searches: '30K+', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5a-lp2h58nknzx3a0_tn' },
-        { id: 4, title: 'Giày thể thao', searches: '27K+', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5j-lp2h58nknzx3b1_tn' },
-        { id: 5, title: 'Balo học sinh', searches: '25K+', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5a-lp2h58nknzx3b2_tn' },
-    ];
+    const totalPages = Math.ceil(categories.length / itemsPerPage);
+    const currentCategories = categories.slice(
+        currentPage * itemsPerPage,
+        (currentPage + 1) * itemsPerPage
+    );
 
-    const dailyDiscover = [
-        { id: 1, name: 'Áo sơ mi nam', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5g-lp2h58nknzx3b3_tn', price: 129000 },
-        { id: 2, name: 'Quần jean nữ', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5g-lp2h58nknzx3b4_tn', price: 179000 },
-        { id: 3, name: 'Tai nghe có dây', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5g-lp2h58nknzx3b5_tn', price: 59000 },
-        { id: 4, name: 'Bình giữ nhiệt', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5g-lp2h58nknzx3b6_tn', price: 99000 },
-        { id: 5, name: 'Đèn bàn học', image: 'https://cf.shopee.vn/file/sg-11134201-7rd5g-lp2h58nknzx3b7_tn', price: 149000 },
-    ];
+    const nextPage = () => {
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const prevPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
 
     return (
         <HomeLayout>
             <Head title="ShopNest - Trang chủ" />
-            
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                
-                {/* Welcome Section */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-blue-700 mb-4">Welcome to ShopNest</h1>
-                    <p className="text-lg text-gray-600 mb-8">
-                        Khám phá những sản phẩm tuyệt vời và ưu đãi hấp dẫn!
-                    </p>
-                    <Link
-                        href="/login"
-                        className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300"
-                    >
-                        Đăng nhập
-                    </Link>
+            <div className="home-content">
+                <div className="home-component">
+                    <div className="category-title">
+                        <h2>danh mục</h2>
+                    </div>
+                    <div className="category-carousel">
+                        <div className="carousel-container">
+                            {/* Previous Button */}
+                            {currentPage > 0 && (
+                                <button
+                                    className="carousel-btn carousel-btn-prev"
+                                    onClick={prevPage}
+                                    aria-label="Previous categories"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="15,18 9,12 15,6"></polyline>
+                                    </svg>
+                                </button>
+                            )}
+
+                            <div className="category-content">
+                                <ul>
+                                    {currentCategories.map((category, index) => (
+                                        <li key={`${currentPage}-${index}`}>
+                                            <img src={category.img} alt={category.name} />
+                                            <span>{category.name}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Next Button */}
+                            {currentPage < totalPages - 1 && (
+                                <button
+                                    className="carousel-btn carousel-btn-next"
+                                    onClick={nextPage}
+                                    aria-label="Next categories"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="9,18 15,12 9,6"></polyline>
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Carousel Indicators */}
+                        <div className="carousel-indicators">
+                            {Array.from({ length: totalPages }, (_, index) => (
+                                <button
+                                    key={index}
+                                    className={`indicator ${index === currentPage ? 'active' : ''}`}
+                                    onClick={() => setCurrentPage(index)}
+                                    aria-label={`Go to page ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </div>
-
-                {/* FLASH SALE */}
-                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🔥 Flash Sale</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {flashSales.map(item => (
-                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all cursor-pointer">
-                                <img src={item.image} alt={item.name} className="object-cover w-full h-28 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium text-gray-800">{item.name}</h3>
-                                <p className="text-red-500 font-semibold mt-1">{item.price.toLocaleString()}₫</p>
-                                <span className="text-xs text-gray-500">Giảm {item.discount}%</span>
-                            </div>
-                        ))}
+                <div className="home-component">
+                    <div className="flash-sale-title">
+                        <h2>f<i className="bi bi-lightning-fill"></i>ash sale</h2>
+                        <div className="flash-sale-timer">
+                            {/* giờ */}
+                            <div className="timer">00</div>
+                            {/* phút */}
+                            <div className="timer">03</div>
+                            {/* giây */}
+                            <div className="timer">59</div>
+                        </div>
                     </div>
-                </section>
-
-                {/* CATEGORIES */}
-                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🏷️ Danh mục</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {categories.map(cat => (
-                            <div key={cat.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all">
-                                <img src={cat.image} alt={cat.name} className="object-cover w-full h-24 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium text-gray-800">{cat.name}</h3>
-                            </div>
-                        ))}
+                    <div className="flash-sale-content">
+                        <FlashSaleCarousel />
                     </div>
-                </section>
-
-                {/* TOP SEARCH */}
-                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-6">🔍 Tìm kiếm hàng đầu</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {topSearches.map(s => (
-                            <div key={s.id} className="text-center bg-white border rounded-lg shadow-sm hover:shadow-md p-3 cursor-pointer transition-all">
-                                <img src={s.image} alt={s.title} className="object-cover w-full h-24 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium text-gray-800">{s.title}</h3>
-                                <p className="text-xs text-gray-500">{s.searches} lượt tìm</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* DAILY DISCOVER */}
-                <section className="mb-12 bg-white rounded-xl shadow-lg p-6">
-                    <h2 className="text-2xl font-bold text-blue-800 mb-6">💡 Gợi ý hôm nay</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {dailyDiscover.map(item => (
-                            <div key={item.id} className="bg-white border rounded-lg shadow-sm hover:shadow-xl p-3 text-center transition-all cursor-pointer">
-                                <img src={item.image} alt={item.name} className="object-cover w-full h-28 rounded-lg mb-2" />
-                                <h3 className="text-sm font-medium text-gray-800">{item.name}</h3>
-                                <p className="text-red-500 font-semibold mt-1">{item.price.toLocaleString()}₫</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                </div>
             </div>
         </HomeLayout>
     );

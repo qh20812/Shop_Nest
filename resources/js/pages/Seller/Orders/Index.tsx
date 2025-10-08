@@ -1,16 +1,17 @@
-
+import Toast from '@/components/admin/users/Toast';
 import DataTable from '@/components/ui/DataTable';
 import FilterPanel from '@/components/ui/FilterPanel';
 import Pagination from '@/components/ui/Pagination';
-import Toast from '@/components/admin/users/Toast';
+import AppLayout from '@/layouts/app/AppLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
 
 interface Customer {
     id: number;
     first_name: string;
     last_name: string;
+    email?: string;
+    phone?: string;
 }
 
 interface Order {
@@ -26,78 +27,105 @@ interface PageProps {
     orders: {
         data: Order[];
         links: { url: string | null; label: string; active: boolean }[];
+        meta?: { total?: number; per_page?: number; current_page?: number };
     };
-    filters: { search?: string; status?: string };
+    filters?: { search?: string; status?: string };
+    stats?: { [k: string]: number };
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
-// Helper hiển thị trạng thái
-const getStatusInfo = (status: number): { text: string; className: string } => {
-    switch (status) {
+
+const STATUS_OPTIONS = [
+    { value: '', label: 'All' },
+    { value: '0', label: 'Pending' },
+    { value: '1', label: 'Processing' },
+    { value: '2', label: 'Shipped' },
+    { value: '3', label: 'Delivered' },
+    { value: '4', label: 'Cancelled' },
+];
+
+
+const getStatusInfo = (status: number) => {
+    switch (Number(status)) {
+        case 0:
+            return { text: 'Pending', className: 'bg-yellow-100 text-yellow-800' };
         case 1:
-            return { text: 'Đang chờ xử lý', className: 'bg-yellow-100 text-yellow-800' };
+            return { text: 'Processing', className: 'bg-blue-100 text-blue-800' };
         case 2:
-            return { text: 'Đang xử lý', className: 'bg-blue-100 text-blue-800' };
+            return { text: 'Shipped', className: 'bg-indigo-100 text-indigo-800' };
         case 3:
-            return { text: 'Đã giao hàng', className: 'bg-indigo-100 text-indigo-800' };
+            return { text: 'Delivered', className: 'bg-green-100 text-green-800' };
         case 4:
-            return { text: 'Đã giao', className: 'bg-green-100 text-green-800' };
-        case 5:
-            return { text: 'Đã hủy', className: 'bg-red-100 text-red-800' };
+            return { text: 'Cancelled', className: 'bg-red-100 text-red-800' };
         default:
-            return { text: 'Không xác định', className: 'bg-gray-100 text-gray-800' };
+            return { text: 'Unknown', className: 'bg-gray-100 text-gray-800' };
     }
 };
 
 export default function Index() {
-    const { orders, filters = {}, flash } = usePage<PageProps>().props;
+    const { orders, filters = {}, stats, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (flash?.success) {
-            setToast({ type: 'success', message: flash.success });
-        } else if (flash?.error) {
-            setToast({ type: 'error', message: flash.error });
-        }
+        if (flash?.success) setToast({ type: 'success', message: flash.success });
+        else if (flash?.error) setToast({ type: 'error', message: flash.error });
     }, [flash]);
 
-    const applyFilters = () => {
-        router.get('/admin/orders', { search, status }, { preserveState: true });
+    const applyFilters = (pageUrl?: string) => {
+        setLoading(true);
+        const url = pageUrl || '/seller/orders';
+        router.get(
+            url,
+            { search, status },
+            {
+                preserveState: true,
+                replace: true,
+                onFinish: () => setLoading(false),
+            },
+        );
     };
 
     const orderColumns = [
         {
-            header: 'Mã đơn hàng',
+            header: 'Order Code',
             cell: (order: Order) => `#${order.order_number}`,
         },
         {
-            header: 'Khách hàng',
+            header: 'Customer',
             cell: (order: Order) => `${order.customer.first_name} ${order.customer.last_name}`,
         },
         {
-            header: 'Ngày đặt',
-            cell: (order: Order) => new Date(order.created_at).toLocaleDateString('vi-VN'),
+            header: 'Created At',
+            cell: (order: Order) => new Date(order.created_at).toLocaleString('en-US'),
         },
         {
-            header: 'Tổng tiền',
-            cell: (order: Order) => `${order.total_amount.toLocaleString('vi-VN')} ₫`,
+            header: 'Total Amount',
+            cell: (order: Order) => `$${order.total_amount.toLocaleString('en-US')}`,
         },
         {
-            header: 'Trạng thái',
+            header: 'Status',
             cell: (order: Order) => {
-                const statusInfo = getStatusInfo(order.status);
-                return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusInfo.className}`}>{statusInfo.text} </span>;
+                const s = getStatusInfo(order.status);
+                return (
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.className}`}>
+                        {s.text}
+                    </span>
+                );
             },
         },
         {
-            header: 'Hành động',
+            header: 'Action',
             cell: (order: Order) => (
-                <Link href={route('seller.orders.show', order.order_id)} className="text-blue-500 hover:underline">
-                    Xem chi tiết{' '}
+                <Link
+                    href={`/seller/orders/${order.order_id}`}
+                    className="text-blue-500 hover:underline"
+                >
+                    View Details
                 </Link>
             ),
         },
@@ -105,49 +133,75 @@ export default function Index() {
 
     return (
         <AppLayout>
-            {' '}
-            <Head title="Quản lý Đơn hàng" />
-            ```
-            {/* Thông báo */}
-            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-            {/* Bộ lọc */}
+            <Head title="Orders List" />
+
+            {/* Stats summary (if provided by backend) */}
+            {stats && (
+                <div className="mb-4 flex flex-wrap gap-3">
+                    {Object.entries(stats).map(([k, v]) => (
+                        <div key={k} className="rounded border bg-gray-50 px-3 py-2">
+                            <div className="text-sm font-medium">{k}</div>
+                            <div className="text-lg font-bold">{v}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Toast message */}
+            {toast && (
+                <Toast
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
+            {/* Filter panel */}
             <FilterPanel
-                title="Order Management"
+                title="Orders Management"
                 breadcrumbs={[
-                    { label: 'Admin', href: '#' },
-                    { label: 'Orders', href: '#', active: true },
+                    { label: 'Seller Dashboard', href: '/seller/dashboard' },
+                    { label: 'Orders', href: '/seller/orders', active: true },
                 ]}
                 searchConfig={{
                     value: search,
                     onChange: setSearch,
-                    placeholder: 'Tìm theo mã đơn hàng...',
+                    placeholder: 'Search by order code or customer name...',
                 }}
                 filterConfigs={[
                     {
                         value: status,
                         onChange: setStatus,
-                        label: '-- Trạng thái --',
-                        options: [
-                            { value: '1', label: 'Đang chờ xử lý' },
-                            { value: '2', label: 'Đang xử lý' },
-                            { value: '3', label: 'Đã giao hàng' },
-                            { value: '4', label: 'Đã giao' },
-                            { value: '5', label: 'Đã hủy' },
-                        ],
+                        label: '-- Status --',
+                        options: STATUS_OPTIONS.map((o) => ({
+                            value: o.value,
+                            label: o.label,
+                        })),
                     },
                 ]}
-                onApplyFilters={applyFilters}
+                onApplyFilters={() => applyFilters('/seller/orders')}
             />
-            {/* Bảng dữ liệu */}
+
+            {/* Orders table */}
             <DataTable
                 columns={orderColumns}
-                data={orders.data}
-                headerTitle="Danh sách đơn hàng"
+                data={orders?.data || []}
+                headerTitle="Orders List"
                 headerIcon="bx-cart"
-                emptyMessage="Không có đơn hàng nào"
+                emptyMessage="No orders found"
+                {...({ loading } as any)}
             />
-            {/* Phân trang */}
-            <Pagination links={orders.links} />
+
+            {/* Pagination */}
+            <Pagination
+                links={orders?.links || []}
+                {...({
+                    onClick: (linkUrl: string | null) => {
+                        if (!linkUrl) return;
+                        applyFilters(linkUrl);
+                    },
+                } as any)}
+            />
         </AppLayout>
     );
 }

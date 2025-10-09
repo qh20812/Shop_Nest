@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Translatable\HasTranslations;
+
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,HasTranslations;
 
     protected $primaryKey = 'product_id';
 
@@ -30,10 +32,10 @@ class Product extends Model
         'is_active' => 'boolean',
         'name' => 'array',
         'description' => 'array',
-        'status' => ProductStatus::class,
+        // 'status' => ProductStatus::class,
     ];
 
-
+    protected $translatable = ['name', 'description'];
 
     // Relationships
     public function category(): BelongsTo
@@ -65,4 +67,15 @@ class Product extends Model
     {
         return $this->hasMany(Review::class, 'product_id');
     }
+
+    public function getStatusAttribute($value)
+{
+    // Nếu là số → map qua fromLegacyInt()
+    if (is_numeric($value)) {
+        return ProductStatus::fromLegacyInt((int)$value);
+    }
+
+    // Nếu đã là string hợp lệ → lấy enum trực tiếp
+    return ProductStatus::from($value);
+}
 }

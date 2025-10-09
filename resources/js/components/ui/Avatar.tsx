@@ -1,65 +1,66 @@
-import React from 'react';
+/** @jsxImportSource react */
+import * as React from 'react';
 
 interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
+  id?: number;
+  first_name?: string;
+  last_name?: string;
   username?: string;
   avatar?: string;
   avatar_url?: string;
 }
 
 interface AvatarProps {
-  user: User;
+  user?: User | null;
+  src?: string | null;
+  alt?: string;
   size?: number;
 }
 
-export default function Avatar({ user, size = 36 }: AvatarProps) {
+export default function Avatar({ user = null, src = null, alt = 'User', size = 36 }: AvatarProps) {
   const [imageError, setImageError] = React.useState(false);
 
-  // Generate initials from first_name or username
   const getInitials = () => {
-    const name = user.first_name || user.username || 'U';
-    return name.charAt(0).toUpperCase();
+    const name = (user && (user.first_name || user.username)) || alt || 'U';
+    return String(name).charAt(0).toUpperCase();
   };
 
-  // Use avatar_url if available, fallback to avatar
-  const avatarSrc = user.avatar_url || user.avatar;
-  
-  // If user has avatar and no image error, show the avatar image
+  const avatarSrc = src ?? user?.avatar_url ?? user?.avatar ?? null;
+
   if (avatarSrc && !imageError) {
     return (
       <img
         src={avatarSrc}
-        alt={`${user.first_name || user.username || 'User'} avatar`}
+        alt={`${alt} avatar`}
         style={{
           width: `${size}px`,
           height: `${size}px`,
-          borderRadius: "50%",
-          objectFit: "cover",
-          border: "2px solid var(--grey)"
+          borderRadius: '50%',
+          objectFit: 'cover',
+          border: '2px solid var(--grey)',
         }}
         onError={() => setImageError(true)}
       />
     );
   }
 
-  // Fallback to initials avatar
   return (
-    <div 
+    <div
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: "50%",
-        background: "var(--primary)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "var(--light)",
-        fontWeight: "600",
+        borderRadius: '50%',
+        background: 'var(--primary)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--light)',
+        fontWeight: '600',
         fontSize: `${size * 0.4}px`,
-        border: "2px solid var(--grey)"
+        border: '2px solid var(--grey)',
       }}
+      aria-label={alt}
+      role="img"
     >
       {getInitials()}
     </div>

@@ -34,6 +34,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     require __DIR__.'/seller.php';
 });
 
+
+Route::view('/customer/dashboard', 'customer.dashboard')->name('customer.dashboard');
+
+
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';

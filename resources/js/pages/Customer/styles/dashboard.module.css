@@ -1,0 +1,110 @@
+.page {
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: #111827;
+    background: #f7fafc;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profileInfo { display:flex; flex-direction:column; gap:2px; }
+.profileName { font-weight:600; }
+.profileEmail { font-size:12px; color:#6b7280; }
+.profileStatus { font-size:12px; color:#10b981; }
+.editProfile { margin-left:12px; color:#2563eb; text-decoration:none; font-size:13px; }
+
+.quickActions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.actionBtn {
+    background:#2563eb;
+    color:white;
+    padding:8px 12px;
+    border-radius:6px;
+    text-decoration:none;
+    font-size:13px;
+    display:inline-block;
+}
+
+.insights {
+    display:grid;
+    grid-template-columns: repeat(4,1fr);
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.insightCard {
+    background: white;
+    border-radius:10px;
+    padding:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.icon { font-size:20px; margin-bottom:6px; }
+.value { font-size:20px; font-weight:700; margin-bottom:2px; }
+.title { font-size:13px; color:#6b7280; }
+
+.midRow {
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.leftColumn { flex:1 1 640px; min-width:300px; }
+.rightColumn { width:320px; display:flex; flex-direction:column; gap:12px; }
+
+.recent h3 { margin:0 0 8px 0; }
+.tableWrap { overflow:auto; background:white; border-radius:8px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.table { width:100%; border-collapse:collapse; }
+.table th, .table td { padding:8px 10px; text-align:left; font-size:13px; border-bottom:1px solid #eef2f7; white-space:nowrap; }
+.viewLink { color:#2563eb; text-decoration:none; font-size:13px; }
+
+.smallCard {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:white;
+    padding:12px;
+    border-radius:8px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.smallIcon { font-size:20px; }
+.smallBody { flex:1; }
+.smallValue { font-weight:700; font-size:18px; }
+.smallTitle { font-size:13px; color:#6b7280; }
+.smallAction { color:#2563eb; text-decoration:none; font-size:13px; }
+
+.empty { padding:14px; color:#6b7280; text-align:center; }
+
+@media (max-width: 900px) {
+    .insights { grid-template-columns: repeat(2,1fr); }
+    .rightColumn { width:100%; }
+    .leftColumn { min-width:100%; }
+}
+
+@media (max-width: 480px) {
+    .insights { grid-template-columns: 1fr; }
+    .headerRow { flex-direction:column; align-items:flex-start; gap:12px; }
+    .table th, .table td { font-size:12px; padding:8px; }
+}

@@ -72,6 +72,10 @@ return [
             'after_commit' => false,
         ],
 
+        'file' => [
+            'driver' => 'sync', // hoặc tùy chỉnh driver hợp lý cho dev
+        ],
+
     ],
 
     /*

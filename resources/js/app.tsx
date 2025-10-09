@@ -4,6 +4,8 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import React from 'react';
+import CustomerDashboard from './pages/Customer/Dasboard/Index';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
@@ -21,3 +23,8 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 // initializeTheme();
+
+const el = document.getElementById('customer-dashboard');
+if (el) {
+    createRoot(el).render(<CustomerDashboard />);
+}

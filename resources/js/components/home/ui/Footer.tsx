@@ -1,48 +1,91 @@
-import { useTranslation } from '../../../lib/i18n';
+import React from 'react'
 
-function Footer() {
-    const { t } = useTranslation();
+export default function Footer() {
     return (
-        <footer className="mt-8 bg-blue-300 border-t">
-            <div className="px-4 py-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3 md:text-center">
-                    {/* Cột 1: Logo và tên web */}
-                    <div className="flex flex-col items-center justify-center">
-                        <div className="flex items-center justify-center mb-2">
-                            <img src="https://down-vn.img.susercontent.com/file/fa6ada2555e8e51f369718bbc92ccc52@resize_w640_nl.webp" alt="ShopNest Logo" className="mr-2 w-14 h-14" />
-                            <span className="text-xl font-bold text-white">Shopnest</span>
+        <footer className='home-footer-container'>
+            <div className="home-footer-content">
+                <div className="home-footer-columns">
+                    {/* Left Column - Logo & Contact Info */}
+                    <div className="footer-column footer-column-logo">
+                        <div className="footer-logo">
+                            <img src="/image/ShopnestLogoNoColor.png" alt="ShopNest Logo" />
+                            <span className="footer-brand-name">ShopNest</span>
                         </div>
-                        {/* <p className="mt-2 text-sm text-blue-900">{t('slogan')}</p> */}
+                        <div className="footer-contact-info">
+                            <div className="contact-item">
+                                <i className="bi bi-geo-alt"></i>
+                                <span>123 Đường ABC, Quận 1, TP. HCM</span>
+                            </div>
+                            <div className="contact-item">
+                                <i className="bi bi-envelope"></i>
+                                <span>contact@shopnest.com</span>
+                            </div>
+                            <div className="contact-item">
+                                <i className="bi bi-telephone"></i>
+                                <span>0123 456 789</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Cột 2: Dịch vụ khách hàng */}
-                    <div className="flex flex-col items-center justify-center text-left">
-                        <h3 className="mb-3 font-semibold text-white text-md">{t('customerServiceTitle')}</h3>
-                        <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('helpCenter')}</a></li>
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('buyGuide')}</a></li>
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('sellGuide')}</a></li>
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('refundPolicy')}</a></li>
+                    {/* First Middle Column - About ShopNest */}
+                    <div className="footer-column">
+                        <h3 className="footer-column-title">Về ShopNest</h3>
+                        <ul className="footer-links">
+                            <li><a href="#">Giới thiệu</a></li>
+                            <li><a href="#">Tuyển dụng</a></li>
+                            <li><a href="#">Liên hệ</a></li>
+                            <li><a href="#">Blog</a></li>
                         </ul>
                     </div>
 
-                    {/* Cột 3: ShopNest */}
-                    <div className="flex flex-col items-center justify-center text-left">
-                        <h3 className="mb-3 font-semibold text-white text-md">ShopNest</h3>
-                        <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('AboutUs')}</a></li>
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('PrivacyPolicy')}</a></li>
-                            <li><a href="#" className="text-white transition hover:text-blue-900">{t('TermsOfUse')}</a></li>
+                    {/* Second Middle Column - Support Policies */}
+                    <div className="footer-column">
+                        <h3 className="footer-column-title">Chính sách & Hỗ trợ</h3>
+                        <ul className="footer-links">
+                            <li><a href="#">Chính sách bảo mật</a></li>
+                            <li><a href="#">Chính sách vận chuyển</a></li>
+                            <li><a href="#">Chính sách đổi trả</a></li>
+                            <li><a href="#">Điều khoản sử dụng</a></li>
+                            <li><a href="#">Hỗ trợ khách hàng</a></li>
                         </ul>
                     </div>
 
+                    {/* Right Column - Customer & Seller Links */}
+                    <div className="footer-column footer-column-split">
+                        {/* Customer Section */}
+                        <div className="footer-section">
+                            <h3 className="footer-section-title">Dành cho khách hàng</h3>
+                            <ul className="footer-links">
+                                <li><a href="#">Hướng dẫn mua hàng</a></li>
+                                <li><a href="#">Thanh toán & vận chuyển</a></li>
+                                <li><a href="#">Câu hỏi thường gặp</a></li>
+                            </ul>
+                        </div>
+                        
+                        {/* Seller Section */}
+                        <div className="footer-section">
+                            <h3 className="footer-section-title">Dành cho người bán</h3>
+                            <ul className="footer-links">
+                                <li><a href="#">Đăng ký bán hàng</a></li>
+                                <li><a href="#">Hướng dẫn bán hàng</a></li>
+                                <li><a href="#">Trung tâm người bán</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div className="pt-4 mt-8 text-center border-t">
-                    <p className="text-sm text-white">&copy; {new Date().getFullYear()} ShopNest. {t('copyright')}</p>
+            </div>
+            
+            <div className="home-footer-bottom">
+                <div className="footer-bottom-content">
+                    <span className="copyright">© {new Date().getFullYear()} ShopNest. All rights reserved.</span>
+                    <div className="footer-social">
+                        <span>Kết nối với chúng tôi:</span>
+                        <a href="#" className="social-link"><i className="bi bi-facebook"></i></a>
+                        <a href="#" className="social-link"><i className="bi bi-instagram"></i></a>
+                        <a href="#" className="social-link"><i className="bi bi-youtube"></i></a>
+                    </div>
                 </div>
             </div>
         </footer>
-    );
+    )
 }
-
-export default Footer;

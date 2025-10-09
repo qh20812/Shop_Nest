@@ -69,8 +69,8 @@ export default function Navbar() {
         <div className="main-nav">
           <div className="nav-logo">
             <a href="#">
-              <img src="/image/ShopnestLogoNoColor.png" alt="ShopNest" />
-              <span>Shopnest</span>
+              <img src="/image/ShopnestLogo.png" alt="ShopNest" />
+              <span>ShopNest</span>
             </a>
           </div>
           <div className="nav-search">

@@ -44,7 +44,7 @@ class AuthenticatedSessionController extends Controller
         
         // Check if user has Customer role
         if ($user && $user->role()->where('name->en', 'Customer')->exists()) {
-            return redirect()->intended(route('welcome', absolute: false))
+            return redirect()->intended(route('home', absolute: false))
                 ->with('success', 'Login successful!');
         }
 

@@ -54,7 +54,7 @@ class IsSeller
             }
 
             // Web redirect for normal requests
-            return redirect()->route('dashboard')->with('error', 'Bạn không có quyền truy cập trang này');
+            return redirect()->route('home')->with('error', 'Bạn không có quyền truy cập trang này');
         }
 
         return $next($request);

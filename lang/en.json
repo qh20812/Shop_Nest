@@ -8,6 +8,17 @@
     "Remember me": "Remember me",
     "Forget Your Password?": "Forget Your Password?",
     "Sign Up": "Sign Up",
+    "Seller Channel": "Seller Channel",
+    "Notifications": "Notifications",
+    "Support": "Support",
+    "Login": "Login",
+    "Account": "Account",
+    "My Orders": "My Orders",
+    "Search products, brands and more...": "Search products, brands and more...",
+    "Cart": "Cart",
+    "Recently added products": "Recently added products",
+    "No products": "No products",
+    "View Cart": "View Cart",
     "Dashboard": "Dashboard",
     "Admin Dashboard": "Admin Dashboard",
     "Welcome to Dashboard": "Welcome to Dashboard",
@@ -390,5 +401,8 @@
     "passwords.reset": "Your password has been reset!",
     "passwords.user": "We can't find a user with that email address.",
     "passwords.token": "This password reset token is invalid.",
-    "passwords.throttled": "Please wait before retrying."
+    "passwords.throttled": "Please wait before retrying.",
+    "auth.failed": "These credentials do not match our records.",
+    "auth.password": "The provided password is incorrect.",
+    "auth.throttle": "Too many login attempts. Please try again in :seconds seconds."
 }

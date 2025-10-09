@@ -68,6 +68,38 @@ class Product extends Model
         return $this->hasMany(Review::class, 'product_id');
     }
 
+    /**
+     * Get the shop that owns this product
+     */
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * Get product questions
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(ProductQuestion::class, 'product_id', 'product_id');
+    }
+
+    /**
+     * Get answered questions only
+     */
+    public function answeredQuestions()
+    {
+        return $this->questions()->where('status', 'answered');
+    }
+
+    /**
+     * Get wishlist items for this product
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class, 'product_id', 'product_id');
+    }
+
     public function getStatusAttribute($value)
 {
     // Nếu là số → map qua fromLegacyInt()

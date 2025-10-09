@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
@@ -88,5 +89,29 @@ class Order extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'order_id', 'order_id');
+    }
+
+    /**
+     * Get shipper rating for this order
+     */
+    public function shipperRating(): HasOne
+    {
+        return $this->hasOne(ShipperRating::class, 'order_id', 'order_id');
+    }
+
+    /**
+     * Get shipment journeys for this order
+     */
+    public function shipmentJourneys(): HasMany
+    {
+        return $this->hasMany(ShipmentJourney::class, 'order_id', 'order_id');
+    }
+
+    /**
+     * Get international addresses for this order
+     */
+    public function internationalAddresses()
+    {
+        return $this->morphMany(InternationalAddress::class, 'addressable');
     }
 }

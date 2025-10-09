@@ -1,11 +1,10 @@
 import React from 'react';
-import { usePage } from '@inertiajs/react';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Product {
     product_id: number;
-    name: { en: string; vi: string };
-    category: { name: { en: string; vi: string } };
+    name: string | { [key: string]: string };
+    category: { name: string | { [key: string]: string } };
     images?: Array<{ image_url: string; is_primary: boolean }>;
 }
 
@@ -13,32 +12,27 @@ interface ProductInfoCellProps {
     product: Product;
 }
 
-interface PageProps {
-    locale?: string;
-    [key: string]: unknown;
-}
-
 export default function ProductInfoCell({ product }: ProductInfoCellProps) {
-    const { t, locale } = useTranslation();
-    const { locale: pageLocale } = usePage<PageProps>().props;
-    
-    // Use locale from translation hook, fallback to page props, then to 'en'
-    const currentLocale = locale || pageLocale || 'en';
-    
+    const { t } = useTranslation();
+
+    // Safety helper to extract string from potential translation object
+    const getStringValue = (value: string | { [key: string]: string }): string => {
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object' && value !== null) {
+            const locale = document.documentElement.lang || 'en';
+            return value[locale] || value['en'] || value['vi'] || Object.values(value)[0] || '';
+        }
+        return '';
+    };
+
     // Helper functions to get localized names
     const getProductName = (): string => {
-        if (!product.name) return 'Unnamed Product';
-        if (typeof product.name === 'string') return product.name;
-        return product.name[currentLocale as keyof typeof product.name] || product.name.en || 'Unnamed Product';
+        return getStringValue(product.name) || 'Unnamed Product';
     };
     
     const getCategoryName = (): string => {
-        if (!product.category?.name) return t('No Category');
-        if (typeof product.category.name === 'string') return product.category.name;
-        return product.category.name[currentLocale as keyof typeof product.category.name] || product.category.name.en || t('No Category');
-    };
-    
-    // Get primary image or first image
+        return product.category?.name ? getStringValue(product.category.name) : t('No Category');
+    };    // Get primary image or first image
     const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
 
     return (

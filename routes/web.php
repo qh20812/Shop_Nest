@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Home/Index');
-})->name('home');
+// Public routes (accessible without login)
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/about', function () {
     return Inertia::render('Home/About');
@@ -27,20 +27,20 @@ Route::post('/language', function () {
     return redirect()->back();
 })->name('language.switch');
 
+// Protected routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', function(){
-        return Inertia::render('Home/Index');
-    })->name('home');
-
     require __DIR__.'/seller.php';
 });
 
+// Product routes (require auth for detailed actions)
 Route::prefix('products')->name('products.')->group(function () {
-    // Trang danh sách sản phẩm (nếu bạn có trang Index)
+    // Public product listing
     Route::get('/', [ProductController::class, 'index'])->name('index');
 
-    // Trang chi tiết sản phẩm
-    Route::get('/{product}', [ProductController::class, 'show'])->name('show');
+    // Product detail requires authentication
+    Route::get('/{product}', [ProductController::class, 'show'])
+        ->middleware('auth')
+        ->name('show');
 });
 
 require __DIR__.'/settings.php';

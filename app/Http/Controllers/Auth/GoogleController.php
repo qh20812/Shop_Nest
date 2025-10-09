@@ -146,9 +146,9 @@ class GoogleController extends Controller
             return redirect()->intended(route('home', absolute: false))
                 ->with('success', 'Login with Google successful!');
         }
-        
-        Log::info('Redirecting user to dashboard');
-        return redirect()->intended(route('dashboard', absolute: false))
+
+        Log::info('Redirecting user to home page');
+        return redirect()->intended(route('home', absolute: false))
             ->with('success', 'Login with Google successful!');
     }
 

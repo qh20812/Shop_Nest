@@ -13,7 +13,7 @@ import { useTranslation } from '../../../lib/i18n';
 
 interface Brand {
     brand_id: number;
-    name: string;
+    name: string | { [key: string]: string };
     description?: string;
     logo_url?: string;
     is_active: boolean;
@@ -35,6 +35,18 @@ interface PageProps {
 export default function Index() {
     const { t } = useTranslation();
     const { brands = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
+
+
+
+    // Safety helper to extract string from potential translation object
+    const getStringValue = (value: string | { [key: string]: string }): string => {
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object' && value !== null) {
+            const locale = document.documentElement.lang || 'en';
+            return value[locale] || value['en'] || value['vi'] || Object.values(value)[0] || '';
+        }
+        return '';
+    };
 
     // Helper function to convert HTML to plain text
     const htmlToPlainText = (html: string): string => {
@@ -104,24 +116,26 @@ export default function Index() {
     };
 
     const handleDeactivate = (brand: Brand) => {
+        const brandName = getStringValue(brand.name);
         setConfirmModal({
             isOpen: true,
             brandId: brand.brand_id,
-            brandName: brand.name,
+            brandName: brandName,
             action: 'deactivate',
             title: t("Confirm Deactivate Brand"),
-            message: `${t("Are you sure you want to deactivate brand")} "${brand.name}"? ${t("This will make it inactive but can be restored later.")}`
+            message: `${t("Are you sure you want to deactivate brand")} "${brandName}"? ${t("This will make it inactive but can be restored later.")}`
         });
     };
 
     const handleRestore = (brand: Brand) => {
+        const brandName = getStringValue(brand.name);
         setConfirmModal({
             isOpen: true,
             brandId: brand.brand_id,
-            brandName: brand.name,
+            brandName: brandName,
             action: 'restore',
             title: t("Confirm Restore Brand"),
-            message: `${t("Are you sure you want to restore brand")} "${brand.name}"? ${t("This will make it active again.")}`
+            message: `${t("Are you sure you want to restore brand")} "${brandName}"? ${t("This will make it active again.")}`
         });
     };
 
@@ -161,39 +175,41 @@ export default function Index() {
         },
         {
             header: t("Brand"),
-            cell: (brand: Brand) => (
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    {brand.logo_url ? (
-                        <img
-                            src={`/storage/${brand.logo_url}`}
-                            alt={brand.name}
-                            style={{
+            cell: (brand: Brand) => {
+                const brandName = getStringValue(brand.name);
+                return (
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        {brand.logo_url ? (
+                            <img
+                                src={`/storage/${brand.logo_url}`}
+                                alt={brandName}
+                                style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    objectFit: "contain",
+                                    borderRadius: "4px",
+                                    border: "1px solid var(--grey)"
+                                }}
+                            />
+                        ) : (
+                            <div style={{
                                 width: "40px",
                                 height: "40px",
-                                objectFit: "contain",
+                                backgroundColor: "var(--grey)",
                                 borderRadius: "4px",
-                                border: "1px solid var(--grey)"
-                            }}
-                        />
-                    ) : (
-                        <div style={{
-                            width: "40px",
-                            height: "40px",
-                            backgroundColor: "var(--grey)",
-                            borderRadius: "4px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "12px",
-                            color: "var(--dark-grey)"
-                        }}>
-                            {brand.name.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <div>
-                        <div style={{ fontWeight: "500", color: "var(--dark)" }}>
-                            {brand.name}
-                        </div>
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "12px",
+                                color: "var(--dark-grey)"
+                            }}>
+                                {brandName.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        <div>
+                            <div style={{ fontWeight: "500", color: "var(--dark)" }}>
+                                {brandName}
+                            </div>
                         {brand.description && (
                             <div style={{ 
                                 fontSize: "12px", 
@@ -210,7 +226,8 @@ export default function Index() {
                         )}
                     </div>
                 </div>
-            )
+                );
+            }
         },
         {
             header: t("Products"),

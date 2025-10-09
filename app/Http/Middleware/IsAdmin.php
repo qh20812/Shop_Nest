@@ -23,7 +23,7 @@ class IsAdmin
         // Lấy thông tin user và kiểm tra quyền admin với null safety
         $user = Auth::user();
         if (!$user?->isAdmin()) {
-            return redirect()->route('dashboard')->with('error', 'Bạn không có quyền truy cập trang này');
+            return redirect()->route('home')->with('error', 'Bạn không có quyền truy cập trang này');
         }
 
         // Cho phép tiếp tục nếu là admin

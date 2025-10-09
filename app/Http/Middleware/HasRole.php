@@ -49,7 +49,7 @@ class HasRole
         }
 
         if (!$hasRole) {
-            return redirect()->route('dashboard')->with('error', 'Bạn không có quyền truy cập trang này');
+            return redirect()->route('home')->with('error', 'Bạn không có quyền truy cập trang này');
         }
 
         // Cho phép tiếp tục nếu có role phù hợp

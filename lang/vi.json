@@ -8,6 +8,17 @@
     "Remember me": "Ghi nhớ đăng nhập",
     "Forget Your Password?": "Quên mật khẩu?",
     "Sign Up": "Đăng ký",
+    "Seller Channel": "Kênh Người Bán",
+    "Notifications": "Thông báo",
+    "Support": "Hỗ trợ",
+    "Login": "Đăng nhập",
+    "Account": "Tài khoản",
+    "My Orders": "Đơn mua",
+    "Search products, brands and more...": "Tìm kiếm sản phẩm, thương hiệu và nhiều hơn nữa...",
+    "Cart": "Giỏ hàng",
+    "Recently added products": "Sản phẩm mới thêm",
+    "No products": "Chưa có sản phẩm",
+    "View Cart": "Xem giỏ hàng",
     "Dashboard": "Bảng điều khiển",
     "Admin Dashboard": "Bảng điều khiển Admin",
     "Welcome to Dashboard": "Chào mừng đến với Bảng điều khiển",
@@ -391,5 +402,7 @@
     "passwords.reset": "Mật khẩu của bạn đã được đặt lại!",
     "passwords.user": "Chúng tôi không thể tìm thấy người dùng với địa chỉ email đó.",
     "passwords.token": "Mã thông báo đặt lại mật khẩu này không hợp lệ.",
-    "passwords.throttled": "Vui lòng đợi trước khi thử lại."
+    "passwords.throttled": "Vui lòng đợi trước khi thử lại.",
+    "auth.failed": "Thông tin đăng nhập không khớp với hồ sơ của chúng tôi.",
+    "auth.throttle": "Quá nhiều lần đăng nhập. Vui lòng thử lại sau trong :seconds giây."
 }

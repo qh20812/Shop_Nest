@@ -14,7 +14,7 @@ import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
     category_id: number;
-    name: { en: string; vi: string };
+    name: string;
 }
 
 interface Brand {
@@ -24,8 +24,8 @@ interface Brand {
 
 interface Product {
     product_id: number;
-    name: { en: string; vi: string };
-    category: { name: { en: string; vi: string } };
+    name: string;
+    category: { name: string };
     brand: { name: string };
     seller: { username: string; first_name: string; last_name: string };
     status: number;
@@ -48,8 +48,10 @@ interface PageProps {
 }
 
 export default function Index() {
-    const { t, locale } = useTranslation();
+    const { t } = useTranslation();
     const { products = { data: [], links: [] }, categories = [], brands = [], filters = {}, flash = {} } = usePage<PageProps>().props;
+
+
 
     const [search, setSearch] = useState(filters.search || '');
     const [categoryId, setCategoryId] = useState(filters.category_id || '');
@@ -58,22 +60,18 @@ export default function Index() {
 
     // Helper function to get localized category name
     const getCategoryName = (category: Category): string => {
-        return category.name[locale as keyof typeof category.name] || category.name.en || 'Unnamed Category';
+        return category.name || 'Unnamed Category';
     };
 
     // Helper function to get localized product name
     const getProductName = React.useCallback((product: Product): string => {
-        if (!product.name) return 'Unnamed Product';
-        if (typeof product.name === 'string') return product.name;
-        return product.name[locale as keyof typeof product.name] || product.name.en || 'Unnamed Product';
-    }, [locale]);
+        return product.name || 'Unnamed Product';
+    }, []);
 
     // Helper function to get localized product category name from product
     const getProductCategoryName = React.useCallback((product: Product): string => {
-        if (!product.category?.name) return t('No Category');
-        if (typeof product.category.name === 'string') return product.category.name;
-        return product.category.name[locale as keyof typeof product.category.name] || product.category.name.en || t('No Category');
-    }, [t, locale]);
+        return product.category?.name || t('No Category');
+    }, [t]);
 
     // Toast state
     const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);

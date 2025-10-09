@@ -1,8 +1,28 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Link, router } from '@inertiajs/react'
+import { usePage } from '@inertiajs/react'
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string;
+}
+
+interface PageProps {
+  auth: {
+    user: User | null;
+  };
+  locale: string;
+  [key: string]: unknown;
+}
 
 export default function Navbar() {
-  // Temporary state to simulate user login status
-  const isLoggedIn = false; // Change to true to see logged in state
+  const { auth, locale } = usePage<PageProps>().props;
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  
+  const isLoggedIn = !!auth.user;
 
   return (
     <nav className='home-navbar'>
@@ -16,51 +36,86 @@ export default function Navbar() {
           </div>
           <div className="top-nav-right">
             {isLoggedIn && (
-              <a href="#" className="nav-item notification-item">
+              <Link href="/notifications" className="nav-item notification-item">
                 <i className="bi bi-bell"></i>
-                Thông báo
-              </a>
+                {locale === 'vi' ? 'Thông báo' : 'Notifications'}
+              </Link>
             )}
             <a href="#" className="nav-item help-item">
               <i className="bi bi-question-circle"></i>
               Hỗ trợ
             </a>
             <div className="lang-dropdown">
-              <span className="lang-current">
+              <span 
+                className="lang-current"
+                onClick={() => setShowLangMenu(!showLangMenu)}
+              >
                 <i className="bi bi-globe"></i>
-                Tiếng Việt
+                {locale === 'vi' ? 'Tiếng Việt' : 'English'}
                 <i className="bi bi-chevron-down"></i>
               </span>
-              <div className="lang-menu">
-                <a href="#" className="lang-option active">Tiếng Việt</a>
-                <a href="#" className="lang-option">English</a>
-              </div>
+              {showLangMenu && (
+                <div className="lang-menu">
+                  <button 
+                    onClick={() => {
+                      router.post('/language', { locale: 'vi' });
+                      setShowLangMenu(false);
+                    }}
+                    className={`lang-option ${locale === 'vi' ? 'active' : ''}`}
+                  >
+                    Tiếng Việt
+                  </button>
+                  <button 
+                    onClick={() => {
+                      router.post('/language', { locale: 'en' });
+                      setShowLangMenu(false);
+                    }}
+                    className={`lang-option ${locale === 'en' ? 'active' : ''}`}
+                  >
+                    English
+                  </button>
+                </div>
+              )}
             </div>
             {!isLoggedIn ? (
-              <a href="#" className="nav-item login-btn">
-                Đăng nhập
-              </a>
+              <Link href="/login" className="nav-item login-btn">
+                {locale === 'vi' ? 'Đăng nhập' : 'Login'}
+              </Link>
             ) : (
               <div className="account-dropdown">
-                <span className="account-current">
-                  <i className="bi bi-person-circle"></i>
-                  Tài khoản
+                <span 
+                  className="account-current"
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                >
+                  {auth.user?.avatar ? (
+                    <img src={auth.user.avatar} alt="Avatar" className="avatar-img" />
+                  ) : (
+                    <i className="bi bi-person-circle"></i>
+                  )}
+                  {auth.user?.username || 'Tài khoản'}
                   <i className="bi bi-chevron-down"></i>
                 </span>
-                <div className="account-menu">
-                  <a href="#" className="account-option">
-                    <i className="bi bi-person"></i>
-                    Thông tin tài khoản
-                  </a>
-                  <a href="#" className="account-option">
-                    <i className="bi bi-clipboard-check"></i>
-                    Đơn mua
-                  </a>
-                  <a href="#" className="account-option">
-                    <i className="bi bi-box-arrow-right"></i>
-                    Đăng xuất
-                  </a>
-                </div>
+                {showAccountMenu && (
+                  <div className="account-menu">
+                    <Link href="/profile" className="account-option">
+                      <i className="bi bi-person"></i>
+                      {locale === 'vi' ? 'Thông tin tài khoản' : 'Profile'}
+                    </Link>
+                    <Link href="/orders" className="account-option">
+                      <i className="bi bi-clipboard-check"></i>
+                      {locale === 'vi' ? 'Đơn mua' : 'My Orders'}
+                    </Link>
+                    <Link 
+                      href="/logout" 
+                      method="post"
+                      as="button"
+                      className="account-option"
+                    >
+                      <i className="bi bi-box-arrow-right"></i>
+                      {locale === 'vi' ? 'Đăng xuất' : 'Logout'}
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

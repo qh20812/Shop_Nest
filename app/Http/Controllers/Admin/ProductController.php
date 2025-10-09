@@ -54,9 +54,56 @@ class ProductController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Get filter data
-        $categories = Category::select('category_id', 'name')->get();
-        $brands = Brand::select('brand_id', 'name')->get();
+        // Transform products to resolve translations
+        $transformedProducts = $products->getCollection()->map(function ($product) {
+            return [
+                'product_id' => $product->product_id,
+                'name' => $product->getTranslation('name', app()->getLocale()),
+                'category' => $product->category ? [
+                    'name' => $product->category->getTranslation('name', app()->getLocale())
+                ] : null,
+                'brand' => $product->brand ? [
+                    'name' => $product->brand->getTranslation('name', app()->getLocale())
+                ] : null,
+                'seller' => $product->seller ? [
+                    'username' => $product->seller->username,
+                    'first_name' => $product->seller->first_name,
+                    'last_name' => $product->seller->last_name
+                ] : null,
+                'status' => $product->status,
+                'images' => $product->images ? $product->images->map(function($image) {
+                    return [
+                        'image_url' => $image->image_url,
+                        'is_primary' => $image->is_primary
+                    ];
+                }) : null,
+                'variants' => $product->variants ? $product->variants->map(function($variant) {
+                    return [
+                        'price' => $variant->price
+                    ];
+                }) : null,
+                'variants_count' => $product->variants_count,
+                'variants_sum_stock_quantity' => $product->variants_sum_stock_quantity,
+            ];
+        });
+        $products->setCollection($transformedProducts);
+
+        // Get filter data and resolve translations
+        $categories = Category::select('category_id', 'name')->get()
+            ->map(function ($category) {
+                return [
+                    'category_id' => $category->category_id,
+                    'name' => $category->getTranslation('name', app()->getLocale())
+                ];
+            });
+        
+        $brands = Brand::select('brand_id', 'name')->get()
+            ->map(function ($brand) {
+                return [
+                    'brand_id' => $brand->brand_id,
+                    'name' => $brand->getTranslation('name', app()->getLocale())
+                ];
+            });
 
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,

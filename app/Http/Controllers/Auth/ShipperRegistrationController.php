@@ -66,7 +66,7 @@ class ShipperRegistrationController extends Controller
                 // Log the user in
                 Auth::login($user);
 
-                return redirect()->route('dashboard')
+                return redirect()->route('home')
                     ->with('success', 'Registration successful! Your shipper application is pending approval. You will be notified once reviewed.');
             });
         } catch (\Exception $e) {

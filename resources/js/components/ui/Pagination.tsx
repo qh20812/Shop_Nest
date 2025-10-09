@@ -21,7 +21,7 @@ export default function Pagination({ links, filters = {}, preserveState = true, 
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')
       );
-      
+
       router.get(url, cleanFilters, {
         preserveState,
         preserveScroll,
@@ -35,7 +35,7 @@ export default function Pagination({ links, filters = {}, preserveState = true, 
   }
 
   return (
-    <div 
+    <div
       style={{
         marginTop: "24px",
         display: "flex",
@@ -48,11 +48,41 @@ export default function Pagination({ links, filters = {}, preserveState = true, 
       }}
     >
       {links.map((link, index) => {
-        // Xử lý các label đặc biệt
+        // Robust label processing for previous/next buttons
         let displayLabel = link.label;
-        if (link.label.includes("Previous")) {
+        
+        // Function to check if this is a previous button
+        const isPreviousButton = (label: string): boolean => {
+          const normalizedLabel = label.toLowerCase().replace(/&[a-z]+;/g, ''); // Remove HTML entities
+          return (
+            normalizedLabel.includes('previous') ||
+            normalizedLabel.includes('trước') ||
+            normalizedLabel.includes('pagination.previous') ||
+            label === '&laquo; Previous' ||
+            label === '&laquo; Trước' ||
+            // Fallback: if it's the first link and has no URL (disabled), it's likely previous
+            (index === 0 && !link.url)
+          );
+        };
+        
+        // Function to check if this is a next button
+        const isNextButton = (label: string): boolean => {
+          const normalizedLabel = label.toLowerCase().replace(/&[a-z]+;/g, ''); // Remove HTML entities
+          return (
+            normalizedLabel.includes('next') ||
+            normalizedLabel.includes('sau') ||
+            normalizedLabel.includes('pagination.next') ||
+            label === 'Next &raquo;' ||
+            label === 'Sau &raquo;' ||
+            // Fallback: if it's the last link, it's likely next
+            (index === links.length - 1)
+          );
+        };
+        
+        // Set display label based on button type
+        if (isPreviousButton(link.label)) {
           displayLabel = "‹";
-        } else if (link.label.includes("Next")) {
+        } else if (isNextButton(link.label)) {
           displayLabel = "›";
         }
 

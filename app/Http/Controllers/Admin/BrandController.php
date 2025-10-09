@@ -33,6 +33,21 @@ class BrandController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Transform brands to resolve translations
+        $transformedBrands = $brands->getCollection()->map(function ($brand) {
+            return [
+                'brand_id' => $brand->brand_id,
+                'name' => $brand->getTranslation('name', app()->getLocale()),
+                'description' => $brand->description,
+                'logo_url' => $brand->logo_url,
+                'is_active' => $brand->is_active,
+                'deleted_at' => $brand->deleted_at,
+                'products_count' => $brand->products_count,
+                'created_at' => $brand->created_at,
+            ];
+        });
+        $brands->setCollection($transformedBrands);
+
         return Inertia::render('Admin/Brands/Index', [
             'brands' => $brands,
             'filters' => $request->only(['search', 'status']),

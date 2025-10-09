@@ -193,4 +193,84 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(UserAddress::class, 'default_address_id');
     }
+
+    /**
+     * Get shipper ratings given by customers
+     */
+    public function shipperRatings(): HasMany
+    {
+        return $this->hasMany(ShipperRating::class, 'shipper_id');
+    }
+
+    /**
+     * Get ratings given by this user to shippers
+     */
+    public function givenShipperRatings(): HasMany
+    {
+        return $this->hasMany(ShipperRating::class, 'customer_id');
+    }
+
+    /**
+     * Get international addresses for this user
+     */
+    public function internationalAddresses()
+    {
+        return $this->morphMany(InternationalAddress::class, 'addressable');
+    }
+
+    /**
+     * Get default wishlist
+     */
+    public function defaultWishlist()
+    {
+        return $this->wishlists()->where('is_default', true)->first();
+    }
+
+    /**
+     * Get product questions asked by this user
+     */
+    public function productQuestions(): HasMany
+    {
+        return $this->hasMany(ProductQuestion::class);
+    }
+
+    /**
+     * Get product answers provided by this user
+     */
+    public function productAnswers(): HasMany
+    {
+        return $this->hasMany(ProductAnswer::class);
+    }
+
+    /**
+     * Get orders assigned to this shipper
+     */
+    public function assignedOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'shipper_id');
+    }
+
+    /**
+     * Get shipment journeys handled by this shipper
+     */
+    public function shipmentJourneys(): HasMany
+    {
+        return $this->hasMany(ShipmentJourney::class, 'shipper_id');
+    }
+
+    /**
+     * Get shops owned by this user
+     */
+    public function ownedShops(): HasMany
+    {
+        return $this->hasMany(Shop::class, 'owner_id');
+    }
+
+    /**
+     * Get average shipper rating
+     */
+    public function getAverageShipperRatingAttribute()
+    {
+        return $this->shipperRatings()->avg('rating');
+    }
 }

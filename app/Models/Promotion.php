@@ -27,6 +27,14 @@ class Promotion extends Model
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'last_used_at' => 'datetime',
+        'customer_eligibility' => 'array',
+        'geographic_restrictions' => 'array',
+        'product_restrictions' => 'array',
+        'time_restrictions' => 'array',
+        'is_active' => 'boolean',
+        'stackable' => 'boolean',
+        'first_time_customer_only' => 'boolean',
     ];
 
     /**
@@ -66,5 +74,79 @@ class Promotion extends Model
             'promotion_id',
             'category_id'
         );
+    }
+
+    /**
+     * Check if promotion is active and within date range
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active 
+            && $this->start_date <= now() 
+            && $this->end_date >= now();
+    }
+
+    /**
+     * Check if promotion budget is exceeded
+     */
+    public function isBudgetExceeded(): bool
+    {
+        return $this->budget_limit && $this->budget_used >= $this->budget_limit;
+    }
+
+    /**
+     * Check if daily usage limit is exceeded
+     */
+    public function isDailyLimitExceeded(): bool
+    {
+        return $this->daily_usage_limit && $this->daily_usage_count >= $this->daily_usage_limit;
+    }
+
+    /**
+     * Check if promotion can be used
+     */
+    public function canBeUsed(): bool
+    {
+        return $this->isActive() 
+            && !$this->isBudgetExceeded() 
+            && !$this->isDailyLimitExceeded()
+            && ($this->usage_limit === null || $this->used_count < $this->usage_limit);
+    }
+
+    /**
+     * Apply the promotion (increment counters)
+     */
+    public function apply(float $discountAmount): void
+    {
+        $this->increment('used_count');
+        $this->increment('daily_usage_count');
+        $this->increment('budget_used', $discountAmount);
+        $this->update(['last_used_at' => now()]);
+    }
+
+    /**
+     * Scope to get active promotions
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now());
+    }
+
+    /**
+     * Scope to get high priority promotions
+     */
+    public function scopeHighPriority($query)
+    {
+        return $query->whereIn('priority', ['high', 'urgent']);
+    }
+
+    /**
+     * Scope to get stackable promotions
+     */
+    public function scopeStackable($query)
+    {
+        return $query->where('stackable', true);
     }
 }

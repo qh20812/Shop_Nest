@@ -1,5 +1,4 @@
 import React from 'react';
-import FlashSaleCarousel from './FlashSaleCarousel';
 
 export default function TopSearchSection() {
     return (
@@ -8,7 +7,7 @@ export default function TopSearchSection() {
                 <h2>tìm kiếm hàng đầu</h2>
             </div>
             <div className="top-search-content">
-                <FlashSaleCarousel />
+                
             </div>
         </div>
     );

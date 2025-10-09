@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\IsSeller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register route middleware alias for isSeller to ensure group middleware works
+        $this->app['router']->aliasMiddleware('isSeller', IsSeller::class);
+
         // Disable SSL verification for local development (Google OAuth)
         if (config('app.env') === 'local') {
             $guzzleConfig = [

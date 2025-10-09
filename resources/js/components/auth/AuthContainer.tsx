@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
 import TogglePanel from './TogglePanel';
 import '../../../css/AuthPage.css';
+import { useTranslation } from '../../lib/i18n';
 
 interface AuthContainerProps {
   defaultMode?: 'signin' | 'signup';
@@ -14,6 +15,7 @@ export default function AuthContainer({ defaultMode = 'signin' }: AuthContainerP
   const handleToggle = (mode: 'signin' | 'signup') => {
     setIsActive(mode === 'signup');
   };
+  const { t } = useTranslation();
 
   return (
     <div className={`container ${isActive ? 'active' : ''}`} id="container">
@@ -21,18 +23,18 @@ export default function AuthContainer({ defaultMode = 'signin' }: AuthContainerP
       <SignInForm />
       <div className="toggle-container">
         <div className="toggle">
-          <TogglePanel 
-            type="left" 
-            title="Welcome Back!"
-            description="Enter your personal details to use all of site features"
-            buttonText="Sign In"
+          <TogglePanel
+            type="left"
+            title={t("Welcome Back!")}
+            description={t("Enter your personal details to use all of site features")}
+            buttonText={t("Sign In")}
             onClick={() => handleToggle('signin')}
           />
-          <TogglePanel 
-            type="right" 
-            title="Hello, Friend!"
-            description="Register with your personal details to use all of site features"
-            buttonText="Sign Up"
+          <TogglePanel
+            type="right"
+            title={t("Hello, Friend!")}
+            description={t("Register with your personal details to use all of site features")}
+            buttonText={t("Sign Up")}
             onClick={() => handleToggle('signup')}
           />
         </div>

@@ -27,9 +27,9 @@ Route::post('/language', function () {
 })->name('language.switch');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/', function(){
+        return Inertia::render('Home/Index');
+    })->name('home');
 
     require __DIR__.'/seller.php';
 });

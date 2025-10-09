@@ -24,13 +24,13 @@ export default function SignInForm() {
   return (
     <div className="form-container sign-in">
       <form onSubmit={onSubmit}>
-        <h1>Sign In</h1>
+        <h1>{t('Sign In')}</h1>
         <AuthSocialIcons baseHref="/auth/google" />
-        <span>or use your email password</span>
-        
-        <AuthInput 
-          type="email" 
-          placeholder="Email"
+        <span>{t('or use your email password')}</span>
+
+        <AuthInput
+          type="email"
+          placeholder={t('Email')}
           value={data.email}
           onChange={(e) => setData('email', e.target.value)}
           required
@@ -39,9 +39,9 @@ export default function SignInForm() {
           <div className="text-red-500 text-xs mt-1">{errors.email}</div>
         )}
 
-        <AuthInput 
-          type="password" 
-          placeholder="Password"
+        <AuthInput
+          type="password"
+          placeholder={t('Password')}
           value={data.password}
           onChange={(e) => setData('password', e.target.value)}
           required

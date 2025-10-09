@@ -42,7 +42,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'is_active' => true,
-            'provider' => 'manual', // Manual registration
+            'provider' => 'manual',
             'avatar' => null, // Manual users start with null avatar (will show initials)
             // Note: first_name, last_name, phone_number will be null initially
             // These can be updated later in ProfileController
@@ -52,12 +52,9 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         // Send welcome email
-        try {
-            Mail::to($user->email)->send(new WelcomeEmail($user));
-            Log::info('Welcome email sent successfully to: ' . $user->email);
-        } catch (\Exception $e) {
-            Log::error('Failed to send welcome email to: ' . $user->email . ' - Error: ' . $e->getMessage());
-        }
+
+        Mail::to($user->email)->send(new WelcomeEmail($user));
+
 
         // Log in the user
         Auth::login($user);

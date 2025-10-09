@@ -6,7 +6,7 @@ use App\Http\Controllers\Seller\ProductController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::prefix('seller')->name('seller.')->group(function () {
+Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->group(function () {
     // Seller Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     

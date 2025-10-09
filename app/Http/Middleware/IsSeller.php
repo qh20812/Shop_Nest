@@ -15,18 +15,48 @@ class IsSeller
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Kiểm tra người dùng đã đăng nhập chưa
+        // If user is not authenticated, return JSON for AJAX/Inertia or redirect to login
         if (!Auth::check()) {
+            if ($request->expectsJson() || method_exists($request, 'inertia') && $request->inertia() || $request->header('X-Inertia')) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
             return redirect()->route('login')->with('error', 'Bạn cần đăng nhập để truy cập trang này');
         }
 
-        // Lấy thông tin user và kiểm tra quyền seller với null safety
+        // Get user and check seller role defensively
         $user = Auth::user();
-        if (!$user?->isSeller()) {
+
+        $isSeller = false;
+        if ($user) {
+            if (method_exists($user, 'isSeller')) {
+                $isSeller = $user->isSeller();
+            } elseif (method_exists($user, 'hasRole')) {
+                $isSeller = $user->hasRole('seller');
+            } else {
+                // Fallback: check a role attribute or relation
+                if (method_exists($user, 'role')) {
+                    try {
+                        $isSeller = $user->role()->where('name->en', 'Seller')->exists();
+                    } catch (\Throwable $e) {
+                        $isSeller = false;
+                    }
+                } elseif (isset($user->role)) {
+                    $isSeller = $user->role === 'seller';
+                }
+            }
+        }
+
+        if (!$isSeller) {
+            // Return JSON 403 for AJAX/API/Inertia requests
+            if ($request->expectsJson() || method_exists($request, 'inertia') && $request->inertia() || $request->header('X-Inertia')) {
+                return response()->json(['message' => 'Forbidden. You do not have seller access.'], 403);
+            }
+
+            // Web redirect for normal requests
             return redirect()->route('dashboard')->with('error', 'Bạn không có quyền truy cập trang này');
         }
 
-        // Cho phép tiếp tục nếu là seller
         return $next($request);
     }
 }

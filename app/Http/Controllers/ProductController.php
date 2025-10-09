@@ -41,9 +41,9 @@ class ProductController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name->vi', 'like', "%$search%")
-                  ->orWhere('name->en', 'like', "%$search%")
-                  ->orWhere('description->vi', 'like', "%$search%")
-                  ->orWhere('description->en', 'like', "%$search%");
+                    ->orWhere('name->en', 'like', "%$search%")
+                    ->orWhere('description->vi', 'like', "%$search%")
+                    ->orWhere('description->en', 'like', "%$search%");
             });
         }
 
@@ -88,17 +88,33 @@ class ProductController extends Controller
         ])->findOrFail($productId);
 
         // Tính điểm trung bình đánh giá
-        $averageRating = $product->reviews()->avg('rating');
+        $averageRating = (float) ($product->reviews()->avg('rating') ?? 0);
 
-        // Khuyến mãi, voucher, tồn kho, v.v. (giả sử có các quan hệ hoặc logic riêng)
-        // $promotions = $product->promotions;
-        // $stock = $product->variants->sum('stock_quantity');
+        // Ngôn ngữ hiện tại của người dùng (vi / en)
+        $locale = app()->getLocale();
 
+        // 🌐 Lấy bản dịch theo locale
+        $product->name = $product->getTranslation('name', $locale, false)
+            ?? $product->getTranslation('name', 'en');
+        $product->description = $product->getTranslation('description', $locale, false)
+            ?? $product->getTranslation('description', 'en');
+
+        // Brand
+        if ($product->brand) {
+            $product->brand->name = $product->brand->getTranslation('name', $locale, false)
+                ?? $product->brand->getTranslation('name', 'en');
+        }
+
+        // Category
+        if ($product->category) {
+            $product->category->name = $product->category->getTranslation('name', $locale, false)
+                ?? $product->category->getTranslation('name', 'en');
+        }
+
+        // Trả dữ liệu cho Inertia
         return Inertia::render('Product/Show', [
             'product' => $product,
             'averageRating' => $averageRating,
-            // 'promotions' => $promotions,
-            // 'stock' => $stock,
         ]);
     }
 
@@ -120,7 +136,7 @@ class ProductController extends Controller
         $related = Product::where('product_id', '!=', $productId)
             ->where(function ($q) use ($product) {
                 $q->where('category_id', $product->category_id)
-                  ->orWhere('brand_id', $product->brand_id);
+                    ->orWhere('brand_id', $product->brand_id);
             })
             ->with(['images'])
             ->take(8)

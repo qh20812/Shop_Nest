@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,6 +33,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('home');
 
     require __DIR__.'/seller.php';
+});
+
+Route::prefix('products')->name('products.')->group(function () {
+    // Trang danh sách sản phẩm (nếu bạn có trang Index)
+    Route::get('/', [ProductController::class, 'index'])->name('index');
+
+    // Trang chi tiết sản phẩm
+    Route::get('/{product}', [ProductController::class, 'show'])->name('show');
 });
 
 require __DIR__.'/settings.php';

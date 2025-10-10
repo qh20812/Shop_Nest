@@ -3,9 +3,9 @@ import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import React from 'react';
-import CustomerDashboard from './pages/Customer/Dasboard/Index';
+import CustomerDashboard from './pages/Customer/index';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({

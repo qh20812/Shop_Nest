@@ -630,6 +630,43 @@ body{
    margin-bottom: 0;
 }
 
+.customer-dashboard { padding: 18px 8px; }
+.customer-top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.customer-profile { display:flex; align-items:center; gap:12px; }
+.customer-profile-info { display:flex; flex-direction:column; gap:2px; }
+.customer-name { font-weight:600; }
+.customer-email { font-size:13px; color:#6b7280; }
+.customer-status { font-size:12px; color:#10b981; }
+
+.customer-quick-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.btn.small { padding:6px 10px; font-size:13px; }
+.btn.primary { background:#2563eb; color:#fff; border-radius:6px; padding:8px 12px; text-decoration:none; display:inline-block; }
+
+.customer-insights { margin-bottom:18px; }
+
+/* Reuse existing Insights component styles; ensure table responsive */
+.table-responsive { overflow:auto; background:#fff; border-radius:8px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.table { width:100%; border-collapse:collapse; }
+.table th, .table td { padding:10px 12px; text-align:left; border-bottom:1px solid #eef2f7; font-size:13px; white-space:nowrap; }
+.empty { text-align:center; color:#6b7280; padding:16px; }
+
+.customer-main { display:flex; gap:16px; flex-wrap:wrap; }
+.customer-left { flex:1 1 640px; min-width:300px; }
+.customer-right { width:320px; display:flex; flex-direction:column; gap:12px; }
+
+/* small card */
+.small-card { display:flex; align-items:center; gap:12px; background:#fff; padding:12px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.small-card-left { font-size:20px; }
+.small-card-value { font-weight:700; font-size:18px; }
+.small-card-title { font-size:13px; color:#6b7280; }
+.action-link { color:#2563eb; text-decoration:none; font-size:13px; }
+
+/* responsive */
+@media (max-width:900px) {
+  .customer-main { flex-direction:column; }
+  .customer-right { width:100%; }
+}
+
 @media screen and (max-width: 768px) {
     .sidebar{
         width: 200px;

@@ -1,4 +1,5 @@
-import React from 'react';
+/** @jsxImportSource react */
+import * as React from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import '@/../css/Page.css';
 
@@ -16,6 +17,7 @@ interface SidebarProps {
 export default function Sidebar({ items, isClosed }: SidebarProps) {
   const { url } = usePage();
 
+  
   const handleLogout = () => {
     router.post('/logout');
   };

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -35,7 +36,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::view('/customer/dashboard', 'customer.dashboard')->name('customer.dashboard');
+Route::get('/customer/dashboard', function () {
+    return Inertia::render('Customer/Dashboard');
+})->middleware(['auth', 'verified'])->name('customer.dashboard');
+Route::view('/customer/dashboard', 'customer.dashboard')->middleware(['auth', 'verified'])->name('customer.dashboard');
 
 
 

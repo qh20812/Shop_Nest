@@ -16,11 +16,10 @@ interface SidebarProps {
 
 export default function Sidebar({ items, isClosed }: SidebarProps) {
   const { url } = usePage();
-
   
-  const handleLogout = () => {
+  function handleLogout() {
     router.post('/logout');
-  };
+  }
 
   return (
     <div className={`sidebar ${isClosed ? 'close' : ''}`}>

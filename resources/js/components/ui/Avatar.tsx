@@ -20,24 +20,32 @@ interface AvatarProps {
 export default function Avatar({ user = null, src = null, alt = 'User', size = 36 }: AvatarProps) {
   const [imageError, setImageError] = React.useState(false);
 
-  const getInitials = () => {
-    const name = (user && (user.first_name || user.username)) || alt || 'U';
-    return String(name).charAt(0).toUpperCase();
-  };
+  // safe avatar source: prefer explicit src, then user.avatar_url, then user.avatar
+  const avatarSrc = src ?? (user ? (user.avatar_url ?? user.avatar ?? null) : null);
 
-  const avatarSrc = src ?? user?.avatar_url ?? user?.avatar ?? null;
+  const getInitials = () => {
+    const name =
+      (user && (user.first_name || user.last_name || user.username)) ||
+      String(alt || 'U');
+    const parts = String(name).trim().split(/\s+/);
+    if (parts.length === 0) return 'U';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
 
   if (avatarSrc && !imageError) {
     return (
       <img
         src={avatarSrc}
         alt={`${alt} avatar`}
+        width={size}
+        height={size}
         style={{
           width: `${size}px`,
           height: `${size}px`,
           borderRadius: '50%',
           objectFit: 'cover',
-          border: '2px solid var(--grey)',
+          display: 'inline-block',
         }}
         onError={() => setImageError(true)}
       />
@@ -46,21 +54,21 @@ export default function Avatar({ user = null, src = null, alt = 'User', size = 3
 
   return (
     <div
+      aria-label={alt}
+      role="img"
       style={{
         width: `${size}px`,
         height: `${size}px`,
         borderRadius: '50%',
-        background: 'var(--primary)',
+        background: '#374151',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'var(--light)',
-        fontWeight: '600',
-        fontSize: `${size * 0.4}px`,
-        border: '2px solid var(--grey)',
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: `${Math.max(12, size * 0.4)}px`,
+        userSelect: 'none',
       }}
-      aria-label={alt}
-      role="img"
     >
       {getInitials()}
     </div>

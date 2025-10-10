@@ -76,8 +76,7 @@ export default function CustomerDashboard(): JSX.Element {
       <div className="customer-dashboard page-section">
         <div className="customer-top">
           <div className="customer-profile">
-            {/* Avatar expects user or src — provide first_name for compatibility */}
-            <Avatar user={{ first_name: user.name ?? '', avatar_url: user.avatar_url ?? undefined }} size={56} />
+            <Avatar src={user?.avatar_url ?? null} alt={user?.name ?? 'Khách hàng'} size={56} />
             <div className="customer-profile-info">
               <div className="customer-name">{user.name}</div>
               <div className="customer-email">{user.email}</div>

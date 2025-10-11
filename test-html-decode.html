@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML Entity Decode Test</title>
+    <script>
+        // Test function to verify HTML entity decoding works
+        function testDecodeHtmlEntities() {
+            const decodeHtmlEntities = (html) => {
+                if (!html) return '';
+                const textarea = document.createElement('textarea');
+                textarea.innerHTML = html;
+                return textarea.value;
+            };
+
+            // Test cases with Vietnamese HTML entities
+            const testCases = [
+                {
+                    input: 'Th&aacute;nh phố Hồ Ch&iacute; Minh',
+                    expected: 'Thành phố Hồ Chí Minh'
+                },
+                {
+                    input: 'H&agrave; Nội',
+                    expected: 'Hà Nội'
+                },
+                {
+                    input: 'Đ&acirc;y l&agrave; m&ocirc;tả sản phẩm',
+                    expected: 'Đây là môtả sản phẩm'
+                },
+                {
+                    input: '&lt;p&gt;HTML tags &amp; entities&lt;/p&gt;',
+                    expected: '<p>HTML tags & entities</p>'
+                }
+            ];
+
+            console.log('Testing HTML Entity Decoding:');
+            testCases.forEach((testCase, index) => {
+                const result = decodeHtmlEntities(testCase.input);
+                const passed = result === testCase.expected;
+                console.log(`Test ${index + 1}: ${passed ? 'PASSED' : 'FAILED'}`);
+                console.log(`  Input: ${testCase.input}`);
+                console.log(`  Expected: ${testCase.expected}`);
+                console.log(`  Got: ${result}`);
+                console.log('---');
+            });
+        }
+
+        // Run test when page loads
+        window.onload = testDecodeHtmlEntities;
+    </script>
+</head>
+<body>
+    <h1>HTML Entity Decode Test</h1>
+    <p>Open browser console to see test results.</p>
+    <div>
+        <h3>Test Inputs:</h3>
+        <p>Th&aacute;nh phố Hồ Ch&iacute; Minh</p>
+        <p>H&agrave; Nội</p>
+        <p>Đ&acirc;y l&agrave; m&ocirc;tả sản phẩm</p>
+    </div>
+</body>
+</html>

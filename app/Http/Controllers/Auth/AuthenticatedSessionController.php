@@ -36,6 +36,17 @@ class AuthenticatedSessionController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        // Check if user account is active
+        if ($user && !$user->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return back()->withErrors([
+                'email' => 'Your account has been deactivated. Please contact support for assistance.',
+            ]);
+        }
+        
         // Check user role and redirect accordingly
         if ($user && $user->isAdmin()) {
             return redirect()->intended(route('admin.dashboard', absolute: false))

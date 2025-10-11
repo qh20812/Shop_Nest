@@ -1,6 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import '../../../css/Page.css';
+import { decodeHtmlEntities } from '../../utils/htmlUtils';
 
 interface ProductImage {
     image_id: number;
@@ -56,11 +57,19 @@ export default function Show() {
         }
     };
 
+
+
     // 🔹 Fallback an toàn nếu name/brand/category vẫn là object
     const getTranslated = (field: any) => {
         if (!field) return '';
-        if (typeof field === 'string') return field;
-        return field.vi || field.en || '';
+        let text = '';
+        if (typeof field === 'string') {
+            text = field;
+        } else {
+            text = field.vi || field.en || '';
+        }
+        // Decode HTML entities for proper Vietnamese display
+        return decodeHtmlEntities(text);
     };
 
     return (

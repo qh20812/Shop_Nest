@@ -10,6 +10,8 @@ import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
 import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
+import he from 'he';
+import { htmlToPlainText } from '../../../utils/htmlUtils';
 
 interface Brand {
     brand_id: number;
@@ -48,19 +50,7 @@ export default function Index() {
         return '';
     };
 
-    // Helper function to convert HTML to plain text
-    const htmlToPlainText = (html: string): string => {
-        if (!html) return '';
-        // Replace <br>, <p>, <li> with newline
-        let text = html.replace(/<\/?(br|p|li)>/gi, '\n');
-        // Remove all other HTML tags
-        text = text.replace(/<[^>]+>/g, '');
-        // Replace multiple newlines with single
-        text = text.replace(/\n{2,}/g, '\n');
-        // Decode HTML entities
-        text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-        return text.trim();
-    };
+
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');

@@ -9,6 +9,7 @@ import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import ActionButtons, { type ActionConfig } from '../../../components/ui/ActionButtons';
 import StatusBadge from '../../../components/ui/StatusBadge';
 import { useTranslation } from '../../../lib/i18n';
+import { htmlToPlainText } from '../../../utils/htmlUtils';
 
 interface Category {
     category_id: number;
@@ -35,19 +36,7 @@ export default function Index() {
     const { t, locale } = useTranslation();
     const { categories = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
 
-    // Helper function to convert HTML to plain text
-    const htmlToPlainText = (html: string): string => {
-        if (!html) return '';
-        // Replace <br>, <p>, <li> with newline
-        let text = html.replace(/<\/?(br|p|li)>/gi, '\n');
-        // Remove all other HTML tags
-        text = text.replace(/<[^>]+>/g, '');
-        // Replace multiple newlines with single
-        text = text.replace(/\n{2,}/g, '\n');
-        // Decode HTML entities
-        text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-        return text.trim();
-    };
+
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
@@ -80,24 +69,6 @@ export default function Index() {
             setToast({ type: "error", message: flash.error });
         }
     }, [flash]);
-
-    // Auto-apply search filter on typing (debounced)
-    // useEffect(() => {
-    //     const delayTimer = setTimeout(() => {
-    //         if (search !== filters.search) {
-    //             router.get('/admin/categories', {
-    //                 search: search || undefined,
-    //                 status: status || undefined
-    //             }, {
-    //                 preserveState: true,
-    //                 preserveScroll: true,
-    //             });
-    //         }
-    //     }, 500);
-
-    //     return () => clearTimeout(delayTimer);
-    // }, [search, filters.search, status]);
-
     const applyFilters = () => {
         router.get('/admin/categories', { search, status }, { preserveState: true });
     };

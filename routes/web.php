@@ -7,6 +7,9 @@ use Inertia\Inertia;
 
 // Public routes (accessible without login)
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/cart-test', function(){
+    return Inertia::render('Customer/Cart');
+});
 
 Route::get('/about', function () {
     return Inertia::render('Home/About');

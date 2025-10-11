@@ -233,6 +233,13 @@ return [
         'message' => 'message',
         'subject' => 'subject',
         'body' => 'body',
+        'username' => 'username',
+        'first_name' => 'first name',
+        'last_name' => 'last name',
+        'email' => 'email address',
+        'phone_number' => 'phone number',
+        'password' => 'password',
+        'password_confirmation' => 'password confirmation',
     ],
 
 ];

@@ -118,7 +118,10 @@ export default function Index() {
                     <Avatar user={shipper} />
                     <div>
                         <p style={{ fontWeight: "500", margin: 0 }}>
-                            {shipper.first_name} {shipper.last_name}
+                            {(() => {
+                                const fullName = `${shipper.first_name || ''} ${shipper.last_name || ''}`.trim();
+                                return fullName || shipper.username || 'Unknown Shipper';
+                            })()}
                         </p>
                         <p style={{ fontSize: "12px", color: "var(--dark-grey)", margin: 0 }}>
                             {shipper.email}

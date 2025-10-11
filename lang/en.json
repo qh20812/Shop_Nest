@@ -404,5 +404,21 @@
     "passwords.throttled": "Please wait before retrying.",
     "auth.failed": "These credentials do not match our records.",
     "auth.password": "The provided password is incorrect.",
-    "auth.throttle": "Too many login attempts. Please try again in :seconds seconds."
+    "auth.throttle": "Too many login attempts. Please try again in :seconds seconds.",
+    "Customer role not found. Please contact system administrator.": "Customer role not found. Please contact system administrator.",
+    "Registration successful! Please verify your email.": "Registration successful! Please verify your email.",
+    "Home": "Home",
+    "Flash Sale": "Flash Sale",
+    "Daily Discover": "Daily Discover",
+    "Shop Now": "Shop Now",
+    "View All": "View All",
+    "sold": "sold",
+    "Discount": "Discount",
+    "Free Shipping": "Free Shipping",
+    "Limited Time": "Limited Time",
+    "Hurry Up": "Hurry Up",
+    "Only": "Only",
+    "left": "left",
+    "Time Left": "Time Left",
+    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
 }

@@ -19,6 +19,7 @@ interface Role {
 
 interface User {
   id: number;
+  username: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -101,9 +102,10 @@ export default function Index() {
     router.get("/admin/users", { search, role, status }, { preserveState: true });
   };
 
-  const handleDelete = (id: number) => {
+  const handleStatusToggle = (id: number) => {
     const user = users.data.find(u => u.id === id);
-    const userName = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
+    const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '';
+    const userName = fullName || user?.username || 'Unknown User';
     
     setConfirmModal({
       isOpen: true,
@@ -112,7 +114,7 @@ export default function Index() {
     });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmStatusToggle = () => {
     if (confirmModal.userId) {
       router.delete(`/admin/users/${confirmModal.userId}`);
     }
@@ -140,12 +142,15 @@ export default function Index() {
       header: "Full Name",
       cell: (user: User) => {
         const isCurrentUser = user.id === currentUserId;
+        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        const displayName = fullName || user.username || 'Unknown User';
+        
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Avatar user={user} />
             <div>
               <p style={{ fontWeight: "500", margin: 0 }}>
-                {user.first_name} {user.last_name}
+                {displayName}
                 {isCurrentUser && (
                   <span
                     style={{
@@ -216,16 +221,30 @@ export default function Index() {
             variant: 'primary',
             icon: 'bx bx-edit',
             label: t("Edit")
-          },
-          {
-            type: 'button',
-            onClick: () => handleDelete(user.id),
-            variant: 'danger',
-            icon: 'bx bx-trash',
-            label: t("Inactive"),
-            disabled: isCurrentUser
           }
         ];
+
+        // Add status toggle button based on user's current status
+        if (user.is_active) {
+          actions.push({
+            type: 'button',
+            onClick: () => handleStatusToggle(user.id),
+            variant: 'danger',
+            icon: 'bx bx-lock',
+            label: t("Deactivate"),
+            disabled: isCurrentUser
+          });
+        } else {
+          actions.push({
+            type: 'button',
+            onClick: () => handleStatusToggle(user.id),
+            variant: 'primary',
+            icon: 'bx bx-lock-open',
+            label: t("Activate"),
+            disabled: isCurrentUser
+          });
+        }
+
         return <ActionButtons actions={actions} />;
       }
     }
@@ -298,9 +317,9 @@ export default function Index() {
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         onClose={handleCloseModal}
-        onConfirm={handleConfirmDelete}
-        title={t("Confirm User Deactivation")}
-        message={`${t("Are you sure you want to deactivate user")} "${confirmModal.userName}"? ${t("This action will prevent them from accessing the system.")}`}
+        onConfirm={handleConfirmStatusToggle}
+        title={t("Confirm User Status Change")}
+        message={`${t("Are you sure you want to change the status of user")} "${confirmModal.userName}"?`}
       />
     </AppLayout>
   );

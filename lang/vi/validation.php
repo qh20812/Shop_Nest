@@ -193,6 +193,8 @@ return [
         'email' => 'địa chỉ email',
         'phone_number' => 'số điện thoại',
         'password' => 'mật khẩu',
+        'password_confirmation' => 'xác nhận mật khẩu',
+        'password' => 'mật khẩu',
         'current_password' => 'mật khẩu hiện tại',
         'password_confirmation' => 'xác nhận mật khẩu',
         'name' => 'tên',

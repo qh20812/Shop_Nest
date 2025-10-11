@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../../lib/i18n';
+import { decodeHtmlEntities } from '../../../utils/htmlUtils';
 
 interface Review {
     review_id: number;
@@ -8,6 +9,7 @@ interface Review {
     created_at: string;
     user: {
         user_id: number;
+        username: string;
         first_name: string;
         last_name: string;
     };
@@ -22,11 +24,16 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
     const { t, locale } = useTranslation();
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
-    // Helper function to get localized description
+    // Helper function to get localized description with HTML entity decoding
     const getDescription = (): string => {
         if (!description) return t('No description available');
-        if (typeof description === 'string') return description;
-        return description[locale as keyof typeof description] || description.en || t('No description available');
+        let desc = '';
+        if (typeof description === 'string') {
+            desc = description;
+        } else {
+            desc = description[locale as keyof typeof description] || description.en || t('No description available');
+        }
+        return decodeHtmlEntities(desc);
     };
 
     // Helper function to format date
@@ -103,7 +110,10 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
                                         <div className="product-tabs__review-header">
                                             <div className="product-tabs__review-user">
                                                 <strong>
-                                                    {`${review.user.first_name} ${review.user.last_name}`.trim()}
+                                                    {(() => {
+                                                        const fullName = `${review.user.first_name || ''} ${review.user.last_name || ''}`.trim();
+                                                        return fullName || review.user.username || 'Anonymous User';
+                                                    })()}
                                                 </strong>
                                             </div>
                                             <div className="product-tabs__review-rating">
@@ -114,7 +124,7 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
                                             </div>
                                         </div>
                                         <div className="product-tabs__review-comment">
-                                            {review.comment}
+                                            {decodeHtmlEntities(review.comment)}
                                         </div>
                                     </div>
                                 ))}

@@ -103,7 +103,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 color: 'var(--dark)',
                 lineHeight: '1.2'
               }}>
-                {props.auth.user.first_name} {props.auth.user.last_name}
+                {(() => {
+                  const fullName = `${props.auth.user.first_name || ''} ${props.auth.user.last_name || ''}`.trim();
+                  return fullName || props.auth.user.username || 'User';
+                })()}
               </p>
               <small style={{ 
                 fontSize: '12px', 

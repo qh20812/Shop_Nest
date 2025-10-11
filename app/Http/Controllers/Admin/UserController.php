@@ -83,15 +83,23 @@ class UserController extends Controller
     }
 
     /**
-     * Vô hiệu hóa (soft delete) người dùng.
+     * Toggle user status (activate/deactivate).
      */
     public function destroy(User $user)
     {
-        // Ngăn admin tự vô hiệu hoá chính mình
+        // Ngăn admin tự thay đổi trạng thái chính mình
         if ($user->id === Auth::id()) {
-            return back()->with('error', 'Bạn không thể tự vô hiệu hoá chính mình.');
+            return back()->with('error', 'Bạn không thể thay đổi trạng thái tài khoản của chính mình.');
         }
-        $user->update(['is_active' => false]);
-        return redirect()->route('admin.users.index')->with('success', 'Vô hiệu hoá người dùng thành công.');
+        
+        // Toggle user status
+        $newStatus = !$user->is_active;
+        $user->update(['is_active' => $newStatus]);
+        
+        $message = $newStatus 
+            ? 'Kích hoạt người dùng thành công.' 
+            : 'Vô hiệu hoá người dùng thành công.';
+        
+        return redirect()->route('admin.users.index')->with('success', $message);
     }
 }

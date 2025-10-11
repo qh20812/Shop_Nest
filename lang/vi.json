@@ -404,5 +404,21 @@
     "passwords.token": "Mã thông báo đặt lại mật khẩu này không hợp lệ.",
     "passwords.throttled": "Vui lòng đợi trước khi thử lại.",
     "auth.failed": "Thông tin đăng nhập không khớp với hồ sơ của chúng tôi.",
-    "auth.throttle": "Quá nhiều lần đăng nhập. Vui lòng thử lại sau trong :seconds giây."
+    "auth.throttle": "Quá nhiều lần đăng nhập. Vui lòng thử lại sau trong :seconds giây.",
+    "Customer role not found. Please contact system administrator.": "Không tìm thấy vai trò khách hàng. Vui lòng liên hệ quản trị viên hệ thống.",
+    "Registration successful! Please verify your email.": "Đăng ký thành công! Vui lòng xác minh email của bạn.",
+    "Home": "Trang chủ",
+    "Flash Sale": "Flash Sale",
+    "Daily Discover": "Khám phá hàng ngày",
+    "Shop Now": "Mua ngay",
+    "View All": "Xem tất cả",
+    "sold": "đã bán",
+    "Discount": "Giảm giá",
+    "Free Shipping": "Miễn phí vận chuyển",
+    "Limited Time": "Thời gian có hạn",
+    "Hurry Up": "Nhanh lên",
+    "Only": "Chỉ còn",
+    "left": "sản phẩm",
+    "Time Left": "Thời gian còn lại",
+    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt."
 }

@@ -4,6 +4,7 @@ import HomeLayout from '../../layouts/app/HomeLayout';
 import CategoryCarousel from '@/components/home/ui/CategoryCarousel';
 import FlashSaleSection from '@/components/home/ui/FlashSaleSection';
 import DailyDiscoverSection from '@/components/home/ui/DailyDiscoverSection';
+import { useTranslation } from '../../lib/i18n';
 
 interface Category {
     id: number;
@@ -63,10 +64,11 @@ interface HomeProps {
 }
 
 export default function Home({ categories, flashSale, dailyDiscover, user }: HomeProps) {
+    const { t } = useTranslation();
 
     return (
         <HomeLayout>
-            <Head title="ShopNest - Trang chủ" />
+            <Head title={`ShopNest - ${t('Home')}`} />
             <div className="home-content">
                 <CategoryCarousel categories={categories} />
                 <FlashSaleSection flashSale={flashSale} />

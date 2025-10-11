@@ -42,13 +42,13 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'This email address is already registered.',
-            'password.required' => 'Password is required.',
-            'password.confirmed' => 'Password confirmation does not match.',
-            'password.min' => 'Password must be at least 8 characters long.',
-            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+            'email.required' => __('validation.required', ['attribute' => __('validation.attributes.email')]),
+            'email.email' => __('validation.email', ['attribute' => __('validation.attributes.email')]),
+            'email.unique' => __('validation.unique', ['attribute' => __('validation.attributes.email')]),
+            'password.required' => __('validation.required', ['attribute' => __('validation.attributes.password')]),
+            'password.confirmed' => __('validation.confirmed', ['attribute' => __('validation.attributes.password')]),
+            'password.min' => __('validation.min.string', ['attribute' => __('validation.attributes.password'), 'min' => 8]),
+            'password.regex' => __('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'),
         ];
     }
 }

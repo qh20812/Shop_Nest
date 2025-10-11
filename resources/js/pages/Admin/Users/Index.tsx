@@ -25,6 +25,8 @@ interface User {
   email: string;
   is_active: boolean;
   roles: Role[];
+  avatar?: string | null;
+  avatar_url?: string | null;
 }
 
 interface AuthUser {
@@ -145,9 +147,15 @@ export default function Index() {
         const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
         const displayName = fullName || user.username || 'Unknown User';
         
+        // Normalize avatar_url for this user if backend returned a relative avatar path
+        const userForAvatar = { ...user } as User;
+        if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http') && !userForAvatar.avatar.startsWith('/')) {
+          userForAvatar.avatar_url = userForAvatar.avatar_url || `/storage/${userForAvatar.avatar}`;
+        }
+
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Avatar user={user} />
+            <Avatar user={userForAvatar} />
             <div>
               <p style={{ fontWeight: "500", margin: 0 }}>
                 {displayName}

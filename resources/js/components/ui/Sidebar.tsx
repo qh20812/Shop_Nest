@@ -22,8 +22,8 @@ export default function Sidebar({ items, isClosed }: SidebarProps) {
 
   return (
     <div className={`sidebar ${isClosed ? 'close' : ''}`}>
-      <Link href="/image/ShopnestLogoColor.png" className="logo">
-        <i className='bx bi-basket2-fill'></i>
+      <Link href="/admin/dashboard" className="logo">
+        <img src="/image/ShopnestLogo.png" alt="Logo" />
         <div className="logo-name">
           <span>Shop</span>Nest
         </div>

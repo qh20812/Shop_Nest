@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import Navbar from '@/components/home/ui/Navbar';
 import '@/../css/Home.css';
-import Footer from '@/components/home/ui/Footer';
 import CartTitle from '@/components/cart/CartTitle';
 import CartColumnTitle from '@/components/cart/CartColumnTitle';
 import CartShopCard from '@/components/cart/CartShopCard';
+import HomeLayout from '@/layouts/app/HomeLayout';
 
 interface CartProduct {
   id: number;
@@ -127,8 +126,7 @@ export default function Cart() {
   };
 
   return (
-    <>
-      <Navbar />
+    <HomeLayout>
       <div className="cart-container">
         <CartTitle title="Giỏ hàng của tôi" />
         
@@ -165,7 +163,6 @@ export default function Cart() {
           </div>
         )}
       </div>
-      <Footer />
-    </>
+    </HomeLayout>
   );
 }

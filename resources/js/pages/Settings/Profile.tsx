@@ -38,6 +38,7 @@ export default function Profile() {
     phone_number: user.phone_number,
     avatar: null as File | null,
     remove_avatar: false,
+    _method: 'PATCH' as string,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,8 +49,8 @@ export default function Profile() {
       setData('avatar', avatarFile);
     }
 
+    // Use POST with _method=PATCH for file uploads in Laravel
     post('/settings/profile', {
-      method: 'patch',
       forceFormData: true,
     });
   };

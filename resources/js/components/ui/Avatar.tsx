@@ -1,12 +1,12 @@
 import React from 'react';
 
 interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
+  id?: number;
+  first_name?: string;
+  last_name?: string;
   username?: string;
-  avatar?: string;
-  avatar_url?: string;
+  avatar?: string | null;
+  avatar_url?: string | null;
 }
 
 interface AvatarProps {
@@ -24,7 +24,12 @@ export default function Avatar({ user, size = 36 }: AvatarProps) {
   };
 
   // Use avatar_url if available, fallback to avatar
-  const avatarSrc = user.avatar_url || user.avatar;
+  let avatarSrc = user.avatar_url || user.avatar;
+
+  // Normalize relative avatar path to the public storage URL
+  if (avatarSrc && !avatarSrc.startsWith('http') && !avatarSrc.startsWith('/')) {
+    avatarSrc = `/storage/${avatarSrc}`;
+  }
   
   // If user has avatar and no image error, show the avatar image
   if (avatarSrc && !imageError) {

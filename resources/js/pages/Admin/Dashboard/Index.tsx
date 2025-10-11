@@ -2,6 +2,7 @@ import React from 'react';
 import AppLayout from '@/layouts/app/AppLayout';
 import Header from '@/components/ui/Header';
 import Insights from '@/components/ui/Insights';
+import Avatar from '@/components/ui/Avatar';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/utils';
@@ -18,7 +19,12 @@ interface Stats {
 }
 
 interface Customer {
+  id?: number;
   username: string;
+  first_name?: string;
+  last_name?: string;
+  avatar?: string;
+  avatar_url?: string;
 }
 
 interface Order {
@@ -152,11 +158,34 @@ export default function Index() {
               {recentOrders && recentOrders.length > 0 ? (
                 recentOrders.map((order) => {
                   const orderStatus = getOrderStatus(order.status);
+                  
+                  // Create safe user object for Avatar component
+                  const userForAvatar = order.customer ? {
+                    id: order.customer.id || 0,
+                    username: order.customer.username || 'N/A',
+                    first_name: order.customer.first_name || '',
+                    last_name: order.customer.last_name || '',
+                    avatar: order.customer.avatar,
+                    avatar_url: order.customer.avatar_url,
+                  } : {
+                    id: 0,
+                    username: 'N/A',
+                    first_name: '',
+                    last_name: '',
+                    avatar: undefined,
+                    avatar_url: undefined,
+                  };
+
+                  // Normalize avatar path if it's relative
+                  if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http')) {
+                    userForAvatar.avatar = `/storage/${userForAvatar.avatar}`;
+                  }
+
                   return (
                     <tr key={order.id}>
-                      <td>
-                        <img src="/logo.svg" alt="User" />
-                        <p>{order.customer?.username || 'N/A'}</p>
+                      <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Avatar user={userForAvatar} size={36} />
+                        <p style={{ margin: 0 }}>{userForAvatar.username}</p>
                       </td>
                       <td>{formatDate(order.created_at)}</td>
                       <td>

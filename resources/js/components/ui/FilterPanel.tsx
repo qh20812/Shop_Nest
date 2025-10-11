@@ -81,16 +81,18 @@ export default function FilterPanel({
       />
 
       {/* Bộ lọc */}
-      <div style={{ marginTop: "24px", marginBottom: "24px" }}>
+      <div style={{ marginTop: "24px", marginBottom: "24px"}}>
         <div
           style={{
             background: "var(--light)",
             padding: "24px",
             borderRadius: "20px",
-            display: "flex",
+            display: "grid",
             gap: "16px",
             alignItems: "center",
-            flexWrap: "wrap"
+            gridTemplateColumns: "4fr 1fr 1fr 1fr",
+            justifyContent: "space-between",
+            width: "100%",
           }}
         >
           {/* Tìm kiếm - Only render if searchConfig is provided */}
@@ -178,7 +180,7 @@ export default function FilterPanel({
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "4px"
+                gap: "4px",
               }}
             >
               <i className={`bx ${buttonConfig.icon}`}></i>

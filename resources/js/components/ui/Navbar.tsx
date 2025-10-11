@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import '@/../css/Page.css';
 import Avatar from '@/components/ui/Avatar';
+import { useTranslation } from '@/lib/i18n';
 
 interface User {
   id: number;
@@ -62,6 +63,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const handleLogout = () => {
     router.post('/logout');
   };
+  const { t } = useTranslation();
 
   return (
     <nav>
@@ -69,7 +71,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       
       <form action="#" className={isSearchShow ? 'show' : ''}>
         <div className="form-input">
-          <input type="search" placeholder="Search..." />
+          <input type="search" placeholder={t('Search...')} />
           <button 
             className="search-btn" 
             type="submit"
@@ -159,7 +161,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               }}
             >
               <i className='bx bx-user' style={{ fontSize: '18px' }}></i>
-              Profile
+              {t('Profile')}
             </Link>
             
             <div
@@ -193,7 +195,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               }}
             >
               <i className='bx bx-log-out' style={{ fontSize: '18px' }}></i>
-              Logout
+              {t('Logout')}
             </button>
           </div>
         )}

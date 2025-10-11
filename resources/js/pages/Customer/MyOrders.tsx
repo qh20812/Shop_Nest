@@ -82,3 +82,5 @@ export default function OrdersPage(): JSX.Element {
     </>
   );
 }
+
+export { default } from '@/pages/Customer/MyOrders';

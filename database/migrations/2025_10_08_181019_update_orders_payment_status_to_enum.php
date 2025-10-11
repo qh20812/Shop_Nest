@@ -17,9 +17,7 @@ return new class extends Migration
 
         // Then modify the column to use ENUM type
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum('payment_status', ['unpaid', 'paid', 'failed', 'refunded'])
-                  ->default('unpaid')
-                  ->change();
+            $table->enum('payment_status', ['unpaid', 'paid', 'failed', 'refunded'])->default('unpaid')->change();
         });
     }
 
@@ -48,7 +46,7 @@ return new class extends Migration
         // Mapping from old integer values to new enum strings
         $mappings = [
             0 => 'unpaid',
-            1 => 'paid', 
+            1 => 'paid',
             2 => 'failed',
             3 => 'refunded',
         ];

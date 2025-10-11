@@ -45,6 +45,9 @@ Route::prefix('products')->name('products.')->group(function () {
         ->middleware('auth')
         ->name('show');
 });
+Route::middleware(['auth','verified'])->group(function(){
+    route::get('/customer/my-orders', [\App\Http\Controllers\Customer\OrderController::class, 'index'])->name('user.orders');
+})
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

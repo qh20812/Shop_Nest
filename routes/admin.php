@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromotionController;
@@ -35,4 +36,15 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::get('/shippers', [ShipperController::class, 'index'])->name('shippers.index');
     Route::get('/shippers/{shipper}', [ShipperController::class, 'show'])->name('shippers.show');
     Route::patch('/shippers/{shipper}/status', [ShipperController::class, 'updateStatus'])->name('shippers.updateStatus');
+
+    // Inventory Management Routes
+    Route::controller(InventoryController::class)->prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/report', 'report')->name('report');
+        Route::get('/{product}', 'show')->name('show')->where('product', '[0-9]+');
+        Route::get('/{product}/history', 'history')->name('history')->where('product', '[0-9]+');
+        Route::post('/stock-in', 'store')->name('store');
+        Route::post('/stock-out', 'stockOut')->name('stockOut');
+        Route::put('/{variant}', 'update')->name('update')->where('variant', '[0-9]+');
+    });
 });

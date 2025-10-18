@@ -22,7 +22,24 @@ class Promotion extends Model
         'end_date',
         'usage_limit',
         'used_count',
-        'is_active'
+        'is_active',
+        'priority',
+        'stackable',
+        'customer_eligibility',
+        'geographic_restrictions',
+        'product_restrictions',
+        'budget_limit',
+        'budget_used',
+        'daily_usage_limit',
+        'daily_usage_count',
+        'per_customer_limit',
+        'first_time_customer_only',
+        'minimum_cart_value',
+        'maximum_discount_amount',
+        'time_restrictions',
+        'auto_apply_condition',
+        'terms_and_conditions',
+        'last_used_at',
     ];
     protected $casts = [
         'start_date' => 'datetime',
@@ -35,6 +52,11 @@ class Promotion extends Model
         'is_active' => 'boolean',
         'stackable' => 'boolean',
         'first_time_customer_only' => 'boolean',
+        'budget_limit' => 'decimal:2',
+        'budget_used' => 'decimal:2',
+        'minimum_cart_value' => 'decimal:2',
+        'maximum_discount_amount' => 'decimal:2',
+        'priority' => 'string',
     ];
 
     /**
@@ -74,6 +96,22 @@ class Promotion extends Model
             'promotion_id',
             'category_id'
         );
+    }
+
+    /**
+     * Get the audit logs for this promotion
+     */
+    public function auditLogs()
+    {
+        return $this->hasMany(PromotionAuditLog::class, 'promotion_id');
+    }
+
+    /**
+     * Get the performance metrics for this promotion
+     */
+    public function performanceMetrics()
+    {
+        return $this->hasMany(PromotionPerformanceMetric::class, 'promotion_id');
     }
 
     /**

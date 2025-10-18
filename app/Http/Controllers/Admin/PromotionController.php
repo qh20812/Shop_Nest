@@ -5,21 +5,52 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePromotionRequest;
 use App\Http\Requests\Admin\UpdatePromotionRequest;
-use App\Models\Category;
-use App\Models\Product;
 use App\Models\Promotion;
+use App\Services\PromotionService;
+use App\Services\PromotionConflictResolver;
+use App\Services\PromotionAnalyticsService;
+use App\Services\PromotionTemplateService;
+use App\Services\PromotionBulkService;
+use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PromotionController extends Controller
 {
+    private const PAGINATION_LIMIT = 15;
+
+    private const STATUS_OPTIONS = [
+        'draft',
+        'active',
+        'paused',
+        'expired',
+    ];
+
+    public function __construct(
+        private PromotionService $promotionService,
+        private PromotionConflictResolver $conflictResolver,
+        private PromotionAnalyticsService $analyticsService,
+        private PromotionTemplateService $templateService,
+        private PromotionBulkService $bulkService
+    ) {}
+
     /**
      * Display a paginated list of all promotions.
      */
     public function index(): Response
     {
+        $this->applyAutomaticStatusUpdates();
+
         $promotions = Promotion::select([
                 'promotion_id',
                 'name',
@@ -31,11 +62,22 @@ class PromotionController extends Controller
                 'used_count',
                 'is_active'
             ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->orderByDesc('created_at')
+            ->paginate(self::PAGINATION_LIMIT);
+
+        $promotions->setCollection(
+            $promotions->getCollection()->map(function (Promotion $promotion) {
+                return array_merge($promotion->toArray(), [
+                    'type' => $this->promotionService->resolveTypeForResponse($promotion->type),
+                    'status' => $this->promotionService->resolveStatus($promotion),
+                ]);
+            })
+        );
 
         return Inertia::render('Admin/Promotions/Index', [
-            'promotions' => $promotions
+            'promotions' => $promotions,
+            'typeOptions' => $this->promotionService->getPromotionTypeOptions(),
+            'statusFilters' => self::STATUS_OPTIONS,
         ]);
     }
 
@@ -44,26 +86,10 @@ class PromotionController extends Controller
      */
     public function create(): Response
     {
-        $products = Product::select('id', 'name', 'sku', 'price')
-            ->orderBy('name')
-            ->get();
-
-        $categories = Category::select('id', 'name')
-            ->whereNull('parent_id') // Only parent categories for simplicity
-            ->orderBy('name')
-            ->get();
-
-        $promotionTypes = [
-            'percentage' => 'Percentage Discount',
-            'fixed_amount' => 'Fixed Amount Discount',
-            'free_shipping' => 'Free Shipping',
-            'buy_x_get_y' => 'Buy X Get Y'
-        ];
-
         return Inertia::render('Admin/Promotions/Create', [
-            'products' => $products,
-            'categories' => $categories,
-            'promotionTypes' => $promotionTypes
+            'products' => $this->promotionService->getProductOptions(),
+            'categories' => $this->promotionService->getCategoryOptions(),
+            'promotionTypes' => $this->promotionService->getPromotionTypeOptions(),
         ]);
     }
 
@@ -72,43 +98,24 @@ class PromotionController extends Controller
      */
     public function store(StorePromotionRequest $request): RedirectResponse
     {
+        $payload = $request->validated();
+
         try {
-            DB::transaction(function () use ($request) {
-                // Create the main promotion record
-                $promotion = Promotion::create([
-                    'name' => $request->name,
-                    'description' => $request->description,
-                    'type' => $request->type,
-                    'value' => $request->value,
-                    'min_order_amount' => $request->minimum_order_value,
-                    'max_discount_amount' => $request->max_discount_amount,
-                    'start_date' => $request->starts_at,
-                    'end_date' => $request->expires_at,
-                    'usage_limit' => $request->usage_limit_per_user,
-                    'used_count' => 0,
-                    'is_active' => $request->boolean('is_active', true)
-                ]);
+            $promotion = $this->promotionService->create(
+                $payload,
+                $payload['product_ids'] ?? [],
+                $payload['category_ids'] ?? []
+            );
 
-                // Handle product conditions (many-to-many relationship)
-                if ($request->filled('product_ids') && is_array($request->product_ids)) {
-                    // Check if the pivot table exists
-                    if (DB::getSchemaBuilder()->hasTable('promotion_products')) {
-                        $promotion->products()->sync($request->product_ids);
-                    }
-                }
-
-                // Handle category conditions (many-to-many relationship)
-                if ($request->filled('category_ids') && is_array($request->category_ids)) {
-                    // Check if the pivot table exists
-                    if (DB::getSchemaBuilder()->hasTable('promotion_categories')) {
-                        $promotion->categories()->sync($request->category_ids);
-                    }
-                }
-            });
+            $this->conflictResolver->handlePromotionConflicts($promotion);
 
             return redirect()->route('admin.promotions.index')
                 ->with('success', 'Promotion created successfully.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Failed to create promotion', ['exception' => $exception]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create promotion. Please try again.');
@@ -120,10 +127,19 @@ class PromotionController extends Controller
      */
     public function show(Promotion $promotion): Response
     {
-        $promotion->load(['products:id,name,sku', 'categories:id,name']);
+        $promotion->load([
+            'products:product_id,name,sku',
+            'categories:category_id,name',
+        ]);
+
+        $promotion->type = $this->promotionService->resolveTypeForResponse($promotion->type);
+        $promotion->status = $this->promotionService->resolveStatus($promotion);
+
+        $promotion->products = $this->promotionService->formatProductsCollection($promotion->products);
+        $promotion->categories = $this->promotionService->formatCategoriesCollection($promotion->categories);
 
         return Inertia::render('Admin/Promotions/Show', [
-            'promotion' => $promotion
+            'promotion' => $promotion,
         ]);
     }
 
@@ -132,29 +148,21 @@ class PromotionController extends Controller
      */
     public function edit(Promotion $promotion): Response
     {
-        $promotion->load(['products:id,name,sku', 'categories:id,name']);
+        $promotion->load([
+            'products:product_id,name,sku',
+            'categories:category_id,name',
+        ]);
 
-        $products = Product::select('id', 'name', 'sku', 'price')
-            ->orderBy('name')
-            ->get();
-
-        $categories = Category::select('id', 'name')
-            ->whereNull('parent_id')
-            ->orderBy('name')
-            ->get();
-
-        $promotionTypes = [
-            'percentage' => 'Percentage Discount',
-            'fixed_amount' => 'Fixed Amount Discount',
-            'free_shipping' => 'Free Shipping',
-            'buy_x_get_y' => 'Buy X Get Y'
-        ];
+        $promotion->type = $this->promotionService->resolveTypeForResponse($promotion->type);
+        $promotion->status = $this->promotionService->resolveStatus($promotion);
+        $promotion->products = $this->promotionService->formatProductsCollection($promotion->products);
+        $promotion->categories = $this->promotionService->formatCategoriesCollection($promotion->categories);
 
         return Inertia::render('Admin/Promotions/Edit', [
             'promotion' => $promotion,
-            'products' => $products,
-            'categories' => $categories,
-            'promotionTypes' => $promotionTypes
+            'products' => $this->promotionService->getProductOptions(),
+            'categories' => $this->promotionService->getCategoryOptions(),
+            'promotionTypes' => $this->promotionService->getPromotionTypeOptions(),
         ]);
     }
 
@@ -163,44 +171,28 @@ class PromotionController extends Controller
      */
     public function update(UpdatePromotionRequest $request, Promotion $promotion): RedirectResponse
     {
+        $payload = $request->validated();
+
         try {
-            DB::transaction(function () use ($request, $promotion) {
-                // Update the main promotion record
-                $promotion->update([
-                    'name' => $request->name,
-                    'description' => $request->description,
-                    'type' => $request->type,
-                    'value' => $request->value,
-                    'min_order_amount' => $request->minimum_order_value,
-                    'max_discount_amount' => $request->max_discount_amount,
-                    'start_date' => $request->starts_at,
-                    'end_date' => $request->expires_at,
-                    'usage_limit' => $request->usage_limit_per_user,
-                    'is_active' => $request->boolean('is_active', true)
-                ]);
+            $promotion = $this->promotionService->update(
+                $promotion,
+                $payload,
+                $payload['product_ids'] ?? [],
+                $payload['category_ids'] ?? []
+            );
 
-                // Handle product conditions - sync will add/remove as needed
-                if (DB::getSchemaBuilder()->hasTable('promotion_products')) {
-                    if ($request->filled('product_ids') && is_array($request->product_ids)) {
-                        $promotion->products()->sync($request->product_ids);
-                    } else {
-                        $promotion->products()->sync([]); // Remove all if empty
-                    }
-                }
-
-                // Handle category conditions
-                if (DB::getSchemaBuilder()->hasTable('promotion_categories')) {
-                    if ($request->filled('category_ids') && is_array($request->category_ids)) {
-                        $promotion->categories()->sync($request->category_ids);
-                    } else {
-                        $promotion->categories()->sync([]); // Remove all if empty
-                    }
-                }
-            });
+            $this->conflictResolver->handlePromotionConflicts($promotion);
 
             return redirect()->route('admin.promotions.index')
                 ->with('success', 'Promotion updated successfully.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Failed to update promotion', [
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception,
+            ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update promotion. Please try again.');
@@ -213,13 +205,184 @@ class PromotionController extends Controller
     public function destroy(Promotion $promotion): RedirectResponse
     {
         try {
-            $promotion->delete();
-            
+            $this->promotionService->delete($promotion);
+
             return redirect()->route('admin.promotions.index')
                 ->with('success', 'Promotion deleted successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
+            Log::error('Failed to delete promotion', [
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception,
+            ]);
+
             return redirect()->back()
                 ->with('error', 'Failed to delete promotion. Please try again.');
         }
+    }
+
+    private function applyAutomaticStatusUpdates(?Promotion $promotion = null, bool $requestedActive = true): void
+    {
+        Promotion::where('end_date', '<', now())->update(['is_active' => false]);
+        Promotion::where('start_date', '>', now())->update(['is_active' => false]);
+    }
+
+    // ===== PHASE 3: CONFLICT RESOLUTION & TARGETING BASICS =====
+
+    // ===== PHASE 2: USAGE TRACKING & ANALYTICS =====
+
+    /**
+     * Get detailed usage statistics for a promotion
+     */
+    public function getUsageStats(Promotion $promotion): array
+    {
+        return $this->analyticsService->getUsageStats($promotion);
+    }
+
+    /**
+     * Calculate revenue impact of a promotion
+     */
+    public function getRevenueImpact(Promotion $promotion): array
+    {
+        return $this->analyticsService->getRevenueImpact($promotion);
+    }
+
+    /**
+     * Get performance metrics for a promotion
+     */
+    public function getPerformanceMetrics(Promotion $promotion): array
+    {
+        return $this->analyticsService->getPerformanceMetrics($promotion);
+    }
+
+    // ===== PHASE 2: BULK OPERATIONS =====
+
+    /**
+     * Bulk activate multiple promotions
+     */
+    public function bulkActivate(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'promotion_ids' => 'required|array|min:1',
+            'promotion_ids.*' => 'exists:promotions,promotion_id',
+        ]);
+
+        $result = $this->bulkService->bulkActivate($request->promotion_ids);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Bulk deactivate multiple promotions
+     */
+    public function bulkDeactivate(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'promotion_ids' => 'required|array|min:1',
+            'promotion_ids.*' => 'exists:promotions,promotion_id',
+        ]);
+
+        $result = $this->bulkService->bulkDeactivate($request->promotion_ids);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Bulk delete multiple promotions
+     */
+    public function bulkDelete(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'promotion_ids' => 'required|array|min:1',
+            'promotion_ids.*' => 'exists:promotions,promotion_id',
+            'confirm' => 'required|boolean|accepted',
+        ]);
+
+        $result = $this->bulkService->bulkDelete($request->promotion_ids);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Bulk duplicate promotions
+     */
+    public function bulkDuplicate(Request $request, Promotion $promotion): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'count' => 'required|integer|min:1|max:50',
+            'name_prefix' => 'nullable|string|max:100',
+        ]);
+
+        $result = $this->bulkService->bulkDuplicate(
+            $promotion,
+            $request->count,
+            $request->name_prefix ?? 'Copy of '
+        );
+
+        return response()->json($result);
+    }
+
+    // ===== PHASE 2: PROMOTION TEMPLATES =====
+
+    /**
+     * Get available promotion templates
+     */
+    public function getTemplates(): \Illuminate\Http\JsonResponse
+    {
+        $templates = $this->templateService->getTemplates();
+
+        return response()->json([
+            'templates' => $templates,
+        ]);
+    }
+
+    /**
+     * Create promotion from template
+     */
+    public function createFromTemplate(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'template_id' => 'required|string',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'starts_at' => 'required|date|after_or_equal:today',
+            'expires_at' => 'required|date|after:starts_at',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,product_id',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'exists:categories,category_id',
+        ]);
+
+        try {
+            $promotion = $this->templateService->createFromTemplate($request->all());
+
+            return redirect()->route('admin.promotions.edit', $promotion)
+                ->with('success', 'Promotion created from template successfully. Please review and activate when ready.');
+        } catch (Exception $exception) {
+            Log::error('Failed to create promotion from template', ['exception' => $exception]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create promotion from template. Please try again.');
+        }
+    }
+
+    /**
+     * Save current promotion as template
+     */
+    public function saveAsTemplate(Request $request, Promotion $promotion): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'template_name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'is_public' => 'boolean',
+        ]);
+
+        $template = $this->templateService->saveAsTemplate($promotion, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'template' => $template,
+            'message' => 'Promotion saved as template successfully.',
+        ]);
     }
 }

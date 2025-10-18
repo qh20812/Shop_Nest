@@ -26,7 +26,7 @@ class UpdatePromotionRequest extends FormRequest
             'name' => 'required|string|max:255|min:3',
             'description' => 'nullable|string|max:1000',
             'type' => 'required|in:percentage,fixed_amount,free_shipping,buy_x_get_y',
-            'value' => 'required|numeric|min:0',
+            'value' => 'required|numeric|min:0.01',
             'minimum_order_value' => 'nullable|numeric|min:0',
             'max_discount_amount' => 'nullable|numeric|min:0',
             'starts_at' => [
@@ -40,15 +40,30 @@ class UpdatePromotionRequest extends FormRequest
                 )
             ],
             'expires_at' => 'required|date|after:starts_at',
-            'usage_limit_per_user' => 'nullable|integer|min:1',
+            'usage_limit_per_user' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
             
             // Condition arrays
             'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,id',
+            'product_ids.*' => 'exists:products,product_id',
             'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
+            'category_ids.*' => 'exists:categories,category_id',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $data = $this->all();
+
+            if (($data['type'] ?? null) === 'percentage' && isset($data['value']) && (float) $data['value'] > 100) {
+                $validator->errors()->add('value', 'The promotion value cannot exceed 100% for percentage discounts.');
+            }
+
+            if (isset($data['usage_limit_per_user']) && $data['usage_limit_per_user'] !== null && (int) $data['usage_limit_per_user'] < 0) {
+                $validator->errors()->add('usage_limit_per_user', 'The usage limit per user must be zero or greater.');
+            }
+        });
     }
 
     /**

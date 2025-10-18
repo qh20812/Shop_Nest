@@ -27,6 +27,7 @@ interface PageProps {
         data: Category[];
         links: { url: string | null; label: string; active: boolean }[];
     };
+    totalCategories: number;
     filters: { search?: string; status?: string };
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
@@ -34,7 +35,7 @@ interface PageProps {
 
 export default function Index() {
     const { t, locale } = useTranslation();
-    const { categories = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
+    const { categories = { data: [], links: [] }, totalCategories = 0, filters = {}, flash = {} } = usePage<PageProps>().props;
 
 
 
@@ -298,7 +299,7 @@ export default function Index() {
             <DataTable
                 columns={categoryColumns}
                 data={categories.data}
-                headerTitle={t("Category List")}
+                headerTitle={`${t("Category List")} (${totalCategories})`}
                 headerIcon="bx-list-ul"
                 emptyMessage={t("No categories found")}
             />

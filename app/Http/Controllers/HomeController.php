@@ -4,41 +4,51 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Enums\ProductStatus;
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\FlashSaleEvent;
 use App\Models\FlashSaleProduct;
-use App\Models\User;
-use App\Models\UserPreference;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\ProductView;
-use App\Models\SearchHistory;
+use App\Models\Review;
+use App\Models\UserPreference;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // Get categories - active categories with image
-        $categories = Category::where('is_active', true)
-            ->whereNotNull('image_url')
-            ->orderBy('category_id')
-            ->limit(20)
-            ->get()
-            ->map(function ($category) {
-                return [
-                    'id' => $category->category_id,
-                    'name' => $category->getTranslation('name', app()->getLocale()),
-                    'img' => $category->image_url,
-                ];
-            });
+        $locale = app()->getLocale();
 
-        // Get active flash sale event and products
-        $flashSaleData = $this->getFlashSaleData();
+        $categories = Cache::remember("home_categories_{$locale}", 900, function () use ($locale) {
+            return Category::where('is_active', true)
+                ->whereNotNull('image_url')
+                ->orderBy('category_id')
+                ->limit(30)
+                ->get()
+                ->map(function ($category) use ($locale) {
+                    return [
+                        'id' => $category->category_id,
+                        'name' => $category->getTranslation('name', $locale),
+                        'img' => $category->image_url,
+                    ];
+                })
+                ->values()
+                ->toArray();
+        });
 
-        // Get daily discover products (personalized)
-        $dailyDiscoverProducts = $this->getDailyDiscoverProducts($user);
+        $flashSaleData = Cache::remember("home_flash_sale_{$locale}", 900, function () use ($locale) {
+            return $this->getFlashSaleData($locale);
+        });
+
+        $dailyDiscoverProducts = $this->getDailyDiscoverProducts($user, $locale);
 
         return Inertia::render('Home/Index', [
             'categories' => $categories,
@@ -53,123 +63,276 @@ class HomeController extends Controller
         ]);
     }
 
-    private function getFlashSaleData()
+    private function getFlashSaleData(string $locale): ?array
     {
-        $activeEvent = FlashSaleEvent::where('status', 'active')
-            ->where('start_time', '<=', now())
-            ->where('end_time', '>=', now())
-            ->first();
+        try {
+            $activeEvent = FlashSaleEvent::query()
+                ->where('status', 'active')
+                ->where('start_time', '<=', now())
+                ->where('end_time', '>=', now())
+                ->first();
 
-        if (!$activeEvent) {
+            if (!$activeEvent) {
+                return null;
+            }
+
+            $flashSaleProducts = FlashSaleProduct::query()
+                ->where('flash_sale_event_id', $activeEvent->id)
+                ->where(function (Builder $query) {
+                    $query->whereColumn('sold_count', '<', 'quantity_limit')
+                        ->orWhere('quantity_limit', 0)
+                        ->orWhereNull('quantity_limit');
+                })
+                ->whereHas('productVariant.product', function (Builder $productQuery) {
+                    $productQuery->where('is_active', true);
+                    $this->applyPublishedStatusFilter($productQuery);
+                })
+                ->with([
+                    'productVariant.product.category',
+                    'productVariant.product.brand',
+                    'productVariant.product.images' => function ($query) {
+                        $query->orderByDesc('is_primary')->orderBy('display_order');
+                    },
+                ])
+                ->limit(10)
+                ->get()
+                ->map(function (FlashSaleProduct $flashSaleProduct) use ($locale) {
+                    $variant = $flashSaleProduct->productVariant;
+                    $product = $variant?->product;
+
+                    if (!$product) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $product->product_id,
+                        'name' => $product->getTranslation('name', $locale),
+                        'image' => $this->resolveVariantImage($variant),
+                        'original_price' => (float) ($variant?->price ?? 0),
+                        'flash_sale_price' => (float) $flashSaleProduct->flash_sale_price,
+                        'discount_percentage' => max(0, round((float) $flashSaleProduct->calculated_discount_percentage, 2)),
+                        'sold_count' => (int) $flashSaleProduct->sold_count,
+                        'quantity_limit' => (int) $flashSaleProduct->quantity_limit,
+                        'remaining_quantity' => (int) $flashSaleProduct->remaining_quantity,
+                        'max_quantity_per_user' => (int) $flashSaleProduct->max_quantity_per_user,
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->toArray();
+
+            if (empty($flashSaleProducts)) {
+                return null;
+            }
+
+            return [
+                'event' => [
+                    'id' => $activeEvent->id,
+                    'name' => $activeEvent->name,
+                    'status' => $activeEvent->status,
+                    'start_time' => optional($activeEvent->start_time)?->toIso8601String(),
+                    'end_time' => optional($activeEvent->end_time)?->toIso8601String(),
+                    'banner_image' => $activeEvent->banner_image,
+                ],
+                'products' => $flashSaleProducts,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Error in getFlashSaleData: ' . $e->getMessage(), ['exception' => $e]);
+
             return null;
         }
-
-        $flashSaleProducts = FlashSaleProduct::where('flash_sale_event_id', $activeEvent->id)
-            ->with(['productVariant.product', 'productVariant.image'])
-            ->whereRaw('sold_count < quantity_limit')
-            ->limit(10)
-            ->get()
-            ->map(function ($flashSaleProduct) {
-                $variant = $flashSaleProduct->productVariant;
-                $product = $variant?->product;
-                $image = $variant?->image;
-                return [
-                    'id' => $product?->product_id ?? null,
-                    'name' => $product ? $product->getTranslation('name', app()->getLocale()) : '',
-                    'image' => $image?->image_url ?? '/images/placeholder.jpg',
-                    'original_price' => $variant?->price ?? 0,
-                    'flash_sale_price' => $flashSaleProduct->flash_sale_price,
-                    'discount_percentage' => $flashSaleProduct->calculated_discount_percentage ?? 0,
-                    'sold_count' => $flashSaleProduct->sold_count,
-                    'quantity_limit' => $flashSaleProduct->quantity_limit,
-                    'remaining_quantity' => $flashSaleProduct->remaining_quantity,
-                ];
-            });
-
-        return [
-            'event' => [
-                'id' => $activeEvent->id,
-                'name' => $activeEvent->name,
-                'end_time' => $activeEvent->end_time,
-                'banner_image' => $activeEvent->banner_image,
-            ],
-            'products' => $flashSaleProducts,
-        ];
     }
 
-    private function getDailyDiscoverProducts($user)
+    private function getDailyDiscoverProducts($user, string $locale): array
+    {
+        try {
+            if ($user) {
+                $query = $this->buildBaseProductQuery();
+
+                $userPreference = UserPreference::where('user_id', $user->id)->first();
+
+                if ($userPreference) {
+                    if ($userPreference->preferred_category_id) {
+                        $query->where('category_id', $userPreference->preferred_category_id);
+                    }
+
+                    if ($userPreference->preferred_brand_id) {
+                        $query->where('brand_id', $userPreference->preferred_brand_id);
+                    }
+
+                    if ($userPreference->min_price_range || $userPreference->max_price_range) {
+                        $query->whereHas('variants', function ($variantQuery) use ($userPreference) {
+                            if ($userPreference->min_price_range) {
+                                $variantQuery->where('price', '>=', $userPreference->min_price_range);
+                            }
+                            if ($userPreference->max_price_range) {
+                                $variantQuery->where('price', '<=', $userPreference->max_price_range);
+                            }
+                        });
+                    }
+                } else {
+                    $viewedCategories = ProductView::where('user_id', $user->id)
+                        ->join('products', 'product_views.product_id', '=', 'products.product_id')
+                        ->select('products.category_id')
+                        ->distinct()
+                        ->pluck('category_id')
+                        ->take(3);
+
+                    if ($viewedCategories->isNotEmpty()) {
+                        $query->whereIn('category_id', $viewedCategories);
+                    }
+                }
+
+                $viewedProductIds = ProductView::where('user_id', $user->id)
+                    ->pluck('product_id');
+
+                if ($viewedProductIds->isNotEmpty()) {
+                    $query->whereNotIn('product_id', $viewedProductIds);
+                }
+
+                $products = $query->limit(20)->get();
+
+                return $this->formatDailyDiscoverProducts($products, $locale);
+            }
+
+            return Cache::remember("home_daily_discover_guest_{$locale}", 900, function () use ($locale) {
+                $products = $this->buildBaseProductQuery()
+                    ->inRandomOrder()
+                    ->limit(20)
+                    ->get();
+
+                return $this->formatDailyDiscoverProducts($products, $locale);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Error in getDailyDiscoverProducts: ' . $e->getMessage(), ['exception' => $e]);
+
+            return [];
+        }
+    }
+
+    private function buildBaseProductQuery(): Builder
     {
         $query = Product::with(['variants', 'images', 'category', 'brand'])
-            ->where('is_active', true)
-            ->where('status', 'published');
+            ->where('is_active', true);
 
-        if ($user) {
-            // Personalized recommendations for logged-in users
-            $userPreference = UserPreference::where('user_id', $user->id)->first();
-            
-            if ($userPreference) {
-                // Recommend based on preferred category
-                if ($userPreference->preferred_category_id) {
-                    $query->where('category_id', $userPreference->preferred_category_id);
-                }
-                
-                // Filter by price range if set
-                if ($userPreference->min_price_range || $userPreference->max_price_range) {
-                    $query->whereHas('variants', function ($variantQuery) use ($userPreference) {
-                        if ($userPreference->min_price_range) {
-                            $variantQuery->where('price', '>=', $userPreference->min_price_range);
-                        }
-                        if ($userPreference->max_price_range) {
-                            $variantQuery->where('price', '<=', $userPreference->max_price_range);
-                        }
-                    });
-                }
-            } else {
-                // Recommend based on user's viewing history if no preferences set
-                $viewedCategories = ProductView::where('user_id', $user->id)
-                    ->join('products', 'product_views.product_id', '=', 'products.product_id')
-                    ->select('products.category_id')
-                    ->distinct()
-                    ->pluck('category_id')
-                    ->take(3);
+        $this->applyPublishedStatusFilter($query);
 
-                if ($viewedCategories->isNotEmpty()) {
-                    $query->whereIn('category_id', $viewedCategories);
-                }
-            }
+        return $query;
+    }
 
-            // Exclude already viewed products
-            $viewedProductIds = ProductView::where('user_id', $user->id)
-                ->pluck('product_id');
-            
-            if ($viewedProductIds->isNotEmpty()) {
-                $query->whereNotIn('product_id', $viewedProductIds);
-            }
-        } else {
-            // Random popular products for guests
-            $query->inRandomOrder();
+    private function formatDailyDiscoverProducts(Collection $products, string $locale): array
+    {
+        if ($products->isEmpty()) {
+            return [];
         }
 
-        $products = $query->limit(20)->get()
-            ->map(function ($product) {
-                $mainVariant = $product->variants->first();
-                $mainImage = $product->images->where('is_primary', true)->first() 
-                           ?? $product->images->first();
+        $productIds = $products->pluck('product_id')->all();
+        $averageRatings = $this->fetchAverageRatings($productIds);
+        $soldCounts = $this->fetchSoldCounts($productIds);
 
-                return [
-                    'id' => $product->product_id,
-                    'name' => $product->getTranslation('name', app()->getLocale()),
-                    'description' => $product->getTranslation('description', app()->getLocale()),
-                    'image' => $mainImage?->image_url ?? '/images/placeholder.jpg',
-                    'price' => $mainVariant?->price ?? 0,
-                    'discount_price' => $mainVariant?->discount_price ?? null,
-                    'category' => $product->category ? $product->category->getTranslation('name', app()->getLocale()) : '',
-                    'brand' => $product->brand?->name ?? '',
-                    'rating' => 4.5, // TODO: Calculate from reviews
-                    'sold_count' => rand(10, 1000), // TODO: Get from order_items
-                ];
-            });
+        return $products->map(function ($product) use ($locale, $averageRatings, $soldCounts) {
+            $mainVariant = $product->variants->first();
+            $mainImage = $product->images->where('is_primary', true)->first()
+                ?? $product->images->first();
 
-        return $products;
+            return [
+                'id' => $product->product_id,
+                'name' => $product->getTranslation('name', $locale),
+                'description' => $product->getTranslation('description', $locale),
+                'image' => $mainImage?->image_url ?? '/images/placeholder.jpg',
+                'price' => (float) ($mainVariant?->price ?? 0),
+                'discount_price' => $mainVariant?->discount_price !== null ? (float) $mainVariant->discount_price : null,
+                'category' => $product->category ? $product->category->getTranslation('name', $locale) : '',
+                'brand' => $product->brand?->name ?? '',
+                'rating' => $averageRatings[$product->product_id] ?? null,
+                'sold_count' => $soldCounts[$product->product_id] ?? 0,
+            ];
+        })->values()->toArray();
+    }
+
+    private function applyPublishedStatusFilter(Builder $query): Builder
+    {
+        return $query->where(function (Builder $statusQuery) {
+            $statusQuery->where('status', ProductStatus::PUBLISHED->value)
+                ->orWhere('status', ProductStatus::PUBLISHED->name)
+                ->orWhere('status', 3)
+                ->orWhere('status', '3');
+        });
+    }
+
+    private function resolveVariantImage(?ProductVariant $variant): string
+    {
+        if (!$variant) {
+            return '/images/placeholder.jpg';
+        }
+
+        $product = $variant->relationLoaded('product')
+            ? $variant->product
+            : $variant->product()->with(['images' => function ($query) {
+                $query->orderByDesc('is_primary')->orderBy('display_order');
+            }])->first();
+
+        if (!$product) {
+            return '/images/placeholder.jpg';
+        }
+
+        $images = $product->relationLoaded('images')
+            ? $product->images
+            : $product->images()->orderByDesc('is_primary')->orderBy('display_order')->get();
+
+        if ($variant->image_id) {
+            $variantImage = $images->firstWhere('image_id', $variant->image_id);
+            if ($variantImage) {
+                return $variantImage->image_url;
+            }
+        }
+
+        $primaryImage = $images->firstWhere('is_primary', true);
+        if ($primaryImage) {
+            return $primaryImage->image_url;
+        }
+
+        $fallbackImage = $images->sortBy('display_order')->first();
+        if ($fallbackImage) {
+            return $fallbackImage->image_url;
+        }
+
+        return '/images/placeholder.jpg';
+    }
+
+    private function fetchAverageRatings(array $productIds): array
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        return Review::query()
+            ->whereIn('product_id', $productIds)
+            ->where('is_approved', true)
+            ->selectRaw('product_id, AVG(rating) as avg_rating')
+            ->groupBy('product_id')
+            ->pluck('avg_rating', 'product_id')
+            ->map(function ($average) {
+                return round((float) $average, 1);
+            })
+            ->toArray();
+    }
+
+    private function fetchSoldCounts(array $productIds): array
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        return OrderItem::query()
+            ->join('product_variants', 'order_items.variant_id', '=', 'product_variants.variant_id')
+            ->whereIn('product_variants.product_id', $productIds)
+            ->selectRaw('product_variants.product_id as product_id, SUM(order_items.quantity) as total_sold')
+            ->groupBy('product_variants.product_id')
+            ->pluck('total_sold', 'product_id')
+            ->map(function ($count) {
+                return (int) $count;
+            })
+            ->toArray();
     }
 }

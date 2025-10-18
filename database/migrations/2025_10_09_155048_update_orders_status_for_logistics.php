@@ -12,18 +12,38 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, let's modify the enum to include new logistics statuses
-        DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM(
-            'pending_confirmation', 
-            'processing', 
-            'pending_assignment',
-            'assigned_to_shipper',
-            'delivering',
-            'delivered', 
-            'completed',
-            'cancelled', 
-            'returned'
-        ) NOT NULL DEFAULT 'pending_confirmation'");
+        // For MySQL, use MODIFY COLUMN
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM(
+                'pending_confirmation',
+                'processing',
+                'pending_assignment',
+                'assigned_to_shipper',
+                'delivering',
+                'delivered',
+                'completed',
+                'cancelled',
+                'returned'
+            ) NOT NULL DEFAULT 'pending_confirmation'");
+        } else {
+            // For SQLite and other databases, drop and recreate column
+            Schema::table('orders', function (Blueprint $table) {
+                $table->dropColumn('status');
+            });
+            Schema::table('orders', function (Blueprint $table) {
+                $table->enum('status', [
+                    'pending_confirmation',
+                    'processing',
+                    'pending_assignment',
+                    'assigned_to_shipper',
+                    'delivering',
+                    'delivered',
+                    'completed',
+                    'cancelled',
+                    'returned'
+                ])->default('pending_confirmation');
+            });
+        }
     }
 
     /**
@@ -32,13 +52,30 @@ return new class extends Migration
     public function down(): void
     {
         // Revert to original enum values
-        DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM(
-            'pending', 
-            'confirmed', 
-            'processing', 
-            'delivered', 
-            'cancelled', 
-            'refunded'
-        ) NOT NULL DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE orders MODIFY COLUMN status ENUM(
+                'pending',
+                'confirmed',
+                'processing',
+                'delivered',
+                'cancelled',
+                'refunded'
+            ) NOT NULL DEFAULT 'pending'");
+        } else {
+            // For SQLite and other databases, drop and recreate column
+            Schema::table('orders', function (Blueprint $table) {
+                $table->dropColumn('status');
+            });
+            Schema::table('orders', function (Blueprint $table) {
+                $table->enum('status', [
+                    'pending',
+                    'confirmed',
+                    'processing',
+                    'delivered',
+                    'cancelled',
+                    'refunded'
+                ])->default('pending');
+            });
+        }
     }
 };

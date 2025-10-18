@@ -70,6 +70,7 @@ class CategorySeeder extends Seeder
                     'vi' => "Các sản phẩm thuộc danh mục {$parentName['vi']}"
                 ],
                 'image_url' => 'https://via.placeholder.com/600x400.png/00aa88?text=Category',
+                'is_active' => true,
             ]);
 
             foreach ($children as $childName) {
@@ -81,6 +82,7 @@ class CategorySeeder extends Seeder
                     ],
                     'parent_category_id' => $parent->category_id,
                     'image_url' => 'https://via.placeholder.com/600x400.png/00aa88?text=Category',
+                    'is_active' => true,
                 ]);
             }
         }

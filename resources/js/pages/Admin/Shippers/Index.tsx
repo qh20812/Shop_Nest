@@ -34,6 +34,7 @@ interface PageProps {
         data: Shipper[];
         links: { url: string | null; label: string; active: boolean }[];
     };
+    totalShippers: number;
     filters: {
         status?: string;
         search?: string;
@@ -45,7 +46,7 @@ interface PageProps {
 
 export default function Index() {
     const { t } = useTranslation();
-    const { shippers, filters, statusOptions, flash } = usePage<PageProps>().props;
+    const { shippers, totalShippers = 0, filters, statusOptions, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || "");
     const [status, setStatus] = useState(filters.status || "");
@@ -200,7 +201,7 @@ export default function Index() {
             <DataTable
                 columns={shipperColumns}
                 data={shippers.data}
-                headerTitle={t('Shipper List')}
+                headerTitle={`${t('Shipper List')} (${totalShippers})`}
                 headerIcon="bx-user-pin"
                 emptyMessage={t('No shippers found')}
             />

@@ -333,6 +333,11 @@
     "Paid": "Đã thanh toán",
     "Unpaid": "Chưa thanh toán",
     "Failed": "Thất bại",
+    "Pending Confirmation": "Đang chờ xác nhận",
+    "Pending Assignment": "Đang chờ gán",
+    "Assigned to Shipper": "Đã gán cho người vận chuyển",
+    "Delivering": "Đang giao hàng",
+    "Returned": "Đã trả hàng",
     "Refunded": "Đã hoàn tiền",
     "Partially Refunded": "Đã hoàn tiền một phần",
     "Unknown": "Không xác định",
@@ -364,7 +369,9 @@
     "buyGuide": "Hướng Dẫn Mua Hàng",
     "sellGuide": "Hướng Dẫn Bán Hàng",
     "refundPolicy": "Chính Sách Hoàn Tiền",
-    
+    "Are you sure you want to rejected this shipper? This action will update their status.": "Bạn có chắc chắn muốn từ chối shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
+    "Are you sure you want to approved this shipper? This action will update their status.": "Bạn có chắc chắn muốn phê duyệt shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
+    "Are you sure you want to suspended this shipper? This action will update their status.": "Bạn có chắc chắn muốn tạm ngưng shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
     "Seller Dashboard": "Bảng điều khiển Seller",
     "My Products": "Sản phẩm của tôi",
     "Add Product": "Thêm sản phẩm",
@@ -421,5 +428,6 @@
     "Only": "Chỉ còn",
     "left": "sản phẩm",
     "Time Left": "Thời gian còn lại",
-    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt."
+    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt.",
+    "Change Password": "Đổi mật khẩu"
 }

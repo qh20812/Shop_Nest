@@ -42,6 +42,7 @@ interface PageProps {
     links: { url: string | null; label: string; active: boolean }[];
   };
   roles: string[];
+  totalUsers: number;
   filters: { search?: string; role?: string; status?: string };
   flash?: { success?: string; error?: string };
   auth: {
@@ -52,7 +53,7 @@ interface PageProps {
 
 export default function Index() {
   const { t, locale } = useTranslation();
-  const { users, roles, filters, flash, auth } = usePage<PageProps>().props;
+  const { users, roles, totalUsers = 0, filters, flash, auth } = usePage<PageProps>().props;
   const currentUserId = auth.user.id;
 
   const [search, setSearch] = useState(filters.search || "");
@@ -313,7 +314,7 @@ export default function Index() {
       <DataTable
         columns={userColumns}
         data={users.data}
-        headerTitle="User List"
+        headerTitle={`User List (${totalUsers})`}
         headerIcon="bx-receipt"
         emptyMessage="No users found"
       />

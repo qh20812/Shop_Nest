@@ -91,18 +91,32 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   
-  const [isSidebarClosed, setIsSidebarClosed] = useState(false);
+  const [isSidebarClosed, setIsSidebarClosed] = useState(() => {
+    // Initialize from localStorage immediately
+    const savedState = localStorage.getItem('sidebarClosed');
+    return savedState !== null ? JSON.parse(savedState) : false;
+  });
 
-  // Toggle sidebar
+  // Toggle sidebar and save to localStorage
   const toggleSidebar = () => {
-    setIsSidebarClosed(!isSidebarClosed);
-  };  // Handle responsive behavior
+    const newState = !isSidebarClosed;
+    setIsSidebarClosed(newState);
+    localStorage.setItem('sidebarClosed', JSON.stringify(newState));
+  };
+
+  // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
         setIsSidebarClosed(true);
       } else {
-        setIsSidebarClosed(false);
+        // Only restore from localStorage if we're not in mobile mode
+        const savedState = localStorage.getItem('sidebarClosed');
+        if (savedState !== null) {
+          setIsSidebarClosed(JSON.parse(savedState));
+        } else {
+          setIsSidebarClosed(false);
+        }
       }
     };
 

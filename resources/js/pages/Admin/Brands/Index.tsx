@@ -10,7 +10,6 @@ import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
 import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
-import he from 'he';
 import { htmlToPlainText } from '../../../utils/htmlUtils';
 
 interface Brand {
@@ -29,6 +28,7 @@ interface PageProps {
         data: Brand[];
         links: { url: string | null; label: string; active: boolean }[];
     };
+    totalBrands: number;
     filters: { search?: string; status?: string };
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
@@ -36,7 +36,7 @@ interface PageProps {
 
 export default function Index() {
     const { t } = useTranslation();
-    const { brands = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
+    const { brands = { data: [], links: [] }, totalBrands = 0, filters = {}, flash = {} } = usePage<PageProps>().props;
 
 
 
@@ -330,7 +330,7 @@ export default function Index() {
             <DataTable
                 columns={brandColumns}
                 data={brands.data}
-                headerTitle={t("Brand List")}
+                headerTitle={`${t("Brand List")} (${totalBrands})`}
                 headerIcon="bx-store"
                 emptyMessage={t("No brands found")}
             />

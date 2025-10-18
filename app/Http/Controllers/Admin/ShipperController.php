@@ -20,6 +20,8 @@ class ShipperController extends Controller
             $query->where('name->en', 'Shipper');
         })->with(['shipperProfile', 'roles']);
 
+        $totalShippers = $query->count();
+
         // Filter by shipper profile status if provided
         if ($request->filled('status')) {
             $query->whereHas('shipperProfile', function ($query) use ($request) {
@@ -42,6 +44,7 @@ class ShipperController extends Controller
 
         return Inertia::render('Admin/Shippers/Index', [
             'shippers' => $shippers,
+            'totalShippers' => $totalShippers,
             'filters' => [
                 'status' => $request->get('status'),
                 'search' => $request->get('search'),

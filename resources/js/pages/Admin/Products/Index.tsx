@@ -43,13 +43,14 @@ interface PageProps {
     categories: Category[];
     brands: Brand[];
     filters: { search?: string; category_id?: string; brand_id?: string; status?: string };
+    totalProducts: number;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
 export default function Index() {
     const { t } = useTranslation();
-    const { products = { data: [], links: [] }, categories = [], brands = [], filters = {}, flash = {} } = usePage<PageProps>().props;
+    const { products = { data: [], links: [] }, categories = [], brands = [], filters = {}, totalProducts = 0, flash = {} } = usePage<PageProps>().props;
 
 
 
@@ -415,7 +416,7 @@ export default function Index() {
             <DataTable
                 columns={productColumns}
                 data={products.data}
-                headerTitle={t("Product List")}
+                headerTitle={`${t("Product List")} (${totalProducts})`}
                 headerIcon="bx-package"
                 emptyMessage={t("No products found")}
             />

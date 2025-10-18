@@ -18,6 +18,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::latest();
+        $totalCategories = Category::count();
         
         // Filter by status
         $status = $request->get('status');
@@ -43,6 +44,7 @@ class CategoryController extends Controller
         
         return Inertia::render('Admin/Categories/Index', [
             'categories' => $categories,
+            'totalCategories' => $totalCategories,
             'filters' => [
                 'search' => $request->get('search'),
                 'status' => $request->get('status'),

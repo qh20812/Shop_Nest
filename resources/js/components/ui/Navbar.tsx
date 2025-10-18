@@ -68,12 +68,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   return (
     <nav>
       <i className='bx bx-menu' onClick={onToggleSidebar} style={{ cursor: 'pointer' }}></i>
-      
+
       <form action="#" className={isSearchShow ? 'show' : ''}>
         <div className="form-input">
           <input type="search" placeholder={t('Search...')} />
-          <button 
-            className="search-btn" 
+          <button
+            className="search-btn"
             type="submit"
             onClick={handleSearchToggle}
           >
@@ -81,16 +81,16 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           </button>
         </div>
       </form>
-      
+
       <a href="#" className="notif">
         <i className='bx bx-bell'></i>
         <span className="count">12</span>
       </a>
-      
+
       {/* Profile Dropdown */}
-      <div 
+      <div
         ref={profileRef}
-        className="profile" 
+        className="profile"
         style={{ position: 'relative', cursor: 'pointer' }}
         onClick={() => setIsProfileOpen(!isProfileOpen)}
       >
@@ -98,10 +98,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* User Name and Role Block */}
             <div style={{ textAlign: 'right' }}>
-              <p style={{ 
-                fontWeight: 600, 
-                fontSize: '14px', 
-                margin: 0, 
+              <p style={{
+                fontWeight: 600,
+                fontSize: '14px',
+                margin: 0,
                 color: 'var(--dark)',
                 lineHeight: '1.2'
               }}>
@@ -110,8 +110,8 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   return fullName || props.auth.user.username || 'User';
                 })()}
               </p>
-              <small style={{ 
-                fontSize: '12px', 
+              <small style={{
+                fontSize: '12px',
                 color: 'var(--dark-grey)',
                 lineHeight: '1.2'
               }}>
@@ -124,7 +124,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         ) : (
           <img src="/logo.svg" alt="Profile" />
         )}
-        
+
         {/* Dropdown Menu */}
         {isProfileOpen && (
           <div
@@ -163,7 +163,28 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               <i className='bx bx-user' style={{ fontSize: '18px' }}></i>
               {t('Profile')}
             </Link>
-            
+            <Link
+              href="/settings/password"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                color: 'var(--dark)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                transition: 'background 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--grey)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <i className='bx bx-lock' style={{ fontSize: '18px' }}></i>
+              {t('Change Password')}
+            </Link>
             <div
               style={{
                 height: '1px',
@@ -171,7 +192,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 margin: '4px 16px',
               }}
             />
-            
+
             <button
               onClick={handleLogout}
               style={{

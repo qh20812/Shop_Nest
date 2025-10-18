@@ -331,6 +331,11 @@
     "Paid": "Paid",
     "Unpaid": "Unpaid",
     "Failed": "Failed",
+    "Pending Confirmation": "Pending Confirmation",
+    "Pending Assignment": "Pending Assignment",
+    "Assigned to Shipper": "Assigned to Shipper",
+    "Delivering": "Delivering",
+    "Returned": "Returned",
     "Refunded": "Refunded",
     "Partially Refunded": "Partially Refunded",
     "Unknown": "Unknown",
@@ -362,7 +367,9 @@
     "buyGuide": "Buying/Ordering Guide",
     "sellGuide": "Selling Guide",
     "refundPolicy": "Refund Policy",
-    
+    "Are you sure you want to rejected this shipper? This action will update their status.": "Are you sure you want to rejected this shipper? This action will update their status.",
+    "Are you sure you want to approved this shipper? This action will update their status.": "Are you sure you want to approved this shipper? This action will update their status.",
+    "Are you sure you want to suspended this shipper? This action will update their status.": "Are you sure you want to suspended this shipper? This action will update their status.",
     "Seller Dashboard": "Seller Dashboard",
     "My Products": "My Products",
     "Add Product": "Add Product",
@@ -421,5 +428,6 @@
     "Only": "Only",
     "left": "left",
     "Time Left": "Time Left",
-    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+    "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    "Change Password": "Change Password"
 }

@@ -15,6 +15,7 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         $query = Brand::query();
+        $totalBrands = Brand::count();
 
         // Filter by status
         if ($request->status === 'inactive') {
@@ -50,6 +51,7 @@ class BrandController extends Controller
 
         return Inertia::render('Admin/Brands/Index', [
             'brands' => $brands,
+            'totalBrands' => $totalBrands,
             'filters' => $request->only(['search', 'status']),
         ]);
     }

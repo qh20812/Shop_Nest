@@ -105,11 +105,14 @@ class ProductController extends Controller
                 ];
             });
 
+        $totalProducts = Product::count();
+
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
             'filters' => $request->only(['search', 'category_id', 'brand_id', 'status']),
+            'totalProducts' => $totalProducts,
         ]);
     }
 

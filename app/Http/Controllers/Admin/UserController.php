@@ -18,6 +18,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'role', 'status']);
+        $totalUsers = User::count();
 
         $users = User::query()
             ->with('roles') // Eager load roles để tránh N+1 query
@@ -44,6 +45,7 @@ class UserController extends Controller
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'roles' => Role::all()->map->name, // Map over collection to get translated role names for current locale
+            'totalUsers' => $totalUsers,
             'filters' => $filters,
         ]);
     }

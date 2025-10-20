@@ -531,5 +531,10 @@
     "categories": "danh mục",
     "selection rules": "quy tắc lựa chọn",
     "rule value": "giá trị quy tắc",
-    "rule type": "loại quy tắc"
+    "rule type": "loại quy tắc",
+    "Create Promotion": "Tạo khuyến mãi",
+    "Expired": "Hết hạn",
+    "Percentage Discount": "Giảm giá phần trăm",
+    "Buy X Get Y": "Mua X Tặng Y",
+    "Spent": "Đã chi"
 }

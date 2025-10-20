@@ -206,21 +206,21 @@ export default function Index() {
           const actions: ActionConfig[] = [
             {
               type: 'link',
-              label: 'View',
+              label: t('View'),
               href: `/admin/promotions/${promotion.promotion_id}`,
               icon: 'bx bx-show',
               variant: 'primary',
             },
             {
               type: 'link',
-              label: 'Edit',
+              label: t('Edit'),
               href: `/admin/promotions/${promotion.promotion_id}/edit`,
               icon: 'bx bx-edit',
               variant: 'primary',
             },
             {
               type: 'button',
-              label: 'Delete',
+              label: t('Delete'),
               onClick: () => openDeleteModal(promotion),
               icon: 'bx bx-trash',
               variant: 'danger',
@@ -257,20 +257,20 @@ export default function Index() {
           {
             value: status,
             onChange: setStatus,
-            label: '-- All Statuses --',
+            label: t('-- All Statuses --'),
             options: statusFilters.map((item) => ({ value: item, label: t(ucfirst(item)) })),
           },
           {
             value: type,
             onChange: setType,
-            label: '-- All Types --',
-            options: Object.keys(typeOptions).map((key) => ({ value: key, label: typeOptions[key] })),
+            label: t('-- All Types --'),
+            options: Object.keys(typeOptions).map((key) => ({ value: key, label: t(typeOptions[key]) })),
           },
         ]}
         buttonConfigs={[
           {
             href: '/admin/promotions/create',
-            label: 'Create Promotion',
+            label: t('Create Promotion'),
             icon: 'bx bx-plus',
             color: 'primary',
           },
@@ -280,9 +280,9 @@ export default function Index() {
       <DataTable<Promotion>
         columns={columns}
         data={promotions.data}
-        headerTitle="Promotions"
+        headerTitle={t('Promotions')}
         headerIcon="bx-purchase-tag"
-        emptyMessage="No promotions found"
+        emptyMessage={t('No promotions found')}
       />
 
       <Pagination links={promotions.links} filters={{ search, status, type }} />

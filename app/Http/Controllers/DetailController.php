@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Services\CartService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -84,7 +85,7 @@ class DetailController extends Controller
             'variant_id' => [
                 'required',
                 'integer',
-                Rule::exists('product_variants', 'variant_id')->where(function (Builder $query) use ($product) {
+                Rule::exists('product_variants', 'variant_id')->where(function (QueryBuilder $query) use ($product) {
                     $query->where('product_id', $product->product_id)->whereNull('deleted_at');
                 }),
             ],
@@ -142,7 +143,7 @@ class DetailController extends Controller
             'variant_id' => [
                 'required',
                 'integer',
-                Rule::exists('product_variants', 'variant_id')->where(function (Builder $query) use ($product) {
+                Rule::exists('product_variants', 'variant_id')->where(function (QueryBuilder $query) use ($product) {
                     $query->where('product_id', $product->product_id)->whereNull('deleted_at');
                 }),
             ],

@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\DetailController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,6 +19,18 @@ Route::get('/about', function () {
 Route::get('/contact', function () {
     return Inertia::render('Home/Contact');
 })->name('contact');
+
+Route::get('/product/{productId}', [DetailController::class, 'show'])
+    ->whereNumber('productId')
+    ->name('product.detail');
+
+Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])
+    ->whereNumber('productId')
+    ->name('product.addToCart');
+
+Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])
+    ->whereNumber('productId')
+    ->name('product.buyNow');
 
 // Language switching route
 Route::post('/language', function () {

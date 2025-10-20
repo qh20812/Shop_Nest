@@ -37,6 +37,7 @@ class CartControllerTest extends TestCase
 
         // Mock routes để Inertia không crash
         Route::middleware('web')->group(function () {
+            Route::post('/cart/apply-promotion', [\App\Http\Controllers\CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
             Route::get('/checkout', function () {
                 session(['checkout_data' => ['mock' => true]]);
                 return redirect()->back();

@@ -27,7 +27,7 @@ class CartController extends Controller
         $promotion = $this->cartService->getActivePromotion($user);
         $totals = $this->cartService->calculateTotals($cartItems, $promotion);
 
-        return Inertia::render('User/Cart/Index', [
+        return Inertia::render('Customer/Cart', [
             'cartItems' => $cartItems->values()->all(),
             'totals' => $totals,
             'promotion' => $promotion ? $promotion->toArray() : null,

@@ -9,13 +9,15 @@ interface HomeLayoutProps {
 }
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
+    const isHomePage = window.location.pathname === '/';
+
     return (
         <div className="home-layout">
             {/* Navbar */}
             <Navbar />
             
-            {/* Header/Banner */}
-            <Header />
+            {/* Header/Banner - only show on home page */}
+            {isHomePage && <Header />}
             
             {/* Main Content */}
             <main className="home-main">

@@ -553,9 +553,15 @@ class CartService
     {
         $cacheKey = "cart:promotion_code:{$code}";
 
-        return $this->cache->remember($cacheKey, now()->addMinutes(5), function () use ($code) {
-            return PromotionCode::where('code', $code)->firstOrFail();
+        $promotionCode = $this->cache->remember($cacheKey, now()->addMinutes(5), function () use ($code) {
+            return PromotionCode::where('code', $code)->first();
         });
+
+        if (!$promotionCode) {
+            throw CartException::promotionNotFound($code);
+        }
+
+        return $promotionCode;
     }
 
     private function getPromotionCodeById(int $promotionCodeId): ?PromotionCode

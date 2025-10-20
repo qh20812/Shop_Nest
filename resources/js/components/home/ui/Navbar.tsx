@@ -9,16 +9,39 @@ interface User {
   avatar?: string;
 }
 
+interface CartItem {
+  cart_item_id: number;
+  variant_id: number;
+  quantity: number;
+  price: number;
+  discount_price?: number;
+  subtotal: number;
+  variant: {
+    variant_id: number;
+    sku: string;
+    price: number;
+    discount_price?: number;
+    stock_quantity: number;
+    available_quantity: number;
+    reserved_quantity: number;
+    product: {
+      product_id: number;
+      name: string;
+    } | null;
+  };
+}
+
 interface PageProps {
   auth: {
     user: User | null;
   };
   locale: string;
+  cartItems?: CartItem[];
   [key: string]: unknown;
 }
 
 export default function Navbar() {
-  const { auth, locale } = usePage<PageProps>().props;
+  const { auth, locale, cartItems = [] } = usePage<PageProps>().props;
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   
@@ -123,7 +146,7 @@ export default function Navbar() {
 
         <div className="main-nav">
           <div className="nav-logo">
-            <a href="#">
+            <a href="/">
               <img src="/image/ShopnestLogo.png" alt="ShopNest" />
               <span>ShopNest</span>
             </a>
@@ -141,19 +164,52 @@ export default function Navbar() {
             </div>
           </div>
           <div className="nav-cart">
-            <a href="#" className="cart-link">
+            <Link href="/cart" className="cart-link">
               <i className="bi bi-cart3"></i>
-              <span className="cart-count">0</span>
-            </a>
+              <span className="cart-count">{cartItems.length}</span>
+            </Link>
             <div className="cart-preview">
               <div className="cart-preview-header">
                 <span>Sản phẩm mới thêm</span>
               </div>
               <div className="cart-preview-content">
-                <div className="cart-empty">
-                  <i className="bi bi-cart-x"></i>
-                  <span>Chưa có sản phẩm</span>
-                </div>
+                {cartItems.length === 0 ? (
+                  <div className="cart-empty">
+                    <i className="bi bi-cart-x"></i>
+                    <span>Chưa có sản phẩm</span>
+                  </div>
+                ) : (
+                  <div className="cart-items">
+                    {cartItems.slice(0, 3).map((item) => (
+                      <div key={item.cart_item_id} className="cart-preview-item">
+                        <img 
+                          src="/image/ShopnestLogo.png" 
+                          alt={item.variant.product?.name || 'Product'} 
+                          className="cart-item-image" 
+                        />
+                        <div className="cart-item-info">
+                          <div className="cart-item-name">
+                            {item.variant.product?.name || 'Unknown Product'}
+                          </div>
+                          <div className="cart-item-variant">
+                            {item.variant.sku}
+                          </div>
+                          <div className="cart-item-price">
+                            {new Intl.NumberFormat('vi-VN', {
+                              style: 'currency',
+                              currency: 'VND'
+                            }).format(item.price)} x {item.quantity}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {cartItems.length > 3 && (
+                      <div className="cart-more-items">
+                        Và {cartItems.length - 3} sản phẩm khác...
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="cart-preview-footer">
                 <a href="/cart" className="view-cart-btn">Xem giỏ hàng</a>

@@ -1,9 +1,54 @@
 import React, { useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import '@/../css/Home.css';
 import CartTitle from '@/components/cart/CartTitle';
 import CartColumnTitle from '@/components/cart/CartColumnTitle';
 import CartShopCard from '@/components/cart/CartShopCard';
 import HomeLayout from '@/layouts/app/HomeLayout';
+
+interface CartItem {
+  cart_item_id: number;
+  variant_id: number;
+  quantity: number;
+  price: number;
+  discount_price?: number;
+  subtotal: number;
+  variant: {
+    variant_id: number;
+    sku: string;
+    price: number;
+    discount_price?: number;
+    stock_quantity: number;
+    available_quantity: number;
+    reserved_quantity: number;
+    product: {
+      product_id: number;
+      name: string;
+    } | null;
+  };
+}
+
+interface Promotion {
+  promotion_id: number;
+  code: string;
+  type: number;
+  value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+}
+
+interface Totals {
+  subtotal: number;
+  discount: number;
+  total: number;
+}
+
+interface PageProps {
+  cartItems: CartItem[];
+  totals: Totals;
+  promotion: Promotion | null;
+  [key: string]: unknown;
+}
 
 interface CartProduct {
   id: number;
@@ -22,48 +67,41 @@ interface Shop {
 }
 
 export default function Cart() {
-  // Sample data - replace with real data from props or API
-  const [shops] = useState<Shop[]>([
-    {
-      id: 1,
-      name: "Fashion Store",
-      products: [
-        {
-          id: 1,
-          name: "Quần tây đen chuẩn vải âu",
-          image: "/image/ShopnestLogo.png",
-          variant: "Đen, Size L",
-          price: 500000,
-          quantity: 1,
-          maxQuantity: 10
-        },
-        {
-          id: 2,
-          name: "Áo sơ mi trắng công sở",
-          image: "/image/ShopnestLogo.png",
-          variant: "Trắng, Size M",
-          price: 350000,
-          quantity: 2,
-          maxQuantity: 5
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Tech World",
-      products: [
-        {
-          id: 3,
-          name: "Tai nghe Bluetooth cao cấp",
-          image: "/image/ShopnestLogo.png",
-          variant: "Đen, Wireless",
-          price: 1200000,
-          quantity: 1,
-          maxQuantity: 3
-        }
-      ]
-    }
-  ]);
+  const { cartItems, promotion } = usePage<PageProps>().props;
+
+  // Transform cartItems to shops format
+  const shops: Shop[] = React.useMemo(() => {
+    const shopMap = new Map<number, Shop>();
+
+    cartItems.forEach((item) => {
+      const product = item.variant.product;
+      if (!product) return;
+
+      const shopId = product.product_id; // Using product_id as shop_id for simplicity
+      const shopName = 'Shop'; // You might want to get actual shop name
+
+      if (!shopMap.has(shopId)) {
+        shopMap.set(shopId, {
+          id: shopId,
+          name: shopName,
+          products: []
+        });
+      }
+
+      const shop = shopMap.get(shopId)!;
+      shop.products.push({
+        id: item.cart_item_id,
+        name: product.name,
+        image: '/image/ShopnestLogo.png', // Default image
+        variant: item.variant.sku,
+        price: item.price,
+        quantity: item.quantity,
+        maxQuantity: item.variant.available_quantity
+      });
+    });
+
+    return Array.from(shopMap.values());
+  }, [cartItems]);
 
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
@@ -156,6 +194,11 @@ export default function Cart() {
                 <span>Tổng thanh toán ({selectedProducts.length} sản phẩm): </span>
                 <span className="total-price">{formatPrice(selectedTotal)}</span>
               </div>
+              {promotion && (
+                <div className="promotion-info">
+                  <span>Mã khuyến mãi: {promotion.code}</span>
+                </div>
+              )}
               <button className="checkout-btn" type="button">
                 Mua hàng
               </button>

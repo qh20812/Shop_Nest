@@ -8,10 +8,9 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\CartItem;
 use App\Models\Promotion;
+use App\Models\PromotionCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class CartControllerTest extends TestCase
 {
@@ -60,11 +59,10 @@ class CartControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_authentication_for_cart_index()
+    public function it_allows_guests_to_view_cart_index()
     {
         $response = $this->get('/cart');
-        // Inertia hoặc middleware verified có thể redirect tới login
-        $this->assertTrue(in_array($response->getStatusCode(), [302, 403, 401]));
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     /** @test */
@@ -76,16 +74,33 @@ class CartControllerTest extends TestCase
             'quantity' => 2,
         ]);
 
-        $this->assertTrue(in_array($response->getStatusCode(), [200, 302]));
+        $response->assertStatus(302);
+        $response->assertSessionHas('success', 'Product added to cart!');
 
         $this->assertDatabaseHas('cart_items', [
             'user_id' => $this->user->id,
             'variant_id' => $this->variant->variant_id,
         ]);
 
-        // Check quantity >= 2 (vì updateOrCreate có thể bị lỗi DB::raw)
         $item = CartItem::where('user_id', $this->user->id)->first();
-        $this->assertTrue($item->quantity >= 2);
+        $this->assertEquals(2, $item->quantity);
+    }
+
+    /** @test */
+    public function guest_can_add_item_to_cart_session()
+    {
+        $response = $this->post('/cart/add', [
+            'variant_id' => $this->variant->variant_id,
+            'quantity' => 1,
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('success', 'Product added to cart!');
+
+        $guestItems = session('cart.guest_items', []);
+        $this->assertCount(1, $guestItems);
+        $this->assertEquals($this->variant->variant_id, $guestItems[0]['variant_id']);
+        $this->assertEquals(1, $guestItems[0]['quantity']);
     }
 
     /** @test */
@@ -98,7 +113,8 @@ class CartControllerTest extends TestCase
             'quantity' => 5,
         ]);
 
-        $this->assertTrue(in_array($response->getStatusCode(), [200, 302]));
+        $response->assertStatus(302);
+        $response->assertSessionHas('error', 'Insufficient stock available for the selected product.');
         $this->assertDatabaseMissing('cart_items', [
             'user_id' => $this->user->id,
             'variant_id' => $this->variant->variant_id,
@@ -182,48 +198,67 @@ class CartControllerTest extends TestCase
     /** @test */
     public function it_applies_valid_promotion_code()
     {
-        if (!Schema::hasColumn('promotions', 'code')) {
-            $this->markTestSkipped('Bảng promotions không có cột code, bỏ qua test này.');
-        }
+        CartItem::factory()->create([
+            'user_id' => $this->user->id,
+            'variant_id' => $this->variant->variant_id,
+            'quantity' => 2,
+        ]);
 
         $promotion = Promotion::factory()->create([
-            'code' => 'SALE50',
-            'is_active' => true,
             'type' => 1,
-            'value' => 50,
-            'max_discount_amount' => 1000,
+            'value' => 10,
+            'min_order_amount' => 0,
+            'max_discount_amount' => 100000,
+        ]);
+
+        PromotionCode::factory()->create([
+            'promotion_id' => $promotion->promotion_id,
+            'code' => 'SALE50',
         ]);
 
         $response = $this->actingAs($this->user)->post('/cart/apply-promotion', [
-            'code' => 'SALE50',
+            'code' => 'sale50',
         ]);
 
         $response->assertStatus(302);
         $response->assertSessionHas('success', 'Promotion applied!');
-        $this->assertEquals(session('applied_promotion_id'), $promotion->promotion_id);
+
+        $sessionPromotion = session('cart.applied_promotion');
+        $this->assertNotNull($sessionPromotion);
+        $this->assertEquals($promotion->promotion_id, $sessionPromotion['promotion_id']);
     }
 
     /** @test */
     public function it_rejects_invalid_promotion_code()
     {
+        CartItem::factory()->create([
+            'user_id' => $this->user->id,
+            'variant_id' => $this->variant->variant_id,
+            'quantity' => 2,
+        ]);
+
         $response = $this->actingAs($this->user)->post('/cart/apply-promotion', [
             'code' => 'INVALIDCODE',
         ]);
 
         $response->assertStatus(302);
-        $response->assertSessionHas('error', 'Invalid promotion code.');
+    $response->assertSessionHas('error', 'The promotion code you entered is not valid.');
     }
 
     /** @test */
     public function it_removes_promotion()
     {
-        session(['applied_promotion_id' => 999]);
+        session(['cart.applied_promotion' => [
+            'promotion_id' => 999,
+            'promotion_code_id' => 111,
+            'code' => 'TESTCODE',
+        ]]);
 
         $response = $this->actingAs($this->user)->post('/cart/remove-promotion');
 
         $response->assertStatus(302);
         $response->assertSessionHas('success', 'Promotion removed.');
-        $this->assertFalse(session()->has('applied_promotion_id'));
+    $this->assertFalse(session()->has('cart.applied_promotion'));
     }
 
     /** @test */
@@ -235,9 +270,10 @@ class CartControllerTest extends TestCase
             'quantity' => 2,
         ]);
 
-        $response = $this->actingAs($this->user)->get('/cart/checkout');
+    $response = $this->actingAs($this->user)->get('/cart/checkout');
 
-        $this->assertTrue(in_array($response->getStatusCode(), [200, 302]));
-        $this->assertTrue(session()->has('checkout_data'));
+    $response->assertStatus(302);
+    $response->assertRedirect(route('cart.checkout'));
+    $this->assertTrue(session()->has('checkout_data'));
     }
 }

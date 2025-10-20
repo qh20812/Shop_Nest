@@ -97,11 +97,11 @@ export default function Navbar() {
                 </span>
                 {showAccountMenu && (
                   <div className="account-menu">
-                    <Link href="/profile" className="account-option">
+                    <Link href="#" className="account-option">
                       <i className="bi bi-person"></i>
                       {locale === 'vi' ? 'Thông tin tài khoản' : 'Profile'}
                     </Link>
-                    <Link href="/orders" className="account-option">
+                    <Link href="#" className="account-option">
                       <i className="bi bi-clipboard-check"></i>
                       {locale === 'vi' ? 'Đơn mua' : 'My Orders'}
                     </Link>
@@ -156,7 +156,7 @@ export default function Navbar() {
                 </div>
               </div>
               <div className="cart-preview-footer">
-                <a href="#" className="view-cart-btn">Xem giỏ hàng</a>
+                <a href="/cart" className="view-cart-btn">Xem giỏ hàng</a>
               </div>
             </div>
           </div>

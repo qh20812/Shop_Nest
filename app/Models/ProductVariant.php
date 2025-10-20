@@ -49,7 +49,13 @@ class ProductVariant extends Model
      */
     public function reserveQuantity(int $quantity): bool
     {
-        if ($this->available_quantity < $quantity) {
+        $available = $this->available_quantity;
+
+        if ($available === null) {
+            $available = max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
+        }
+
+        if ($available < $quantity) {
             return false;
         }
 
@@ -70,7 +76,13 @@ class ProductVariant extends Model
      */
     public function isInStock(): bool
     {
-        return $this->available_quantity > 0;
+        $available = $this->available_quantity;
+
+        if ($available === null) {
+            $available = max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
+        }
+
+        return $available > 0;
     }
 
     /**
@@ -78,7 +90,13 @@ class ProductVariant extends Model
      */
     public function isLowStock(): bool
     {
-        return $this->available_quantity <= $this->minimum_stock_level;
+        $available = $this->available_quantity;
+
+        if ($available === null) {
+            $available = max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
+        }
+
+        return $available <= (int) ($this->minimum_stock_level ?? 0);
     }
 
     /**

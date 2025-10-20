@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import AuthButton from './AuthButton';
 
 interface TogglePanelProps {
@@ -21,6 +22,9 @@ export default function TogglePanel({
 
   return (
     <div className={panelClass}>
+      <Link href="/">
+      <img src="/image/ShopnestLogoNoColor.png" alt="Logo" className='logo-in-authpage' />
+      </Link>
       <h1>{title}</h1>
       <p>{description}</p>
       <AuthButton text={buttonText} onClick={onClick} id={buttonId}  />

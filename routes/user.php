@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\PaymentReturnController;
+use App\Http\Controllers\PaymentWebhookController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ReviewController;
+use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])
     ->prefix('dashboard/orders')
@@ -60,13 +63,23 @@ Route::middleware(['auth', 'verified'])
         Route::get('{review}', [ReviewController::class, 'show'])->name('show');
     });
 
-    Route::middleware(['auth', 'verified'])->group(function(){
-        Route::get('/cart',[CartController::class,'index'])->name('cart.index');
-        Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-        Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
-        Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
-        Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
-        Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
-        Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
-        Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
-    });
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
+    Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
+    Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+});
+
+Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.stripe');
+
+Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle']);
+Route::get('/payments/stripe/cancel', function () {
+    return Inertia::render('PaymentResult', [
+        'provider' => 'stripe',
+        'status' => 'canceled',
+    ]);
+});

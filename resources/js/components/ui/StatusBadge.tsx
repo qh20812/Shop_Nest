@@ -67,12 +67,18 @@ export default function StatusBadge({ status, type = 'general' }: StatusBadgePro
                     return 'status completed';
                 case 'pending':
                     return 'status pending';
+                case 'draft':
+                    return 'status pending';
+                case 'paused':
+                    return 'status process';
                 case 'suspended':
                     return 'status process';
                 case 'rejected':
                     return 'status pending';
                 case 'active':
                     return 'status completed';
+                case 'expired':
+                    return 'status pending';
                 case 'inactive':
                     return 'status pending';
                 case 'hidden':
@@ -146,7 +152,10 @@ export default function StatusBadge({ status, type = 'general' }: StatusBadgePro
                 case 'approved': return t('Approved');
                 case 'rejected': return t('Rejected');
                 case 'suspended': return t('Suspended');
+                case 'draft': return t('Draft');
+                case 'paused': return t('Paused');
                 case 'active': return t('Active');
+                case 'expired': return t('Expired');
                 case 'inactive': return t('Inactive');
                 case 'hidden': return t('Hidden');
                 default: return String(status);

@@ -30,6 +30,11 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::post('/orders/{order}/refund', [OrderController::class, 'createRefund'])->name('orders.createRefund');
     
     // Promotion management routes
+    Route::post('promotions/create-with-rules', [PromotionController::class, 'createWithRules'])->name('promotions.createWithRules');
+    Route::post('promotions/preview-matching', [PromotionController::class, 'previewMatchingProducts'])->name('promotions.previewMatching');
+    Route::post('promotions/{promotion}/bulk-import', [PromotionController::class, 'bulkImportProducts'])->name('promotions.bulkImport');
+    Route::get('promotions/imports/{trackingToken}', [PromotionController::class, 'getImportStatus'])->name('promotions.importStatus');
+    Route::patch('promotions/{promotion}/auto-apply', [PromotionController::class, 'toggleAutoApply'])->name('promotions.toggleAutoApply');
     Route::resource('promotions', PromotionController::class);
     
     // Shipper management routes

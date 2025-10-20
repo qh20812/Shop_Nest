@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Promotion extends Model
@@ -40,6 +42,14 @@ class Promotion extends Model
         'auto_apply_condition',
         'terms_and_conditions',
         'last_used_at',
+        'selection_rules',
+        'auto_apply_new_products',
+        'created_by_type',
+        'seller_id',
+        'budget_source',
+        'allocated_budget',
+        'spent_budget',
+        'roi_percentage',
     ];
     protected $casts = [
         'start_date' => 'datetime',
@@ -49,16 +59,23 @@ class Promotion extends Model
         'geographic_restrictions' => 'array',
         'product_restrictions' => 'array',
         'time_restrictions' => 'array',
+        'selection_rules' => 'array',
         'is_active' => 'boolean',
         'stackable' => 'boolean',
         'first_time_customer_only' => 'boolean',
+        'auto_apply_new_products' => 'boolean',
         'budget_limit' => 'decimal:2',
         'budget_used' => 'decimal:2',
         'minimum_cart_value' => 'decimal:2',
         'maximum_discount_amount' => 'decimal:2',
         'priority' => 'string',
+        'allocated_budget' => 'decimal:2',
+        'spent_budget' => 'decimal:2',
+        'roi_percentage' => 'decimal:2',
+        'created_by_type' => 'string',
+        'budget_source' => 'string',
     ];
-
+        
     /**
      * The orders that belong to the promotion.
      */
@@ -98,6 +115,11 @@ class Promotion extends Model
         );
     }
 
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
     /**
      * Get the audit logs for this promotion
      */
@@ -112,6 +134,19 @@ class Promotion extends Model
     public function performanceMetrics()
     {
         return $this->hasMany(PromotionPerformanceMetric::class, 'promotion_id');
+    }
+
+    /**
+     * Import batches that generated associations for this promotion
+     */
+    public function imports()
+    {
+        return $this->hasMany(PromotionImport::class, 'promotion_id');
+    }
+
+    public function sellerParticipations(): HasMany
+    {
+        return $this->hasMany(SellerPromotionParticipation::class, 'platform_promotion_id', 'promotion_id');
     }
 
     /**

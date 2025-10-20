@@ -6,6 +6,7 @@ use App\Models\Promotion;
 use App\Models\PromotionAuditLog;
 use App\Traits\AuditLoggable;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,10 @@ use Illuminate\Validation\ValidationException;
 class PromotionService
 {
     use AuditLoggable;
+    
+    public function __construct(private PromotionRuleService $ruleService)
+    {
+    }
     private const TYPE_MAP = [
         'percentage' => 1,
         'fixed_amount' => 2,
@@ -54,7 +59,9 @@ class PromotionService
                     'end_date' => $data['expires_at'],
                     'usage_limit' => $data['usage_limit_per_user'] ?? null,
                     'used_count' => 0,
-                    'is_active' => true,
+                    'is_active' => $data['is_active'] ?? true,
+                    'selection_rules' => $data['selection_rules'] ?? null,
+                    'auto_apply_new_products' => (bool) ($data['auto_apply_new_products'] ?? false),
                 ]);
 
                 $this->syncRelationships($promotion, $productIds, $categoryIds);
@@ -73,6 +80,21 @@ class PromotionService
             Log::error('Failed to create promotion', ['exception' => $exception]);
             throw $exception;
         }
+    }
+
+    /**
+     * Create a promotion using selection rules
+     */
+    public function createWithRules(array $data): Promotion
+    {
+        $rules = $data['selection_rules'] ?? [];
+
+        $this->ruleService->validateRules($rules);
+
+        $matches = $this->ruleService->getMatchingProducts($rules);
+        $productIds = $matches->pluck('product_id')->all();
+
+        return $this->create($data, $productIds, $data['category_ids'] ?? []);
     }
 
     /**
@@ -98,6 +120,10 @@ class PromotionService
                     'end_date' => $data['expires_at'],
                     'usage_limit' => $data['usage_limit_per_user'] ?? null,
                     'is_active' => $promotion->is_active,
+                    'selection_rules' => array_key_exists('selection_rules', $data) ? $data['selection_rules'] : $promotion->selection_rules,
+                    'auto_apply_new_products' => array_key_exists('auto_apply_new_products', $data)
+                        ? (bool) $data['auto_apply_new_products']
+                        : $promotion->auto_apply_new_products,
                 ]);
 
                 $this->syncRelationships($promotion, $productIds, $categoryIds);
@@ -116,6 +142,45 @@ class PromotionService
             ]);
             throw $exception;
         }
+    }
+
+    /**
+     * Update a promotion and re-evaluate selection rules
+     */
+    public function updateWithRules(Promotion $promotion, array $data): Promotion
+    {
+        $rules = $data['selection_rules'] ?? [];
+
+        $this->ruleService->validateRules($rules);
+
+        $matches = $this->ruleService->getMatchingProducts($rules);
+        $productIds = $matches->pluck('product_id')->all();
+
+        return $this->update($promotion, $data, $productIds, $data['category_ids'] ?? []);
+    }
+
+    /**
+     * Toggle auto-apply behaviour for a promotion
+     */
+    public function toggleAutoApply(Promotion $promotion, bool $enabled): Promotion
+    {
+        $previous = $promotion->auto_apply_new_products;
+
+        if ($previous === $enabled) {
+            return $promotion;
+        }
+
+        $promotion->auto_apply_new_products = $enabled;
+        $promotion->save();
+
+        $this->logAudit(
+            $enabled ? 'auto_apply_enabled' : 'auto_apply_disabled',
+            $promotion,
+            ['auto_apply_new_products' => $previous],
+            ['auto_apply_new_products' => $enabled]
+        );
+
+        return $promotion->refresh();
     }
 
     /**
@@ -158,15 +223,26 @@ class PromotionService
     {
         $locale = app()->getLocale();
 
-        return \App\Models\Product::select('product_id', 'name', 'sku', 'price')
+        return \App\Models\Product::select('product_id', 'name', 'sku')
             ->orderBy('product_id')
             ->get()
             ->map(function (\App\Models\Product $product) use ($locale) {
+                $name = $product->name;
+                
+                // If name is an array/object, extract the locale value
+                if (is_array($name)) {
+                    $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
+                }
+                
+                // Ensure it's a string
+                if (!is_string($name)) {
+                    $name = 'Unnamed';
+                }
+                
                 return [
                     'product_id' => $product->product_id,
-                    'name' => $product->getTranslation('name', $locale) ?? $product->name,
+                    'name' => $name,
                     'sku' => $product->sku,
-                    'price' => $product->price,
                 ];
             })
             ->values();
@@ -184,9 +260,21 @@ class PromotionService
             ->orderBy('category_id')
             ->get()
             ->map(function (\App\Models\Category $category) use ($locale) {
+                $name = $category->name;
+                
+                // If name is an array/object, extract the locale value
+                if (is_array($name)) {
+                    $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
+                }
+                
+                // Ensure it's a string
+                if (!is_string($name)) {
+                    $name = 'Unnamed';
+                }
+                
                 return [
                     'category_id' => $category->category_id,
-                    'name' => $category->getTranslation('name', $locale) ?? $category->name,
+                    'name' => $name,
                 ];
             })
             ->values();
@@ -200,9 +288,21 @@ class PromotionService
         $locale = app()->getLocale();
 
         return $products->map(function (\App\Models\Product $product) use ($locale) {
+            $name = $product->name;
+            
+            // If name is an array/object, extract the locale value
+            if (is_array($name)) {
+                $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
+            }
+            
+            // Ensure it's a string
+            if (!is_string($name)) {
+                $name = 'Unnamed';
+            }
+            
             return [
                 'product_id' => $product->product_id,
-                'name' => $product->getTranslation('name', $locale) ?? $product->name,
+                'name' => $name,
                 'sku' => $product->sku,
             ];
         })->values();
@@ -216,9 +316,21 @@ class PromotionService
         $locale = app()->getLocale();
 
         return $categories->map(function (\App\Models\Category $category) use ($locale) {
+            $name = $category->name;
+            
+            // If name is an array/object, extract the locale value
+            if (is_array($name)) {
+                $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
+            }
+            
+            // Ensure it's a string
+            if (!is_string($name)) {
+                $name = 'Unnamed';
+            }
+            
             return [
                 'category_id' => $category->category_id,
-                'name' => $category->getTranslation('name', $locale) ?? $category->name,
+                'name' => $name,
             ];
         })->values();
     }
@@ -233,6 +345,18 @@ class PromotionService
             return $reversed[(int) $type] ?? 'percentage';
         }
         return $type ? (string) $type : 'percentage';
+    }
+
+    /**
+     * Map promotion type from request to stored value.
+     */
+    public function mapTypeForQuery(string|int $type): int
+    {
+        if (is_numeric($type)) {
+            return (int) $type;
+        }
+
+        return self::TYPE_MAP[$type] ?? self::TYPE_MAP['percentage'];
     }
 
     /**
@@ -264,15 +388,15 @@ class PromotionService
 
         $validator->after(function ($validator) use ($data, $promotion) {
             if (($data['type'] ?? null) && !array_key_exists($data['type'], self::TYPE_MAP)) {
-                $validator->errors()->add('type', 'The selected promotion type is not supported.');
+                $validator->errors()->add('type', __('The selected promotion type is not supported.'));
             }
 
             if (($data['type'] ?? null) === 'percentage' && isset($data['value']) && (float) $data['value'] > 100) {
-                $validator->errors()->add('value', 'The promotion value cannot exceed 100% for percentage discounts.');
+                $validator->errors()->add('value', __('The promotion value cannot exceed 100% for percentage discounts.'));
             }
 
             if (isset($data['usage_limit_per_user']) && $data['usage_limit_per_user'] !== null && (int) $data['usage_limit_per_user'] < 0) {
-                $validator->errors()->add('usage_limit_per_user', 'The usage limit per user must be zero or greater.');
+                $validator->errors()->add('usage_limit_per_user', __('The usage limit per user must be zero or greater.'));
             }
 
             if (isset($data['starts_at'], $data['expires_at'])) {
@@ -280,11 +404,11 @@ class PromotionService
                 $end = Carbon::parse($data['expires_at']);
 
                 if ($start->gte($end)) {
-                    $validator->errors()->add('expires_at', 'The expiry date must be after the start date.');
+                    $validator->errors()->add('expires_at', __('The expiry date must be after the start date.'));
                 }
 
                 if ($promotion && $promotion->used_count > 0 && $end->lessThan(now())) {
-                    $validator->errors()->add('expires_at', 'You cannot set an expiry date in the past for a promotion that has already been used.');
+                    $validator->errors()->add('expires_at', __('You cannot set an expiry date in the past for a promotion that has already been used.'));
                 }
             }
         });
@@ -355,13 +479,65 @@ class PromotionService
     }
 
     /**
+     * Resolve localized "name" attribute for translatable models
+     */
+    private function resolveLocalizedName(Model $model, string $locale): string
+    {
+        // Get the raw attribute value first
+        $value = $model->getRawOriginal('name') ?? $model->getAttribute('name');
+
+        // If it's a JSON string, decode it
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                // Extract the locale-specific value
+                $candidate = $decoded[$locale] ?? $decoded['en'] ?? reset($decoded);
+                if (is_string($candidate) && $candidate !== '') {
+                    return $candidate;
+                }
+            }
+            // If not JSON, return as-is
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        // If it's already an array
+        if (is_array($value)) {
+            $candidate = $value[$locale] ?? $value['en'] ?? reset($value);
+            if (is_string($candidate) && $candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        // Try using getTranslation method as fallback
+        if (method_exists($model, 'getTranslation')) {
+            try {
+                $translated = $model->getTranslation('name', $locale, false);
+                if (is_string($translated) && $translated !== '') {
+                    return $translated;
+                }
+            } catch (\Exception $e) {
+                // Silently fail and continue
+            }
+        }
+
+        // Last resort - try to get any string value
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        return 'Unnamed';
+    }
+
+    /**
      * Map type for storage
      */
     private function mapTypeForStorage(string $type): int
     {
         if (!array_key_exists($type, self::TYPE_MAP)) {
             throw ValidationException::withMessages([
-                'type' => 'The selected promotion type is not supported.',
+                'type' => __('The selected promotion type is not supported.'),
             ]);
         }
 

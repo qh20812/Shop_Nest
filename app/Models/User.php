@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Role;
+use App\Models\SellerPromotionParticipation;
+use App\Models\SellerPromotionWallet;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -264,6 +266,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function ownedShops(): HasMany
     {
         return $this->hasMany(Shop::class, 'owner_id');
+    }
+
+    /**
+     * Seller promotions created by this user
+     */
+    public function sellerPromotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class, 'seller_id', 'id');
+    }
+
+    /**
+     * Seller promotion wallet for this user
+     */
+    public function promotionWallet(): HasOne
+    {
+        return $this->hasOne(SellerPromotionWallet::class, 'seller_id', 'id');
+    }
+
+    /**
+     * Platform promotion participations
+     */
+    public function promotionParticipations(): HasMany
+    {
+        return $this->hasMany(SellerPromotionParticipation::class, 'seller_id', 'id');
     }
 
     /**

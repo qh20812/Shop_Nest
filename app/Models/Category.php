@@ -25,7 +25,6 @@ class Category extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'name' => 'array',
         'description' => 'array',
     ];
 

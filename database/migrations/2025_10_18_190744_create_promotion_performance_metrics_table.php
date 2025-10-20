@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('promotion_performance_metrics', function (Blueprint $table) {
             $table->bigIncrements('metric_id');
-            $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
+            $table->foreignId('promotion_id')->constrained('promotions', 'promotion_id')->cascadeOnDelete();
             $table->date('date');
             $table->unsignedInteger('impressions')->default(0);
             $table->unsignedInteger('clicks')->default(0);

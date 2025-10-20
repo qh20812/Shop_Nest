@@ -10,10 +10,12 @@ use App\Services\PromotionService;
 use App\Services\PromotionConflictResolver;
 use App\Services\PromotionAnalyticsService;
 use App\Services\PromotionTemplateService;
+use App\Services\PromotionBulkImportService;
 use App\Services\PromotionBulkService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\PromotionRuleService;
 
 class PromotionController extends Controller
 {
@@ -41,17 +44,26 @@ class PromotionController extends Controller
         private PromotionConflictResolver $conflictResolver,
         private PromotionAnalyticsService $analyticsService,
         private PromotionTemplateService $templateService,
-        private PromotionBulkService $bulkService
+        private PromotionBulkService $bulkService,
+        private PromotionRuleService $ruleService,
+        private PromotionBulkImportService $bulkImportService
     ) {}
 
     /**
      * Display a paginated list of all promotions.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->applyAutomaticStatusUpdates();
 
-        $promotions = Promotion::select([
+        $filters = [
+            'search' => $request->string('search')->toString(),
+            'status' => $request->string('status')->toString(),
+            'type' => $request->string('type')->toString(),
+        ];
+
+        $query = Promotion::query()
+            ->select([
                 'promotion_id',
                 'name',
                 'type',
@@ -60,17 +72,52 @@ class PromotionController extends Controller
                 'end_date',
                 'usage_limit',
                 'used_count',
-                'is_active'
+                'is_active',
+                'allocated_budget',
+                'spent_budget',
+                'roi_percentage',
             ])
-            ->orderByDesc('created_at')
-            ->paginate(self::PAGINATION_LIMIT);
+            ->when($filters['search'], function ($builder, $search) {
+                $builder->where('name', 'like', "%{$search}%");
+            })
+            ->when($filters['type'], function ($builder, $type) {
+                $builder->where('type', $this->promotionService->mapTypeForQuery($type));
+            })
+            ->when($filters['status'], function ($builder, $status) {
+                $now = now();
+
+                switch ($status) {
+                    case 'draft':
+                        $builder->where('start_date', '>', $now);
+                        break;
+                    case 'active':
+                        $builder
+                            ->where('start_date', '<=', $now)
+                            ->where('end_date', '>=', $now)
+                            ->where('is_active', true);
+                        break;
+                    case 'paused':
+                        $builder
+                            ->where('start_date', '<=', $now)
+                            ->where('end_date', '>=', $now)
+                            ->where('is_active', false);
+                        break;
+                    case 'expired':
+                        $builder->where('end_date', '<', $now);
+                        break;
+                }
+            })
+            ->orderByDesc('created_at');
+
+        $promotions = $query->paginate(self::PAGINATION_LIMIT)->withQueryString();
 
         $promotions->setCollection(
             $promotions->getCollection()->map(function (Promotion $promotion) {
-                return array_merge($promotion->toArray(), [
-                    'type' => $this->promotionService->resolveTypeForResponse($promotion->type),
-                    'status' => $this->promotionService->resolveStatus($promotion),
-                ]);
+                $data = $promotion->toArray();
+                $data['type'] = $this->promotionService->resolveTypeForResponse($promotion->type);
+                $data['status'] = $this->promotionService->resolveStatus($promotion);
+
+                return $data;
             })
         );
 
@@ -78,6 +125,8 @@ class PromotionController extends Controller
             'promotions' => $promotions,
             'typeOptions' => $this->promotionService->getPromotionTypeOptions(),
             'statusFilters' => self::STATUS_OPTIONS,
+            'ruleOptions' => $this->getRuleOptions(),
+            'filters' => array_filter($filters, static fn ($value) => $value !== null && $value !== ''),
         ]);
     }
 
@@ -90,6 +139,7 @@ class PromotionController extends Controller
             'products' => $this->promotionService->getProductOptions(),
             'categories' => $this->promotionService->getCategoryOptions(),
             'promotionTypes' => $this->promotionService->getPromotionTypeOptions(),
+            'ruleOptions' => $this->getRuleOptions(),
         ]);
     }
 
@@ -101,11 +151,17 @@ class PromotionController extends Controller
         $payload = $request->validated();
 
         try {
-            $promotion = $this->promotionService->create(
-                $payload,
-                $payload['product_ids'] ?? [],
-                $payload['category_ids'] ?? []
-            );
+            if (!empty($payload['selection_rules'] ?? [])) {
+                $promotion = $this->promotionService->createWithRules($payload);
+            } else {
+                unset($payload['selection_rules']);
+
+                $promotion = $this->promotionService->create(
+                    $payload,
+                    $payload['product_ids'] ?? [],
+                    $payload['category_ids'] ?? []
+                );
+            }
 
             $this->conflictResolver->handlePromotionConflicts($promotion);
 
@@ -128,18 +184,19 @@ class PromotionController extends Controller
     public function show(Promotion $promotion): Response
     {
         $promotion->load([
-            'products:product_id,name,sku',
-            'categories:category_id,name',
+            'products',
+            'categories',
         ]);
 
-        $promotion->type = $this->promotionService->resolveTypeForResponse($promotion->type);
-        $promotion->status = $this->promotionService->resolveStatus($promotion);
-
-        $promotion->products = $this->promotionService->formatProductsCollection($promotion->products);
-        $promotion->categories = $this->promotionService->formatCategoriesCollection($promotion->categories);
+        // Format data without modifying the model
+        $promotionData = $promotion->toArray();
+        $promotionData['type'] = $this->promotionService->resolveTypeForResponse($promotion->type);
+        $promotionData['status'] = $this->promotionService->resolveStatus($promotion);
+        $promotionData['products'] = $this->promotionService->formatProductsCollection($promotion->products)->toArray();
+        $promotionData['categories'] = $this->promotionService->formatCategoriesCollection($promotion->categories)->toArray();
 
         return Inertia::render('Admin/Promotions/Show', [
-            'promotion' => $promotion,
+            'promotion' => $promotionData,
         ]);
     }
 
@@ -149,20 +206,23 @@ class PromotionController extends Controller
     public function edit(Promotion $promotion): Response
     {
         $promotion->load([
-            'products:product_id,name,sku',
-            'categories:category_id,name',
+            'products',
+            'categories',
         ]);
 
-        $promotion->type = $this->promotionService->resolveTypeForResponse($promotion->type);
-        $promotion->status = $this->promotionService->resolveStatus($promotion);
-        $promotion->products = $this->promotionService->formatProductsCollection($promotion->products);
-        $promotion->categories = $this->promotionService->formatCategoriesCollection($promotion->categories);
+        // Format data without modifying the model
+        $promotionData = $promotion->toArray();
+        $promotionData['type'] = $this->promotionService->resolveTypeForResponse($promotion->type);
+        $promotionData['status'] = $this->promotionService->resolveStatus($promotion);
+        $promotionData['products'] = $this->promotionService->formatProductsCollection($promotion->products)->toArray();
+        $promotionData['categories'] = $this->promotionService->formatCategoriesCollection($promotion->categories)->toArray();
 
         return Inertia::render('Admin/Promotions/Edit', [
-            'promotion' => $promotion,
+            'promotion' => $promotionData,
             'products' => $this->promotionService->getProductOptions(),
             'categories' => $this->promotionService->getCategoryOptions(),
             'promotionTypes' => $this->promotionService->getPromotionTypeOptions(),
+            'ruleOptions' => $this->getRuleOptions(),
         ]);
     }
 
@@ -174,12 +234,16 @@ class PromotionController extends Controller
         $payload = $request->validated();
 
         try {
-            $promotion = $this->promotionService->update(
-                $promotion,
-                $payload,
-                $payload['product_ids'] ?? [],
-                $payload['category_ids'] ?? []
-            );
+            if (array_key_exists('selection_rules', $payload) && !empty($payload['selection_rules'])) {
+                $promotion = $this->promotionService->updateWithRules($promotion, $payload);
+            } else {
+                $promotion = $this->promotionService->update(
+                    $promotion,
+                    $payload,
+                    $payload['product_ids'] ?? [],
+                    $payload['category_ids'] ?? []
+                );
+            }
 
             $this->conflictResolver->handlePromotionConflicts($promotion);
 
@@ -384,5 +448,196 @@ class PromotionController extends Controller
             'template' => $template,
             'message' => 'Promotion saved as template successfully.',
         ]);
+    }
+
+    /**
+     * Create promotion using rule-based selection
+     */
+    public function createWithRules(Request $request): JsonResponse
+    {
+        $payload = $request->validate([
+            'name' => 'required|string|max:255|min:3',
+            'description' => 'nullable|string|max:1000',
+            'type' => 'required|in:percentage,fixed_amount,free_shipping,buy_x_get_y',
+            'value' => 'required|numeric|min:0.01',
+            'minimum_order_value' => 'nullable|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'starts_at' => 'required|date|after_or_equal:today',
+            'expires_at' => 'required|date|after:starts_at',
+            'usage_limit_per_user' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'exists:categories,category_id',
+            'selection_rules' => 'required|array|min:1',
+            'selection_rules.*.type' => 'required|string',
+            'selection_rules.*.operator' => 'nullable|string',
+            'selection_rules.*.value' => 'required',
+            'auto_apply_new_products' => 'boolean',
+        ]);
+
+        try {
+            $promotion = $this->promotionService->createWithRules($payload);
+
+            $this->conflictResolver->handlePromotionConflicts($promotion);
+
+            $matches = $this->ruleService->getMatchingProducts($payload['selection_rules']);
+
+            return response()->json([
+                'success' => true,
+                'promotion' => $promotion->fresh(['products' => function ($query) {
+                    $query->select('products.product_id', 'name');
+                }]),
+                'matched_products' => $matches->count(),
+                'products_preview' => $matches->take(50),
+            ], 201);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Failed to create promotion with rules', [
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create promotion from rules. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview matching products for selection rules
+     */
+    public function previewMatchingProducts(Request $request): JsonResponse
+    {
+        $rules = $request->input('selection_rules');
+
+        if (empty($rules) && $request->filled('promotion_id')) {
+            $promotion = Promotion::find($request->input('promotion_id'));
+            $rules = $promotion?->selection_rules ?? [];
+        }
+
+        if (empty($rules)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selection rules are required to preview matching products.',
+            ], 422);
+        }
+
+        try {
+            $this->ruleService->validateRules($rules);
+            $matches = $this->ruleService->getMatchingProducts($rules);
+
+            return response()->json([
+                'success' => true,
+                'matched_products' => $matches->count(),
+                'products_preview' => $matches->take(50),
+            ]);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Failed to preview matching products', [
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to preview matching products.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Queue CSV bulk import for promotion products
+     */
+    public function bulkImportProducts(Request $request, Promotion $promotion): JsonResponse
+    {
+        $validated = $request->validate([
+            'file' => 'required|file',
+        ]);
+
+        try {
+            /** @var \Illuminate\Http\UploadedFile $file */
+            $file = $validated['file'];
+            $import = $this->bulkImportService->queueImport($promotion, $file);
+
+            return response()->json([
+                'success' => true,
+                'tracking_token' => $import->tracking_token,
+                'import_id' => $import->import_id,
+                'status' => $import->status,
+            ], 202);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Failed to queue promotion bulk import', [
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk import could not be started. Please try again later.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Retrieve import progress
+     */
+    public function getImportStatus(string $trackingToken): JsonResponse
+    {
+        $status = $this->bulkImportService->getImportStatus($trackingToken);
+
+        if (!$status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Import not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'import' => $status,
+        ]);
+    }
+
+    /**
+     * Toggle auto-apply behaviour for promotion
+     */
+    public function toggleAutoApply(Request $request, Promotion $promotion): JsonResponse
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        try {
+            $updated = $this->promotionService->toggleAutoApply($promotion, (bool) $validated['enabled']);
+
+            return response()->json([
+                'success' => true,
+                'promotion' => [
+                    'promotion_id' => $updated->promotion_id,
+                    'auto_apply_new_products' => $updated->auto_apply_new_products,
+                ],
+            ]);
+        } catch (Exception $exception) {
+            Log::error('Failed to toggle auto apply on promotion', [
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to update auto-apply settings right now.',
+            ], 500);
+        }
+    }
+
+    private function getRuleOptions(): array
+    {
+        return [
+            'types' => PromotionRuleService::SUPPORTED_RULE_TYPES,
+            'operators' => PromotionRuleService::SUPPORTED_OPERATORS,
+        ];
     }
 }

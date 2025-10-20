@@ -30,12 +30,17 @@ export default defineConfig({
     server: {
         fs: {
             allow: ['..']
-        }
+        },
+        hmr: {
+            host: 'localhost',
+        },
+        host: 'localhost'
     },
     resolve: {
         alias: {
             '@': '/resources/js',
         },
         extensions: ['.js', '.ts', '.jsx', '.tsx'],
+        dedupe: ['react', 'react-dom']
     }
 });

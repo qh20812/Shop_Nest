@@ -185,6 +185,26 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               <i className='bx bx-lock' style={{ fontSize: '18px' }}></i>
               {t('Change Password')}
             </Link>
+            <Link href="/settings"
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                color: 'var(--dark)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                transition: 'background 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--grey)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}>
+              <i className='bx bx-cog' style={{ fontSize: '18px' }}></i>
+              {t('Settings')}
+            </Link>
             <div
               style={{
                 height: '1px',

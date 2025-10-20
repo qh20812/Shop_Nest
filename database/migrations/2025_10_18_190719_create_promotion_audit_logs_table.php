@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('promotion_audit_logs', function (Blueprint $table) {
             $table->bigIncrements('audit_id');
-            $table->foreignId('promotion_id')->nullable()->constrained('promotions')->cascadeOnDelete();
+            $table->foreignId('promotion_id')->nullable()->constrained('promotions', 'promotion_id')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->enum('action', ['created', 'updated', 'deleted', 'activated', 'deactivated', 'applied']);
             $table->json('old_values')->nullable();

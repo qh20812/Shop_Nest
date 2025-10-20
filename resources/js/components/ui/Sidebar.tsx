@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, usePage, router } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import '@/../css/Page.css';
 
 interface SidebarItem {
@@ -16,9 +16,9 @@ interface SidebarProps {
 export default function Sidebar({ items, isClosed }: SidebarProps) {
   const { url } = usePage();
 
-  const handleLogout = () => {
-    router.post('/logout');
-  };
+  // const handleLogout = () => {
+  //   router.post('/logout');
+  // };
 
   return (
     <div className={`sidebar ${isClosed ? 'close' : ''}`}>
@@ -40,14 +40,14 @@ export default function Sidebar({ items, isClosed }: SidebarProps) {
         ))}
       </ul>
       
-      <ul className="side-menu">
+      {/* <ul className="side-menu">
         <li>
           <button onClick={handleLogout} className="logout">
             <i className='bx bx-log-out-circle'></i>
             Logout
           </button>
         </li>
-      </ul>
+      </ul> */}
     </div>
   );
 }

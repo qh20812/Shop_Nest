@@ -37,11 +37,10 @@ class CartControllerTest extends TestCase
 
         // Mock routes để Inertia không crash
         Route::middleware('web')->group(function () {
-            Route::get('/cart', fn() => response('Cart mock page', 200))->name('cart.index');
             Route::get('/checkout', function () {
                 session(['checkout_data' => ['mock' => true]]);
                 return redirect()->back();
-            })->name('checkout.index');
+            })->name('cart.checkout');
         });
     }
 

@@ -36,7 +36,7 @@ export default function FlashSaleSection({ flashSale }: FlashSaleSectionProps) {
     return (
         <div className="home-component">
             <div className="flash-sale-title">
-                <h2>f<i className="bi bi-lightning-fill"></i>ash {t('Flash Sale').toLowerCase()}</h2>
+                <h2>f<i className="bi bi-lightning-fill"></i>ash Sale</h2>
                 {flashSale && flashSale.products.length > 0 && (
                     <div className="flash-sale-timer">
                         {/* giờ */}

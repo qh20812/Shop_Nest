@@ -31,7 +31,7 @@ class DetailController extends Controller
 
         $productBase = Cache::remember(
             "product_detail_{$productId}_{$locale}",
-            1800,
+            300, // Reduced from 1800 to 300 seconds (5 minutes)
             function () use ($productId, $locale) {
                 $product = $this->buildProductQuery($productId)->first();
 
@@ -137,6 +137,12 @@ class DetailController extends Controller
 
     public function buyNow(Request $request, int $productId)
     {
+        Log::info('DetailController@buyNow start', [
+            'product_id' => $productId,
+            'user_id' => Auth::id(),
+            'request_data' => $request->all(),
+        ]);
+
         $product = $this->findPublishedProduct($productId);
 
         $data = $request->validate([
@@ -177,13 +183,13 @@ class DetailController extends Controller
             }
 
             if (!$user) {
-                session(['url.intended' => route('cart.checkout')]);
+                session(['url.intended' => route('cart.checkout.show')]);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => $user ? 'Chuyển đến trang thanh toán.' : 'Vui lòng đăng nhập để tiếp tục thanh toán.',
-                'redirect' => $user ? route('cart.checkout') : route('login'),
+                'redirect' => $user ? route('cart.checkout.show') : route('login'),
             ]);
         } catch (CartException $exception) {
             return response()->json([
@@ -195,6 +201,7 @@ class DetailController extends Controller
                 'product_id' => $productId,
                 'variant_id' => $data['variant_id'] ?? null,
                 'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return response()->json([

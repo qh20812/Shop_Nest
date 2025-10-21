@@ -133,6 +133,9 @@ class OrderController extends Controller
                         'quantity' => $cartItem->quantity,
                         'unit_price' => $unitPrice,
                         'total_price' => $totalPrice,
+                        'original_currency' => $validated['currency'],
+                        'original_unit_price' => $unitPrice,
+                        'original_total_price' => $totalPrice,
                     ];
                 }
 
@@ -162,6 +165,9 @@ class OrderController extends Controller
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'total_price' => $item['total_price'],
+                        'original_currency' => $order->currency,
+                        'original_unit_price' => $item['original_unit_price'],
+                        'original_total_price' => $item['original_total_price'],
                     ]);
 
                     // Reduce stock

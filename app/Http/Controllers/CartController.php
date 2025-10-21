@@ -140,7 +140,7 @@ class CartController extends Controller
     }
 
     /**
-     * Move cart data to the checkout page, re-verifying promotion and stock.
+     * Create order from cart and redirect to payment gateway.
      */
     public function checkout(): RedirectResponse
     {
@@ -148,15 +148,47 @@ class CartController extends Controller
         $cartItems = $this->cartService->getCartItems($user);
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return back()->with('error', 'Your cart is empty.');
         }
 
         try {
-            $this->cartService->prepareCheckoutData($user);
-        } catch (CartException $exception) {
-            return redirect()->route('cart.index')->with('error', $exception->getMessage());
-        }
+            // Create order from cart items
+            $order = $this->cartService->createOrderFromCart($user);
 
-        return redirect()->route('cart.checkout');
+            // Get payment provider (default to Stripe)
+            $provider = request()->input('provider', 'stripe');
+            $gateway = \App\Services\PaymentService::make($provider);
+
+            // Create payment and get redirect URL
+            $paymentUrl = $gateway->createPayment($order);
+
+            // Redirect to payment gateway
+            return redirect($paymentUrl);
+        } catch (CartException $exception) {
+            return back()->with('error', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            \Log::error('cart.checkout_failed', [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+            ]);
+            return back()->with('error', 'Failed to initiate payment. Please try again.');
+        }
+    }
+
+    /**
+     * Show the checkout page.
+     */
+    public function showCheckout(): Response
+    {
+        $user = Auth::user();
+        $cartItems = $this->cartService->getCartItems($user);
+        $promotion = $this->cartService->getActivePromotion($user);
+        $totals = $this->cartService->calculateTotals($cartItems, $promotion);
+
+        return Inertia::render('Customer/Checkout', [
+            'cartItems' => $cartItems->values()->all(),
+            'totals' => $totals,
+            'promotion' => $promotion ? $promotion->toArray() : null,
+        ]);
     }
 }

@@ -3,10 +3,9 @@
 namespace App\Payments\Gateways;
 
 use App\Models\Order;
-use App\Models\Payment;
-use App\Models\Product;
 use App\Payments\Contracts\PaymentGateway;
-use Illuminate\Support\Facades\DB;
+use App\Payments\PaymentConstants;
+use App\Services\ExchangeRateService;
 use Stripe\StripeClient;
 
 class StripeGateway implements PaymentGateway
@@ -16,13 +15,23 @@ class StripeGateway implements PaymentGateway
 
     public function createPayment(Order $order): string
     {
-        $lineItems = $order->items->map(function ($item) {
-            $amountCents = (int) round($item->unit_price * 100);
+        $order->loadMissing('items.variant.product');
+        $targetCurrency = strtolower(config('services.stripe.currency', 'USD'));
+        $sourceCurrency = strtoupper($order->currency ?? 'VND');
+
+        $lineItems = $order->items->map(function ($item) use ($sourceCurrency, $targetCurrency) {
+            $unitAmount = ExchangeRateService::convert(
+                (float) $item->unit_price,
+                $sourceCurrency,
+                strtoupper($targetCurrency)
+            );
+
+            $amountCents = (int) round($unitAmount * PaymentConstants::CENTS_MULTIPLIER);
 
             return [
                 'price_data' => [
-                    'currency'     => 'usd',
-                    'product_data' => ['name' => $item->product->name],
+                    'currency'     => $targetCurrency,
+                    'product_data' => ['name' => $item->variant?->product?->name ?? 'Order Item'],
                     'unit_amount'  => $amountCents,
                 ],
                 'quantity' => (int) $item->quantity,
@@ -57,39 +66,13 @@ class StripeGateway implements PaymentGateway
         }
 
         $session = $payload['data']['object'] ?? [];
-        $sessionId = $session['id'] ?? null;
-        $orderId   = $session['metadata']['order_id'] ?? null;
-        $pi        = $session['payment_intent'] ?? null;
-        $eventId   = $payload['id'] ?? null;
 
-        if (!$sessionId || !$orderId) {
-            return ['status' => 'failed', 'transaction_id' => null, 'message' => 'Missing session/order metadata'];
-        }
-
-        DB::transaction(function () use ($orderId, $pi, $eventId) {
-            $order = Order::with(['items'])->lockForUpdate()->findOrFail($orderId);
-
-            if ($order->status === 'paid') {
-                return;
-            }
-
-            foreach ($order->items as $item) {
-                Product::whereKey($item->product_id)
-                    ->where('stock', '>=', $item->quantity)
-                    ->decrement('stock', $item->quantity);
-            }
-
-            $order->update(['status' => 'paid']);
-
-            Payment::where('order_id', $order->id)
-                ->where('provider', 'stripe')
-                ->update([
-                    'status'          => 'succeeded',
-                    'transaction_id'  => $pi,
-                    'gateway_event_id' => $eventId,
-                ]);
-        });
-
-        return ['status' => 'succeeded', 'transaction_id' => $pi, 'message' => 'Stock decremented & order paid'];
+        return [
+            'status' => 'succeeded',
+            'transaction_id' => $session['payment_intent'] ?? null,
+            'order_id' => $session['metadata']['order_id'] ?? null,
+            'event_id' => $payload['id'] ?? null,
+            'message' => 'Stripe checkout session completed',
+        ];
     }
 }

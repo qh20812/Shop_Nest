@@ -14,14 +14,18 @@ class OrderItemFactory extends Factory
     public function definition(): array
     {
         $quantity = fake()->numberBetween(1, 5);
-        $price = fake()->numberBetween(100000, 1000000);
+        $price = fake()->randomFloat(2, 10, 500);
+        $currency = fake()->randomElement(['USD', 'VND']);
 
         return [
             'order_id' => Order::factory(),
             'variant_id' => ProductVariant::factory(),
             'quantity' => $quantity,
-            'price' => $price,
-            'total' => $quantity * $price,
+            'unit_price' => $price,
+            'total_price' => $quantity * $price,
+            'original_currency' => $currency,
+            'original_unit_price' => $price,
+            'original_total_price' => $quantity * $price,
         ];
     }
 }

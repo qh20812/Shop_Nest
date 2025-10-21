@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DetailController;
+use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,12 @@ Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addTo
 Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])
     ->whereNumber('productId')
     ->name('product.buyNow');
+
+if (app()->environment(['local', 'testing']) || config('app.debug')) {
+    Route::get('/debug/inventory/{variant}', [InventoryDebugController::class, 'show'])
+        ->whereNumber('variant')
+        ->name('debug.inventory.show');
+}
 
 // Language switching route
 Route::post('/language', function () {

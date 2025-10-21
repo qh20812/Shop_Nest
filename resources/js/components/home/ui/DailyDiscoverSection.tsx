@@ -15,19 +15,11 @@ interface DailyDiscoverProduct {
     sold_count: number;
 }
 
-interface User {
-    id: number;
-    username: string;
-    email: string;
-    avatar?: string;
-}
-
 interface DailyDiscoverSectionProps {
     products: DailyDiscoverProduct[];
-    user: User | null;
 }
 
-export default function DailyDiscoverSection({ products, user }: DailyDiscoverSectionProps) {
+export default function DailyDiscoverSection({ products }: DailyDiscoverSectionProps) {
     const { t } = useTranslation();
 
     return (
@@ -35,7 +27,7 @@ export default function DailyDiscoverSection({ products, user }: DailyDiscoverSe
             <div className="daily-discover-title">
                 <h2>{t('Daily Discover')}</h2>
             </div>
-            <DailyDiscoverContent products={products} user={user} />
+            <DailyDiscoverContent products={products} />
         </div>
     );
 }

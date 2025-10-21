@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { router } from '@inertiajs/react';
 
 export interface FlashSaleItem {
     id: number;
@@ -70,7 +71,7 @@ export const FlashSaleCarousel: React.FC<FlashSaleCarouselProps> = ({
 
                 <div className="flash-sale-grid">
                     {getCurrentItems().map((item) => (
-                        <div key={item.id} className="flash-sale-card">
+                        <div key={item.id} className="flash-sale-card" onClick={() => router.get(`/product/${item.id}`)}>
                             <div className="card-image">
                                 <img src={item.image} alt={item.title} />
                                 <div className="discount-badge">

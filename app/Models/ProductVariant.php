@@ -46,16 +46,18 @@ class ProductVariant extends Model
 
     /**
      * Reserve quantity for this variant
+     * Note: We check against stock_quantity only, not (stock - reserved)
+     * This allows checkout even if there are stale reservations from expired sessions
      */
     public function reserveQuantity(int $quantity): bool
     {
-        $available = $this->available_quantity;
-
-        if ($available === null) {
-            $available = max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
+        // If inventory tracking is disabled, always allow
+        if (!(bool) ($this->track_inventory ?? true)) {
+            return true;
         }
 
-        if ($available < $quantity) {
+        // Check if we have enough physical stock
+        if ((int) $this->stock_quantity < $quantity) {
             return false;
         }
 

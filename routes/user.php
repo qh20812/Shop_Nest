@@ -72,12 +72,19 @@ Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])-
 Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/cart/checkout', [CartController::class, 'showCheckout'])->name('cart.checkout.show');
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 });
 
-Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.stripe');
+Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.stripe');
+Route::post('/webhooks/paypal', [PaymentWebhookController::class, 'paypal'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.paypal');
 
-Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle']);
+Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
+    ->middleware('throttle:30,1');
 Route::get('/payments/stripe/cancel', function () {
     return Inertia::render('PaymentResult', [
         'provider' => 'stripe',

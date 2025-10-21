@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\CartException;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Events\Cart\LowStockDetected;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -16,6 +18,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Throwable;
 
 class CartService
 {
@@ -432,14 +436,46 @@ class CartService
     private function verifyStockForCheckout(?User $user, Collection $cartItems): void
     {
         if (!$user) {
-            foreach ($cartItems as $item) {
-                $variant = $this->getVariantById((int) $item['variant_id']);
-                $this->ensureStock($variant, (int) $item['quantity']);
-            }
+            session()->forget('checkout_reserved');
+
+            Log::debug('cart.verifyStock.guest_start', ['items' => $cartItems->map(fn ($item) => [
+                'variant_id' => $item['variant_id'],
+                'quantity' => $item['quantity'],
+            ])->all()]);
+
+            DB::transaction(function () use ($cartItems) {
+                foreach ($cartItems as $item) {
+                    $variant = ProductVariant::with('product')
+                        ->lockForUpdate()
+                        ->findOrFail((int) $item['variant_id']);
+
+                    $quantity = (int) $item['quantity'];
+                    $this->ensureStock($variant, $quantity);
+                }
+            }, 3);
+
+            Log::debug('cart.verifyStock.guest_completed');
             return;
         }
 
-        DB::transaction(function () use ($cartItems, $user) {
+        $previousReserved = session('checkout_reserved', []);
+        if (!empty($previousReserved)) {
+            $this->releaseReservedQuantities($previousReserved);
+        }
+
+        session()->forget('checkout_reserved');
+
+        $reservedSummary = [];
+
+        DB::transaction(function () use ($cartItems, $user, &$reservedSummary) {
+            Log::debug('cart.verifyStock.user_start', [
+                'user_id' => $user->id,
+                'items' => $cartItems->map(fn ($item) => [
+                    'variant_id' => $item['variant_id'],
+                    'quantity' => $item['quantity'],
+                ])->all(),
+            ]);
+
             foreach ($cartItems as $item) {
                 $variant = ProductVariant::with('product')
                     ->lockForUpdate()
@@ -458,9 +494,15 @@ class CartService
                     throw CartException::insufficientStock($variant, $quantity);
                 }
 
+                $reservedSummary[$variant->variant_id] = ($reservedSummary[$variant->variant_id] ?? 0) + $quantity;
+
                 $this->cache->forget($this->variantCacheKey($variant->variant_id));
             }
+
+            Log::debug('cart.verifyStock.user_completed', ['user_id' => $user->id]);
         });
+
+        session(['checkout_reserved' => $reservedSummary]);
     }
 
     private function transformCartItem(ProductVariant $variant, int $quantity, ?CartItem $cartItem = null): array
@@ -493,19 +535,37 @@ class CartService
     private function ensureStock(ProductVariant $variant, int $desiredQuantity): void
     {
         if ($desiredQuantity <= 0) {
+            Log::warning('Invalid quantity requested', [
+                'variant_id' => $variant->variant_id,
+                'desired_quantity' => $desiredQuantity,
+            ]);
             throw CartException::insufficientStock($variant, $desiredQuantity);
         }
 
         if ((bool) ($variant->track_inventory ?? true)) {
-            $available = $this->availableQuantity($variant);
+            // When adding to cart, only check actual stock_quantity (not reserved)
+            // Reservations are only enforced during checkout in verifyStockForCheckout
+            $stockQuantity = (int) $variant->stock_quantity;
 
-            if ($available < $desiredQuantity) {
+            Log::info('Stock check (add to cart)', [
+                'variant_id' => $variant->variant_id,
+                'stock_quantity' => $stockQuantity,
+                'reserved_quantity' => $variant->reserved_quantity ?? 0,
+                'desired_quantity' => $desiredQuantity,
+            ]);
+
+            if ($stockQuantity < $desiredQuantity) {
+                Log::warning('Insufficient stock detected', [
+                    'variant_id' => $variant->variant_id,
+                    'stock_available' => $stockQuantity,
+                    'desired' => $desiredQuantity,
+                ]);
                 Event::dispatch(new LowStockDetected($variant, $desiredQuantity));
                 throw CartException::insufficientStock($variant, $desiredQuantity);
             }
 
             $minimumLevel = (int) ($variant->minimum_stock_level ?? 0);
-            if ($minimumLevel > 0 && $available <= $minimumLevel) {
+            if ($minimumLevel > 0 && $stockQuantity <= $minimumLevel) {
                 Event::dispatch(new LowStockDetected($variant, $desiredQuantity));
             }
         }
@@ -592,5 +652,155 @@ class CartService
         $reserved = (int) ($variant->reserved_quantity ?? 0);
 
         return max(0, $stockQuantity - $reserved);
+    }
+
+    private function releaseReservedQuantities(array $reservations): void
+    {
+        if (empty($reservations)) {
+            return;
+        }
+
+        DB::transaction(function () use ($reservations) {
+            foreach ($reservations as $variantId => $quantity) {
+                $variantId = (int) $variantId;
+                $quantity = (int) $quantity;
+
+                if ($variantId <= 0 || $quantity <= 0) {
+                    continue;
+                }
+
+                $variant = ProductVariant::lockForUpdate()->find($variantId);
+
+                if (!$variant) {
+                    Log::warning('cart.releaseReserved.variant_missing', [
+                        'variant_id' => $variantId,
+                    ]);
+                    continue;
+                }
+
+                $currentReserved = (int) ($variant->reserved_quantity ?? 0);
+                $decrement = min($quantity, $currentReserved);
+
+                if ($decrement <= 0) {
+                    continue;
+                }
+
+                $variant->decrement('reserved_quantity', $decrement);
+
+                Log::debug('cart.releaseReserved.decrement', [
+                    'variant_id' => $variantId,
+                    'released' => $decrement,
+                    'reserved_after' => (int) ($variant->reserved_quantity ?? 0),
+                ]);
+
+                $this->cache->forget($this->variantCacheKey($variantId));
+            }
+        }, 3);
+    }
+
+    /**
+     * Create an order from current cart items.
+     * 
+     * @param User $user
+     * @return Order
+     * @throws CartException
+     */
+    public function createOrderFromCart(User $user): Order
+    {
+        $cartItems = $this->getCartItems($user);
+
+        if ($cartItems->isEmpty()) {
+            throw new CartException('Cart is empty');
+        }
+
+        $promotion = $this->getActivePromotion($user);
+        $this->verifyStockForCheckout($user, $cartItems);
+        $totals = $this->calculateTotals($cartItems, $promotion);
+        $reservedDuringPreparation = collect(session('checkout_reserved', []));
+
+        try {
+            $order = DB::transaction(function () use ($user, $cartItems, $promotion, $totals, $reservedDuringPreparation) {
+                $order = Order::create([
+                    'customer_id' => $user->id,
+                    'order_number' => $this->generateOrderNumber(),
+                    'sub_total' => $totals['subtotal'],
+                    'shipping_fee' => 0,
+                    'discount_amount' => $totals['discount'],
+                    'total_amount' => $totals['total'],
+                    'status' => OrderStatus::PENDING_CONFIRMATION,
+                    'payment_method' => 3,
+                    'payment_status' => PaymentStatus::UNPAID,
+                ]);
+
+                foreach ($cartItems as $item) {
+                    $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
+
+                    if (!$variant) {
+                        throw new CartException("Product variant not found");
+                    }
+
+                    if ($variant->track_inventory) {
+                        $alreadyReserved = (int) $reservedDuringPreparation->get($variant->variant_id, 0);
+                        $neededQuantity = (int) $item['quantity'];
+
+                        if ($alreadyReserved >= $neededQuantity) {
+                            $reservedDuringPreparation->put($variant->variant_id, $alreadyReserved - $neededQuantity);
+                        } else {
+                            $additionalReserve = $neededQuantity - max(0, $alreadyReserved);
+
+                            if ($additionalReserve > 0) {
+                                $variant->increment('reserved_quantity', $additionalReserve);
+                                Log::debug('order.reserve.additional', [
+                                    'variant_id' => $variant->variant_id,
+                                    'additional' => $additionalReserve,
+                                    'reserved_after' => (int) ($variant->reserved_quantity ?? 0),
+                                ]);
+                            }
+                        }
+                    }
+
+                    $order->items()->create([
+                        'variant_id' => $variant->variant_id,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['price'],
+                        'total_price' => $item['subtotal'],
+                    ]);
+                }
+
+                if ($promotion) {
+                    $order->promotions()->attach($promotion->promotion_id, [
+                        'discount_applied' => $totals['discount'],
+                    ]);
+                }
+
+                Log::info('order.created_from_cart', [
+                    'order_id' => $order->order_id,
+                    'user_id' => $user->id,
+                    'total' => $totals['total'],
+                ]);
+
+                return $order;
+            });
+        } catch (Throwable $exception) {
+            $this->releaseReservedQuantities(session('checkout_reserved', []));
+            session()->forget('checkout_reserved');
+            throw $exception;
+        }
+
+        session()->forget('checkout_reserved');
+
+        return $order;
+    }
+
+    /**
+     * Generate a unique order ID.
+     */
+    private function generateOrderNumber(): string
+    {
+        do {
+            $number = 'SN' . now()->format('YmdHis') . Str::upper(Str::random(4));
+        } while (Order::where('order_number', $number)->exists());
+
+        return $number;
     }
 }

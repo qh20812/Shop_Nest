@@ -49,21 +49,13 @@ interface DailyDiscoverProduct {
     sold_count: number;
 }
 
-interface User {
-    id: number;
-    username: string;
-    email: string;
-    avatar?: string;
-}
-
 interface HomeProps {
     categories: Category[];
     flashSale: FlashSale | null;
     dailyDiscover: DailyDiscoverProduct[];
-    user: User | null;
 }
 
-export default function Home({ categories, flashSale, dailyDiscover, user }: HomeProps) {
+export default function Home({ categories, flashSale, dailyDiscover }: HomeProps) {
     const { t } = useTranslation();
 
     return (
@@ -72,7 +64,7 @@ export default function Home({ categories, flashSale, dailyDiscover, user }: Hom
             <div className="home-content">
                 <CategoryCarousel categories={categories} />
                 <FlashSaleSection flashSale={flashSale} />
-                <DailyDiscoverSection products={dailyDiscover} user={user} />
+                <DailyDiscoverSection products={dailyDiscover} />
             </div>
         </HomeLayout>
     );

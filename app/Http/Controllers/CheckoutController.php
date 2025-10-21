@@ -102,6 +102,9 @@ class CheckoutController extends Controller
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $cartItem->variant->price,
                     'total_price' => $cartItem->quantity * $cartItem->variant->price,
+                    'original_currency' => $currency,
+                    'original_unit_price' => $cartItem->variant->price,
+                    'original_total_price' => $cartItem->quantity * $cartItem->variant->price,
                 ]);
             }
 

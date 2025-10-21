@@ -45,24 +45,20 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'currency' => env('STRIPE_CURRENCY', 'USD'),
     ],
-    // 'paypal' => [
-    //     'client_id' => env('PAYPAL_CLIENT_ID'),
-    //     'client_secret' => env('PAYPAL_CLIENT_SECRET'),
-    //     'mode' => env('PAYPAL_MODE', 'sandbox'),
-    // ],
-    // 'momo' => [
-    //     'partner_code' => env('MOMO_PARTNER_CODE'),
-    //     'access_key' => env('MOMO_ACCESS_KEY'),
-    //     'secret_key' => env('MOMO_SECRET_KEY'),
-    //     'endpoint' => env('MOMO_ENDPOINT'),
-    //     'redirect' => env('MOMO_REDIRECT_URL'),
-    //     'ipn' => env('MOMO_IPN_URL'),
-    // ],
-    // 'vnpay' => [
-    //     'tmn_code' => env('VNP_TMN_CODE'),
-    //     'hash_secret' => env('VNP_HASH_SECRET'),
-    //     'payment_url' => env('VNP_PAYMENT_URL'),
-    //     'return_url' => env('VNP_RETURN_URL'),
-    // ],
+    'exchange_rate' => [
+        'base_currency' => env('EXCHANGE_RATE_BASE', 'USD'),
+        'api_url' => env('EXCHANGE_RATE_API_URL', 'https://v6.exchangerate-api.com/v6/'),
+        'api_key' => env('EXCHANGE_RATE_API_KEY'),
+        'cache_ttl' => (int) env('EXCHANGE_RATE_CACHE_TTL', 3600),
+        'timeout' => (int) env('EXCHANGE_RATE_TIMEOUT', 5),
+        'fallback_rates' => [
+            'VND' => (float) env('EXCHANGE_RATE_FALLBACK_VND', 25000),
+        ],
+    ],
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+    ],
 
 ];

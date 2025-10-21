@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 import '@/../css/Home.css';
 import CartTitle from '@/components/cart/CartTitle';
 import CartColumnTitle from '@/components/cart/CartColumnTitle';
@@ -199,7 +199,11 @@ export default function Cart() {
                   <span>Mã khuyến mãi: {promotion.code}</span>
                 </div>
               )}
-              <button className="checkout-btn" type="button">
+              <button 
+                className="checkout-btn" 
+                type="button"
+                onClick={handleCheckout}
+              >
                 Mua hàng
               </button>
             </div>
@@ -209,3 +213,14 @@ export default function Cart() {
     </HomeLayout>
   );
 }
+
+  const handleCheckout = () => {
+    // Use Inertia router to POST to checkout endpoint
+    router.post('/cart/checkout', {
+      provider: 'stripe', // Default to Stripe, can be changed to 'paypal'
+    }, {
+      onError: (errors: Record<string, string>) => {
+        console.error('Checkout failed:', errors);
+      },
+    });
+  };

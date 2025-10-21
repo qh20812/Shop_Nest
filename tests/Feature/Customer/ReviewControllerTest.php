@@ -76,6 +76,9 @@ class ReviewControllerTest extends TestCase
             'quantity' => 1,
             'unit_price' => 100000,
             'total_price' => 100000,
+            'original_currency' => $order->currency ?? 'VND',
+            'original_unit_price' => 100000,
+            'original_total_price' => 100000,
         ]);
 
         $response = $this->actingAs($this->user)
@@ -134,6 +137,9 @@ class ReviewControllerTest extends TestCase
             'quantity' => 1,
             'unit_price' => 100000,
             'total_price' => 100000,
+            'original_currency' => $order->currency ?? 'VND',
+            'original_unit_price' => 100000,
+            'original_total_price' => 100000,
         ]);
 
         $response = $this->actingAs($this->user)

@@ -23,7 +23,7 @@ export default function TogglePanel({
   return (
     <div className={panelClass}>
       <Link href="/">
-      <img src="/image/ShopnestLogoNoColor.png" alt="Logo" className='logo-in-authpage' />
+      <img src="/image/ShopnestLogo.png" alt="Logo" className='logo-in-authpage' />
       </Link>
       <h1>{title}</h1>
       <p>{description}</p>

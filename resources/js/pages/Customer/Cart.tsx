@@ -167,7 +167,7 @@ export default function Cart() {
 
   return (
     <HomeLayout>
-      <div className="cart-container">
+      <div className="max-w-[1200px] mx-auto p-5 bg-[var(--light)] min-h-[calc(100vh-200px)]">
         <CartTitle title="Giỏ hàng của tôi" />
         
         <CartColumnTitle 
@@ -175,7 +175,7 @@ export default function Cart() {
           onSelectAll={handleSelectAll}
         />
 
-        <div className="cart-content">
+        <div className="flex flex-col gap-4">
           {shops.map(shop => (
             <CartShopCard
               key={shop.id}
@@ -190,11 +190,15 @@ export default function Cart() {
         </div>
 
         {selectedProducts.length > 0 && (
-          <div className="cart-checkout-summary">
-            <div className="checkout-summary-content">
-              <div className="summary-info">
-                <span>Tổng thanh toán ({selectedProducts.length} sản phẩm): </span>
-                <span className="total-price">{formatPrice(selectedTotal)}</span>
+          <div className="sticky bottom-0 bg-[var(--light-2)] border-t-2 border-[var(--primary)] p-5 mt-5 rounded-t-lg shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
+            <div className="max-w-[1200px] mx-auto flex justify-between items-center">
+              <div className="flex flex-col gap-1">
+                <span className="text-[var(--dark-grey)] text-sm font-['Poppins',sans-serif]">
+                  Tổng thanh toán ({selectedProducts.length} sản phẩm): 
+                </span>
+                <span className="text-xl font-bold text-[var(--danger)]">
+                  {formatPrice(selectedTotal)}
+                </span>
               </div>
               {promotion && (
                 <div className="promotion-info">
@@ -202,7 +206,7 @@ export default function Cart() {
                 </div>
               )}
               <button 
-                className="checkout-btn" 
+                className="bg-[var(--primary)] text-white border-none px-8 py-3 rounded-md text-base font-semibold cursor-pointer transition-all duration-300 font-['Poppins',sans-serif] hover:bg-[#1565C0] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(25,118,210,0.3)]" 
                 type="button"
                 onClick={handleCheckout}
               >

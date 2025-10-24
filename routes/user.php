@@ -4,9 +4,11 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ReviewController;
+use App\Http\Controllers\User\AddressController;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])
@@ -64,6 +66,35 @@ Route::middleware(['auth', 'verified'])
         Route::get('{review}', [ReviewController::class, 'show'])->name('show');
     });
 
+Route::middleware(['auth', 'verified'])
+    ->prefix('dashboard/addresses')
+    ->as('dashboard.addresses.')
+    ->group(function () {
+        // Danh sách địa chỉ
+        Route::get('/', [AddressController::class, 'index'])->name('index');
+
+        // Form tạo địa chỉ mới
+        Route::get('/create', [AddressController::class, 'create'])->name('create');
+
+        // Lưu địa chỉ mới
+        Route::post('/', [AddressController::class, 'store'])->name('store');
+
+        // Xem chi tiết địa chỉ
+        Route::get('/{address}', [AddressController::class, 'show'])->name('show');
+
+        // Form chỉnh sửa địa chỉ
+        Route::get('/{address}/edit', [AddressController::class, 'edit'])->name('edit');
+
+        // Cập nhật địa chỉ
+        Route::put('/{address}', [AddressController::class, 'update'])->name('update');
+
+        // Xóa địa chỉ
+        Route::delete('/{address}', [AddressController::class, 'destroy'])->name('destroy');
+
+        // Đặt địa chỉ mặc định
+        Route::patch('/{address}/default', [AddressController::class, 'setDefault'])->name('set-default');
+    });
+
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
@@ -73,8 +104,17 @@ Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])-
 Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/cart/checkout', [CartController::class, 'showCheckout'])->name('cart.checkout.show');
-    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    // Checkout routes
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    
+    // Checkout API routes
+    Route::get('/checkout/available-promotions', [CheckoutController::class, 'getAvailablePromotions'])->name('checkout.available-promotions');
+    
+    // Address API routes
+    Route::get('/addresses/provinces', [CheckoutController::class, 'getProvinces'])->name('addresses.provinces');
+    Route::get('/addresses/districts/{provinceId}', [CheckoutController::class, 'getDistricts'])->name('addresses.districts');
+    Route::get('/addresses/wards/{districtId}', [CheckoutController::class, 'getWards'])->name('addresses.wards');
 });
 
     // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users

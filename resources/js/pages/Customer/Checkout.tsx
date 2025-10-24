@@ -2,7 +2,21 @@ import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 import HomeLayout from '@/layouts/app/HomeLayout';
+import CartTitle from '@/components/cart/CartTitle';
+import { useTranslation } from '@/lib/i18n';
 
+// Import new components
+import OrderSummary from '@/components/Shared/OrderSummary';
+import PromotionInput from '@/components/Shared/PromotionInput';
+import AddressSelector from '@/components/Shared/AddressSelector';
+import CheckoutProductList from '@/components/Checkout/CheckoutProductList';
+import CheckoutAddressForm from '@/components/Checkout/CheckoutAddressForm';
+import CheckoutPaymentSection from '@/components/Checkout/CheckoutPaymentSection';
+import CheckoutOrderNotes from '@/components/Checkout/CheckoutOrderNotes';
+import CheckoutModal from '@/components/Checkout/CheckoutModal';
+import CheckoutExitConfirmation from '@/components/Checkout/CheckoutExitConfirmation';
+
+// Interfaces
 interface ProductImage {
   id: number;
   image_path: string;
@@ -39,9 +53,12 @@ interface Address {
   name: string;
   phone: string;
   address: string;
-  city: string;
+  province: string;
   district: string;
   ward: string;
+  province_id?: number;
+  district_id?: number;
+  ward_id?: number;
   is_default: boolean;
 }
 
@@ -84,7 +101,6 @@ interface PageProps {
   totals?: Totals;
   subtotal?: number;
   shipping?: number;
-  tax?: number;
   discount?: number;
   total?: number;
   addresses?: Address[];
@@ -100,11 +116,27 @@ const getCsrfToken = (): string => {
 };
 
 export default function Checkout() {
-  const { cartItems, order, orderItems, totals, subtotal, shipping = 0, discount = 0, total, addresses = [], promotion } = usePage<PageProps>().props;
+  const { 
+    cartItems, 
+    order, 
+    orderItems, 
+    totals, 
+    subtotal, 
+    shipping = 0, 
+    discount = 0, 
+    total, 
+    addresses = [], 
+    paymentMethods = [
+      { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe' },
+      { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account' },
+    ],
+    promotion 
+  } = usePage<PageProps>().props;
+  
+  const { t } = useTranslation();
   
   // Determine checkout type
   const isBuyNowCheckout = !!(order && orderItems && totals);
-  // const isCartCheckout = !!(cartItems && subtotal !== undefined && total !== undefined);
   
   // Use appropriate data based on checkout type
   const items = isBuyNowCheckout ? orderItems : cartItems;
@@ -113,6 +145,7 @@ export default function Checkout() {
   const finalDiscount = isBuyNowCheckout ? totals!.discount_amount : discount;
   const finalTotal = isBuyNowCheckout ? totals!.total : total!;
   
+  // State management
   const [selectedAddress, setSelectedAddress] = useState<number>(
     addresses.find(addr => addr.is_default)?.id || (addresses[0]?.id || 0)
   );
@@ -121,27 +154,77 @@ export default function Checkout() {
   const [appliedPromo, setAppliedPromo] = useState(promotion);
   const [orderNotes, setOrderNotes] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
+  const [showAddressModal, setShowAddressModal] = useState<boolean>(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
-  const handleApplyPromo = async () => {
-    if (!promoCode.trim()) {
-      alert('Please enter a promotion code');
-      return;
+  // Track unsaved changes
+  React.useEffect(() => {
+    if (orderNotes.trim() || promoCode.trim()) {
+      setHasUnsavedChanges(true);
+    } else {
+      setHasUnsavedChanges(false);
     }
-    
+  }, [orderNotes, promoCode]);
+
+  // Helper functions
+  const getProductImage = (item: CartItem | OrderItem): string => {
+    if ('variant' in item && item.variant?.product?.images) {
+      const images = item.variant.product.images;
+      return images.length > 0 ? `/storage/${images[0].image_path}` : '/image/ShopnestLogo.png';
+    }
+    if ('image' in item) {
+      return item.image || '/image/ShopnestLogo.png';
+    }
+    return '/image/ShopnestLogo.png';
+  };
+
+  const getVariantText = (item: CartItem | OrderItem): string => {
+    if ('variant' in item && item.variant) {
+      const variant = item.variant;
+      const parts = [];
+      if (variant.color) parts.push(variant.color);
+      if (variant.size) parts.push(variant.size);
+      return parts.length > 0 ? parts.join(' / ') : variant.sku;
+    }
+    if ('variant_name' in item) {
+      return item.variant_name;
+    }
+    return '';
+  };
+
+  const getItemPrice = (item: CartItem | OrderItem): number => {
+    if ('variant' in item && item.variant) {
+      return item.variant.sale_price || item.variant.price || item.total_price / item.quantity;
+    }
+    if ('unit_price' in item) {
+      return item.unit_price;
+    }
+    return item.total_price / item.quantity;
+  };
+
+  const getOriginalPrice = (item: CartItem | OrderItem): number | null => {
+    if ('variant' in item && item.variant?.sale_price && item.variant?.price) {
+      return item.variant.price;
+    }
+    return null;
+  };
+
+  // Handlers
+  const handleApplyPromo = async (code: string) => {
     try {
       const response = await axios.post('/cart/apply-promotion', 
-        { code: promoCode },
+        { code },
         { headers: { 'X-CSRF-TOKEN': getCsrfToken() } }
       );
       
       if (response.data?.success) {
         setAppliedPromo(response.data.promotion);
-        alert('Promotion applied successfully!');
+        alert(t('Promotion applied successfully!'));
         router.reload();
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        alert(error.response?.data?.message || 'Invalid promotion code');
+        alert(error.response?.data?.message || t('Invalid promotion code'));
       }
     }
   };
@@ -157,16 +240,41 @@ export default function Checkout() {
     }
   };
 
+  const handleAddAddress = async (newAddress: {
+    name: string;
+    phone: string;
+    address: string;
+    province_id: string;
+    district_id: string;
+    ward_id: string;
+    is_default: boolean;
+  }) => {
+    try {
+      const response = await axios.post('/addresses', newAddress, {
+        headers: { 'X-CSRF-TOKEN': getCsrfToken() }
+      });
+      
+      if (response.data?.success) {
+        setShowAddressModal(false);
+        router.reload();
+      }
+    } catch (error) {
+      console.error('Failed to add address:', error);
+      throw error;
+    }
+  };
+
   const handleCheckout = async () => {
     if (!isBuyNowCheckout && !selectedAddress && addresses.length > 0) {
-      alert('Please select a shipping address');
+      alert(t('Please select a shipping address'));
       return;
     }
 
     setProcessing(true);
+    setHasUnsavedChanges(false); // Clear unsaved changes when proceeding
     
     try {
-      const endpoint = isBuyNowCheckout ? `/buy-now/checkout/${order!.order_id}` : '/cart/checkout';
+      const endpoint = isBuyNowCheckout ? `/buy-now/checkout/${order!.order_id}` : '/checkout';
       const payload = isBuyNowCheckout 
         ? { provider: selectedPayment }
         : { provider: selectedPayment, address_id: selectedAddress, notes: orderNotes };
@@ -178,84 +286,32 @@ export default function Checkout() {
       if (response.data?.success && response.data?.payment_url) {
         window.location.href = response.data.payment_url;
       } else {
-        console.error('Invalid response from checkout:', response.data);
-        alert(response.data?.message || 'Failed to process checkout. Please try again.');
+        alert(response.data?.message || t('Failed to process checkout. Please try again.'));
         setProcessing(false);
       }
     } catch (error: unknown) {
       setProcessing(false);
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'Failed to process checkout. Please try again.';
-        console.error('Checkout failed:', error.response?.data);
-        alert(errorMessage);
+        alert(error.response?.data?.message || t('Failed to process checkout. Please try again.'));
       } else {
-        console.error('Unexpected error during checkout:', error);
-        alert('An unexpected error occurred. Please try again.');
+        alert(t('An unexpected error occurred. Please try again.'));
       }
     }
-  };
-
-  const getProductImage = (item: CartItem | OrderItem): string => {
-    // For cart items
-    if ('variant' in item && item.variant?.product?.images) {
-      const images = item.variant.product.images;
-      return images.length > 0 ? `/storage/${images[0].image_path}` : '/image/default-product.png';
-    }
-    // For order items
-    if ('image' in item) {
-      return item.image || '/image/default-product.png';
-    }
-    return '/image/default-product.png';
-  };
-
-  const getVariantText = (item: CartItem | OrderItem): string => {
-    // For cart items
-    if ('variant' in item && item.variant) {
-      const variant = item.variant;
-      const parts = [];
-      if (variant.color) parts.push(variant.color);
-      if (variant.size) parts.push(variant.size);
-      return parts.length > 0 ? parts.join(' / ') : variant.sku;
-    }
-    // For order items
-    if ('variant_name' in item) {
-      return item.variant_name;
-    }
-    return '';
-  };
-
-  const getItemPrice = (item: CartItem | OrderItem): number => {
-    // For cart items
-    if ('variant' in item && item.variant) {
-      return item.variant.sale_price || item.variant.price || item.total_price / item.quantity;
-    }
-    // For order items
-    if ('unit_price' in item) {
-      return item.unit_price;
-    }
-    return item.total_price / item.quantity;
-  };
-
-  const getOriginalPrice = (item: CartItem | OrderItem): number | null => {
-    // For cart items
-    if ('variant' in item && item.variant?.sale_price && item.variant?.price) {
-      return item.variant.price;
-    }
-    return null;
-  };
-
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
   if (!items || items.length === 0) {
     return (
       <HomeLayout>
-        <div className="checkout-wrapper">
-          <div className="checkout-empty">
-            <i className="fas fa-shopping-cart"></i>
-            <div className="checkout-empty-text">Your cart is empty</div>
-            <a href="/" className="checkout-empty-btn">Continue Shopping</a>
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <i className="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
+            <div className="text-xl text-gray-600 mb-6">{t('Your cart is empty')}</div>
+            <a 
+              href="/" 
+              className="px-6 py-3 btn-primary rounded-lg transition-colors duration-200"
+            >
+              {t('Continue Shopping')}
+            </a>
           </div>
         </div>
       </HomeLayout>
@@ -264,250 +320,128 @@ export default function Checkout() {
 
   return (
     <HomeLayout>
-      <div className="checkout-wrapper">
-        <h1 className="checkout-page-title">
-          <i className="fas fa-shopping-bag"></i> Checkout
-        </h1>
+      <div className="max-w-6xl mx-auto px-4 py-6 font-['Poppins',sans-serif]">
+        <CartTitle title={t("Checkout Order")} />
 
-        <div className="checkout-container">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 mt-6">
           {/* Main Content */}
-          <div className="checkout-main">
-            {/* Product List Section */}
-            <div className="checkout-section">
-              <h2 className="checkout-section-title">
-                <i className="fas fa-box"></i>
-                Order Items ({items!.length})
-              </h2>
-              <div className="checkout-product-list">
-                {items!.map((item) => (
-                  <div key={item.id} className="checkout-product-item">
-                    <img 
-                      src={getProductImage(item)} 
-                      alt={item.product_name}
-                      className="checkout-product-image"
-                    />
-                    <div className="checkout-product-details">
-                      <div className="checkout-product-name">{item.product_name}</div>
-                      {getVariantText(item) && (
-                        <div className="checkout-product-variant">
-                          <i className="fas fa-tag"></i> {getVariantText(item)}
-                        </div>
-                      )}
-                      <div className="checkout-product-price">
-                        <span className="checkout-price-current">
-                          {formatPrice(getItemPrice(item))}
-                        </span>
-                        {getOriginalPrice(item) && (
-                          <span className="checkout-price-original">
-                            {formatPrice(getOriginalPrice(item)!)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="checkout-product-quantity">
-                      <div className="checkout-quantity-text">Qty: {item.quantity}</div>
-                      <div className="checkout-product-subtotal">
-                        {formatPrice(item.total_price)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="space-y-5">
+            {/* Product List */}
+            <CheckoutProductList
+              items={items!}
+              getProductImage={getProductImage}
+              getVariantText={getVariantText}
+              getItemPrice={getItemPrice}
+              getOriginalPrice={getOriginalPrice}
+            />
 
-            {/* Shipping Address Section */}
-            {addresses.length > 0 && (
-              <div className="checkout-section">
-                <h2 className="checkout-section-title">
-                  <i className="fas fa-map-marker-alt"></i>
-                  Shipping Address
-                </h2>
-                <div className="checkout-address-list">
-                  {addresses.map((address) => (
-                    <div 
-                      key={address.id}
-                      className={`checkout-address-item ${selectedAddress === address.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedAddress(address.id)}
-                    >
-                      <div className="checkout-address-header">
-                        <input 
-                          type="radio"
-                          name="address"
-                          checked={selectedAddress === address.id}
-                          onChange={() => setSelectedAddress(address.id)}
-                          className="checkout-address-radio"
-                        />
-                        <span className="checkout-address-name">{address.name}</span>
-                        {address.is_default && (
-                          <span className="checkout-address-default">Default</span>
-                        )}
-                        <span className="checkout-address-phone">{address.phone}</span>
-                      </div>
-                      <div className="checkout-address-detail">
-                        {address.address}, {address.ward}, {address.district}, {address.city}
-                      </div>
-                    </div>
-                  ))}
+            {/* Shipping Address */}
+            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-map-marker-alt text-primary"></i>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {t("Shipping Address")}
+                  </h3>
                 </div>
-              </div>
-            )}
-
-            {/* Payment Method Section */}
-            <div className="checkout-section">
-              <h2 className="checkout-section-title">
-                <i className="fas fa-credit-card"></i>
-                Payment Method
-              </h2>
-              <div className="checkout-payment-methods">
-                <div 
-                  className={`checkout-payment-item ${selectedPayment === 'stripe' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPayment('stripe')}
+                <button
+                  onClick={() => setShowAddressModal(true)}
+                  className="px-4 py-2 text-sm text-primary border-2 border-dashed border-primary rounded-lg hover:bg-primary-light transition-colors duration-200"
                 >
-                  <input 
-                    type="radio"
-                    name="payment"
-                    value="stripe"
-                    checked={selectedPayment === 'stripe'}
-                    onChange={() => setSelectedPayment('stripe')}
-                    className="checkout-payment-radio"
-                  />
-                  <div className="checkout-payment-info">
-                    <div className="checkout-payment-name">Credit/Debit Card</div>
-                    <div className="checkout-payment-desc">Pay securely with Stripe</div>
-                  </div>
-                </div>
-                <div 
-                  className={`checkout-payment-item ${selectedPayment === 'paypal' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPayment('paypal')}
-                >
-                  <input 
-                    type="radio"
-                    name="payment"
-                    value="paypal"
-                    checked={selectedPayment === 'paypal'}
-                    onChange={() => setSelectedPayment('paypal')}
-                    className="checkout-payment-radio"
-                  />
-                  <div className="checkout-payment-info">
-                    <div className="checkout-payment-name">PayPal</div>
-                    <div className="checkout-payment-desc">Pay with your PayPal account</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Promotion Code Section */}
-            <div className="checkout-section">
-              <h2 className="checkout-section-title">
-                <i className="fas fa-gift"></i>
-                Promotion Code
-              </h2>
-              <div className="checkout-promotion-form">
-                <input 
-                  type="text"
-                  placeholder="Enter promotion code"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="checkout-promotion-input"
-                  disabled={!!appliedPromo}
-                />
-                <button 
-                  onClick={handleApplyPromo}
-                  className="checkout-promotion-btn"
-                  disabled={!!appliedPromo}
-                >
-                  Apply
+                  <i className="fas fa-plus mr-2"></i>
+                  {t("Add New")}
                 </button>
               </div>
-              {appliedPromo && (
-                <div className="checkout-promotion-applied">
-                  <span className="checkout-promotion-applied-text">
-                    <i className="fas fa-check-circle"></i> {appliedPromo.code} applied
-                  </span>
-                  <button onClick={handleRemovePromo} className="checkout-promotion-remove">
-                    Remove
+              
+              {addresses.length > 0 ? (
+                <AddressSelector
+                  addresses={addresses}
+                  selectedId={selectedAddress}
+                  onSelect={setSelectedAddress}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 mb-4">{t("You don't have any shipping address yet")}</p>
+                  <button
+                    onClick={() => setShowAddressModal(true)}
+                    className="px-6 py-2.5 btn-primary rounded-lg transition-colors duration-200"
+                  >
+                    {t("Add Shipping Address")}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Order Notes Section */}
-            <div className="checkout-section">
-              <h2 className="checkout-section-title">
-                <i className="fas fa-sticky-note"></i>
-                Order Notes (Optional)
-              </h2>
-              <textarea
-                placeholder="Add notes about your order (e.g., delivery instructions)"
-                value={orderNotes}
-                onChange={(e) => setOrderNotes(e.target.value)}
-                className="checkout-notes-textarea"
+            {/* Promotion Code */}
+            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <i className="fas fa-gift text-primary"></i>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t("Promotions & Vouchers")}
+                </h3>
+              </div>
+              
+              <PromotionInput
+                onApply={handleApplyPromo}
+                onRemove={handleRemovePromo}
+                appliedCode={appliedPromo?.code}
               />
             </div>
+
+            {/* Payment Method */}
+            <CheckoutPaymentSection
+              methods={paymentMethods}
+              selectedMethod={selectedPayment}
+              onMethodChange={setSelectedPayment}
+              onCheckout={handleCheckout}
+              processing={processing}
+              disabled={!selectedAddress && addresses.length > 0}
+            />
+
+            {/* Order Notes */}
+            <CheckoutOrderNotes
+              value={orderNotes}
+              onChange={setOrderNotes}
+            />
           </div>
 
           {/* Sidebar - Order Summary */}
-          <div className="checkout-sidebar">
-            <div className="checkout-summary">
-              <h3 className="checkout-summary-title">Order Summary</h3>
+          <div className="lg:sticky lg:top-4 h-fit">
+            <div className="bg-white rounded-lg p-5 shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+                {t("Order Summary")}
+              </h3>
               
-              <div className="checkout-summary-row">
-                <span className="checkout-summary-label">Subtotal:</span>
-                <span className="checkout-summary-value">{formatPrice(finalSubtotal)}</span>
-              </div>
+              <OrderSummary
+                subtotal={finalSubtotal}
+                shipping={finalShipping}
+                discount={finalDiscount}
+                total={finalTotal}
+              />
 
-              {finalShipping > 0 && (
-                <div className="checkout-summary-row">
-                  <span className="checkout-summary-label">Shipping:</span>
-                  <span className="checkout-summary-value">{formatPrice(finalShipping)}</span>
-                </div>
-              )}
-
-              {finalDiscount > 0 && (
-                <div className="checkout-summary-row">
-                  <span className="checkout-summary-label">Discount:</span>
-                  <span className="checkout-summary-value checkout-summary-discount">
-                    -{formatPrice(finalDiscount)}
-                  </span>
-                </div>
-              )}
-
-              <div className="checkout-summary-row checkout-summary-total">
-                <span className="checkout-summary-label">Total:</span>
-                <span className="checkout-summary-value">{formatPrice(finalTotal)}</span>
-              </div>
-
-              <button 
-                onClick={handleCheckout}
-                disabled={processing}
-                className="checkout-payment-btn"
-              >
-                {processing ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i> Processing...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-lock"></i> Proceed to Payment
-                  </>
-                )}
-              </button>
-
-              <button 
-                onClick={() => router.visit('/cart')}
-                className="checkout-back-btn"
-              >
-                <i className="fas fa-arrow-left"></i> Back to Cart
-              </button>
-
-              <div className="checkout-security-note">
-                <i className="fas fa-shield-alt"></i>
-                Your payment information is secure and encrypted
+              <div className="mt-4 p-3 bg-primary-light rounded-lg text-xs text-gray-600 flex items-start gap-2">
+                <i className="fas fa-shield-alt text-primary mt-0.5"></i>
+                <span>{t("Your payment information is secure and encrypted")}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add Address Modal */}
+      <CheckoutModal
+        isOpen={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        title={t("Add New Address")}
+      >
+        <CheckoutAddressForm
+          onSubmit={handleAddAddress}
+          onCancel={() => setShowAddressModal(false)}
+        />
+      </CheckoutModal>
+
+      {/* Exit Confirmation */}
+      <CheckoutExitConfirmation hasUnsavedChanges={hasUnsavedChanges} />
     </HomeLayout>
   );
 }

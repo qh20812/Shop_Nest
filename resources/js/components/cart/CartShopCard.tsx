@@ -43,28 +43,33 @@ export default function CartShopCard({
   };
 
   return (
-    <div className="cart-shop-card">
-      <div className="cart-shop-header">
-        <div className="cart-shop-info">
+    <div className="bg-[var(--light-2)] rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+      <div className="p-4 border-b border-[var(--grey)] flex justify-between items-center bg-[var(--light)]">
+        <div className="flex items-center gap-3">
           <input 
             type="checkbox"
             id={`shop-${shop.id}`}
-            className="cart-checkbox"
+            className="w-[18px] h-[18px] accent-[var(--primary)] cursor-pointer"
             checked={isShopSelected}
             onChange={(e) => handleShopSelect(e.target.checked)}
           />
-          <i className="bi bi-shop cart-shop-icon"></i>
-          <span className="cart-shop-name">{shop.name}</span>
+          <i className="bi bi-shop text-[var(--primary)] text-base"></i>
+          <span className="font-semibold text-[var(--dark)] font-['Poppins',sans-serif]">
+            {shop.name}
+          </span>
         </div>
-        <div className="cart-shop-actions">
-          <button className="cart-chat-btn" type="button">
+        <div className="flex gap-2">
+          <button 
+            className="bg-transparent border border-[var(--primary)] text-[var(--primary)] px-3 py-1.5 rounded text-[13px] cursor-pointer transition-all duration-300 flex items-center gap-1.5 font-['Poppins',sans-serif] hover:bg-[var(--primary)] hover:text-white" 
+            type="button"
+          >
             <i className="bi bi-chat-dots"></i>
             Chat
           </button>
         </div>
       </div>
       
-      <div className="cart-shop-products">
+      <div className="flex flex-col">
         {shop.products.map(product => (
           <CartProductItem
             key={product.id}

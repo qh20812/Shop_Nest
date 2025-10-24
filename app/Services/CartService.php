@@ -90,13 +90,30 @@ class CartService
 
     public function clearCart(?User $user): void
     {
+        Log::info('cart_service.clear_cart_started', [
+            'user_id' => $user?->id,
+            'is_guest' => !$user,
+        ]);
+        
         if ($user) {
-            CartItem::where('user_id', $user->id)->delete();
+            $itemCount = CartItem::where('user_id', $user->id)->count();
+            $deleted = CartItem::where('user_id', $user->id)->delete();
+            
+            Log::info('cart_service.cart_items_deleted', [
+                'user_id' => $user->id,
+                'item_count' => $itemCount,
+                'deleted_count' => $deleted,
+            ]);
         } else {
             session()->forget(self::SESSION_GUEST_ITEMS_KEY);
+            Log::info('cart_service.guest_cart_cleared');
         }
 
         $this->removePromotion($user);
+        
+        Log::info('cart_service.clear_cart_completed', [
+            'user_id' => $user?->id,
+        ]);
     }
 
     public function applyPromotion(?User $user, string $code, Collection $cartItems): Promotion

@@ -40,11 +40,11 @@ class StripeGateway implements PaymentGateway
 
         $session = $this->stripe->checkout->sessions->create([
             'mode'                  => 'payment',
-            'success_url'           => url('/payments/stripe/return?status=success&order_id=' . $order->id . '&session_id={CHECKOUT_SESSION_ID}'),
-            'cancel_url'            => url('/payments/stripe/return?status=cancel&order_id=' . $order->id),
+            'success_url'           => url('/payments/stripe/return?status=success&order_id=' . $order->order_id . '&session_id={CHECKOUT_SESSION_ID}'),
+            'cancel_url'            => url('/payments/stripe/return?status=cancel&order_id=' . $order->order_id),
             'payment_method_types'  => ['card'],
             'line_items'            => $lineItems,
-            'metadata'              => ['order_id' => (string) $order->id],
+            'metadata'              => ['order_id' => (string) $order->order_id],
         ]);
 
         return $session->url;

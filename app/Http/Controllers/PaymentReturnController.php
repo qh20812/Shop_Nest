@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\HandlesOrderPayments;
 use App\Http\Requests\PaymentReturnRequest;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\InventoryService;
@@ -87,6 +88,27 @@ class PaymentReturnController extends Controller
 
                     $shouldClearCart = $order->payment_status === PaymentStatus::PAID;
                     $shouldRestoreInventory = $order->payment_status === PaymentStatus::FAILED;
+                    
+                    // If payment failed or canceled, create a refund transaction
+                    if ($shouldRestoreInventory) {
+                        $order->transactions()->create([
+                            'type' => 'refund',
+                            'amount' => $order->total_amount,
+                            'currency' => $order->currency ?? 'VND',
+                            'gateway' => $provider,
+                            'gateway_transaction_id' => $result['transaction_id'] ?? null,
+                            'gateway_event_id' => $eventId,
+                            'status' => 'completed',
+                            'raw_payload' => $payload,
+                        ]);
+
+                        Log::info('payment_return.refund_created', [
+                            'provider' => $provider,
+                            'order_id' => $order->order_id,
+                            'reason' => 'payment_failed',
+                        ]);
+                    }
+
                     $processedOrder = $order->fresh('items.variant');
 
                     Log::info('payment_return.processed', [
@@ -100,6 +122,7 @@ class PaymentReturnController extends Controller
                     'provider' => $provider,
                     'order_id' => $sanitizedOrderId,
                     'message' => $exception->getMessage(),
+                    'trace' => $exception->getTraceAsString(),
                 ]);
             }
         } else {
@@ -110,7 +133,31 @@ class PaymentReturnController extends Controller
         }
 
         if ($shouldClearCart) {
+            Log::info('payment_return.clearing_cart', [
+                'user_id' => Auth::id(),
+                'provider' => $provider,
+                'order_id' => $sanitizedOrderId,
+            ]);
+            
+            // Clear the cart for this user
             $this->cartService->clearCart(Auth::user());
+            
+            // Verify cart was cleared
+            $remainingItems = CartItem::where('user_id', Auth::id())->count();
+            
+            if ($remainingItems > 0) {
+                Log::warning('payment_return.cart_not_fully_cleared', [
+                    'user_id' => Auth::id(),
+                    'remaining_items' => $remainingItems,
+                ]);
+            } else {
+                Log::info('payment_return.cart_cleared_successfully', [
+                    'user_id' => Auth::id(),
+                ]);
+            }
+            
+            // Clear any promotion session data
+            session()->forget('applied_promotion');
         }
 
         if ($shouldRestoreInventory && $processedOrder) {

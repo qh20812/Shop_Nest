@@ -11,6 +11,7 @@ use App\Models\CartItem;
 use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -142,36 +143,96 @@ class CartController extends Controller
     /**
      * Create order from cart and redirect to payment gateway.
      */
-    public function checkout(): RedirectResponse
+    public function checkout(): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $user = Auth::user();
         $cartItems = $this->cartService->getCartItems($user);
 
         if ($cartItems->isEmpty()) {
-            return back()->with('error', 'Your cart is empty.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Your cart is empty.'
+            ], 400);
         }
 
         try {
-            // Create order from cart items
+            // Pre-check: Verify all items have sufficient stock before proceeding
+            Log::info('cart.checkout.initiated', [
+                'user_id' => $user->id,
+                'cart_items_count' => $cartItems->count(),
+            ]);
+
+            // Create order from cart items (this internally verifies stock)
             $order = $this->cartService->createOrderFromCart($user);
+
+            Log::info('cart.checkout.order_created', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'order_number' => $order->order_number,
+                'total_amount' => $order->total_amount,
+            ]);
 
             // Get payment provider (default to Stripe)
             $provider = request()->input('provider', 'stripe');
-            $gateway = \App\Services\PaymentService::make($provider);
+            
+            try {
+                $gateway = \App\Services\PaymentService::make($provider);
+            } catch (\InvalidArgumentException $e) {
+                Log::error('cart.checkout.invalid_provider', [
+                    'user_id' => $user->id,
+                    'order_id' => $order->order_id,
+                    'provider' => $provider,
+                    'message' => $e->getMessage(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment provider selected.'
+                ], 400);
+            }
 
             // Create payment and get redirect URL
             $paymentUrl = $gateway->createPayment($order);
 
-            // Redirect to payment gateway
-            return redirect($paymentUrl);
+            Log::info('cart.checkout.payment_initiated', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'provider' => $provider,
+                'payment_url' => $paymentUrl,
+            ]);
+
+            // Return JSON response with payment URL for client-side redirect
+            return response()->json([
+                'success' => true,
+                'payment_url' => $paymentUrl,
+                'order_id' => $order->order_id,
+                'order_number' => $order->order_number,
+            ]);
+
         } catch (CartException $exception) {
-            return back()->with('error', $exception->getMessage());
-        } catch (\Throwable $exception) {
-            \Log::error('cart.checkout_failed', [
+            Log::error('cart.checkout.cart_exception', [
                 'user_id' => $user->id,
                 'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
-            return back()->with('error', 'Failed to initiate payment. Please try again.');
+            
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ], 400);
+        } catch (\Throwable $exception) {
+            Log::error('cart.checkout_failed', [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot process payment at this time. Please try again later.'
+            ], 500);
         }
     }
 

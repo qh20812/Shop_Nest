@@ -13,6 +13,8 @@ class ExchangeRateService
 
     /**
      * Get exchange rate from source currency to target currency.
+     * 
+     * @throws \RuntimeException If unable to get exchange rate and no fallback available
      */
     public static function getRate(string $fromCurrency, string $toCurrency = 'USD'): float
     {
@@ -23,22 +25,46 @@ class ExchangeRateService
             return 1.0;
         }
 
-        $baseCurrency = strtoupper(config('services.exchange_rate.base_currency', 'USD'));
-        $rates = self::getRates($baseCurrency);
+        try {
+            $baseCurrency = strtoupper(config('services.exchange_rate.base_currency', 'USD'));
+            $rates = self::getRates($baseCurrency);
 
-        if ($from === $baseCurrency) {
-            return self::resolveRate($rates, $to);
+            if ($from === $baseCurrency) {
+                return self::resolveRate($rates, $to);
+            }
+
+            if ($to === $baseCurrency) {
+                $fromRate = self::resolveRate($rates, $from);
+                return $fromRate > 0 ? 1 / $fromRate : 1.0;
+            }
+
+            $rateToBase = self::getRate($from, $baseCurrency);
+            $rateFromBase = self::getRate($baseCurrency, $to);
+
+            return round($rateToBase * $rateFromBase, 6);
+        } catch (\Throwable $exception) {
+            Log::error('exchange_rate.get_rate_failed', [
+                'from' => $from,
+                'to' => $to,
+                'message' => $exception->getMessage(),
+            ]);
+            
+            // Return hardcoded fallback rate
+            $fallbackRates = self::getHardcodedRates();
+            $fromRate = $fallbackRates[$from] ?? 1.0;
+            $toRate = $fallbackRates[$to] ?? 1.0;
+            
+            if ($fromRate > 0 && $toRate > 0) {
+                return round($toRate / $fromRate, 6);
+            }
+            
+            // Last resort: return 1.0 to prevent complete failure
+            Log::warning('exchange_rate.using_fallback_rate_1', [
+                'from' => $from,
+                'to' => $to,
+            ]);
+            return 1.0;
         }
-
-        if ($to === $baseCurrency) {
-            $fromRate = self::resolveRate($rates, $from);
-            return $fromRate > 0 ? 1 / $fromRate : 1.0;
-        }
-
-        $rateToBase = self::getRate($from, $baseCurrency);
-        $rateFromBase = self::getRate($baseCurrency, $to);
-
-        return round($rateToBase * $rateFromBase, 6);
     }
 
     /**

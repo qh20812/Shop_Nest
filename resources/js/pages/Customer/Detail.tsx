@@ -200,6 +200,10 @@ export default function Detail() {
   };
 
   const performAction = async (endpoint: 'add-to-cart' | 'buy-now', type: 'add' | 'buy') => {
+    if (loading) {
+      return; // Prevent multiple requests
+    }
+
     if (!selectedVariant) {
       setStatusMessage({ type: 'error', message: 'Vui lòng chọn đầy đủ biến thể sản phẩm.' });
       return;
@@ -214,20 +218,37 @@ export default function Detail() {
     setStatusMessage(null);
 
     try {
+      // Refresh CSRF token before request
+      const freshToken = getCsrfToken();
+      if (!freshToken) {
+        throw new Error('CSRF token not available');
+      }
+
+      console.log('Using CSRF Token:', freshToken); // Debug log
+
+      // Use fetch with proper credentials
       const response = await fetch(`/product/${product.id}/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          'X-CSRF-TOKEN': getCsrfToken(),
+          'X-CSRF-TOKEN': freshToken,
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
           variant_id: selectedVariant.variant_id,
           quantity,
+          provider: 'stripe', // Default payment provider
         }),
       });
 
       const payload = await response.json().catch(() => null);
+
+      // Handle login required - redirect immediately
+      if (payload?.action === 'login_required' && payload?.redirect) {
+        window.location.href = payload.redirect;
+        return;
+      }
 
       if (!response.ok || !payload?.success) {
         const message = payload?.message || 'Không thể xử lý yêu cầu lúc này.';
@@ -235,17 +256,28 @@ export default function Detail() {
         return;
       }
 
-      setStatusMessage({ type: 'success', message: payload.message || 'Thao tác thành công.' });
+      // For "Buy Now" - redirect to checkout page
+      if (type === 'buy' && payload.redirect_url) {
+        setStatusMessage({ type: 'success', message: 'Đang chuyển đến trang thanh toán...' });
+        window.location.href = payload.redirect_url;
+        return;
+      }
 
+      // For "Add to Cart" - show success message and reload cart
       if (type === 'add') {
+        setStatusMessage({ type: 'success', message: payload.message || 'Đã thêm vào giỏ hàng.' });
         router.reload({ only: ['cartItems'] });
       }
 
-      if (type === 'buy' && payload.redirect) {
+      // Fallback for legacy redirect responses
+      if (payload.redirect) {
         window.location.href = payload.redirect;
       }
-    } catch {
-      setStatusMessage({ type: 'error', message: 'Có lỗi xảy ra, vui lòng thử lại sau.' });
+    } catch (error: unknown) {
+      console.error('Action error:', error);
+      const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+      const message = axiosError.response?.data?.message || axiosError.message || 'Có lỗi xảy ra khi xử lý yêu cầu.';
+      setStatusMessage({ type: 'error', message });
     } finally {
       setLoading(null);
     }

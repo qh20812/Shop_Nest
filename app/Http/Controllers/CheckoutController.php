@@ -19,17 +19,117 @@ class CheckoutController extends Controller
      */
     public function index(): Response
     {
-        $cartItems = CartItem::with(['variant.product'])
-            ->where('user_id', Auth::id())
+        $user = Auth::user();
+        
+        // Get cart items with full product and variant details
+        $cartItems = CartItem::with([
+            'variant.product.images',
+            'variant.product.category',
+        ])
+            ->where('user_id', $user->id)
             ->get();
 
+        // If cart is empty, still render page (component handles empty state)
+        if ($cartItems->isEmpty()) {
+            return Inertia::render('Customer/Checkout', [
+                'cartItems' => [],
+                'subtotal' => 0,
+                'shipping' => 0,
+                'tax' => 0,
+                'discount' => 0,
+                'total' => 0,
+                'addresses' => [],
+                'promotion' => null,
+            ]);
+        }
+
+        // Calculate subtotal
         $subtotal = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->variant->price;
+            $price = $item->variant->sale_price ?? $item->variant->price;
+            return $item->quantity * $price;
         });
 
-        return Inertia::render('Checkout/Index', [
-            'cartItems' => $cartItems,
-            'subtotal' => $subtotal,
+        // Calculate shipping fee
+        $shipping = $this->calculateShippingFee($subtotal);
+        
+        // Calculate tax (example: 10% tax)
+        $tax = $subtotal * 0.0; // Set to 0 or apply tax logic as needed
+        
+        // Get applied promotion/discount if exists
+        $promotion = session('applied_promotion', null);
+        $discount = 0;
+        
+        if ($promotion) {
+            // Calculate discount based on promotion type
+            if (isset($promotion['type']) && $promotion['type'] === 'percentage') {
+                $discount = $subtotal * ($promotion['discount'] / 100);
+            } elseif (isset($promotion['type']) && $promotion['type'] === 'fixed') {
+                $discount = $promotion['discount'];
+            } else {
+                // Default: treat as percentage
+                $discount = $subtotal * ($promotion['discount'] / 100);
+            }
+        }
+        
+        // Calculate total
+        $total = $subtotal + $shipping + $tax - $discount;
+        
+        // Get user addresses
+        $addresses = $user->addresses()
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($address) {
+                return [
+                    'id' => $address->id,
+                    'name' => $address->recipient_name ?? 'Recipient',
+                    'phone' => $address->phone ?? '',
+                    'address' => $address->address_line ?? '',
+                    'city' => $address->province ?? '',
+                    'district' => $address->district ?? '',
+                    'ward' => $address->ward ?? '',
+                    'is_default' => (bool) $address->is_default,
+                ];
+            });
+
+        // Format cart items for frontend
+        $formattedCartItems = $cartItems->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'product_name' => $item->variant->product->name ?? 'Product',
+                'quantity' => $item->quantity,
+                'total_price' => $item->quantity * ($item->variant->sale_price ?? $item->variant->price),
+                'variant' => [
+                    'id' => $item->variant->id,
+                    'sku' => $item->variant->sku,
+                    'size' => $item->variant->size ?? null,
+                    'color' => $item->variant->color ?? null,
+                    'price' => $item->variant->price,
+                    'sale_price' => $item->variant->sale_price ?? null,
+                    'product' => [
+                        'id' => $item->variant->product->id,
+                        'name' => $item->variant->product->name,
+                        'slug' => $item->variant->product->slug,
+                        'images' => $item->variant->product->images->map(function ($image) {
+                            return [
+                                'id' => $image->id,
+                                'image_path' => $image->image_path,
+                            ];
+                        }),
+                    ],
+                ],
+            ];
+        });
+
+        return Inertia::render('Customer/Checkout', [
+            'cartItems' => $formattedCartItems,
+            'subtotal' => round($subtotal, 2),
+            'shipping' => round($shipping, 2),
+            'tax' => round($tax, 2),
+            'discount' => round($discount, 2),
+            'total' => round($total, 2),
+            'addresses' => $addresses,
+            'promotion' => $promotion,
             'availableCurrencies' => ExchangeRateService::getSupportedCurrencies(),
         ]);
     }

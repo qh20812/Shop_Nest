@@ -25,14 +25,6 @@ Route::get('/product/{productId}', [DetailController::class, 'show'])
     ->whereNumber('productId')
     ->name('product.detail');
 
-Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])
-    ->whereNumber('productId')
-    ->name('product.addToCart');
-
-Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])
-    ->whereNumber('productId')
-    ->name('product.buyNow');
-
 if (app()->environment(['local', 'testing']) || config('app.debug')) {
     Route::get('/debug/inventory/{variant}', [InventoryDebugController::class, 'show'])
         ->whereNumber('variant')

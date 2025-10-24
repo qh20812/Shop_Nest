@@ -17,7 +17,18 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(StripeClient::class, function () {
-            return new StripeClient(config('services.stripe.secret'));
+            $client = new StripeClient(config('services.stripe.secret'));
+
+            // Configure HTTP client for local development
+            if (config('app.env') === 'local') {
+                // Set global HTTP client for Stripe SDK
+                \Stripe\ApiRequestor::setHttpClient(new \Stripe\HttpClient\CurlClient([
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => false,
+                ]));
+            }
+
+            return $client;
         });
     }
 

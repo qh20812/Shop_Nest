@@ -98,7 +98,7 @@ class PaypalPaymentTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->get("/payments/paypal/return?order_id={$this->order->id}&token=PAYPAL_ORDER_123");
+        $response = $this->get("/payments/paypal/return?order_id={$this->order->order_id}&token=PAYPAL_ORDER_123");
 
         $response->assertStatus(200);
 
@@ -117,7 +117,7 @@ class PaypalPaymentTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        $response = $this->get("/payments/paypal/return?order_id={$this->order->id}&status=cancel");
+        $response = $this->get("/payments/paypal/return?order_id={$this->order->order_id}&status=cancel");
 
         $response->assertStatus(200);
 

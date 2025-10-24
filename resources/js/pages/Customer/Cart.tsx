@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { usePage, router } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import '@/../css/Home.css';
 import CartTitle from '@/components/cart/CartTitle';
 import CartColumnTitle from '@/components/cart/CartColumnTitle';
@@ -162,6 +163,7 @@ export default function Cart() {
       currency: 'VND'
     }).format(price);
   };
+  
 
   return (
     <HomeLayout>
@@ -214,13 +216,30 @@ export default function Cart() {
   );
 }
 
-  const handleCheckout = () => {
-    // Use Inertia router to POST to checkout endpoint
-    router.post('/cart/checkout', {
-      provider: 'stripe', // Default to Stripe, can be changed to 'paypal'
-    }, {
-      onError: (errors: Record<string, string>) => {
-        console.error('Checkout failed:', errors);
-      },
-    });
+  const handleCheckout = async () => {
+    try {
+      // Use Axios to POST to checkout endpoint and get JSON response
+      const response = await axios.post('/cart/checkout', {
+        provider: 'stripe', // Default to Stripe, can be changed to 'paypal'
+      });
+
+      // Check if response contains payment URL
+      if (response.data?.success && response.data?.payment_url) {
+        // Redirect to payment gateway using client-side navigation
+        window.location.href = response.data.payment_url;
+      } else {
+        console.error('Invalid response from checkout:', response.data);
+        alert(response.data?.message || 'Failed to process checkout. Please try again.');
+      }
+    } catch (error: unknown) {
+      // Handle Axios errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || 'Failed to process checkout. Please try again.';
+        console.error('Checkout failed:', error.response?.data);
+        alert(errorMessage);
+      } else {
+        console.error('Unexpected error during checkout:', error);
+        alert('An unexpected error occurred. Please try again.');
+      }
+    }
   };

@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
 use App\Enums\ProductStatus;
 use App\Exceptions\CartException;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Review;
+use App\Models\UserAddress;
 use App\Services\CartService;
+use App\Services\InventoryService;
+use App\Services\PaymentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -21,8 +27,10 @@ use Inertia\Response;
 
 class DetailController extends Controller
 {
-    public function __construct(private CartService $cartService)
-    {
+    public function __construct(
+        private CartService $cartService,
+        private InventoryService $inventoryService
+    ) {
     }
 
     public function show(Request $request, int $productId): Response
@@ -79,6 +87,16 @@ class DetailController extends Controller
 
     public function addToCart(Request $request, int $productId)
     {
+        // Require authentication for Add to Cart
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.',
+                'redirect' => route('login'),
+                'action' => 'login_required',
+            ]);
+        }
+
         $product = $this->findPublishedProduct($productId);
 
         $data = $request->validate([
@@ -135,6 +153,9 @@ class DetailController extends Controller
         }
     }
 
+    /**
+     * Buy Now: Create order directly without adding to cart
+     */
     public function buyNow(Request $request, int $productId)
     {
         Log::info('DetailController@buyNow start', [
@@ -143,6 +164,17 @@ class DetailController extends Controller
             'request_data' => $request->all(),
         ]);
 
+        // Require authentication for Buy Now
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập để tiếp tục mua hàng.',
+                'redirect' => route('login'),
+                'action' => 'login_required',
+            ]);
+        }
+
+        $user = Auth::user();
         $product = $this->findPublishedProduct($productId);
 
         $data = $request->validate([
@@ -154,9 +186,11 @@ class DetailController extends Controller
                 }),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+            'provider' => ['nullable', 'string', 'in:stripe,paypal'],
         ]);
 
         try {
+            // Get the variant
             $variant = ProductVariant::where('product_id', $product->product_id)
                 ->where('variant_id', $data['variant_id'])
                 ->whereNull('deleted_at')
@@ -169,33 +203,109 @@ class DetailController extends Controller
                 ], 422);
             }
 
-            $user = Auth::user();
-
-            $this->cartService->addItem($user, (int) $variant->variant_id, (int) $data['quantity']);
-
-            try {
-                $this->cartService->prepareCheckoutData($user);
-            } catch (CartException $exception) {
+            // Check stock availability
+            if ($variant->stock_quantity < $data['quantity']) {
                 return response()->json([
                     'success' => false,
-                    'message' => $exception->getMessage(),
+                    'message' => 'Không đủ số lượng trong kho.',
                 ], 422);
             }
 
-            if (!$user) {
-                session(['url.intended' => route('cart.checkout.show')]);
+            // Create order directly (without cart)
+            DB::beginTransaction();
+
+            try {
+                // Calculate prices
+                $unitPrice = $variant->sale_price ?? $variant->price;
+                
+                // Cap price at $999.99 for Stripe limit
+                $unitPrice = min($unitPrice, 999.99);
+                
+                $subtotal = $unitPrice * $data['quantity'];
+                $shippingFee = $subtotal >= 100 ? 0 : 10; // Free shipping over $100
+                $totalAmount = $subtotal + $shippingFee;
+
+                // Create the order
+                $order = Order::create([
+                    'customer_id' => $user->id,
+                    'order_number' => 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                    'sub_total' => $subtotal,
+                    'shipping_fee' => $shippingFee,
+                    'discount_amount' => 0,
+                    'total_amount' => $totalAmount,
+                    'currency' => 'USD',
+                    'exchange_rate' => 1.0,
+                    'total_amount_base' => $totalAmount,
+                    'status' => \App\Enums\OrderStatus::PENDING_CONFIRMATION,
+                    'payment_method' => 1, // Default payment method
+                    'payment_status' => \App\Enums\PaymentStatus::UNPAID,
+                    'notes' => 'Mua ngay từ trang chi tiết sản phẩm',
+                ]);
+
+                // Create order item
+                $order->items()->create([
+                    'variant_id' => $variant->variant_id,
+                    'quantity' => $data['quantity'],
+                    'unit_price' => $unitPrice,
+                    'total_price' => $subtotal,
+                    'original_currency' => 'USD',
+                    'original_unit_price' => $unitPrice,
+                    'original_total_price' => $subtotal,
+                ]);
+
+                // Note: Inventory will be adjusted upon successful payment in PaymentReturnController
+
+                DB::commit();
+
+                Log::info('DetailController@buyNow order created', [
+                    'user_id' => $user->id,
+                    'order_id' => $order->order_id,
+                    'order_number' => $order->order_number,
+                ]);
+
+                // Get payment provider (default to Stripe)
+                $provider = $data['provider'] ?? 'stripe';
+                
+                try {
+                    $gateway = \App\Services\PaymentService::make($provider);
+                } catch (\InvalidArgumentException $e) {
+                    Log::error('DetailController@buyNow invalid_provider', [
+                        'user_id' => $user->id,
+                        'order_id' => $order->order_id,
+                        'provider' => $provider,
+                        'message' => $e->getMessage(),
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Phương thức thanh toán không hợp lệ.',
+                    ], 400);
+                }
+
+                // Create payment and get redirect URL
+                $paymentUrl = $gateway->createPayment($order);
+
+                Log::info('DetailController@buyNow payment initiated', [
+                    'user_id' => $user->id,
+                    'order_id' => $order->order_id,
+                    'provider' => $provider,
+                    'payment_url' => $paymentUrl,
+                ]);
+
+                // Return JSON response with redirect URL to checkout page
+                return response()->json([
+                    'success' => true,
+                    'redirect_url' => route('buy.now.checkout.show', ['orderId' => $order->order_id]),
+                    'order_id' => $order->order_id,
+                    'order_number' => $order->order_number,
+                    'message' => 'Đang chuyển đến trang thanh toán...',
+                ]);
+
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                throw $e;
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => $user ? 'Chuyển đến trang thanh toán.' : 'Vui lòng đăng nhập để tiếp tục thanh toán.',
-                'redirect' => $user ? route('cart.checkout.show') : route('login'),
-            ]);
-        } catch (CartException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-            ], 422);
         } catch (\Throwable $exception) {
             Log::error('DetailController@buyNow failed', [
                 'product_id' => $productId,
@@ -206,7 +316,7 @@ class DetailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể xử lý yêu cầu mua ngay lúc này.',
+                'message' => 'Không thể xử lý yêu cầu mua ngay lúc này. Vui lòng thử lại.',
             ], 500);
         }
     }
@@ -249,12 +359,7 @@ class DetailController extends Controller
 
     private function applyPublishedStatusFilter(Builder $query): Builder
     {
-        return $query->where(function (Builder $statusQuery) {
-            $statusQuery->where('status', ProductStatus::PUBLISHED->value)
-                ->orWhere('status', ProductStatus::PUBLISHED->name)
-                ->orWhere('status', 3)
-                ->orWhere('status', '3');
-        });
+        return $query->where('status', ProductStatus::PUBLISHED);
     }
 
     private function transformProduct(Product $product, string $locale): array
@@ -525,5 +630,101 @@ class DetailController extends Controller
             ->pluck('total_sold', 'product_id')
             ->map(fn ($count) => (int) $count)
             ->toArray();
+    }
+
+    public function showBuyNowCheckout(int $orderId)
+    {
+        $user = Auth::user();
+        
+        // Find the order and ensure it belongs to the user
+        $order = Order::where('order_id', $orderId)
+            ->where('customer_id', $user->id)
+            ->where('status', OrderStatus::PENDING_CONFIRMATION)
+            ->with(['items.variant.product'])
+            ->firstOrFail();
+
+        // Calculate totals
+        $subtotal = $order->sub_total;
+        $shippingFee = $order->shipping_fee;
+        $discountAmount = $order->discount_amount;
+        $totalAmount = $order->total_amount;
+
+        return Inertia::render('Customer/Checkout', [
+            'order' => $order,
+            'orderItems' => $order->items->map(function ($item) {
+                return [
+                    'id' => $item->order_item_id,
+                    'variant_id' => $item->variant_id,
+                    'product_name' => $item->variant?->product?->name ?? 'Unknown Product',
+                    'variant_name' => $item->variant?->name ?? '',
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'total_price' => $item->total_price,
+                    'image' => $item->variant?->image ?? null,
+                ];
+            }),
+            'totals' => [
+                'subtotal' => $subtotal,
+                'shipping_fee' => $shippingFee,
+                'discount_amount' => $discountAmount,
+                'total' => $totalAmount,
+            ],
+        ]);
+    }
+
+    public function processBuyNowCheckout(Request $request, int $orderId)
+    {
+        $user = Auth::user();
+        
+        // Validate request
+        $data = $request->validate([
+            'provider' => ['required', 'string', 'in:stripe,paypal'],
+            'address_id' => ['required', 'exists:user_addresses,id'],
+        ]);
+
+        // Find the order and ensure it belongs to the user
+        $order = Order::where('order_id', $orderId)
+            ->where('customer_id', $user->id)
+            ->where('status', OrderStatus::PENDING_CONFIRMATION)
+            ->firstOrFail();
+
+        // Verify the address belongs to the user
+        $address = UserAddress::where('id', $data['address_id'])
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Update order with shipping address
+        $order->update(['shipping_address_id' => $address->id]);
+
+        try {
+            $gateway = PaymentService::make($data['provider']);
+            $paymentUrl = $gateway->createPayment($order);
+
+            Log::info('DetailController@processBuyNowCheckout payment initiated', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'provider' => $data['provider'],
+                'payment_url' => $paymentUrl,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payment_url' => $paymentUrl,
+                'message' => 'Đang chuyển đến cổng thanh toán...',
+            ]);
+
+        } catch (\Throwable $exception) {
+            Log::error('DetailController@processBuyNowCheckout failed', [
+                'order_id' => $orderId,
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xử lý thanh toán. Vui lòng thử lại.',
+            ], 500);
+        }
     }
 }

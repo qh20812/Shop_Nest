@@ -79,8 +79,8 @@ class PaypalGateway implements PaymentGateway
                 ],
             ],
             'application_context' => [
-                'return_url' => url('/payments/paypal/return?order_id=' . $order->id),
-                'cancel_url' => url('/payments/paypal/return?order_id=' . $order->id . '&status=cancel'),
+                'return_url' => url('/payments/paypal/return?order_id=' . $order->order_id),
+                'cancel_url' => url('/payments/paypal/return?order_id=' . $order->order_id . '&status=cancel'),
                 'brand_name' => config('app.name'),
                 'user_action' => 'PAY_NOW',
             ],

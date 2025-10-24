@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\DetailController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\PaymentWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cart/checkout', [CartController::class, 'showCheckout'])->name('cart.checkout.show');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 });
+
+    // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
+    Route::middleware(['web'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+        Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])->name('product.buy.now');
+        Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])->name('product.addToCart');
+        Route::get('/buy-now/checkout/{orderId}', [DetailController::class, 'showBuyNowCheckout'])->name('buy.now.checkout.show');
+        Route::post('/buy-now/checkout/{orderId}', [DetailController::class, 'processBuyNowCheckout'])->name('buy.now.checkout');
+    });
 
 Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
     ->middleware('throttle:60,1')

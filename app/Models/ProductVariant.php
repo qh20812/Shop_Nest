@@ -45,6 +45,22 @@ class ProductVariant extends Model
     }
 
     /**
+     * Get the inventory logs for this variant.
+     */
+    public function inventoryLogs()
+    {
+        return $this->hasMany(InventoryLog::class, 'variant_id', 'variant_id');
+    }
+
+    /**
+     * Get the order items for this variant.
+     */
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class, 'variant_id', 'variant_id');
+    }
+
+    /**
      * Reserve quantity for this variant
      * Note: We check against stock_quantity only, not (stock - reserved)
      * This allows checkout even if there are stale reservations from expired sessions

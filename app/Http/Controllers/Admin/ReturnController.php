@@ -33,11 +33,11 @@ class ReturnController extends Controller
             'filters' => $filters,
             // Có thể gửi thêm danh sách các trạng thái để frontend hiển thị bộ lọc
             'statuses' => [
-                1 => 'Đang chờ xử lý',
-                2 => 'Đã chấp nhận',
-                3 => 'Đã từ chối',
-                4 => 'Đã hoàn tiền',
-                5 => 'Đã đổi hàng',
+                'pending' => 'Đang chờ xử lý',
+                'approved' => 'Đã chấp nhận',
+                'rejected' => 'Đã từ chối',
+                'refunded' => 'Đã hoàn tiền',
+                'exchanged' => 'Đã đổi hàng',
             ],
         ]);
     }
@@ -69,7 +69,7 @@ class ReturnController extends Controller
         $returnRequest = ReturnRequest::findOrFail($id);
         
         $validated = $request->validate([
-            'status' => ['required', 'integer', Rule::in([1, 2, 3, 4, 5])], // Các trạng thái hợp lệ
+            'status' => ['required', 'string', Rule::in(['pending', 'approved', 'rejected', 'refunded', 'exchanged'])], // Các trạng thái hợp lệ
             'admin_note' => ['nullable', 'string', 'max:1000'], // Ghi chú của admin
         ]);
 

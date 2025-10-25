@@ -58,8 +58,8 @@ class DashboardControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
-        // Khẳng định: Bị chuyển hướng về trang dashboard chung và có thông báo lỗi
-        $response->assertRedirect(route('dashboard'));
+        // Khẳng định: Bị chuyển hướng về trang home và có thông báo lỗi
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -84,10 +84,12 @@ class DashboardControllerTest extends TestCase
         // Khẳng định: Truy cập thành công và thấy component React tương ứng
         $response->assertStatus(200);
 
-        // Khẳng định: Đúng component và có các props cần thiết
+        // Khẳng định: Đúng component và có các props cần thiết với cấu trúc đúng
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Dashboard/Index')
-            ->has('stats')
+            ->has('stats', fn (Assert $stats) => $stats
+                ->hasAll(['total_revenue', 'total_orders', 'new_users', 'total_products'])
+            )
             ->has('recentOrders')
             ->has('newUsers')
         );

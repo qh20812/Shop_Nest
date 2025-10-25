@@ -31,6 +31,12 @@ abstract class DuskTestCase extends BaseTestCase
             $this->shouldStartMaximized() ? '--start-maximized' : '--window-size=1920,1080',
             '--disable-search-engine-choice-screen',
             '--disable-smooth-scrolling',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-web-security',
+            '--allow-running-insecure-content',
+            '--disable-features=VizDisplayCompositor',
+            '--allow-insecure-localhost',
         ])->unless($this->hasHeadlessDisabled(), function (Collection $items) {
             return $items->merge([
                 '--disable-gpu',
@@ -44,5 +50,13 @@ abstract class DuskTestCase extends BaseTestCase
                 ChromeOptions::CAPABILITY, $options
             )
         );
+    }
+
+    /**
+     * Determine whether to disable headless mode.
+     */
+    protected function hasHeadlessDisabled(): bool
+    {
+        return true; // Disable headless to see Chrome window
     }
 }

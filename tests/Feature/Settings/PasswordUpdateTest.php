@@ -29,7 +29,8 @@ class PasswordUpdateTest extends TestCase
             ->actingAs($user)
             ->get(route('password.edit'));
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertInertia(fn ($page) => $page->component('Settings/Password'));
     }
 
     public function test_mat_khau_co_the_duoc_cap_nhat()
@@ -40,14 +41,15 @@ class PasswordUpdateTest extends TestCase
             ->actingAs($user)
             ->from(route('password.edit'))
             ->put(route('password.update'), [
-                'current_password' => 'password',
+                'current_password' => '@12345Shopnest',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
             ]);
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('password.edit'));
+            ->assertRedirect(route('password.edit'))
+            ->assertSessionHas('success', 'Mật khẩu đã được cập nhật thành công.');
 
         $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
     }
@@ -67,6 +69,24 @@ class PasswordUpdateTest extends TestCase
 
         $response
             ->assertSessionHasErrors('current_password')
+            ->assertRedirect(route('password.edit'));
+    }
+
+    public function test_mat_khau_moi_khong_duoc_giong_mat_khau_cu()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from(route('password.edit'))
+            ->put(route('password.update'), [
+                'current_password' => '@12345Shopnest',
+                'password' => '@12345Shopnest', // same as current
+                'password_confirmation' => '@12345Shopnest',
+            ]);
+
+        $response
+            ->assertSessionHasErrors('password')
             ->assertRedirect(route('password.edit'));
     }
 }

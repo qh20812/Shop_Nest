@@ -42,8 +42,8 @@ class CategoryManagementTest extends TestCase
     {
         $response = $this->actingAs($this->customer)->get(route('admin.categories.index'));
 
-        // Khẳng định: Phải bị chuyển hướng (ví dụ về dashboard) và nhận thông báo lỗi
-        $response->assertRedirect(route('dashboard'));
+        // Khẳng định: Phải bị chuyển hướng và nhận thông báo lỗi
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -61,6 +61,22 @@ class CategoryManagementTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Index')
                                                     ->has('categories.data', 3) // Kiểm tra có đúng 3 danh mục được trả về không
+                                                    ->has('totalCategories')
+                                                    ->has('filters')
+        );
+    }
+
+    /**
+     * Kịch bản 2.1: Admin có thể truy cập trang tạo danh mục.
+     */
+    public function test_admin_co_the_truy_cap_trang_tao_danh_muc(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.create'));
+
+        // Khẳng định: Truy cập thành công
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Create')
+                                                    ->has('parentCategories')
         );
     }
 
@@ -142,6 +158,23 @@ class CategoryManagementTest extends TestCase
     }
 
     /**
+     * Kịch bản 5.1: Admin có thể truy cập trang chỉnh sửa danh mục.
+     */
+    public function test_admin_co_the_truy_cap_trang_chinh_sua_danh_muc(): void
+    {
+        $category = Category::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.edit', $category));
+
+        // Khẳng định: Truy cập thành công
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Edit')
+                                                    ->has('category')
+                                                    ->has('parentCategories')
+        );
+    }
+
+    /**
      * Kịch bản 6: Admin có thể xóa một danh mục (soft delete).
      */
     public function test_admin_co_the_xoa_danh_muc(): void
@@ -156,6 +189,47 @@ class CategoryManagementTest extends TestCase
 
         // Khẳng định: Bản ghi đã được đánh dấu là xóa mềm trong database
         $this->assertSoftDeleted('categories', [
+            'category_id' => $category->category_id,
+        ]);
+    }
+
+    /**
+     * Kịch bản 7: Admin có thể khôi phục một danh mục đã xóa.
+     */
+    public function test_admin_co_the_khoi_phuc_danh_muc(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.categories.restore', $category->category_id));
+
+        // Khẳng định: Chuyển hướng thành công
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success', 'Khôi phục danh mục thành công.');
+
+        // Khẳng định: Danh mục đã được khôi phục
+        $this->assertDatabaseHas('categories', [
+            'category_id' => $category->category_id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    /**
+     * Kịch bản 8: Admin có thể xóa vĩnh viễn một danh mục.
+     */
+    public function test_admin_co_the_xoa_vinh_vien_danh_muc(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.categories.forceDelete', $category->category_id));
+
+        // Khẳng định: Chuyển hướng thành công
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success', 'Xóa vĩnh viễn danh mục thành công.');
+
+        // Khẳng định: Danh mục đã bị xóa vĩnh viễn
+        $this->assertDatabaseMissing('categories', [
             'category_id' => $category->category_id,
         ]);
     }

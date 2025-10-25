@@ -54,12 +54,14 @@ class RegisteredUserController extends Controller
             'first_name' => null, // Will be null initially
             'last_name' => null,  // Will be null initially  
             'phone_number' => null, // Will be null initially
-            'role_id' => $customerRole->id,
             'provider' => 'manual',
             'avatar' => null, // Manual users start with null avatar (will show initials)
             // Note: first_name, last_name, phone_number will be null initially
             // These can be updated later in ProfileController
         ]);
+
+        // Assign customer role using many-to-many relationship
+        $user->roles()->attach($customerRole->id);
 
         // Fire the registered event
         event(new Registered($user));

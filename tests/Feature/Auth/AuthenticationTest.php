@@ -10,6 +10,14 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Set locale to English for consistent testing
+        app()->setLocale('en');
+    }
+
     public function test_man_hinh_dang_nhap_co_the_hien_thi()
     {
         $response = $this->get(route('login'));
@@ -23,11 +31,11 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post(route('login.store'), [
             'email' => $user->email,
-            'password' => 'password',
+            'password' => '@12345Shopnest',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
     }
 
     public function test_nguoi_dung_khong_the_xac_thuc_voi_mat_khau_sai()

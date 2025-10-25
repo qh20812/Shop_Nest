@@ -17,7 +17,6 @@ class InventoryLog extends Model
 
     protected $casts = [
         'quantity_change' => 'integer',
-        'reason' => InventoryLogReason::class,
         'deleted_at' => 'datetime',
     ];
 

@@ -106,7 +106,18 @@ class PaymentWebhookController extends Controller
                 return;
             }
 
-            $this->inventoryService->adjustInventoryForOrder($order);
+            try {
+                $this->inventoryService->adjustInventoryForOrder($order);
+            } catch (Throwable $exception) {
+                Log::error('webhooks.payment.inventory_adjustment_failed', [
+                    'provider' => $provider,
+                    'order_id' => $order->order_id,
+                    'event_id' => $eventId,
+                    'message' => $exception->getMessage(),
+                ]);
+                // For webhooks, we continue processing even if inventory adjustment fails
+                // The payment should still be recorded
+            }
 
             $this->persistPayment($order, $provider, [
                 'status' => 'succeeded',

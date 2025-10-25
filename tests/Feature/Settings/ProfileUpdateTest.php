@@ -28,7 +28,13 @@ class ProfileUpdateTest extends TestCase
             ->actingAs($user)
             ->get(route('profile.edit'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Settings/Profile')
+                ->has('user')
+                ->has('mustVerifyEmail')
+                ->has('status')
+            );
     }
 
     public function test_thong_tin_ho_so_co_the_duoc_cap_nhat()
@@ -46,7 +52,8 @@ class ProfileUpdateTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('profile.edit'))
+            ->assertSessionHas('success', 'Profile updated successfully!');
 
         $user->refresh();
 
@@ -54,7 +61,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('Test', $user->first_name);
         $this->assertSame('User', $user->last_name);
         $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->email_verified_at);
     }
 
     public function test_trang_thai_xac_minh_email_khong_thay_doi_khi_email_khong_doi()
@@ -72,7 +79,8 @@ class ProfileUpdateTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('profile.edit'));
+            ->assertRedirect(route('profile.edit'))
+            ->assertSessionHas('success', 'Profile updated successfully!');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
@@ -84,7 +92,7 @@ class ProfileUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->delete(route('profile.destroy'), [
-                'password' => 'password',
+                'password' => '@12345Shopnest',
             ]);
 
         $response

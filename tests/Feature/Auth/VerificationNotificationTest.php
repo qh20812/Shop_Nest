@@ -12,6 +12,14 @@ class VerificationNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Set locale to English for consistent error messages
+        app()->setLocale('en');
+    }
+
     public function test_gui_thong_bao_xac_minh(): void
     {
         Notification::fake();
@@ -37,7 +45,7 @@ class VerificationNotificationTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('verification.send'))
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('home', absolute: false));
 
         Notification::assertNothingSent();
     }

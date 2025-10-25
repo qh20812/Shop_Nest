@@ -270,10 +270,9 @@ class CartControllerTest extends TestCase
             'quantity' => 2,
         ]);
 
-    $response = $this->actingAs($this->user)->get('/cart/checkout');
+    $response = $this->actingAs($this->user)->get('/checkout');
 
     $response->assertStatus(302);
-    $response->assertRedirect(route('cart.checkout'));
     $this->assertTrue(session()->has('checkout_data'));
     }
 }

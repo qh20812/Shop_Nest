@@ -44,7 +44,7 @@ class ReturnControllerTest extends TestCase
             'return_number' => 'RTN-TEST-' . time(),
             'reason' => 1,
             'description' => 'Test return request',
-            'status' => 1, // Đang chờ xử lý
+            'status' => 'pending', // Đang chờ xử lý
             'refund_amount' => 100.00,
             'type' => 1, // Refund
         ]);
@@ -66,7 +66,7 @@ class ReturnControllerTest extends TestCase
     {
         $response = $this->actingAs($this->customer)->get(route('admin.returns.index'));
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -93,20 +93,20 @@ class ReturnControllerTest extends TestCase
             'return_number' => 'RTN-TEST-2-' . time(),
             'reason' => 2,
             'description' => 'Test return request 2',
-            'status' => 2, // Đã chấp nhận
+            'status' => 'approved', // Đã chấp nhận
             'refund_amount' => 200.00,
             'type' => 1,
         ]);
 
-        // Test lọc theo trạng thái "Đang chờ xử lý" (status = 1)
+        // Test lọc theo trạng thái "Đang chờ xử lý" (status = 'pending')
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.returns.index', ['status' => 1]));
+            ->get(route('admin.returns.index', ['status' => 'pending']));
 
         $response->assertStatus(200);
 
-        // Test lọc theo trạng thái "Đã chấp nhận" (status = 2)
+        // Test lọc theo trạng thái "Đã chấp nhận" (status = 'approved')
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.returns.index', ['status' => 2]));
+            ->get(route('admin.returns.index', ['status' => 'approved']));
 
         $response->assertStatus(200);
     }
@@ -139,7 +139,7 @@ class ReturnControllerTest extends TestCase
         $response = $this->actingAs($this->customer)
             ->get(route('admin.returns.show', $this->returnRequest));
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -149,7 +149,7 @@ class ReturnControllerTest extends TestCase
     public function test_admin_co_the_cap_nhat_trang_thai_yeu_cau_tra_hang_thanh_cong()
     {
         $response = $this->actingAs($this->admin)->put(route('admin.returns.update', $this->returnRequest), [
-            'status' => 2,
+            'status' => 'approved',
             'admin_note' => 'Approved by admin'
         ]);
         
@@ -157,15 +157,12 @@ class ReturnControllerTest extends TestCase
         $response->assertSessionHas('success', 'Cập nhật yêu cầu trả hàng thành công.');
         
         $this->returnRequest->refresh();
-        $this->assertEquals(2, $this->returnRequest->status);
+        $this->assertEquals(\App\Enums\ReturnStatus::APPROVED, $this->returnRequest->status);
     }
 
-    /**
-     * Test cập nhật với tất cả các trạng thái hợp lệ.
-     */
     public function test_admin_co_the_cap_nhat_voi_tat_ca_cac_trang_thai_hop_le(): void
     {
-        $validStatuses = [1, 2, 3, 4, 5]; // Tất cả trạng thái hợp lệ
+        $validStatuses = ['pending', 'approved', 'rejected', 'refunded', 'exchanged']; // Tất cả trạng thái hợp lệ
 
         foreach ($validStatuses as $status) {
             $returnRequest = ReturnRequest::create([
@@ -174,7 +171,7 @@ class ReturnControllerTest extends TestCase
                 'return_number' => 'RTN-TEST-' . $status . '-' . time(),
                 'reason' => 'Test reason',
                 'description' => 'Test description',
-                'status' => 1,
+                'status' => 'pending',
                 'refund_amount' => 100.00,
                 'type' => 1,
             ]);
@@ -189,7 +186,7 @@ class ReturnControllerTest extends TestCase
             $response->assertSessionHas('success');
 
             $returnRequest->refresh();
-            $this->assertEquals($status, $returnRequest->status);
+            $this->assertEquals(\App\Enums\ReturnStatus::from($status), $returnRequest->status);
         }
     }
 
@@ -199,7 +196,7 @@ class ReturnControllerTest extends TestCase
     public function test_admin_cap_nhat_yeu_cau_tra_hang_that_bai_voi_trang_thai_khong_hop_le(): void
     {
         $updateData = [
-            'status' => 99, // Trạng thái không hợp lệ
+            'status' => 'invalid_status', // Trạng thái không hợp lệ
             'admin_note' => 'Invalid status test'
         ];
 
@@ -210,7 +207,7 @@ class ReturnControllerTest extends TestCase
 
         // Kiểm tra trạng thái không thay đổi
         $this->returnRequest->refresh();
-        $this->assertEquals(1, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
+        $this->assertEquals(\App\Enums\ReturnStatus::PENDING, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
     }
 
     /**
@@ -219,7 +216,7 @@ class ReturnControllerTest extends TestCase
     public function test_admin_co_the_cap_nhat_yeu_cau_tra_hang_voi_trang_thai_khong_hop_le(): void
     {
         $updateData = [
-            'status' => 999, // Trạng thái không hợp lệ
+            'status' => 'another_invalid', // Trạng thái không hợp lệ
             'admin_note' => 'Test note',
         ];
 
@@ -230,7 +227,7 @@ class ReturnControllerTest extends TestCase
 
         // Kiểm tra trạng thái không thay đổi
         $this->returnRequest->refresh();
-        $this->assertEquals(1, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
+        $this->assertEquals(\App\Enums\ReturnStatus::PENDING, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
     }
 
     /**
@@ -287,7 +284,7 @@ class ReturnControllerTest extends TestCase
     public function test_admin_co_the_cap_nhat_yeu_cau_tra_hang_voi_admin_note_null_hoac_rong(): void
     {
         $updateData = [
-            'status' => 3,
+            'status' => 'rejected',
             'admin_note' => null // admin_note có thể null
         ];
 
@@ -299,7 +296,7 @@ class ReturnControllerTest extends TestCase
 
         // Kiểm tra trạng thái đã được cập nhật
         $this->returnRequest->refresh();
-        $this->assertEquals(3, $this->returnRequest->status);
+        $this->assertEquals(\App\Enums\ReturnStatus::REJECTED, $this->returnRequest->status);
     }
 
     /**
@@ -343,7 +340,7 @@ class ReturnControllerTest extends TestCase
         $response = $this->actingAs($this->customer)
             ->put(route('admin.returns.update', $this->returnRequest), $updateData);
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -361,7 +358,7 @@ class ReturnControllerTest extends TestCase
                 'return_number' => 'RTN-TEST-' . $i . '-' . time(),
                 'reason' => 1,
                 'description' => "Test return request {$i}",
-                'status' => 1,
+                'status' => 'pending',
                 'refund_amount' => 100.00,
                 'type' => 1,
             ]);

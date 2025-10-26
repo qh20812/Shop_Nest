@@ -2,7 +2,7 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import SettingsLayout from '@/layouts/settings/SettingLayout';
-import AppearanceCard from '@/components/settings/AppearanceCard';
+import AppearanceCard from '@/Components/settings/AppearanceCard';
 
 export default function Appearance() {
   const { t } = useTranslation();

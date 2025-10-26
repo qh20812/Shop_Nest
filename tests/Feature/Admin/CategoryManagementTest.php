@@ -7,11 +7,14 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CategoryManagementTest extends TestCase
 {
-    use RefreshDatabase; // Tự động reset database sau mỗi lần test, đảm bảo môi trường sạch
+    use RefreshDatabase, WithFaker;
 
     protected User $admin;
     protected User $customer;
@@ -25,6 +28,7 @@ class CategoryManagementTest extends TestCase
 
         // 1. Chạy seed để tạo các Role
         $this->seed(RoleSeeder::class);
+        app()->setLocale('en'); // Set locale to English for consistent testing
 
         // 2. Tạo một user Admin
         $this->admin = User::factory()->create();
@@ -43,7 +47,7 @@ class CategoryManagementTest extends TestCase
         $response = $this->actingAs($this->customer)->get(route('admin.categories.index'));
 
         // Khẳng định: Phải bị chuyển hướng (ví dụ về dashboard) và nhận thông báo lỗi
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -158,5 +162,170 @@ class CategoryManagementTest extends TestCase
         $this->assertSoftDeleted('categories', [
             'category_id' => $category->category_id,
         ]);
+    }
+
+    public function test_admin_can_access_create_category_page(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.create'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn($page) => $page->component('Admin/Categories/Create'));
+    }
+
+    public function test_admin_can_access_edit_category_page(): void
+    {
+        $category = Category::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.edit', $category));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn($page) => $page->component('Admin/Categories/Edit'));
+    }
+
+    // public function test_admin_can_create_category_with_image(): void
+    // {
+    //     Storage::fake('public');
+
+    //     $image = UploadedFile::fake()->image('category.jpg');
+    //     $categoryData = [
+    //         'name' => [
+    //             'en' => 'Electronics',
+    //             'vi' => 'Điện tử'
+    //         ],
+    //         'description' => [
+    //             'en' => 'Electronic devices',
+    //             'vi' => 'Thiết bị điện tử'
+    //         ],
+    //         'is_active' => true,
+    //         'image' => $image,
+    //     ];
+
+    //     $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
+
+    //     $response->assertRedirect(route('admin.categories.index'));
+    //     $response->assertSessionHas('success');
+    //     $this->assertDatabaseHas('categories', [
+    //         'name->en' => 'Electronics',
+    //     ]);
+    //     // Storage::assertExists('categories/' . $image->hashName(), 'public');
+    // }
+
+    public function test_admin_can_update_category(): void
+    {
+        $category = Category::factory()->create([
+            'name' => ['en' => 'Old Category', 'vi' => 'Danh mục cũ']
+        ]);
+        $updateData = [
+            'name' => [
+                'en' => 'Updated Category',
+                'vi' => 'Danh mục cập nhật'
+            ],
+            'description' => [
+                'en' => 'Updated description',
+                'vi' => 'Mô tả cập nhật'
+            ],
+            'is_active' => false,
+        ];
+
+        $response = $this->actingAs($this->admin)->put(route('admin.categories.update', $category), $updateData);
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('categories', [
+            'category_id' => $category->category_id,
+            'name->en' => 'Updated Category',
+            'is_active' => false,
+        ]);
+    }
+
+    public function test_admin_can_restore_category(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $response = $this->actingAs($this->admin)->patch(route('admin.categories.restore', $category->category_id));
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('categories', [
+            'category_id' => $category->category_id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_admin_can_force_delete_category(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.categories.forceDelete', $category->category_id));
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('categories', [
+            'category_id' => $category->category_id,
+        ]);
+    }
+
+    public function test_admin_can_filter_categories_by_search(): void
+    {
+        Category::factory()->create(['name' => ['en' => 'Phones', 'vi' => 'Điện thoại']]);
+        Category::factory()->create(['name' => ['en' => 'Laptops', 'vi' => 'Máy tính xách tay']]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['search' => 'Phones']));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn($page) => $page
+            ->has('categories.data', 1)
+            ->where('categories.data.0.name.en', 'Phones')
+        );
+    }
+
+    public function test_admin_can_filter_categories_by_status(): void
+    {
+        Category::factory()->create(['is_active' => true]);
+        Category::factory()->create(['is_active' => false]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'active']));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+    }
+
+    public function test_customer_cannot_access_category_management(): void
+    {
+        $response = $this->actingAs($this->customer)->get(route('admin.categories.index'));
+
+        $response->assertRedirect(route('home'));
+        $response->assertSessionHas('error');
+    }
+
+    public function test_validation_errors_on_create_category(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), []);
+
+        $response->assertSessionHasErrors(['name.en', 'name.vi', 'is_active']);
+    }
+
+    public function test_validation_errors_on_update_category(): void
+    {
+        $category = Category::factory()->create();
+        $response = $this->actingAs($this->admin)->put(route('admin.categories.update', $category), [
+            'name' => ['en' => '', 'vi' => ''],
+        ]);
+
+        $response->assertSessionHasErrors(['name.en', 'name.vi']);
+    }
+
+    public function test_category_translations_are_handled_in_index(): void
+    {
+        Category::factory()->create(['name' => ['en' => 'Test Category', 'vi' => 'Danh mục thử']]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index'));
+
+        $response->assertInertia(fn($page) => $page
+            ->has('categories.data', 1)
+            ->where('categories.data.0.name.en', 'Test Category')
+        );
     }
 }

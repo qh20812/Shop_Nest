@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import '@/../css/Home.css';
-import CartTitle from '@/components/cart/CartTitle';
-import CartColumnTitle from '@/components/cart/CartColumnTitle';
-import CartShopCard from '@/components/cart/CartShopCard';
+import CartTitle from '@/Components/cart/CartTitle';
+import CartColumnTitle from '@/Components/cart/CartColumnTitle';
+import CartShopCard from '@/Components/cart/CartShopCard';
 import HomeLayout from '@/layouts/app/HomeLayout';
 
 interface CartItem {

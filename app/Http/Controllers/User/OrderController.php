@@ -72,10 +72,10 @@ class OrderController extends Controller
         // Aggregated data for the view
         $baseUserOrdersQuery = Order::where('customer_id', $user->id);
         $totalSpent = (clone $baseUserOrdersQuery)->where('status', 'delivered')->sum('total_amount');
-        $statusCounts = (clone $baseUserOrdersQuery)
+        $statusCounts = DB::table('orders')
             ->select('status', DB::raw('count(*) as count'))
+            ->where('customer_id', $user->id)
             ->groupBy('status')
-            ->get()
             ->pluck('count', 'status');
 
         return Inertia::render('User/Dashboard/Orders/Index', [
@@ -408,7 +408,7 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'return_items' => 'required|array|min:1',
-            'return_items.*.order_item_id' => ['required', Rule::exists('order_items', 'id')->where('order_id', $order->order_id)],
+            'return_items.*.order_item_id' => ['required', Rule::exists('order_items', 'order_item_id')->where('order_id', $order->order_id)],
             'return_items.*.quantity' => 'required|integer|min:1',
             'return_items.*.reason' => 'required|string|in:defective,wrong_item,not_as_described,changed_mind',
             'return_images' => 'nullable|array|max:5',

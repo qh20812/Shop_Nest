@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
@@ -44,6 +45,11 @@ Route::post('/language', function () {
 
 // Protected routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Chatbot API endpoint (moved from api.php to use web session auth)
+    Route::post('/chatbot/message', [ChatbotController::class, 'send'])
+        ->middleware('throttle:10,1')
+        ->name('chatbot.message');
+    
     require __DIR__.'/seller.php';
 });
 

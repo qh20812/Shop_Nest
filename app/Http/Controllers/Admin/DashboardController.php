@@ -32,7 +32,7 @@ class DashboardController extends Controller
         try {
             return [
                 // Sums the base currency amount for an accurate total across all currencies
-                'total_revenue' => Order::where('status', 3)->sum('total_amount_base') ?? 0,
+                'total_revenue' => Order::where('status', \App\Enums\OrderStatus::COMPLETED)->sum('total_amount_base') ?? 0,
                 'total_orders' => Order::count(),
                 'new_users' => User::whereDate('created_at', '>=', now()->subWeek())->count(),
                 'total_products' => Product::count(),

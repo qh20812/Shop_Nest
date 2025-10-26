@@ -3,20 +3,30 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exceptions\InventoryException;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\InventoryLog;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\InventoryService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InventoryController extends Controller
 {
+    public function __construct(private readonly InventoryService $inventoryService)
+    {
+    }
+
     /**
      * Hiển thị danh sách tồn kho sản phẩm (theo biến thể).
      * Cho phép lọc theo từ khóa, người bán, danh mục, thương hiệu, và trạng thái tồn kho.
@@ -26,37 +36,27 @@ class InventoryController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Giả định rằng việc quản lý tồn kho được thực hiện ở cấp độ ProductVariant.
+        $this->authorize('viewAny', ProductVariant::class);
+
         $filters = $request->only(['search', 'seller_id', 'category_id', 'brand_id', 'stock_status']);
 
-        $variants = ProductVariant::with(['product.seller', 'product.category', 'product.brand'])
-            ->select('product_variants.*') // Bắt đầu với bảng product_variants
-            ->join('products', 'product_variants.product_id', '=', 'products.product_id') // Join để lọc
-            ->when($request->input('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('products.name', 'like', "%{$search}%")
-                        ->orWhere('product_variants.sku', 'like', "%{$search}%");
-                });
+        $variants = ProductVariant::query()
+            ->with(['product.seller', 'product.category', 'product.brand'])
+            ->select('product_variants.*')
+            ->join('products', 'product_variants.product_id', '=', 'products.product_id')
+            ->search($filters['search'] ?? null)
+            ->forSeller(isset($filters['seller_id']) ? (int) $filters['seller_id'] : null)
+            ->forCategory(isset($filters['category_id']) ? (int) $filters['category_id'] : null)
+            ->forBrand(isset($filters['brand_id']) ? (int) $filters['brand_id'] : null)
+            ->when($filters['stock_status'] ?? null, function ($query, $status) {
+                return match ($status) {
+                    'in_stock' => $query->where('product_variants.stock_quantity', '>', InventoryService::IN_STOCK_THRESHOLD),
+                    'low_stock' => $query->whereBetween('product_variants.stock_quantity', [1, InventoryService::LOW_STOCK_THRESHOLD]),
+                    'out_of_stock' => $query->where('product_variants.stock_quantity', '=', 0),
+                    default => $query,
+                };
             })
-            ->when($request->input('seller_id'), function ($query, $sellerId) {
-                $query->where('products.seller_id', $sellerId);
-            })
-            ->when($request->input('category_id'), function ($query, $categoryId) {
-                $query->where('products.category_id', $categoryId);
-            })
-            ->when($request->input('brand_id'), function ($query, $brandId) {
-                $query->where('products.brand_id', $brandId);
-            })
-            ->when($request->input('stock_status'), function ($query, $status) {
-                if ($status === 'in_stock') {
-                    $query->where('product_variants.stock_quantity', '>', 10);
-                } elseif ($status === 'low_stock') {
-                    $query->whereBetween('product_variants.stock_quantity', [1, 10]);
-                } elseif ($status === 'out_of_stock') {
-                    $query->where('product_variants.stock_quantity', '=', 0);
-                }
-            })
-            ->orderBy('products.name')
+            ->orderBy('products.product_id')
             ->orderBy('product_variants.variant_id')
             ->paginate(20)
             ->withQueryString();
@@ -83,6 +83,8 @@ class InventoryController extends Controller
      */
     public function show(int $productId): Response
     {
+        $this->authorize('viewAny', ProductVariant::class);
+
         $product = Product::with([
             'seller',
             'category',
@@ -106,6 +108,8 @@ class InventoryController extends Controller
      */
     public function history(int $productId): Response
     {
+        $this->authorize('viewAny', ProductVariant::class);
+
         $product = Product::with('variants')->findOrFail($productId);
         $variantIds = $product->variants->pluck('variant_id');
 
@@ -128,104 +132,69 @@ class InventoryController extends Controller
      */
     public function report(Request $request): Response
     {
-        // Cần có Policy để kiểm tra quyền xem báo cáo, ví dụ:
-        // $this->authorize('viewReports', Inventory::class);
+        $this->authorize('viewReports', ProductVariant::class);
 
-        $statsBySeller = ProductVariant::select(
-            'users.name as seller_name',
-            DB::raw('SUM(product_variants.stock_quantity) as total_stock')
-        )
-            ->join('products', 'product_variants.product_id', '=', 'products.product_id')
-            ->join('users', 'products.seller_id', '=', 'users.id')
-            ->groupBy('users.name')
-            ->get();
+        $reportData = $this->buildReportData();
 
-        $statsByCategory = ProductVariant::select(
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(categories.name, '$.vi')) as category_name"),
-            DB::raw('SUM(product_variants.stock_quantity) as total_stock')
-        )
-            ->join('products', 'product_variants.product_id', '=', 'products.product_id')
-            ->join('categories', 'products.category_id', '=', 'categories.category_id')
-            ->groupBy('category_name')
-            ->get();
-
-        $lowStockVariants = ProductVariant::with('product.seller')
-            ->where('stock_quantity', '>', 0)
-            ->where('stock_quantity', '<=', 10)
-            ->orderBy('stock_quantity', 'asc')
-            ->get();
-
-        $outOfStockVariants = ProductVariant::with('product.seller')
-            ->where('stock_quantity', '=', 0)
-            ->get();
-
-        // Hàng tồn kho lâu ngày (không có giao dịch trong 90 ngày)
-        $ninetyDaysAgo = now()->subDays(90);
-        $agingVariants = ProductVariant::with('product.seller')
-            ->where('stock_quantity', '>', 0)
-            ->whereDoesntHave('inventoryLogs', function ($query) use ($ninetyDaysAgo) {
-                $query->where('created_at', '>', $ninetyDaysAgo);
-            })
-            ->get();
-
-        return Inertia::render('Admin/Inventory/Report', [
-            'statsBySeller' => $statsBySeller,
-            'statsByCategory' => $statsByCategory,
-            'lowStockVariants' => $lowStockVariants,
-            'outOfStockVariants' => $outOfStockVariants,
-            'agingVariants' => $agingVariants,
-        ]);
+        return Inertia::render('Admin/Inventory/Report', $reportData);
     }
 
     /**
      * Tạo phiếu nhập kho (tăng số lượng).
      *
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $this->authorize('manageInventory', ProductVariant::class);
+
         $validated = $request->validate([
             'variant_id' => 'required|exists:product_variants,variant_id',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string|max:255',
         ]);
 
-        // $this->authorize('manageInventory', ProductVariant::class);
+        try {
+            $this->inventoryService->adjustStock(
+                (int) $validated['variant_id'],
+                (int) $validated['quantity'],
+                __('Stock In: :reason', ['reason' => $validated['reason']])
+            );
+        } catch (InventoryException|ModelNotFoundException $exception) {
+            return back()->withErrors(['general' => $exception->getMessage()]);
+        }
 
-        return $this->addInventoryLog(
-            $validated['variant_id'],
-            $validated['quantity'],
-            "Stock In: " . $validated['reason']
-        );
+        return back()->with('success', __('Inventory increased successfully.'));
     }
 
     /**
      * Tạo phiếu xuất kho (giảm số lượng).
      *
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function stockOut(Request $request)
+    public function stockOut(Request $request): RedirectResponse
     {
+        $this->authorize('manageInventory', ProductVariant::class);
+
         $validated = $request->validate([
             'variant_id' => 'required|exists:product_variants,variant_id',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string|max:255',
         ]);
 
-        // $this->authorize('manageInventory', ProductVariant::class);
-
-        $variant = ProductVariant::find($validated['variant_id']);
-        if ($variant->stock_quantity < $validated['quantity']) {
-            return back()->withErrors(['quantity' => __('Quantity for stock-out exceeds current stock.')]);
+        try {
+            $this->inventoryService->adjustStock(
+                (int) $validated['variant_id'],
+                -abs((int) $validated['quantity']),
+                __('Stock Out: :reason', ['reason' => $validated['reason']])
+            );
+        } catch (InventoryException $exception) {
+            return back()->withErrors(['general' => $exception->getMessage()]);
         }
 
-        return $this->addInventoryLog(
-            $validated['variant_id'],
-            -abs($validated['quantity']), // Luôn là số âm
-            "Stock Out: " . $validated['reason']
-        );
+        return back()->with('success', __('Inventory decreased successfully.'));
     }
 
     /**
@@ -233,65 +202,195 @@ class InventoryController extends Controller
      *
      * @param Request $request
      * @param int $variantId
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function update(Request $request, int $variantId)
+    public function update(Request $request, int $variantId): RedirectResponse
     {
+        $this->authorize('manageInventory', ProductVariant::class);
+
         $validated = $request->validate([
             'new_quantity' => 'required|integer|min:0',
             'reason' => 'required|string|max:255',
         ]);
 
-        // $this->authorize('manageInventory', ProductVariant::class);
-
-        $variant = ProductVariant::findOrFail($variantId);
-        $change = $validated['new_quantity'] - $variant->stock_quantity;
-
-        if ($change === 0) {
-            return back()->with('info', 'Số lượng tồn kho không thay đổi.');
+        try {
+            $this->inventoryService->setStock(
+                $variantId,
+                (int) $validated['new_quantity'],
+                __('Adjustment: :reason', ['reason' => $validated['reason']])
+            );
+        } catch (InventoryException $exception) {
+            return back()->withErrors(['general' => $exception->getMessage()]);
         }
 
-        return $this->addInventoryLog(
-            $variantId,
-            $change,
-            "Adjustment: " . $validated['reason']
-        );
+        return back()->with('success', __('Inventory adjusted successfully.'));
     }
 
     /**
-     * Helper method để cập nhật tồn kho và ghi log.
-     *
-     * @param int $variantId
-     * @param int $quantityChange
-     * @param string $reason
-     * @return \Illuminate\Http\RedirectResponse
+     * Bulk adjust inventory levels for multiple variants.
      */
-    private function addInventoryLog(int $variantId, int $quantityChange, string $reason)
+    public function bulkUpdate(Request $request): RedirectResponse
     {
+        $this->authorize('manageInventory', ProductVariant::class);
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+            'adjustments' => 'required|array|min:1',
+            'adjustments.*.variant_id' => 'required|distinct|exists:product_variants,variant_id',
+            'adjustments.*.quantity_change' => 'required|integer',
+        ]);
+
         try {
-            DB::transaction(function () use ($variantId, $quantityChange, $reason) {
-                $variant = ProductVariant::lockForUpdate()->findOrFail($variantId);
-
-                $newQuantity = $variant->stock_quantity + $quantityChange;
-
-                if ($newQuantity < 0) {
-                    throw new \Exception(__('Stock cannot be negative.'));
-                }
-
-                $variant->update(['stock_quantity' => $newQuantity]);
-
-                // Giả định có model InventoryLog để ghi lại lịch sử
-                InventoryLog::create([
-                    'variant_id' => $variantId,
-                    'user_id' => Auth::id(),
-                    'quantity_change' => $quantityChange,
-                    'reason' => $reason,
-                ]);
-            });
-        } catch (\Exception $e) {
-            return back()->withErrors(['general' => 'Đã xảy ra lỗi: ' . $e->getMessage()]);
+            $this->inventoryService->bulkAdjust($validated['adjustments'], $validated['reason']);
+        } catch (InventoryException|ModelNotFoundException $exception) {
+            return back()->withErrors(['general' => $exception->getMessage()]);
         }
 
-        return back()->with('success', 'Cập nhật tồn kho thành công.');
+        return back()->with('success', __('Bulk inventory update completed.'));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorize('viewReports', ProductVariant::class);
+
+        $reportData = $this->buildReportData();
+
+        $fileName = 'inventory-report-' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function () use ($reportData) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Section', 'Identifier', 'Label', 'Value']);
+
+            foreach ($reportData['statsBySeller'] as $row) {
+                fputcsv($handle, ['Seller', $row->seller_id ?? '', $row->seller_name, $row->total_stock]);
+            }
+
+            foreach ($reportData['statsByCategory'] as $row) {
+                fputcsv($handle, ['Category', $row->category_id ?? '', $row->category_name, $row->total_stock]);
+            }
+
+            foreach ($reportData['forecast'] as $row) {
+                fputcsv($handle, ['Forecast', $row->variant_id, $row->sku ?? '', $row->avg_daily_demand]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $fileName, $headers);
+    }
+
+    /**
+     * Build report data arrays with caching.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildReportData(): array
+    {
+        $statsBySeller = Cache::remember(
+            'inventory_report_stats_by_seller',
+            now()->addHour(),
+            fn () => ProductVariant::select(
+                'users.id as seller_id',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as seller_name"),
+                DB::raw('SUM(product_variants.stock_quantity) as total_stock')
+            )
+                ->join('products', 'product_variants.product_id', '=', 'products.product_id')
+                ->join('users', 'products.seller_id', '=', 'users.id')
+                ->groupBy('users.id', 'users.first_name', 'users.last_name')
+                ->orderByDesc('total_stock')
+                ->get()
+        );
+
+        $statsByCategory = Cache::remember(
+            'inventory_report_stats_by_category',
+            now()->addHour(),
+            fn () => ProductVariant::select(
+                'categories.category_id',
+                'categories.name',
+                DB::raw('SUM(product_variants.stock_quantity) as total_stock')
+            )
+                ->join('products', 'product_variants.product_id', '=', 'products.product_id')
+                ->join('categories', 'products.category_id', '=', 'categories.category_id')
+                ->groupBy('categories.category_id', 'categories.name')
+                ->orderByDesc('total_stock')
+                ->get()
+                ->map(function ($row) {
+                    $translations = is_array($row->name)
+                        ? $row->name
+                        : json_decode($row->name, true) ?? [];
+
+                    $locale = app()->getLocale();
+                    $row->category_name = $translations[$locale] ?? reset($translations) ?: __('Unknown category');
+
+                    return $row;
+                })
+        );
+
+        $lowStockVariants = Cache::remember(
+            'inventory_report_low_stock',
+            now()->addHour(),
+            fn () => ProductVariant::with('product.seller')
+                ->lowStock()
+                ->orderBy('stock_quantity')
+                ->get()
+        );
+
+        $outOfStockVariants = Cache::remember(
+            'inventory_report_out_of_stock',
+            now()->addHour(),
+            fn () => ProductVariant::with('product.seller')
+                ->outOfStock()
+                ->get()
+        );
+
+        $ninetyDaysAgo = now()->subDays(90);
+        $agingVariants = Cache::remember(
+            'inventory_report_aging',
+            now()->addHour(),
+            fn () => ProductVariant::with('product.seller')
+                ->where('stock_quantity', '>', 0)
+                ->whereDoesntHave('inventoryLogs', fn ($query) => $query->where('created_at', '>', $ninetyDaysAgo))
+                ->get()
+        );
+
+        $thirtyDaysAgo = now()->subDays(30);
+        $forecast = Cache::remember(
+            'inventory_report_forecast',
+            now()->addHour(),
+            function () use ($thirtyDaysAgo) {
+                return OrderItem::select(
+                    'order_items.variant_id',
+                    DB::raw('SUM(order_items.quantity) as total_quantity'),
+                    DB::raw('COUNT(DISTINCT DATE(orders.created_at)) as active_days')
+                )
+                    ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
+                    ->where('orders.created_at', '>=', $thirtyDaysAgo)
+                    ->groupBy('order_items.variant_id')
+                    ->get()
+                    ->map(function ($row) {
+                        $variant = ProductVariant::find($row->variant_id);
+                        $days = max(1, (int) $row->active_days ?: 30);
+
+                        $row->avg_daily_demand = round($row->total_quantity / $days, 2);
+                        $row->sku = $variant?->sku;
+
+                        return $row;
+                    });
+            }
+        );
+
+        return [
+            'statsBySeller' => $statsBySeller,
+            'statsByCategory' => $statsByCategory,
+            'lowStockVariants' => $lowStockVariants,
+            'outOfStockVariants' => $outOfStockVariants,
+            'agingVariants' => $agingVariants,
+            'forecast' => $forecast,
+        ];
     }
 }

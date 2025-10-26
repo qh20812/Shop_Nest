@@ -1,9 +1,9 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
 import HomeLayout from '../../layouts/app/HomeLayout';
-import CategoryCarousel from '@/components/home/ui/CategoryCarousel';
-import FlashSaleSection from '@/components/home/ui/FlashSaleSection';
-import DailyDiscoverSection from '@/components/home/ui/DailyDiscoverSection';
+import CategoryCarousel from '@/Components/home/ui/CategoryCarousel';
+import FlashSaleSection from '@/Components/home/ui/FlashSaleSection';
+import DailyDiscoverSection from '@/Components/home/ui/DailyDiscoverSection';
 import { useTranslation } from '../../lib/i18n';
 
 interface Category {

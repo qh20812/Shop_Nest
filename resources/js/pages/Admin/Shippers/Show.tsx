@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import AppLayout from "../../../layouts/app/AppLayout";
-import Header from "@/components/ui/Header";
-import Toast from "@/components/admin/users/Toast";
-import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import ActionButton from '@/components/ui/ActionButton';
-import DocumentViewer from '@/components/admin/shippers/DocumentViewer';
-import ShipperInfoCard from '@/components/admin/shippers/ShipperInfoCard';
-import StatusBadge from '@/components/ui/StatusBadge';
+import Header from "@/Components/ui/Header";
+import Toast from "@/Components/admin/users/Toast";
+import ConfirmationModal from "@/Components/ui/ConfirmationModal";
+import ActionButton from '@/Components/ui/ActionButton';
+import DocumentViewer from '@/Components/admin/shippers/DocumentViewer';
+import ShipperInfoCard from '@/Components/admin/shippers/ShipperInfoCard';
+import StatusBadge from '@/Components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 

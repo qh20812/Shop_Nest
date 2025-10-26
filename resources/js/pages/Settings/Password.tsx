@@ -2,7 +2,7 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import SettingsLayout from '@/layouts/settings/SettingLayout';
-import PasswordCard from '@/components/settings/PasswordCard';
+import PasswordCard from '@/Components/settings/PasswordCard';
 
 export default function Password() {
   const { t } = useTranslation();

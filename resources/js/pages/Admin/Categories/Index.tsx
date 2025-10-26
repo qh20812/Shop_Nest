@@ -1,13 +1,13 @@
 import { router, usePage, Head } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import FilterPanel from '../../../components/ui/FilterPanel';
-import DataTable from '../../../components/ui/DataTable';
-import Pagination from '../../../components/ui/Pagination';
-import Toast from '../../../components/admin/users/Toast';
-import ConfirmationModal from '../../../components/ui/ConfirmationModal';
-import ActionButtons, { type ActionConfig } from '../../../components/ui/ActionButtons';
-import StatusBadge from '../../../components/ui/StatusBadge';
+import FilterPanel from '../../../Components/ui/FilterPanel';
+import DataTable from '../../../Components/ui/DataTable';
+import Pagination from '../../../Components/ui/Pagination';
+import Toast from '../../../Components/admin/users/Toast';
+import ConfirmationModal from '../../../Components/ui/ConfirmationModal';
+import ActionButtons, { type ActionConfig } from '../../../Components/ui/ActionButtons';
+import StatusBadge from '../../../Components/ui/StatusBadge';
 import { useTranslation } from '../../../lib/i18n';
 import { htmlToPlainText } from '../../../utils/htmlUtils';
 

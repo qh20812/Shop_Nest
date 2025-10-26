@@ -1,8 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import InputError from '@/components/ui/InputError';
-import ActionButton from '@/components/ui/ActionButton';
+import PrimaryInput from '@/Components/ui/PrimaryInput';
+import InputError from '@/Components/ui/InputError';
+import ActionButton from '@/Components/ui/ActionButton';
 
 interface FormData {
     first_name: string;

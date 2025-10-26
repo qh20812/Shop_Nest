@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
     }
 
     public function test_nguoi_dung_khong_the_xac_thuc_voi_mat_khau_sai()
@@ -61,7 +61,7 @@ class AuthenticationTest extends TestCase
                 'email' => $user->email,
                 'password' => 'wrong-password',
             ])->assertStatus(302)->assertSessionHasErrors([
-                'email' => 'These credentials do not match our records.',
+                'email' => 'Thông tin đăng nhập không khớp với hồ sơ của chúng tôi.',
             ]);
         }
 
@@ -74,6 +74,6 @@ class AuthenticationTest extends TestCase
 
         $errors = session('errors');
 
-        $this->assertStringContainsString('Too many login attempts', $errors->first('email'));
+        $this->assertStringContainsString('Quá nhiều lần đăng nhập', $errors->first('email'));
     }
 }

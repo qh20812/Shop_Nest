@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { router, usePage } from "@inertiajs/react";
 import { useTranslation } from "@/lib/i18n";
-import ActionButton from "@/components/ui/ActionButton";
-import PrimaryInput from "@/components/ui/PrimaryInput";
+import ActionButton from "@/Components/ui/ActionButton";
+import PrimaryInput from "@/Components/ui/PrimaryInput";
 
 interface Role {
   id: number;

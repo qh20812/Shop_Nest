@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 import HomeLayout from '@/layouts/app/HomeLayout';
-import CartTitle from '@/components/cart/CartTitle';
+import CartTitle from '@/Components/cart/CartTitle';
 import { useTranslation } from '@/lib/i18n';
 
 interface ProductImage {

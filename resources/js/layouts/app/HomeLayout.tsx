@@ -1,7 +1,7 @@
 import React from 'react';
-import Navbar from '../../components/home/ui/Navbar';
-import Header from '../../components/home/ui/Header';
-import Footer from '../../components/home/ui/Footer';
+import Navbar from '../../Components/home/ui/Navbar';
+import Header from '../../Components/home/ui/Header';
+import Footer from '../../Components/home/ui/Footer';
 import '@/../css/Home.css';
 
 interface HomeLayoutProps {

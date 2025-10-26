@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from '@/lib/i18n';
 import { useTheme, Theme } from '@/hooks/useTheme';
 import SettingsCard from './SettingsCard';
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LanguageSwitcher from '@/Components/ui/LanguageSwitcher';
 
 export default function AppearanceCard() {
   const { t } = useTranslation();

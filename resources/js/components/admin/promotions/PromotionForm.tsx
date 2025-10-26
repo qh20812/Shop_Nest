@@ -2,7 +2,7 @@ import React from 'react';
 import RuleBuilder, { type PromotionRule } from './RuleBuilder';
 import RulePreview from './RulePreview';
 import AutoApplyToggle from './AutoApplyToggle';
-import InputError from '@/components/input-error';
+import InputError from '@/Components/input-error';
 
 interface ProductOption {
     product_id: number;

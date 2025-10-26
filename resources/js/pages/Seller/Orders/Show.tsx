@@ -1,4 +1,4 @@
-import Toast from '@/components/admin/users/Toast';
+import Toast from '@/Components/admin/users/Toast';
 import AppLayout from '@/layouts/app/AppLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';

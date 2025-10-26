@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import SettingsLayout from '@/layouts/settings/SettingLayout';
-import SettingsCard from '@/components/settings/SettingsCard';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import ActionButton from '@/components/ui/ActionButton';
-import AvatarUpload from '@/components/ui/AvatarUpload';
+import SettingsCard from '@/Components/settings/SettingsCard';
+import PrimaryInput from '@/Components/ui/PrimaryInput';
+import ActionButton from '@/Components/ui/ActionButton';
+import AvatarUpload from '@/Components/ui/AvatarUpload';
 
 interface User {
   id: number;

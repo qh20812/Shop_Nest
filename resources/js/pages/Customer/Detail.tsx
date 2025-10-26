@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import ImageCarousel, { ProductImage } from '@/components/product-detail/ImageCarousel';
-import ProductInfo from '@/components/product-detail/ProductInfo';
-import VariantSelector, { VariantAttribute } from '@/components/product-detail/VariantSelector';
-import QuantitySelector from '@/components/product-detail/QuantitySelector';
-import ActionButtons from '@/components/product-detail/ActionButtons';
-import ProductTabs from '@/components/product-detail/ProductTabs';
-import ReviewList, { RatingSummary, ReviewItem, ReviewPagination } from '@/components/product-detail/ReviewList';
-import RelatedProducts, { RelatedProductItem } from '@/components/product-detail/RelatedProducts';
+import ImageCarousel, { ProductImage } from '@/Components/product-detail/ImageCarousel';
+import ProductInfo from '@/Components/product-detail/ProductInfo';
+import VariantSelector, { VariantAttribute } from '@/Components/product-detail/VariantSelector';
+import QuantitySelector from '@/Components/product-detail/QuantitySelector';
+import ActionButtons from '@/Components/product-detail/ActionButtons';
+import ProductTabs from '@/Components/product-detail/ProductTabs';
+import ReviewList, { RatingSummary, ReviewItem, ReviewPagination } from '@/Components/product-detail/ReviewList';
+import RelatedProducts, { RelatedProductItem } from '@/Components/product-detail/RelatedProducts';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import '@/../css/Home.css';
 

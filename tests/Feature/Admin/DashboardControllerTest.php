@@ -58,8 +58,8 @@ class DashboardControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('admin.dashboard'));
 
-        // Khẳng định: Bị chuyển hướng về trang dashboard chung và có thông báo lỗi
-        $response->assertRedirect(route('dashboard'));
+        // Khẳng định: Bị chuyển hướng về trang home và có thông báo lỗi
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -90,6 +90,71 @@ class DashboardControllerTest extends TestCase
             ->has('stats')
             ->has('recentOrders')
             ->has('newUsers')
+        );
+    }
+
+    /**
+     * Kịch bản 4: Dashboard hiển thị đúng dữ liệu thống kê.
+     */
+    public function test_dashboard_hien_thi_dung_du_lieu_thong_ke(): void
+    {
+        // Tạo dữ liệu mẫu
+        $user = User::factory()->create(['created_at' => now()]);
+        $order = \App\Models\Order::factory()->create(['status' => \App\Enums\OrderStatus::COMPLETED->value, 'total_amount_base' => 100]);
+        $product = \App\Models\Product::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('stats')
+            ->where('stats.total_revenue', 100)
+            ->where('stats.total_orders', 1)
+            ->where('stats.total_products', 1)
+        );
+    }
+
+    /**
+     * Kịch bản 5: Dashboard hiển thị recent orders.
+     */
+    public function test_dashboard_hien_thi_recent_orders(): void
+    {
+        $order = \App\Models\Order::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('recentOrders')
+        );
+    }
+
+    /**
+     * Kịch bản 6: Dashboard hiển thị new users.
+     */
+    public function test_dashboard_hien_thi_new_users(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('newUsers')
+        );
+    }
+
+    /**
+     * Kịch bản 7: Dashboard xử lý khi không có dữ liệu.
+     */
+    public function test_dashboard_xu_ly_khi_khong_co_du_lieu(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('stats.total_revenue', 0)
+            ->where('stats.total_orders', 0)
+            ->where('stats.new_users', 3) // 3 users from setUp
+            ->where('stats.total_products', 0)
+            ->has('recentOrders', 0)
+            ->has('newUsers', 3)
         );
     }
 }

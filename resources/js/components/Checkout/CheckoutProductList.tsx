@@ -1,5 +1,5 @@
 import React from 'react';
-import ProductCard from '@/components/Shared/ProductCard';
+import ProductCard from '@/Components/Shared/ProductCard';
 
 interface ProductImage {
   id: number;

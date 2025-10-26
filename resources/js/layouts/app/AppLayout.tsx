@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/ui/Sidebar';
-import Navbar from '@/components/ui/Navbar';
+import Sidebar from '@/Components/ui/Sidebar';
+import Navbar from '@/Components/ui/Navbar';
 import { useTranslation } from '../../lib/i18n';
 import { usePage } from '@inertiajs/react';
+import Chatbot from '@/Components/Chatbot';
+
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -142,6 +144,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <main>
           {children}
         </main>
+        <Chatbot user={user} />
       </div>
     </>
   );

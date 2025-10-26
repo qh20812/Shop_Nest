@@ -33,7 +33,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { icon: 'bx bx-user', label: t('Users'), href: '/admin/users' },
     { icon: 'bi bi-truck', label: t('Shippers'), href: '/admin/shippers' },
     { icon: 'bx bx-package', label: t('Products'), href: '/admin/products' },
-    { icon: 'bx bx-tag', label: t('Inventories'), href: '/admin/inventories' },
+    { icon: 'bx bx-tag', label: t('Inventory'), href: '/admin/inventory' },
     { icon: 'bx bx-gift', label: t('Promotions'), href: '/admin/promotions' },
     { icon: 'bx bx-category', label: t('Categories'), href: '/admin/categories' },
     { icon: 'bx bx-store', label: t('Brands'), href: '/admin/brands' },

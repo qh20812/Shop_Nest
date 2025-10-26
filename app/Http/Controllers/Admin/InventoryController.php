@@ -64,7 +64,14 @@ class InventoryController extends Controller
         return Inertia::render('Admin/Inventory/Index', [
             'variants' => $variants,
             'filters' => $filters,
-            'sellers' => User::whereHas('roles', fn ($q) => $q->where('name->en', 'Seller'))->get(['id', 'name']),
+            'sellers' => User::whereHas('roles', function ($q) {
+                $q->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(roles.name, '$.en')) = 'Seller'");
+            })
+                ->get()
+                ->map(fn($u) => [
+                    'id' => $u->id,
+                    'name' => $u->full_name,
+                ]),
             'categories' => Category::all(['category_id', 'name']),
             'brands' => Brand::all(['brand_id', 'name']),
             'stockStatuses' => [
@@ -128,18 +135,17 @@ class InventoryController extends Controller
      */
     public function report(Request $request): Response
     {
-        // Cần có Policy để kiểm tra quyền xem báo cáo, ví dụ:
-        // $this->authorize('viewReports', Inventory::class);
-
+        // Báo cáo tồn kho theo người bán (Seller)
         $statsBySeller = ProductVariant::select(
-            'users.name as seller_name',
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(users.name, '$.vi')) as seller_name"),
             DB::raw('SUM(product_variants.stock_quantity) as total_stock')
         )
             ->join('products', 'product_variants.product_id', '=', 'products.product_id')
             ->join('users', 'products.seller_id', '=', 'users.id')
-            ->groupBy('users.name')
+            ->groupBy('seller_name')
             ->get();
 
+        // Báo cáo theo danh mục
         $statsByCategory = ProductVariant::select(
             DB::raw("JSON_UNQUOTE(JSON_EXTRACT(categories.name, '$.vi')) as category_name"),
             DB::raw('SUM(product_variants.stock_quantity) as total_stock')
@@ -149,17 +155,18 @@ class InventoryController extends Controller
             ->groupBy('category_name')
             ->get();
 
+        // Các biến thể sắp hết hàng
         $lowStockVariants = ProductVariant::with('product.seller')
-            ->where('stock_quantity', '>', 0)
-            ->where('stock_quantity', '<=', 10)
+            ->whereBetween('stock_quantity', [1, 10])
             ->orderBy('stock_quantity', 'asc')
             ->get();
 
+        // Hết hàng
         $outOfStockVariants = ProductVariant::with('product.seller')
             ->where('stock_quantity', '=', 0)
             ->get();
 
-        // Hàng tồn kho lâu ngày (không có giao dịch trong 90 ngày)
+        // Hàng tồn kho lâu ngày (90 ngày không thay đổi)
         $ninetyDaysAgo = now()->subDays(90);
         $agingVariants = ProductVariant::with('product.seller')
             ->where('stock_quantity', '>', 0)
@@ -175,57 +182,6 @@ class InventoryController extends Controller
             'outOfStockVariants' => $outOfStockVariants,
             'agingVariants' => $agingVariants,
         ]);
-    }
-
-    /**
-     * Tạo phiếu nhập kho (tăng số lượng).
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'variant_id' => 'required|exists:product_variants,variant_id',
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'required|string|max:255',
-        ]);
-
-        // $this->authorize('manageInventory', ProductVariant::class);
-
-        return $this->addInventoryLog(
-            $validated['variant_id'],
-            $validated['quantity'],
-            "Stock In: " . $validated['reason']
-        );
-    }
-
-    /**
-     * Tạo phiếu xuất kho (giảm số lượng).
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function stockOut(Request $request)
-    {
-        $validated = $request->validate([
-            'variant_id' => 'required|exists:product_variants,variant_id',
-            'quantity' => 'required|integer|min:1',
-            'reason' => 'required|string|max:255',
-        ]);
-
-        // $this->authorize('manageInventory', ProductVariant::class);
-
-        $variant = ProductVariant::find($validated['variant_id']);
-        if ($variant->stock_quantity < $validated['quantity']) {
-            return back()->withErrors(['quantity' => __('Quantity for stock-out exceeds current stock.')]);
-        }
-
-        return $this->addInventoryLog(
-            $validated['variant_id'],
-            -abs($validated['quantity']), // Luôn là số âm
-            "Stock Out: " . $validated['reason']
-        );
     }
 
     /**

@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo; // <-- Thêm vào
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $primaryKey = 'variant_id';
+
     protected $fillable = [
         'product_id',
         'sku',
@@ -24,7 +27,7 @@ class ProductVariant extends Model
     /**
      * Lấy sản phẩm cha của biến thể này.
      */
-    public function product(): BelongsTo // <-- THÊM PHƯƠNG THỨC NÀY
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
@@ -103,5 +106,21 @@ class ProductVariant extends Model
     public function scopeTracked($query)
     {
         return $query->where('track_inventory', true);
+    }
+
+    /**
+     * Lịch sử tồn kho (Inventory Logs)
+     */
+    public function inventoryLogs(): HasMany
+    {
+        return $this->hasMany(InventoryLog::class, 'variant_id', 'variant_id');
+    }
+
+    /**
+     * Các mục đơn hàng (Order Items) chứa biến thể này
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'variant_id', 'variant_id');
     }
 }

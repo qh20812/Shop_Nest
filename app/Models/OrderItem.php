@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderItem extends Model
 {
     use HasFactory;
+
     public $timestamps = false;
     protected $primaryKey = 'order_item_id';
+
     protected $fillable = [
         'order_id',
         'variant_id',
@@ -18,7 +20,20 @@ class OrderItem extends Model
         'unit_price',
         'total_price'
     ];
-    public function variant(): BelongsTo{
-        return $this->belongsTo(ProductVariant::class,'variant_id');
+
+    /**
+     * Mỗi OrderItem thuộc về một ProductVariant.
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id', 'variant_id');
+    }
+
+    /**
+     * Mỗi OrderItem thuộc về một Order.
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id', 'order_id');
     }
 }

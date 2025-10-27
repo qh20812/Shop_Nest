@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSRF Test</title>
+    <meta name="csrf-token" content="test-token-123">
+</head>
+<body>
+    <h1>CSRF Test Page</h1>
+    <button id="testBtn">Test Buy Now</button>
+
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                console.log('CSRF Token:', csrfToken);
+
+                const response = await fetch('/product/9/buy-now', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        variant_id: 18,
+                        quantity: 1,
+                        provider: 'stripe'
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Response:', result);
+
+                if (result.success) {
+                    alert('Success! Redirecting to: ' + result.redirect_url);
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

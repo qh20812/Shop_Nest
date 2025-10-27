@@ -1,70 +1,112 @@
-import NewPasswordController from '@/actions/App/Http/Controllers/Auth/NewPasswordController';
-import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import AuthLayout from '@/layouts/auth-layout';
+import React from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import '../../../css/AuthPage.css';
+import { useTranslation } from '../../lib/i18n';
 
 interface ResetPasswordProps {
-    token: string;
-    email: string;
+  email: string;
+  token: string;
 }
 
-export default function ResetPassword({ token, email }: ResetPasswordProps) {
-    return (
-        <AuthLayout title="Reset password" description="Please enter your new password below">
-            <Head title="Reset password" />
+export default function ResetPassword({ email, token }: ResetPasswordProps) {
+  const { t } = useTranslation();
+  const { data, setData, post, processing, errors, reset } = useForm({
+    token: token,
+    email: email,
+    password: '',
+    password_confirmation: '',
+  });
 
-            <Form
-                {...NewPasswordController.store.form()}
-                transform={(data) => ({ ...data, token, email })}
-                resetOnSuccess={['password', 'password_confirmation']}
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    post('/reset-password', {
+      onFinish: () => reset('password', 'password_confirmation'),
+    });
+  };
+
+  return (
+    <div className="auth-page">
+      <Head title={t('Reset Password')} />
+
+      {/* Form Container */}
+      <div className="container">
+        <div className="form-container" style={{ width: '100%' }}>
+          <form onSubmit={onSubmit}>
+            <h1>{t('Reset Password')}</h1>
+            <p>{t('Enter your new password')}</p>
+
+            {/* Hidden fields */}
+            <input type="hidden" name="token" value={data.token} />
+            <input type="hidden" name="email" value={data.email} />
+
+            {/* Email display (readonly) */}
+            <input
+              type="email"
+              placeholder={t('Email')}
+              value={data.email}
+              readOnly
+              style={{ 
+                backgroundColor: '#f5f5f5',
+                cursor: 'not-allowed',
+                opacity: 0.7
+              }}
+            />
+
+            {/* New Password */}
+            <input
+              id="password"
+              type="password"
+              placeholder={t('New Password Reset')}
+              value={data.password}
+              onChange={(e) => setData('password', e.target.value)}
+              required
+              autoFocus
+            />
+            
+            {errors.password && (
+              <div className="text-red-500 text-xs mt-1">{errors.password}</div>
+            )}
+
+            {/* Confirm Password */}
+            <input
+              id="password_confirmation"
+              type="password"
+              placeholder={t('Confirm New Password Reset')}
+              value={data.password_confirmation}
+              onChange={(e) => setData('password_confirmation', e.target.value)}
+              required
+            />
+            
+            {errors.password_confirmation && (
+              <div className="text-red-500 text-xs mt-1">{errors.password_confirmation}</div>
+            )}
+
+            {/* Global errors */}
+            {errors.email && (
+              <div className="text-red-500 text-xs mt-1">{errors.email}</div>
+            )}
+            {errors.token && (
+              <div className="text-red-500 text-xs mt-1">{errors.token}</div>
+            )}
+
+            <button
+              type="submit"
+              className="mt-4"
+              disabled={processing}
+              style={{
+                opacity: processing ? 0.6 : 1,
+                cursor: processing ? 'not-allowed' : 'pointer'
+              }}
             >
-                {({ processing, errors }) => (
-                    <div className="grid gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" name="email" autoComplete="email" value={email} className="mt-1 block w-full" readOnly />
-                            <InputError message={errors.email} className="mt-2" />
-                        </div>
+              {processing ? t('Resetting...') : t('Reset Password')}
+            </button>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                name="password"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                autoFocus
-                                placeholder="Password"
-                            />
-                            <InputError message={errors.password} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">Confirm password</Label>
-                            <Input
-                                id="password_confirmation"
-                                type="password"
-                                name="password_confirmation"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
-                            />
-                            <InputError message={errors.password_confirmation} className="mt-2" />
-                        </div>
-
-                        <Button type="submit" className="mt-4 w-full" disabled={processing}>
-                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Reset password
-                        </Button>
-                    </div>
-                )}
-            </Form>
-        </AuthLayout>
-    );
+            <a href="/login" className="mt-4" style={{ textDecoration: 'none' }}>
+              {t('Back to Login')}
+            </a>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DisputeStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,10 +24,24 @@ class Dispute extends Model
         'resolution',
         'resolved_at'
     ];
+
+    protected $casts = [
+        'status' => DisputeStatus::class,
+    ];
     public function order():BelongsTo{
         return $this->belongsTo(Order::class,'order_id');
     }
     public function messages():HasMany{
         return $this->hasMany(DisputeMessage::class,'dispute_id');
+    }
+
+    /**
+     * Get all transactions related to the dispute (by order_id).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'order_id', 'order_id');
     }
 }

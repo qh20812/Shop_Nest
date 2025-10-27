@@ -11,7 +11,9 @@ export default defineConfig({
             ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),
-        react(),
+        react({
+            jsxRuntime: 'automatic',
+        }),
         tailwindcss(),
         wayfinder({
             formVariants: true,
@@ -19,5 +21,26 @@ export default defineConfig({
     ],
     esbuild: {
         jsx: 'automatic',
+        target: 'esnext',
     },
+    optimizeDeps: {
+        include: ['@tinymce/tinymce-react'],
+        force: true
+    },
+    server: {
+        fs: {
+            allow: ['..']
+        },
+        hmr: {
+            host: 'localhost',
+        },
+        host: 'localhost'
+    },
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+        extensions: ['.js', '.ts', '.jsx', '.tsx'],
+        dedupe: ['react', 'react-dom']
+    }
 });

@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
+use App\Services\ExchangeRateService;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -43,9 +46,41 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'first_name' => $request->user()->first_name,
+                    'last_name' => $request->user()->last_name,
+                    'email' => $request->user()->email,
+                    'username' => $request->user()->username,
+                    'avatar' => $request->user()->avatar,
+                    'avatar_url' => $request->user()->avatar_url,
+                    'roles' => $request->user()->loadMissing('roles')->roles->map(fn ($role) => ['name' => $role->name]),
+                ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'locale' => App::getLocale(),
+            'translations' => $this->getTranslations(),
+            'currency' => [
+                'code' => App::getLocale() === 'vi' ? 'VND' : 'USD',
+                'rates' => ExchangeRateService::getHardcodedRates(),
+            ],
         ];
+    }
+
+    /**
+     * Get translations for current locale
+     *
+     * @return array
+     */
+    private function getTranslations(): array
+    {
+        $locale = App::getLocale();
+        $path = lang_path("{$locale}.json");
+        
+        if (File::exists($path)) {
+            return json_decode(File::get($path), true) ?? [];
+        }
+        
+        return [];
     }
 }

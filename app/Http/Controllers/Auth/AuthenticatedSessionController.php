@@ -18,7 +18,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('auth/login', [
+        return Inertia::render('auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
         ]);
@@ -33,7 +33,34 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check if user account is active
+        if ($user && !$user->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return back()->withErrors([
+                'email' => 'Your account has been deactivated. Please contact support for assistance.',
+            ]);
+        }
+        
+        // Check user role and redirect accordingly
+        if ($user && $user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard', absolute: false))
+                ->with('success', 'Welcome back, Admin!');
+        }
+        
+        // Check if user has Customer role
+        if ($user && $user->role()->where('name->en', 'Customer')->exists()) {
+            return redirect()->intended(route('home', absolute: false))
+                ->with('success', 'Login successful!');
+        }
+
+        return redirect()->intended(route('home', absolute: false))
+            ->with('success', 'Welcome back!');
     }
 
     /**

@@ -48,8 +48,8 @@ return new class extends Migration
         // Bảng Roles
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Admin, Seller, Customer
-            $table->string('description')->nullable();
+            $table->json('name'); // Sử dụng JSON để hỗ trợ đa ngôn ngữ
+            $table->json('description')->nullable(); // Sử dụng JSON để hỗ trợ đa ngôn ngữ
             $table->timestamps();
         });
 

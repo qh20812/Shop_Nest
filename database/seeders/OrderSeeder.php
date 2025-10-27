@@ -13,7 +13,7 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = Role::where('name', 'Customer')->first()->users;
+        $customers = Role::where('name->en', 'Customer')->first()?->users;
         $variants = ProductVariant::all();
 
         foreach ($customers as $customer) {
@@ -35,6 +35,9 @@ class OrderSeeder extends Seeder
                         'quantity' => $quantity,
                         'unit_price' => $variant->price,
                         'total_price' => $variant->price * $quantity,
+                        'original_currency' => 'VND',
+                        'original_unit_price' => $variant->price,
+                        'original_total_price' => $variant->price * $quantity,
                     ];
                 }
                 $order->items()->createMany($orderItems);

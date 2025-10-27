@@ -16,7 +16,10 @@ class OrderItem extends Model
         'variant_id',
         'quantity',
         'unit_price',
-        'total_price'
+        'total_price',
+        'original_currency',
+        'original_unit_price',
+        'original_total_price'
     ];
     public function variant(): BelongsTo{
         return $this->belongsTo(ProductVariant::class,'variant_id');

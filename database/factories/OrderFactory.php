@@ -2,37 +2,38 @@
 
 namespace Database\Factories;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
- */
 class OrderFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
-        $subTotal = fake()->numberBetween(100000, 10000000);
-        $shippingFee = fake()->numberBetween(15000, 50000);
-        
+        // ✅ SỬA LẠI: Tạo giá trị subTotal theo thang USD hợp lý (ví dụ: từ 50 đến 2000 USD)
+        $subTotal = fake()->randomFloat(2, 50, 2000);
+        $shippingFee = fake()->randomFloat(2, 5, 50);
+        $totalAmount = $subTotal + $shippingFee;
+
         return [
             'customer_id' => User::factory(),
             'order_number' => 'ORD-' . fake()->unique()->randomNumber(8),
             'sub_total' => $subTotal,
             'shipping_fee' => $shippingFee,
             'discount_amount' => 0,
-            'total_amount' => $subTotal + $shippingFee,
-            'status' => fake()->numberBetween(0, 4),
+            'total_amount' => $totalAmount,
+            'status' => fake()->randomElement(OrderStatus::cases())->value,
             'payment_method' => fake()->numberBetween(1, 3),
-            'payment_status' => fake()->numberBetween(0, 2),
+            'payment_status' => fake()->randomElement(PaymentStatus::cases())->value,
             'shipping_address_id' => UserAddress::factory(),
             'notes' => fake()->sentence(),
+            
+            // Dữ liệu tiền tệ bây giờ đã đúng
+            'currency' => 'USD',
+            'exchange_rate' => 1.0,
+            'total_amount_base' => $totalAmount,
         ];
     }
 }

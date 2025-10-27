@@ -34,5 +34,51 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_SECRET_ID'),
+        'redirect' => env('GOOGLE_REDIRECT'),
+    ],
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'currency' => env('STRIPE_CURRENCY', 'USD'),
+    ],
+    'exchange_rate' => [
+        'base_currency' => env('EXCHANGE_RATE_BASE', 'USD'),
+        'api_url' => env('EXCHANGE_RATE_API_URL', 'https://v6.exchangerate-api.com/v6/'),
+        'api_key' => env('EXCHANGE_RATE_API_KEY'),
+        'cache_ttl' => (int) env('EXCHANGE_RATE_CACHE_TTL', 3600),
+        'timeout' => (int) env('EXCHANGE_RATE_TIMEOUT', 5),
+        'fallback_rates' => [
+            'VND' => (float) env('EXCHANGE_RATE_FALLBACK_VND', 25000),
+        ],
+    ],
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'default_model' => env('GROQ_MODEL', 'llama-3.1-8b-instant'),
+        'timeout' => (int) env('GROQ_TIMEOUT', 20),
+        'verify_ssl' => env('GROQ_VERIFY_SSL', false),
+    ],
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        'default_model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'timeout' => (int) env('OPENAI_TIMEOUT', 20),
+        'verify_ssl' => env('OPENAI_VERIFY_SSL', false),
+    ],
+
+    'chatbot' => [
+        'fallback_enabled' => filter_var(env('CHATBOT_FALLBACK_ENABLED', true), FILTER_VALIDATE_BOOL),
+    ],
 
 ];

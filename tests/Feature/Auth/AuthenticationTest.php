@@ -10,14 +10,14 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_screen_can_be_rendered()
+    public function test_man_hinh_dang_nhap_co_the_hien_thi()
     {
         $response = $this->get(route('login'));
 
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen()
+    public function test_nguoi_dung_co_the_xac_thuc_qua_man_hinh_dang_nhap()
     {
         $user = User::factory()->create();
 
@@ -27,10 +27,10 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
     }
 
-    public function test_users_can_not_authenticate_with_invalid_password()
+    public function test_nguoi_dung_khong_the_xac_thuc_voi_mat_khau_sai()
     {
         $user = User::factory()->create();
 
@@ -42,7 +42,7 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_users_can_logout()
+    public function test_nguoi_dung_co_the_dang_xuat()
     {
         $user = User::factory()->create();
 
@@ -52,7 +52,7 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('home'));
     }
 
-    public function test_users_are_rate_limited()
+    public function test_nguoi_dung_bi_gioi_han_so_lan_dang_nhap()
     {
         $user = User::factory()->create();
 
@@ -61,7 +61,7 @@ class AuthenticationTest extends TestCase
                 'email' => $user->email,
                 'password' => 'wrong-password',
             ])->assertStatus(302)->assertSessionHasErrors([
-                'email' => 'These credentials do not match our records.',
+                'email' => 'Thông tin đăng nhập không khớp với hồ sơ của chúng tôi.',
             ]);
         }
 
@@ -74,6 +74,6 @@ class AuthenticationTest extends TestCase
 
         $errors = session('errors');
 
-        $this->assertStringContainsString('Too many login attempts', $errors->first('email'));
+        $this->assertStringContainsString('Quá nhiều lần đăng nhập', $errors->first('email'));
     }
 }

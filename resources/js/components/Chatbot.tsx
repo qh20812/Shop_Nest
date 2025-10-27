@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ChatBubble from './ChatBubble';
 import ChatWindow from './ChatWindow';
+import '../../css/chatbot.css';
 
 interface Message {
     id: number;
@@ -207,7 +208,7 @@ export default function Chatbot({ user }: ChatbotProps) {
     };
 
     return (
-        <>
+        <div className="chatbot">
             <ChatBubble 
                 onClick={toggleChat} 
                 isOpen={isOpen}
@@ -227,6 +228,6 @@ export default function Chatbot({ user }: ChatbotProps) {
                     onSoundToggle={() => setSoundEnabled(!soundEnabled)}
                 />
             )}
-        </>
+        </div>
     );
 }

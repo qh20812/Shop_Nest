@@ -36,9 +36,9 @@ class AddressController extends Controller
             'recipient_name' => 'required|string|max:100',// Tên người nhận
             'phone' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
             'address_line' => 'required|string|max:255',// Địa chỉ chi tiết
-            'ward' => 'required|string|max:100',// Phường
-            'district' => 'required|string|max:100',// Quận
-            'province' => 'required|string|max:100',// Tỉnh
+            'province_id' => 'required|exists:administrative_divisions,id',// ID tỉnh
+            'district_id' => 'required|exists:administrative_divisions,id',// ID quận
+            'ward_id' => 'required|exists:administrative_divisions,id',// ID phường
             'postal_code' => 'nullable|string|max:10',// Mã bưu chính
             'is_default' => 'boolean',// Địa chỉ mặc định
         ];
@@ -52,9 +52,9 @@ class AddressController extends Controller
             'recipient_name' => $validated['recipient_name'],// Tên người nhận
             'phone' => $validated['phone'],// Số điện thoại
             'address_line' => $validated['address_line'],// Địa chỉ chi tiết
-            'ward' => $validated['ward'],// Phường
-            'district' => $validated['district'],// Quận
-            'province' => $validated['province'],// Tỉnh
+            'province_id' => $validated['province_id'],// ID tỉnh
+            'district_id' => $validated['district_id'],// ID quận
+            'ward_id' => $validated['ward_id'],// ID phường
             'postal_code' => $validated['postal_code'] ?? null,
             'is_default' => $validated['is_default'] ?? false,
         ]);
@@ -98,9 +98,9 @@ abort(403);// Kiểm tra quyền truy cập
             'recipient_name' => 'required|string|max:100',// Tên người nhận
             'phone' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
             'address_line' => 'required|string|max:255',// Địa chỉ chi tiết
-            'ward' => 'required|string|max:100',// Phường
-            'district' => 'required|string|max:100',// Quận
-            'province' => 'required|string|max:100',// Tỉnh
+            'province_id' => 'required|exists:administrative_divisions,id',// ID tỉnh
+            'district_id' => 'required|exists:administrative_divisions,id',// ID quận
+            'ward_id' => 'required|exists:administrative_divisions,id',// ID phường
             'postal_code' => 'nullable|string|max:10',// Mã bưu chính
             'is_default' => 'boolean',// Địa chỉ mặc định
         ];
@@ -114,9 +114,9 @@ abort(403);// Kiểm tra quyền truy cập
             'recipient_name' => $validated['recipient_name'],// Tên người nhận
             'phone' => $validated['phone'],// Số điện thoại
             'address_line' => $validated['address_line'],// Địa chỉ chi tiết
-            'ward' => $validated['ward'],// Phường
-            'district' => $validated['district'],// Quận
-            'province' => $validated['province'],// Tỉnh
+            'province_id' => $validated['province_id'],// ID tỉnh
+            'district_id' => $validated['district_id'],// ID quận
+            'ward_id' => $validated['ward_id'],// ID phường
             'postal_code' => $validated['postal_code'] ?? null,// Mã bưu chính
             'is_default' => $validated['is_default'] ?? false,// Địa chỉ mặc định
         ]);

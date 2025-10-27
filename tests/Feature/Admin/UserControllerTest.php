@@ -48,7 +48,7 @@ class UserControllerTest extends TestCase
     {
         $response = $this->actingAs($this->customer)->get(route('admin.users.index'));
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -141,7 +141,9 @@ class UserControllerTest extends TestCase
         $this->assertTrue($this->customer->is_active);
         
         // Kiểm tra role đã được cập nhật
-        $this->assertTrue($this->customer->roles->contains('name', 'Admin'));
+        $this->customer->refresh();
+        $this->customer->load('roles');
+        $this->assertTrue($this->customer->roles->contains('id', $adminRole->id));
     }
 
     /**
@@ -209,7 +211,7 @@ class UserControllerTest extends TestCase
             ->delete(route('admin.users.destroy', $this->admin));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Bạn không thể tự vô hiệu hoá chính mình.');
+        $response->assertSessionHas('error', 'Bạn không thể thay đổi trạng thái tài khoản của chính mình.');
 
         // Kiểm tra admin vẫn còn active
         $this->admin->refresh();

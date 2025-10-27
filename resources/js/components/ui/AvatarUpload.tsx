@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/Components/ui/Avatar';
 import { useTranslation } from '../../lib/i18n';
 
 interface User {

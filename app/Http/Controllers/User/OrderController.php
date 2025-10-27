@@ -72,10 +72,10 @@ class OrderController extends Controller
         // Aggregated data for the view
         $baseUserOrdersQuery = Order::where('customer_id', $user->id);
         $totalSpent = (clone $baseUserOrdersQuery)->where('status', 'delivered')->sum('total_amount');
-        $statusCounts = (clone $baseUserOrdersQuery)
+        $statusCounts = DB::table('orders')
             ->select('status', DB::raw('count(*) as count'))
+            ->where('customer_id', $user->id)
             ->groupBy('status')
-            ->get()
             ->pluck('count', 'status');
 
         return Inertia::render('User/Dashboard/Orders/Index', [
@@ -133,6 +133,9 @@ class OrderController extends Controller
                         'quantity' => $cartItem->quantity,
                         'unit_price' => $unitPrice,
                         'total_price' => $totalPrice,
+                        'original_currency' => $validated['currency'],
+                        'original_unit_price' => $unitPrice,
+                        'original_total_price' => $totalPrice,
                     ];
                 }
 
@@ -162,6 +165,9 @@ class OrderController extends Controller
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'total_price' => $item['total_price'],
+                        'original_currency' => $order->currency,
+                        'original_unit_price' => $item['original_unit_price'],
+                        'original_total_price' => $item['original_total_price'],
                     ]);
 
                     // Reduce stock
@@ -240,7 +246,7 @@ class OrderController extends Controller
                 event(new OrderCancelled($order, $request->input('cancellation_reason')));
             });
         } catch (\Exception $e) {
-            Log::error('Order cancellation failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('Order cancellation failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             return redirect()->route('user.orders.show', $order)->with('error', 'An unexpected error occurred.');
         }
 
@@ -278,7 +284,7 @@ class OrderController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            Log::error('Reorder failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('Reorder failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             return redirect()->route('user.orders.show', $order)->with('error', 'Could not process reorder.');
         }
 
@@ -306,7 +312,7 @@ class OrderController extends Controller
             $pdf = Pdf::loadView('invoices.order', ['order' => $order]);
             return $pdf->download("invoice-{$order->order_number}.pdf");
         } catch (\Exception $e) {
-            Log::error('PDF Invoice generation failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('PDF Invoice generation failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             return back()->with('error', 'Could not generate invoice.');
         }
     }
@@ -327,7 +333,7 @@ class OrderController extends Controller
         try {
             $trackingData = $shippingService->getTrackingData($order->shippingDetail->tracking_number, $order->shippingDetail->shipping_provider);
         } catch (\Exception $e) {
-            Log::error('Failed to fetch tracking data', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('Failed to fetch tracking data', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             $trackingData = ['error' => 'Could not retrieve tracking information from the carrier.'];
         }
 
@@ -402,7 +408,7 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'return_items' => 'required|array|min:1',
-            'return_items.*.order_item_id' => ['required', Rule::exists('order_items', 'id')->where('order_id', $order->id)],
+            'return_items.*.order_item_id' => ['required', Rule::exists('order_items', 'order_item_id')->where('order_id', $order->order_id)],
             'return_items.*.quantity' => 'required|integer|min:1',
             'return_items.*.reason' => 'required|string|in:defective,wrong_item,not_as_described,changed_mind',
             'return_images' => 'nullable|array|max:5',
@@ -423,7 +429,7 @@ class OrderController extends Controller
                 // Create return request record
                 $returnRequest = ReturnRequest::create([
                     'customer_id' => Auth::id(),
-                    'order_id' => $order->id,
+                    'order_id' => $order->order_id,
                     'return_number' => 'RTN-' . strtoupper(uniqid()),
                     'reason' => $validated['return_items'][0]['reason'], // Simplified
                     'description' => $validated['return_reason_detail'],
@@ -436,7 +442,7 @@ class OrderController extends Controller
                 event(new ReturnRequested($returnRequest));
             });
         } catch (\Exception $e) {
-            Log::error('Return request failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            Log::error('Return request failed', ['order_id' => $order->order_id, 'error' => $e->getMessage()]);
             return back()->with('error', 'An unexpected error occurred.');
         }
 

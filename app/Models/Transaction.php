@@ -35,7 +35,9 @@ class Transaction extends Model
         'currency',
         'gateway',
         'gateway_transaction_id',
+        'gateway_event_id',
         'status',
+        'raw_payload',
     ];
 
     /**
@@ -47,6 +49,7 @@ class Transaction extends Model
         'amount' => 'float',
         'type' => 'string',
         'status' => 'string',
+        'raw_payload' => 'array',
     ];
 
     /**

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import ProductImageGallery from '../../../components/admin/products/ProductImageGallery';
-import ProductInfo from '../../../components/admin/products/ProductInfo';
-import ProductTabs from '../../../components/admin/products/ProductTabs';
+import ProductImageGallery from '../../../Components/admin/products/ProductImageGallery';
+import ProductInfo from '../../../Components/admin/products/ProductInfo';
+import ProductTabs from '../../../Components/admin/products/ProductTabs';
 import { useTranslation } from '../../../lib/i18n';
 
 interface AttributeValue {

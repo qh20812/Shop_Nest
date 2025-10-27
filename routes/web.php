@@ -1,7 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\DetailController;
+use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,6 +22,16 @@ Route::get('/contact', function () {
     return Inertia::render('Home/Contact');
 })->name('contact');
 
+Route::get('/product/{productId}', [DetailController::class, 'show'])
+    ->whereNumber('productId')
+    ->name('product.detail');
+
+if (app()->environment(['local', 'testing']) || config('app.debug')) {
+    Route::get('/debug/inventory/{variant}', [InventoryDebugController::class, 'show'])
+        ->whereNumber('variant')
+        ->name('debug.inventory.show');
+}
+
 // Language switching route
 Route::post('/language', function () {
     $locale = request('locale');
@@ -32,6 +45,11 @@ Route::post('/language', function () {
 
 // Protected routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Chatbot API endpoint (moved from api.php to use web session auth)
+    Route::post('/chatbot/message', [ChatbotController::class, 'send'])
+        ->middleware('throttle:10,1')
+        ->name('chatbot.message');
+    
     require __DIR__.'/seller.php';
 });
 

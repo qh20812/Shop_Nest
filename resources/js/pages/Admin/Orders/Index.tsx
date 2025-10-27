@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
+import FilterPanel from '@/Components/ui/FilterPanel';
+import Pagination from '@/Components/ui/Pagination';
 import { useTranslation } from '@/lib/i18n';
-import OrderSummaryCards from '@/components/admin/orders/OrderSummaryCards';
-import OrderFilterPanel from '@/components/admin/orders/OrderFilterPanel';
-import OrderTable from '@/components/admin/orders/OrderTable';
+import OrderSummaryCards from '@/Components/admin/orders/OrderSummaryCards';
+import OrderFilterPanel from '@/Components/admin/orders/OrderFilterPanel';
+import OrderTable from '@/Components/admin/orders/OrderTable';
 
 interface Customer {
   id: number;

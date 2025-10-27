@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Payments\Contracts\PaymentGateway;
+use App\Payments\Gateways\PaypalGateway;
 use App\Payments\Gateways\StripeGateway;
 use InvalidArgumentException;
 
@@ -12,7 +13,8 @@ class PaymentService
     {
         return match ($provider) {
             'stripe' => app(StripeGateway::class),
-            'default' => throw new InvalidArgumentException('unsupported provider'),
+            'paypal' => app(PaypalGateway::class),
+            default => throw new InvalidArgumentException('unsupported provider'),
         };
     }
 }

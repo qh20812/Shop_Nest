@@ -12,17 +12,14 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    // 1. Trang Dashboard Chính
     public function index()
     {
         $user = Auth::user();
 
-        $orderStats = [
-            'total_orders'      => $user->orders()->count(),
-            'pending_orders'    => $user->orders()->where('status', 'pending_confirmation')->count(),
-            'shipped_orders'    => $user->orders()->where('status', 'delivering')->count(),
-            'delivered_orders'  => $user->orders()->where('status', 'delivered')->count(),       
-            'total_spent'       => $user->orders()->where('status', 'delivered')->sum('total_amount'),
+        $activeOrders = [
+            'pending' => $user->orders()->where('status', 'pending_confirmation')->count(),
+            'delivering' => $user->orders()->where('status', 'delivering')->count(),
+            'delivered' => $user->orders()->where('status', 'delivered')->count(),
         ];
 
         $recentOrders = $user->orders()
@@ -36,7 +33,7 @@ class DashboardController extends Controller
 
         return Inertia::render('User/Dashboard/Index', [
             'user'           => $user,
-            'orderStats'     => $orderStats,
+            'activeOrders'   => $activeOrders,
             'recentOrders'   => $recentOrders,
             'wishlistCount'  => $wishlistCount,
             'reviewsCount'   => $reviewsCount,

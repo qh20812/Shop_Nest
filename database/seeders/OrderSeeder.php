@@ -35,6 +35,9 @@ class OrderSeeder extends Seeder
                         'quantity' => $quantity,
                         'unit_price' => $variant->price,
                         'total_price' => $variant->price * $quantity,
+                        'original_currency' => 'VND',
+                        'original_unit_price' => $variant->price,
+                        'original_total_price' => $variant->price * $quantity,
                     ];
                 }
                 $order->items()->createMany($orderItems);

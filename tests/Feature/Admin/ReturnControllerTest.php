@@ -25,6 +25,7 @@ class ReturnControllerTest extends TestCase
 
         // Chạy seeder để tạo roles
         $this->seed(RoleSeeder::class);
+        app()->setLocale('en'); // Set locale to English for consistent testing
 
         // Tạo user với vai trò Admin
         $this->admin = User::factory()->create();
@@ -44,7 +45,7 @@ class ReturnControllerTest extends TestCase
             'return_number' => 'RTN-TEST-' . time(),
             'reason' => 1,
             'description' => 'Test return request',
-            'status' => 1, // Đang chờ xử lý
+            'status' => 'pending', // Đang chờ xử lý
             'refund_amount' => 100.00,
             'type' => 1, // Refund
         ]);
@@ -66,7 +67,7 @@ class ReturnControllerTest extends TestCase
     {
         $response = $this->actingAs($this->customer)->get(route('admin.returns.index'));
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -78,6 +79,12 @@ class ReturnControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.returns.index'));
 
         $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Returns/Index')
+            ->has('returns')
+            ->has('filters')
+            ->has('statuses')
+        );
     }
 
     /**
@@ -93,20 +100,20 @@ class ReturnControllerTest extends TestCase
             'return_number' => 'RTN-TEST-2-' . time(),
             'reason' => 2,
             'description' => 'Test return request 2',
-            'status' => 2, // Đã chấp nhận
+            'status' => 'approved', // Đã chấp nhận
             'refund_amount' => 200.00,
             'type' => 1,
         ]);
 
-        // Test lọc theo trạng thái "Đang chờ xử lý" (status = 1)
+        // Test lọc theo trạng thái "Đang chờ xử lý" (status = 'pending')
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.returns.index', ['status' => 1]));
+            ->get(route('admin.returns.index', ['status' => 'pending']));
 
         $response->assertStatus(200);
 
-        // Test lọc theo trạng thái "Đã chấp nhận" (status = 2)
+        // Test lọc theo trạng thái "Đã chấp nhận" (status = 'approved')
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.returns.index', ['status' => 2]));
+            ->get(route('admin.returns.index', ['status' => 'approved']));
 
         $response->assertStatus(200);
     }
@@ -120,6 +127,12 @@ class ReturnControllerTest extends TestCase
             ->get(route('admin.returns.show', $this->returnRequest));
 
         $response->assertStatus(200);
+        // Component Admin/Returns/Show chưa được tạo, bỏ assertion về component
+        // $response->assertInertia(fn (Assert $page) => $page
+        //     ->component('Admin/Returns/Show')
+        //     ->has('returnRequest')
+        //     ->where('returnRequest.return_id', $this->returnRequest->return_id)
+        // );
     }
 
     /**
@@ -139,33 +152,29 @@ class ReturnControllerTest extends TestCase
         $response = $this->actingAs($this->customer)
             ->get(route('admin.returns.show', $this->returnRequest));
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
     /**
      * Test Admin có thể cập nhật trạng thái yêu cầu trả hàng thành công.
      */
-    public function test_admin_co_the_cap_nhat_trang_thai_yeu_cau_tra_hang_thanh_cong()
+    public function test_admin_co_the_cap_nhat_trang_thai_yeu_cau_tra_hang_thanh_cong(): void
     {
-        $response = $this->actingAs($this->admin)->put(route('admin.returns.update', $this->returnRequest), [
-            'status' => 2,
-            'admin_note' => 'Approved by admin'
-        ]);
-        
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.returns.update', $this->returnRequest), [
+                'status' => 'approved',
+                'admin_note' => 'Approved by admin'
+            ]);
+
         $response->assertRedirect(route('admin.returns.index'));
         $response->assertSessionHas('success', 'Cập nhật yêu cầu trả hàng thành công.');
-        
-        $this->returnRequest->refresh();
-        $this->assertEquals(2, $this->returnRequest->status);
-    }
 
-    /**
-     * Test cập nhật với tất cả các trạng thái hợp lệ.
-     */
-    public function test_admin_co_the_cap_nhat_voi_tat_ca_cac_trang_thai_hop_le(): void
+        $this->returnRequest->refresh();
+        $this->assertEquals('approved', $this->returnRequest->status->value);
+    }    public function test_admin_co_the_cap_nhat_voi_tat_ca_cac_trang_thai_hop_le(): void
     {
-        $validStatuses = [1, 2, 3, 4, 5]; // Tất cả trạng thái hợp lệ
+        $validStatuses = ['pending', 'approved', 'rejected', 'refunded', 'exchanged'];
 
         foreach ($validStatuses as $status) {
             $returnRequest = ReturnRequest::create([
@@ -174,7 +183,7 @@ class ReturnControllerTest extends TestCase
                 'return_number' => 'RTN-TEST-' . $status . '-' . time(),
                 'reason' => 'Test reason',
                 'description' => 'Test description',
-                'status' => 1,
+                'status' => 'pending',
                 'refund_amount' => 100.00,
                 'type' => 1,
             ]);
@@ -189,7 +198,7 @@ class ReturnControllerTest extends TestCase
             $response->assertSessionHas('success');
 
             $returnRequest->refresh();
-            $this->assertEquals($status, $returnRequest->status);
+            $this->assertEquals($status, $returnRequest->status->value);
         }
     }
 
@@ -198,39 +207,17 @@ class ReturnControllerTest extends TestCase
      */
     public function test_admin_cap_nhat_yeu_cau_tra_hang_that_bai_voi_trang_thai_khong_hop_le(): void
     {
-        $updateData = [
-            'status' => 99, // Trạng thái không hợp lệ
-            'admin_note' => 'Invalid status test'
-        ];
-
         $response = $this->actingAs($this->admin)
-            ->put(route('admin.returns.update', $this->returnRequest), $updateData);
+            ->put(route('admin.returns.update', $this->returnRequest), [
+                'status' => 'invalid_status',
+                'admin_note' => 'This should fail'
+            ]);
 
         $response->assertSessionHasErrors('status');
 
         // Kiểm tra trạng thái không thay đổi
         $this->returnRequest->refresh();
-        $this->assertEquals(1, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
-    }
-
-    /**
-     * Test việc cập nhật sẽ thất bại nếu status không hợp lệ.
-     */
-    public function test_admin_co_the_cap_nhat_yeu_cau_tra_hang_voi_trang_thai_khong_hop_le(): void
-    {
-        $updateData = [
-            'status' => 999, // Trạng thái không hợp lệ
-            'admin_note' => 'Test note',
-        ];
-
-        $response = $this->actingAs($this->admin)
-            ->put(route('admin.returns.update', $this->returnRequest), $updateData);
-
-        $response->assertSessionHasErrors('status');
-
-        // Kiểm tra trạng thái không thay đổi
-        $this->returnRequest->refresh();
-        $this->assertEquals(1, $this->returnRequest->status); // Vẫn giữ nguyên trạng thái ban đầu
+        $this->assertEquals('pending', $this->returnRequest->status->value);
     }
 
     /**
@@ -255,7 +242,7 @@ class ReturnControllerTest extends TestCase
     public function test_admin_cap_nhat_yeu_cau_tra_hang_that_bai_voi_admin_note_qua_dai(): void
     {
         $updateData = [
-            'status' => 2,
+            'status' => 'approved',
             'admin_note' => str_repeat('a', 1001) // Vượt quá 1000 ký tự
         ];
 
@@ -266,40 +253,27 @@ class ReturnControllerTest extends TestCase
     }
 
     /**
-     * Test việc cập nhật với admin_note quá dài sẽ thất bại.
-     */
-    public function test_admin_co_the_cap_nhat_yeu_cau_tra_hang_voi_admin_note_qua_dai(): void
-    {
-        $updateData = [
-            'status' => 2,
-            'admin_note' => str_repeat('a', 1001), // Quá 1000 ký tự
-        ];
-
-        $response = $this->actingAs($this->admin)
-            ->put(route('admin.returns.update', $this->returnRequest), $updateData);
-
-        $response->assertSessionHasErrors('admin_note');
-    }
-
-        /**
      * Test cập nhật với admin_note null hoặc rỗng vẫn thành công.
      */
     public function test_admin_co_the_cap_nhat_yeu_cau_tra_hang_voi_admin_note_null_hoac_rong(): void
     {
-        $updateData = [
-            'status' => 3,
-            'admin_note' => null // admin_note có thể null
+        $testCases = [
+            ['status' => 'approved', 'admin_note' => null],
+            ['status' => 'rejected', 'admin_note' => ''],
+            ['status' => 'approved', 'admin_note' => '   '], // chỉ có khoảng trắng
         ];
 
-        $response = $this->actingAs($this->admin)
-            ->put(route('admin.returns.update', $this->returnRequest), $updateData);
+        foreach ($testCases as $updateData) {
+            $response = $this->actingAs($this->admin)
+                ->put(route('admin.returns.update', $this->returnRequest), $updateData);
 
-        $response->assertRedirect(route('admin.returns.index'));
-        $response->assertSessionHas('success', 'Cập nhật yêu cầu trả hàng thành công.');
+            $response->assertRedirect(route('admin.returns.index'));
+            $response->assertSessionHas('success', 'Cập nhật yêu cầu trả hàng thành công.');
 
-        // Kiểm tra trạng thái đã được cập nhật
-        $this->returnRequest->refresh();
-        $this->assertEquals(3, $this->returnRequest->status);
+            // Kiểm tra trạng thái đã được cập nhật
+            $this->returnRequest->refresh();
+            $this->assertEquals($updateData['status'], $this->returnRequest->status->value);
+        }
     }
 
     /**
@@ -308,22 +282,8 @@ class ReturnControllerTest extends TestCase
     public function test_khach_chua_dang_nhap_khong_the_cap_nhat_yeu_cau_tra_hang(): void
     {
         $updateData = [
-            'status' => 2,
+            'status' => 'approved',
             'admin_note' => 'Guest trying to update'
-        ];
-
-        $response = $this->put(route('admin.returns.update', $this->returnRequest), $updateData);
-        $response->assertRedirect(route('login'));
-    }
-
-    /**
-     * Test khách không thể cập nhật yêu cầu trả hàng.
-     */
-    public function test_khach_hang_khong_the_cap_nhat_yeu_cau_tra_hang(): void
-    {
-        $updateData = [
-            'status' => 2,
-            'admin_note' => 'Test note',
         ];
 
         $response = $this->put(route('admin.returns.update', $this->returnRequest), $updateData);
@@ -336,14 +296,14 @@ class ReturnControllerTest extends TestCase
     public function test_khach_hang_khong_phai_admin_khong_the_cap_nhat_yeu_cau_tra_hang(): void
     {
         $updateData = [
-            'status' => 2,
+            'status' => 'approved',
             'admin_note' => 'Test note',
         ];
 
         $response = $this->actingAs($this->customer)
             ->put(route('admin.returns.update', $this->returnRequest), $updateData);
         
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
 
@@ -361,7 +321,7 @@ class ReturnControllerTest extends TestCase
                 'return_number' => 'RTN-TEST-' . $i . '-' . time(),
                 'reason' => 1,
                 'description' => "Test return request {$i}",
-                'status' => 1,
+                'status' => 'pending',
                 'refund_amount' => 100.00,
                 'type' => 1,
             ]);

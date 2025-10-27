@@ -34,6 +34,12 @@
     min-height: 100vh;
 }
 
+.auth-page .logo-in-authpage{
+    width: 90px;
+    height: auto;
+    margin-bottom: 5px;
+}
+
 .auth-page .container{
     background-color: var(--light);
     border-radius: 30px;

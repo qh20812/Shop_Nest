@@ -46,6 +46,8 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::controller(InventoryController::class)->prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/report', 'report')->name('report');
+        Route::get('/report/export', 'export')->name('report.export');
+        Route::post('/bulk-update', 'bulkUpdate')->name('bulkUpdate');
         Route::get('/{product}', 'show')->name('show')->where('product', '[0-9]+');
         Route::get('/{product}/history', 'history')->name('history')->where('product', '[0-9]+');
         Route::post('/stock-in', 'store')->name('store');

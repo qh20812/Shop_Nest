@@ -7,24 +7,35 @@ interface CartColumnTitleProps {
 
 export default function CartColumnTitle({ isAllSelected, onSelectAll }: CartColumnTitleProps) {
   return (
-    <div className="cart-column-title">
-      <div className="cart-column-header">
-        <div className="cart-column-checkbox">
+    <div className="bg-[var(--light-2)] rounded-lg p-4 mb-4 shadow-sm">
+      <div className="grid grid-cols-[2.5fr_1fr_1.2fr_1fr_1fr] gap-4 items-center">
+        <div className="flex items-center gap-3">
           <input 
             type="checkbox" 
             id="select-all-cart"
-            className="cart-checkbox"
+            className="w-[18px] h-[18px] accent-[var(--primary)] cursor-pointer"
             checked={isAllSelected}
             onChange={(e) => onSelectAll(e.target.checked)}
           />
-          <label htmlFor="select-all-cart" className="cart-checkbox-label">
+          <label 
+            htmlFor="select-all-cart" 
+            className="font-medium text-[var(--dark)] cursor-pointer font-['Poppins',sans-serif]"
+          >
             Sản phẩm
           </label>
         </div>
-        <div className="cart-column-item">Đơn giá</div>
-        <div className="cart-column-item">Số lượng</div>
-        <div className="cart-column-item">Thành tiền</div>
-        <div className="cart-column-item">Thao tác</div>
+        <div className="font-medium text-[var(--dark)] font-['Poppins',sans-serif] text-center">
+          Đơn giá
+        </div>
+        <div className="font-medium text-[var(--dark)] font-['Poppins',sans-serif] text-center">
+          Số lượng
+        </div>
+        <div className="font-medium text-[var(--dark)] font-['Poppins',sans-serif] text-center">
+          Thành tiền
+        </div>
+        <div className="font-medium text-[var(--dark)] font-['Poppins',sans-serif] text-center">
+          Thao tác
+        </div>
       </div>
     </div>
   );

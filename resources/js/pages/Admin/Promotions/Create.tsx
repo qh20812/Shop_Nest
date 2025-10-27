@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import Header from '@/components/ui/Header';
-import ActionButton from '@/components/ui/ActionButton';
-import Toast from '@/components/admin/users/Toast';
+import Header from '@/Components/ui/Header';
+import ActionButton from '@/Components/ui/ActionButton';
+import Toast from '@/Components/admin/users/Toast';
 import { useTranslation } from '@/lib/i18n';
 import '@/../css/Page.css';
 

@@ -35,7 +35,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated(); // User is logged in after registration
-        $response->assertRedirect(route('login'));
-        $response->assertSessionHas('success', 'Registration successful! Please log in.');
+        $response->assertRedirect(route('verification.notice'));
+        $response->assertSessionHas('status', 'Đăng ký thành công! Vui lòng xác minh email của bạn.');
     }
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import '@/../css/Page.css';
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/Components/ui/Avatar';
 import { useTranslation } from '@/lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface User {
   id: number;
@@ -81,7 +82,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           </button>
         </div>
       </form>
-
+      <LanguageSwitcher />
       <a href="#" className="notif">
         <i className='bx bx-bell'></i>
         <span className="count">12</span>

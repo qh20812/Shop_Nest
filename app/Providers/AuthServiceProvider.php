@@ -2,12 +2,17 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Promotion;
+use App\Policies\CartItemPolicy;
+use App\Policies\ChatbotPolicy;
+use App\Policies\InventoryPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PromotionPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -17,8 +22,10 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-    Product::class => ProductPolicy::class,
-    Promotion::class => PromotionPolicy::class,
+        CartItem::class => CartItemPolicy::class,
+        Product::class => ProductPolicy::class,
+        Promotion::class => PromotionPolicy::class,
+        ProductVariant::class => InventoryPolicy::class,
     ];
 
     /**
@@ -26,7 +33,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::define('chatbot.access', [ChatbotPolicy::class, 'access']);
     }
 }
 

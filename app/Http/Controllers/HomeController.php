@@ -19,9 +19,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Services\CartService;
 
 class HomeController extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -50,10 +55,13 @@ class HomeController extends Controller
 
         $dailyDiscoverProducts = $this->getDailyDiscoverProducts($user, $locale);
 
+        $cartItems = $user ? $this->cartService->getCartItems($user) : collect();
+
         return Inertia::render('Home/Index', [
             'categories' => $categories,
             'flashSale' => $flashSaleData,
             'dailyDiscover' => $dailyDiscoverProducts,
+            'cartItems' => $cartItems->values()->all(),
             'user' => $user ? [
                 'id' => $user->id,
                 'username' => $user->username,

@@ -1,5 +1,5 @@
 import React from 'react';
-import AuthContainer from '../../components/auth/AuthContainer';
+import AuthContainer from '../../Components/auth/AuthContainer';
 import '../../../css/AuthPage.css';
 
 export default function Register() {

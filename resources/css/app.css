@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import 'tailwindcss';
+@import './chatbot-animations.css';
 @plugin 'tailwindcss-animate';
 
 @source '../views';
@@ -69,4 +70,22 @@
         transition: all 0.3s ease;
     }
 
+    /* Chatbot Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-slideUp {
+        animation: slideUp 0.3s ease-out;
+    }
 }

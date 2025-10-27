@@ -84,6 +84,8 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
+    'supported_locales' => array_values(array_filter(array_map('trim', explode(',', env('APP_SUPPORTED_LOCALES', 'en,vi'))))),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

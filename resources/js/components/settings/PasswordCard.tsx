@@ -2,8 +2,8 @@ import React from 'react';
 import { useForm } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import SettingsCard from './SettingsCard';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import ActionButton from '@/components/ui/ActionButton';
+import PrimaryInput from '@/Components/ui/PrimaryInput';
+import ActionButton from '@/Components/ui/ActionButton';
 
 interface PasswordFormData {
   current_password: string;

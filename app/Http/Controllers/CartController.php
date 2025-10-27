@@ -2,60 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\CartException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddToCartRequest;
+use App\Http\Requests\ApplyPromotionRequest;
+use App\Http\Requests\UpdateCartItemRequest;
 use App\Models\CartItem;
-use App\Models\ProductVariant;
-use App\Models\Promotion;
-use Illuminate\Http\Request;
+use App\Services\CartService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CartController extends Controller
 {
-    /**
-     * Display the shopping cart with items, totals, and applied promotions.
-     */
-    public function index(Request $request): Response
+    public function __construct(private CartService $cartService)
+    {
+    }
+
+    public function index(): Response
     {
         $user = Auth::user();
-        $cartItems = CartItem::where('user_id', $user->id)->with('variant.product')->get();
-        $promotion = $this->getActivePromotion($user); // Fetch applied promotion if any
+        $cartItems = $this->cartService->getCartItems($user);
+        $promotion = $this->cartService->getActivePromotion($user);
+        $totals = $this->cartService->calculateTotals($cartItems, $promotion);
 
-        $totals = $this->calculateTotals($cartItems, $promotion);
-
-        return Inertia::render('User/Cart/Index', [
-            'cartItems' => $cartItems,
+        return Inertia::render('Customer/Cart', [
+            'cartItems' => $cartItems->values()->all(),
             'totals' => $totals,
-            'promotion' => $promotion,
+            'promotion' => $promotion ? $promotion->toArray() : null,
         ]);
     }
 
     /**
      * Add a product variant to the cart, checking stock levels.
      */
-    public function add(Request $request)
+    public function add(AddToCartRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'variant_id' => 'required|exists:product_variants,variant_id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $variantId = $validated['variant_id'];
-        $quantity = $validated['quantity'];
+        $data = $request->validated();
         $user = Auth::user();
 
-        $variant = ProductVariant::find($variantId);
-        if (!$this->checkStock($variant, $quantity)) {
-            return back()->with('error', 'Insufficient stock.');
+        try {
+            $this->cartService->addItem($user, $data['variant_id'], $data['quantity']);
+        } catch (CartException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
-
-        CartItem::updateOrCreate(
-            ['user_id' => $user->id, 'variant_id' => $variantId],
-            ['quantity' => DB::raw("quantity + $quantity")]
-        );
 
         return back()->with('success', 'Product added to cart!');
     }
@@ -63,27 +55,24 @@ class CartController extends Controller
     /**
      * Update the quantity of a product in the cart, ensuring stock levels.
      */
-    public function update(Request $request, $itemId)
+    public function update(UpdateCartItemRequest $request, int $itemId): RedirectResponse
     {
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:0', // Allow 0 to remove item
-        ]);
-
-        $quantity = $validated['quantity'];
+        $quantity = $request->validated()['quantity'];
         $user = Auth::user();
 
-        $cartItem = CartItem::where('user_id', $user->id)->findOrFail($itemId);
-        $variant = $cartItem->variant;
+        if ($user) {
+            $cartItem = CartItem::where('user_id', $user->id)->findOrFail($itemId);
+            $this->authorize('update', $cartItem);
+        }
 
-        if ($quantity > 0) {
-            if (!$this->checkStock($variant, $quantity)) {
-                return back()->with('error', 'Insufficient stock.');
-            }
-            $cartItem->update(['quantity' => $quantity]);
-        } else {
-            // Remove the item if quantity is set to 0
-            $this->remove($itemId);
-            return;
+        try {
+            $this->cartService->updateItem($user, $itemId, $quantity);
+        } catch (CartException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        if ($quantity === 0) {
+            return back()->with('success', 'Product removed from cart.');
         }
 
         return back()->with('success', 'Cart updated.');
@@ -92,10 +81,16 @@ class CartController extends Controller
     /**
      * Remove a product from the cart.
      */
-    public function remove($itemId)
+    public function remove(int $itemId): RedirectResponse
     {
         $user = Auth::user();
-        CartItem::where('user_id', $user->id)->findOrFail($itemId)->delete();
+
+        if ($user) {
+            $cartItem = CartItem::where('user_id', $user->id)->findOrFail($itemId);
+            $this->authorize('delete', $cartItem);
+        }
+
+        $this->cartService->removeItem($user, $itemId);
 
         return back()->with('success', 'Product removed from cart.');
     }
@@ -103,10 +98,11 @@ class CartController extends Controller
     /**
      * Clear the entire shopping cart.
      */
-    public function clear()
+    public function clear(): RedirectResponse
     {
         $user = Auth::user();
-        CartItem::where('user_id', $user->id)->delete();
+
+        $this->cartService->clearCart($user);
 
         return back()->with('success', 'Cart cleared.');
     }
@@ -114,31 +110,21 @@ class CartController extends Controller
     /**
      * Apply a promotion code to the cart.
      */
-    public function applyPromotion(Request $request)
+    public function applyPromotion(ApplyPromotionRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string',
-        ]);
-
-        $code = $validated['code'];
         $user = Auth::user();
+        $code = $request->validated()['code'];
+        $cartItems = $this->cartService->getCartItems($user);
 
-        // Validate promotion code, conditions, time, usage limits, etc.
-        $promotion = Promotion::where('code', $code)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$promotion) {
-            return back()->with('error', 'Invalid promotion code.');
+        if ($cartItems->isEmpty()) {
+            return back()->with('error', 'Your cart is empty.');
         }
 
-        // Check if promotion is valid for the user
-        if ($promotion->usage_limit_per_user !== null && $promotion->users()->where('user_id', $user->id)->exists()) {
-            return back()->with('error', 'You have already used this promotion.');
+        try {
+            $this->cartService->applyPromotion($user, $code, $cartItems);
+        } catch (CartException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
-
-        // Store the promotion ID in session or a dedicated cart table
-        session(['applied_promotion_id' => $promotion->promotion_id]);
 
         return back()->with('success', 'Promotion applied!');
     }
@@ -146,109 +132,124 @@ class CartController extends Controller
     /**
      * Remove the applied promotion code from the cart.
      */
-    public function removePromotion()
+    public function removePromotion(): RedirectResponse
     {
-        session()->forget('applied_promotion_id');
+        $user = Auth::user();
+        $this->cartService->removePromotion($user);
 
         return back()->with('success', 'Promotion removed.');
     }
 
     /**
-     * Move cart data to the checkout page, re-verifying promotion and stock.
+     * Create order from cart and redirect to payment gateway.
      */
-    public function checkout(Request $request)
+    public function checkout(): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $user = Auth::user();
-        $cartItems = CartItem::where('user_id', $user->id)->with('variant.product')->get();
-        $promotion = $this->getActivePromotion($user);
+        $cartItems = $this->cartService->getCartItems($user);
 
-        // Re-verify stock and promotion
-        foreach ($cartItems as $cartItem) {
-            if (!$this->checkStock($cartItem->variant, $cartItem->quantity)) {
-                return redirect()->route('cart.index')->with('error', 'Insufficient stock for some items.');
-            }
+        if ($cartItems->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your cart is empty.'
+            ], 400);
         }
 
-        // Calculate totals
-        $totals = $this->calculateTotals($cartItems, $promotion);
+        try {
+            // Pre-check: Verify all items have sufficient stock before proceeding
+            Log::info('cart.checkout.initiated', [
+                'user_id' => $user->id,
+                'cart_items_count' => $cartItems->count(),
+            ]);
 
-        // Store cart data in session or pass it to the checkout view
-        session(['checkout_data' => [
-            'cartItems' => $cartItems->toArray(),
+            // Create order from cart items (this internally verifies stock)
+            $order = $this->cartService->createOrderFromCart($user);
+
+            Log::info('cart.checkout.order_created', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'order_number' => $order->order_number,
+                'total_amount' => $order->total_amount,
+            ]);
+
+            // Get payment provider (default to Stripe)
+            $provider = request()->input('provider', 'stripe');
+            
+            try {
+                $gateway = \App\Services\PaymentService::make($provider);
+            } catch (\InvalidArgumentException $e) {
+                Log::error('cart.checkout.invalid_provider', [
+                    'user_id' => $user->id,
+                    'order_id' => $order->order_id,
+                    'provider' => $provider,
+                    'message' => $e->getMessage(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment provider selected.'
+                ], 400);
+            }
+
+            // Create payment and get redirect URL
+            $paymentUrl = $gateway->createPayment($order);
+
+            Log::info('cart.checkout.payment_initiated', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'provider' => $provider,
+                'payment_url' => $paymentUrl,
+            ]);
+
+            // Return JSON response with payment URL for client-side redirect
+            return response()->json([
+                'success' => true,
+                'payment_url' => $paymentUrl,
+                'order_id' => $order->order_id,
+                'order_number' => $order->order_number,
+            ]);
+
+        } catch (CartException $exception) {
+            Log::error('cart.checkout.cart_exception', [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ], 400);
+        } catch (\Throwable $exception) {
+            Log::error('cart.checkout_failed', [
+                'user_id' => $user->id,
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot process payment at this time. Please try again later.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the checkout page.
+     */
+    public function showCheckout(): Response
+    {
+        $user = Auth::user();
+        $cartItems = $this->cartService->getCartItems($user);
+        $promotion = $this->cartService->getActivePromotion($user);
+        $totals = $this->cartService->calculateTotals($cartItems, $promotion);
+
+        return Inertia::render('Customer/Checkout', [
+            'cartItems' => $cartItems->values()->all(),
             'totals' => $totals,
             'promotion' => $promotion ? $promotion->toArray() : null,
-        ]]);
-
-        return redirect()->route('checkout.index'); // Redirect to checkout page
-    }
-
-    /**
-     * Get active promotion
-     */
-    private function getActivePromotion($user)
-    {
-        $promotionId = session('applied_promotion_id');
-
-        if ($promotionId) {
-            // Load promotion and validate
-            $promotion = Promotion::find($promotionId);
-
-            if (!$promotion || !$promotion->is_active) {
-                session()->forget('applied_promotion_id');
-                return null;
-            }
-
-            return $promotion;
-        }
-
-        return null;
-    }
-
-    /**
-     * Calculate cart totals, including discounts from promotions.
-     */
-    protected function calculateTotals($cartItems, $promotion = null): array
-    {
-        $subtotal = 0;
-        foreach ($cartItems as $item) {
-            $subtotal += $item->variant->price * $item->quantity;
-        }
-
-        $discountAmount = 0;
-        if ($promotion) {
-            // Calculate discount based on promotion type (percentage or fixed amount)
-            if ($promotion->type == 1) { // Percentage
-                $discountAmount = ($subtotal * $promotion->value) / 100;
-                if ($discountAmount > $promotion->max_discount_amount) {
-                    $discountAmount = $promotion->max_discount_amount;
-                }
-            } else { // Fixed Amount
-                $discountAmount = $promotion->value;
-            }
-        }
-
-        $total = $subtotal - $discountAmount;
-
-        return [
-            'subtotal' => $subtotal,
-            'discount' => $discountAmount,
-            'total' => $total,
-        ];
-    }
-
-    /**
-     * Check if there is enough stock for a product.
-     */
-    protected function checkStock(ProductVariant $variant, int $quantity): bool
-    {
-        if ($variant->stock_quantity < $quantity) {
-            Log::warning("Insufficient stock for product {$variant->product->name}", [
-                'product_id' => $variant->product->product_id,
-                'requested_quantity' => $quantity,
-                'available_quantity' => $variant->stock_quantity,
-            ]);
-            return false;
-        }
-        return true;
+        ]);
     }
 }

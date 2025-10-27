@@ -2,7 +2,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import Pagination from '../../../components/ui/Pagination';
+import Pagination from '../../../Components/ui/Pagination';
 
 interface User {
     id: number;

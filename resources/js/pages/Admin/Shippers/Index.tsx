@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Head, usePage, router } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
-import FilterPanel from "@/components/ui/FilterPanel";
-import DataTable from "@/components/ui/DataTable";
-import Pagination from "@/components/ui/Pagination";
-import Toast from "@/components/admin/users/Toast";
-import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import Avatar from '@/components/ui/Avatar';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import StatusBadge from '@/components/ui/StatusBadge';
+import FilterPanel from "@/Components/ui/FilterPanel";
+import DataTable from "@/Components/ui/DataTable";
+import Pagination from "@/Components/ui/Pagination";
+import Toast from "@/Components/admin/users/Toast";
+import ConfirmationModal from "@/Components/ui/ConfirmationModal";
+import Avatar from '@/Components/ui/Avatar';
+import ActionButtons, { ActionConfig } from '@/Components/ui/ActionButtons';
+import StatusBadge from '@/Components/ui/StatusBadge';
 import '@/../css/Page.css';
 import { useTranslation } from '../../../lib/i18n';
 interface ShipperProfile {

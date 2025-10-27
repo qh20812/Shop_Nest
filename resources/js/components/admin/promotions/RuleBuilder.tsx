@@ -1,5 +1,5 @@
 import React from 'react';
-import InputError from '@/components/input-error';
+import InputError from '@/Components/input-error';
 
 export interface PromotionRule {
     type: string;

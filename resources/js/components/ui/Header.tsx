@@ -24,18 +24,15 @@ export default function Header({ title, breadcrumbs, reportButton }: HeadProps) 
         <h1>{title}</h1>
         <ul className="breadcrumb">
           {breadcrumbs.map((item, index) => (
-            <React.Fragment key={index}>
-              <li>
-                {item.href ? (
-                  <a href={item.href} className={item.active ? 'active' : ''}>
-                    {item.label}
-                  </a>
-                ) : (
-                  <span className={item.active ? 'active' : ''}>{item.label}</span>
-                )}
-              </li>
-              {index < breadcrumbs.length - 1 && <span>/</span>}
-            </React.Fragment>
+            <li key={index}>
+              {item.href ? (
+                <a href={item.href} className={item.active ? 'active' : ''}>
+                  {item.label}
+                </a>
+              ) : (
+                <span className={item.active ? 'active' : ''}>{item.label}</span>
+              )}
+            </li>
           ))}
         </ul>
       </div>

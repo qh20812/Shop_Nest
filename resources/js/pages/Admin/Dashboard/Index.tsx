@@ -59,8 +59,8 @@ export default function Index() {
   const { stats, recentOrders, newUsers, currency } = usePage<DashboardProps>().props;
 
   const breadcrumbs = [
-    { label: t('Analytics'), href: '#' },
-    { label: t('Shop'), href: '#', active: true },
+    { label: t('Dashboard'), href: '/admin/dashboard' },
+    { label: t('Overview'), href: '#', active: true }
   ];
 
   // Tạo insightsData từ stats động

@@ -275,8 +275,8 @@ export default function Index() {
       <FilterPanel
         title="User Management"
         breadcrumbs={[
-          { label: "Admin", href: "#" },
-          { label: "Users", href: "#", active: true },
+          { label: "Users", href: "#" },
+          { label: "Overview", href: "#", active: true },
         ]}
         searchConfig={{
           value: search,

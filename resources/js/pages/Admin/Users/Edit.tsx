@@ -39,7 +39,6 @@ export default function Edit() {
         <Header
           title={t("Edit User")}
           breadcrumbs={[
-            { label: t("Admin"), href: "/admin/dashboard" },
             { label: t("Users"), href: "/admin/users" },
             { label: t("Edit"), href: "#", active: true },
           ]}

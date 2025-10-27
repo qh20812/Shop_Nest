@@ -176,8 +176,8 @@ export default function Index() {
             <FilterPanel
                 title={t('Shipper Management')}
                 breadcrumbs={[
-                    { label: t('Dashboard'), href: "/admin/dashboard" },
-                    { label: t('Shippers'), href: "/admin/shippers", active: true },
+                    { label: t('Shippers'), href: "#" },
+                    { label: t('Overview'), href: "/admin/shippers", active: true },
                 ]}
                 onApplyFilters={applyFilters}
                 searchConfig={{

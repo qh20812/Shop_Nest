@@ -135,105 +135,97 @@ export default function ChatWindow({
 
     return (
         <>
-            {/* Backdrop - Semi-transparent overlay */}
-            <div 
-                className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 backdrop-blur-sm"
+            <div
+                className="chatbot__overlay"
                 onClick={handleBackdropClick}
                 aria-hidden="true"
             ></div>
 
-            {/* Chat Window */}
-            <div 
+            <div
                 ref={chatWindowRef}
-                className="fixed bottom-6 right-6 w-full max-w-md md:w-[450px] h-[600px] bg-white rounded-2xl shadow-2xl z-50 flex flex-col transform transition-all duration-300 animate-slideUp overflow-hidden will-change-transform"
+                className="chatbot__window"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="chat-title"
             >
-                
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--grey)] bg-gradient-to-r from-[var(--primary)] to-[var(--light-primary)]">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                            <Icons.Robot className="w-6 h-6 text-[var(--primary)]" />
+                <div className="chatbot__header">
+                    <div className="chatbot__header-info">
+                        <div className="chatbot__header-avatar">
+                            <Icons.Robot className="chatbot__header-avatar-icon" />
                         </div>
                         <div>
-                            <h3 id="chat-title" className="font-semibold text-lg text-white">AI Assistant</h3>
-                            <div className="flex items-center text-xs text-white/90">
-                                <div className="w-2 h-2 bg-[var(--success)] rounded-full mr-1.5 animate-pulse"></div>
-                                Đang hoạt động
+                            <h3 id="chat-title" className="chatbot__header-title">AI Assistant</h3>
+                            <div className="chatbot__header-status">
+                                <span className="chatbot__status-indicator" aria-hidden="true"></span>
+                                <span>Đang hoạt động</span>
                             </div>
                         </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
+
+                    <div className="chatbot__header-actions">
                         <button
+                            type="button"
                             onClick={onSoundToggle}
-                            className="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
-                            aria-label={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}
+                            className="chatbot__icon-button"
+                            aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
                         >
-                            {soundEnabled ? (
-                                <Icons.VolumeOn className="w-5 h-5 text-white" />
-                            ) : (
-                                <Icons.VolumeOff className="w-5 h-5 text-white" />
-                            )}
+                            {soundEnabled ? <Icons.VolumeOn /> : <Icons.VolumeOff />}
                         </button>
 
                         <button
+                            type="button"
                             onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                            className="chatbot__icon-button"
                             aria-label="Đóng chat"
                         >
-                            <Icons.Close className="w-6 h-6 text-white" />
+                            <Icons.Close />
                         </button>
                     </div>
                 </div>
 
-                {/* Messages Area */}
-                <div className="flex-1 px-6 py-5 overflow-y-auto bg-[var(--light)]">
+                <div className="chatbot__messages">
                     {messages.length === 0 && (
-                        <div className="text-center text-[var(--dark-grey)] py-12 px-6">
-                            <div className="w-20 h-20 bg-gradient-to-br from-[var(--primary)] to-[var(--light-primary)] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                                <Icons.Robot className="w-10 h-10 text-white" />
+                        <div className="chatbot__empty-state">
+                            <div className="chatbot__empty-illustration">
+                                <Icons.Robot className="chatbot-icon chatbot-icon--lg" />
                             </div>
-                            <div className="space-y-3">
-                                <h3 className="text-xl font-bold text-[var(--dark)]">Chào mừng đến với AI Assistant! 🤖</h3>
-                                <p className="text-base leading-relaxed max-w-sm mx-auto">
-                                    Tôi là trợ lý AI thông minh, sẵn sàng giúp bạn với mọi câu hỏi về sản phẩm, đơn hàng, và nhiều hơn nữa.
-                                </p>
-                                <div className="flex justify-center space-x-4 mt-6">
-                                    <div className="flex items-center space-x-2 text-sm text-[var(--primary)] bg-[var(--light-primary)] px-3 py-2 rounded-full">
-                                        <Icons.CheckCircle />
-                                        <span>Trả lời tức thì</span>
-                                    </div>
-                                    <div className="flex items-center space-x-2 text-sm text-[var(--primary)] bg-[var(--light-primary)] px-3 py-2 rounded-full">
-                                        <Icons.Zap />
-                                        <span>Thông minh & nhanh chóng</span>
-                                    </div>
-                                </div>
+                            <h3 className="chatbot__empty-title">Chào mừng đến với AI Assistant! 🤖</h3>
+                            <p className="chatbot__empty-subtext">
+                                Tôi là trợ lý AI thông minh, sẵn sàng giúp bạn với mọi câu hỏi về sản phẩm, đơn hàng, và nhiều hơn nữa.
+                            </p>
+                            <div className="chatbot__empty-hints">
+                                <span className="chatbot__empty-hint">
+                                    <Icons.CheckCircle className="chatbot-icon chatbot-icon--sm" />
+                                    <span>Trả lời tức thì</span>
+                                </span>
+                                <span className="chatbot__empty-hint">
+                                    <Icons.Zap className="chatbot-icon chatbot-icon--sm" />
+                                    <span>Thông minh & nhanh chóng</span>
+                                </span>
                             </div>
-                            <p className="text-xs mt-6 text-[var(--dark-grey)]">Chọn câu hỏi gợi ý bên dưới hoặc nhập tin nhắn của bạn</p>
+                            <p className="chatbot__empty-footnote">Chọn câu hỏi gợi ý bên dưới hoặc nhập tin nhắn của bạn</p>
                         </div>
                     )}
-                    
+
                     {messages.map((message: Message) => (
                         <Message key={message.id} message={message} />
                     ))}
-                    
+
                     {isTyping && <Message isTyping={true} />}
-                    
+
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Quick Questions */}
-                <div className="px-6 py-4 border-t border-[var(--grey)] bg-white">
-                    <p className="text-xs font-medium text-[var(--dark-grey)] mb-3">Câu hỏi gợi ý:</p>
-                    <div className="flex flex-wrap gap-2">
+                <div className="chatbot__quick-questions">
+                    <p className="chatbot__section-title">Câu hỏi gợi ý:</p>
+                    <div className="chatbot__quick-questions-list">
                         {getQuickQuestions().map((question: string, index: number) => (
                             <button
+                                type="button"
                                 key={index}
                                 onClick={() => handleQuestionClick(question)}
-                                className="px-4 py-2 text-sm bg-[var(--light-primary)] text-[var(--primary)] rounded-full hover:bg-[var(--primary)] hover:text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
+                                className="chatbot__quick-question"
+                                disabled={isTyping}
                             >
                                 {question}
                             </button>
@@ -241,9 +233,8 @@ export default function ChatWindow({
                     </div>
                 </div>
 
-                {/* Input Area */}
-                <div className="px-6 py-5 border-t border-[var(--grey)] bg-white">
-                    <div className="flex space-x-3">
+                <div className="chatbot__input-area">
+                    <div className="chatbot__input-row">
                         <input
                             ref={inputRef}
                             type="text"
@@ -252,21 +243,19 @@ export default function ChatWindow({
                             onKeyPress={onKeyPress}
                             placeholder="Nhập tin nhắn..."
                             maxLength={500}
-                            className="flex-1 px-4 py-3 border-2 border-[var(--grey)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                            className="chatbot__input"
                         />
                         <button
+                            type="button"
                             onClick={() => onSendMessage()}
-                            disabled={!input.trim()}
-                            className="px-5 py-3 bg-[var(--primary)] text-white rounded-xl hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 shadow-lg"
+                            className="chatbot__send-button"
+                            disabled={isTyping || !input.trim()}
+                            aria-label="Gửi tin nhắn"
                         >
                             <Icons.Send />
                         </button>
                     </div>
-                    
-                    {/* Character Count */}
-                    <div className="text-xs text-[var(--dark-grey)] mt-2 text-right">
-                        {input.length}/500 ký tự
-                    </div>
+                    <div className="chatbot__char-count">{input.length}/500 ký tự</div>
                 </div>
             </div>
         </>

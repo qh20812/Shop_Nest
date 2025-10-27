@@ -49,7 +49,7 @@ Route::prefix('products')->name('products.')->group(function () {
         ->name('show');
 });
 Route::middleware(['auth', 'verified'])->group(function () {
-    route::get('/customer/my_orders', [UserOrderController::class, 'index'])->name('user.orders');
+    route::get('/customer/Orders', [UserOrderController::class, 'index'])->name('user.order');
     route::get('/customer/profile', [DashboardController::class, 'index'])->name('user.profile');
 });
 

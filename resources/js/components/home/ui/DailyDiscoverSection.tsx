@@ -26,6 +26,7 @@ export default function DailyDiscoverSection({ products }: DailyDiscoverSectionP
         <div className="home-component">
             <div className="daily-discover-title">
                 <h2>{t('Daily Discover')}</h2>
+                <a href="/daily-discover" className="see-all-btn">{t('See All')}</a>
             </div>
             <DailyDiscoverContent products={products} />
         </div>

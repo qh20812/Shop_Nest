@@ -59,15 +59,15 @@ const CheckoutProductList: React.FC<CheckoutProductListProps> = ({
   getOriginalPrice,
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <i className="fas fa-shopping-bag text-primary"></i>
-        <h3 className="text-lg font-semibold text-gray-900">
+    <div className="checkout-section checkout-product-list">
+      <div className="checkout-section__header">
+        <i className="checkout-section__icon fas fa-shopping-bag" aria-hidden="true"></i>
+        <h3 className="checkout-section__title">
           Sản phẩm đặt hàng
         </h3>
       </div>
       
-      <div className="space-y-4">
+      <div className="checkout-product-list__items">
         {items.map((item, index) => {
           const image = getProductImage(item);
           const variant = getVariantText(item);

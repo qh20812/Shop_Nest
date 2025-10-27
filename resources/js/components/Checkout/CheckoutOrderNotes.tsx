@@ -12,10 +12,10 @@ const CheckoutOrderNotes: React.FC<CheckoutOrderNotesProps> = ({
   placeholder = 'Thêm ghi chú cho đơn hàng (ví dụ: hướng dẫn giao hàng)',
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <i className="fas fa-sticky-note text-primary"></i>
-        <h3 className="text-lg font-semibold text-gray-900">
+    <div className="checkout-section checkout-notes">
+      <div className="checkout-section__header">
+        <i className="checkout-section__icon fas fa-sticky-note" aria-hidden="true"></i>
+        <h3 className="checkout-section__title">
           Ghi chú đơn hàng
         </h3>
       </div>
@@ -25,7 +25,7 @@ const CheckoutOrderNotes: React.FC<CheckoutOrderNotesProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 ring-primary focus:border-transparent"
+        className="checkout-textarea checkout-notes__textarea"
       />
     </div>
   );

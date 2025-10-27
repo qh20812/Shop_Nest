@@ -1,19 +1,27 @@
 import React, { useEffect } from 'react';
 
+type ModalWidth = 'small' | 'medium' | 'large';
+
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  maxWidth?: string;
+  maxWidth?: ModalWidth;
 }
+
+const widthClassMap: Record<ModalWidth, string> = {
+  small: 'checkout-modal__dialog--small',
+  medium: 'checkout-modal__dialog--medium',
+  large: 'checkout-modal__dialog--large',
+};
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
   title,
   children,
-  maxWidth = 'max-w-2xl',
+  maxWidth = 'large',
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -31,28 +39,31 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="checkout-modal__overlay"
       onClick={onClose}
     >
       <div
-        className={`relative w-full ${maxWidth} bg-white rounded-lg shadow-xl`}
+        className={`checkout-modal__dialog ${widthClassMap[maxWidth]}`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="checkout-modal-title"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+        <div className="checkout-modal__header">
+          <h3 className="checkout-modal__title" id="checkout-modal-title">
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200"
+            className="checkout-modal__close"
+            aria-label="Đóng hộp thoại"
           >
-            <i className="fas fa-times text-xl"></i>
+            <i className="fas fa-times" aria-hidden="true"></i>
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="checkout-modal__body">
           {children}
         </div>
       </div>

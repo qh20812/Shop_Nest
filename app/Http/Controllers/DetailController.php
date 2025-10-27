@@ -679,7 +679,7 @@ class DetailController extends Controller
         // Validate request
         $data = $request->validate([
             'provider' => ['required', 'string', 'in:stripe,paypal'],
-            'address_id' => ['required', 'exists:user_addresses,id'],
+            // 'address_id' => ['nullable', 'exists:user_addresses,id'],
         ]);
 
         // Find the order and ensure it belongs to the user
@@ -689,12 +689,12 @@ class DetailController extends Controller
             ->firstOrFail();
 
         // Verify the address belongs to the user
-        $address = UserAddress::where('id', $data['address_id'])
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+        // $address = UserAddress::where('id', $data['address_id'])
+        //     ->where('user_id', $user->id)
+        //     ->firstOrFail();
 
         // Update order with shipping address
-        $order->update(['shipping_address_id' => $address->id]);
+        // $order->update(['shipping_address_id' => $address->id]);
 
         try {
             $gateway = PaymentService::make($data['provider']);

@@ -60,36 +60,29 @@ const CheckoutExitConfirmation: React.FC<CheckoutExitConfirmationProps> = ({
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
-        {/* Icon */}
-        <div className="flex justify-center pt-6">
-          <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center">
-            <i className="fas fa-exclamation-triangle text-3xl text-yellow-600"></i>
-          </div>
+    <div className="checkout-exit__overlay">
+      <div className="checkout-exit__dialog" role="dialog" aria-modal="true">
+        <div className="checkout-exit__icon">
+          <i className="fas fa-exclamation-triangle" aria-hidden="true"></i>
         </div>
 
-        {/* Content */}
-        <div className="p-6 text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Xác nhận rời khỏi trang
-          </h3>
-          <p className="text-sm text-gray-600">
-            {message}
-          </p>
+        <div className="checkout-exit__content">
+          <h3 className="checkout-exit__title">Xác nhận rời khỏi trang</h3>
+          <p className="checkout-exit__message">{message}</p>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 p-6 pt-0">
+        <div className="checkout-exit__actions">
           <button
+            type="button"
             onClick={handleStay}
-            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium"
+            className="checkout-button checkout-button--secondary"
           >
             Ở lại
           </button>
           <button
+            type="button"
             onClick={handleLeave}
-            className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+            className="checkout-button checkout-button--danger"
           >
             Rời khỏi
           </button>

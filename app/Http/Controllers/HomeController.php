@@ -33,20 +33,26 @@ class HomeController extends Controller
         $locale = app()->getLocale();
 
         $categories = Cache::remember("home_categories_{$locale}", 900, function () use ($locale) {
-            return Category::where('is_active', true)
-                ->whereNotNull('image_url')
-                ->orderBy('category_id')
-                ->limit(30)
-                ->get()
-                ->map(function ($category) use ($locale) {
-                    return [
-                        'id' => $category->category_id,
-                        'name' => $category->getTranslation('name', $locale),
-                        'img' => $category->image_url,
-                    ];
-                })
-                ->values()
-                ->toArray();
+            try {
+                return Category::where('is_active', true)
+                    ->whereNotNull('image_url')
+                    ->orderBy('name') // Order by name alphabetically
+                    ->limit(30)
+                    ->get()
+                    ->map(function ($category) use ($locale) {
+                        return [
+                            'id' => $category->category_id,
+                            'name' => $category->getTranslation('name', $locale) ?? $category->name,
+                            'img' => $category->image_url,
+                            'slug' => $category->slug, // Add slug for routing
+                        ];
+                    })
+                    ->values()
+                    ->toArray();
+            } catch (\Exception $e) {
+                Log::error('Failed to fetch categories: ' . $e->getMessage());
+                return []; // Return empty array instead of crashing
+            }
         });
 
         $flashSaleData = Cache::remember("home_flash_sale_{$locale}", 900, function () use ($locale) {
@@ -68,6 +74,7 @@ class HomeController extends Controller
                 'email' => $user->email,
                 'avatar' => $user->avatar,
             ] : null,
+            'isLoadingCategories' => empty($categories), // Add loading indicator
         ]);
     }
 

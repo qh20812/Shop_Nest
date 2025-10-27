@@ -139,11 +139,10 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Họ và tên <span className="text-red-500">*</span>
+    <form onSubmit={handleSubmit} className="checkout-form">
+      <div className="checkout-form__group">
+        <label className="checkout-form__label">
+          Họ và tên <span className="checkout-form__required">*</span>
         </label>
         <input
           type="text"
@@ -151,14 +150,13 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Nhập họ tên"
           required
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent"
+          className="checkout-input"
         />
       </div>
 
-      {/* Phone */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Số điện thoại <span className="text-red-500">*</span>
+      <div className="checkout-form__group">
+        <label className="checkout-form__label">
+          Số điện thoại <span className="checkout-form__required">*</span>
         </label>
         <input
           type="tel"
@@ -166,14 +164,13 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           placeholder="Nhập số điện thoại"
           required
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent"
+          className="checkout-input"
         />
       </div>
 
-      {/* Address */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Địa chỉ <span className="text-red-500">*</span>
+      <div className="checkout-form__group">
+        <label className="checkout-form__label">
+          Địa chỉ <span className="checkout-form__required">*</span>
         </label>
         <input
           type="text"
@@ -181,22 +178,21 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
           placeholder="Số nhà, tên đường"
           required
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent"
+          className="checkout-input"
         />
       </div>
 
-      {/* Province & District */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Tỉnh/Thành phố <span className="text-red-500">*</span>
+      <div className="checkout-form__split">
+        <div className="checkout-form__group">
+          <label className="checkout-form__label">
+            Tỉnh/Thành phố <span className="checkout-form__required">*</span>
           </label>
           <select
             value={formData.province_id}
             onChange={(e) => handleProvinceChange(e.target.value)}
             disabled={loadingProvinces}
             required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent disabled:bg-gray-100"
+            className="checkout-select"
           >
             <option value="">Chọn tỉnh/thành phố</option>
             {provinces.map((province) => (
@@ -207,16 +203,16 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Quận/Huyện <span className="text-red-500">*</span>
+        <div className="checkout-form__group">
+          <label className="checkout-form__label">
+            Quận/Huyện <span className="checkout-form__required">*</span>
           </label>
           <select
             value={formData.district_id}
             onChange={(e) => handleDistrictChange(e.target.value)}
             disabled={!formData.province_id || loadingDistricts}
             required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent disabled:bg-gray-100"
+            className="checkout-select"
           >
             <option value="">Chọn quận/huyện</option>
             {districts.map((district) => (
@@ -228,17 +224,16 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
         </div>
       </div>
 
-      {/* Ward */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Phường/Xã <span className="text-red-500">*</span>
+      <div className="checkout-form__group">
+        <label className="checkout-form__label">
+          Phường/Xã <span className="checkout-form__required">*</span>
         </label>
         <select
           value={formData.ward_id}
           onChange={(e) => setFormData({ ...formData, ward_id: e.target.value })}
           disabled={!formData.district_id || loadingWards}
           required
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent disabled:bg-gray-100"
+          className="checkout-select"
         >
           <option value="">Chọn phường/xã</option>
           {wards.map((ward) => (
@@ -249,33 +244,31 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({
         </select>
       </div>
 
-      {/* Default checkbox */}
-      <div className="flex items-center gap-2">
+      <div className="checkout-checkbox">
         <input
           type="checkbox"
           id="is_default"
           checked={formData.is_default}
           onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-          className="w-4 h-4 accent-primary rounded"
+          className="checkout-checkbox__input"
         />
-        <label htmlFor="is_default" className="text-sm text-gray-700">
+        <label htmlFor="is_default" className="checkout-checkbox__label">
           Đặt làm địa chỉ mặc định
         </label>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4">
+      <div className="checkout-form__actions">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+          className="checkout-button checkout-button--secondary"
         >
           Hủy
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="flex-1 px-4 py-2.5 btn-primary rounded-lg transition-colors duration-200 disabled:bg-gray-400"
+          className="checkout-button checkout-button--primary"
         >
           {submitting ? 'Đang lưu...' : 'Lưu địa chỉ'}
         </button>

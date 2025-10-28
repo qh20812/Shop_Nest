@@ -1,37 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSwipeable } from 'react-swipeable';
 
 interface Category {
+    id: number;
     img: string;
     name: string;
+    slug?: string;
 }
 
 interface CategoryCarouselProps {
     categories: Category[];
+    isLoading?: boolean;
 }
 
-export default function CategoryCarousel({ categories }: CategoryCarouselProps) {
+// Debounce utility function
+function debounce<T extends (...args: unknown[]) => void>(
+    func: T,
+    wait: number
+): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+}
+
+// Loading skeleton component
+const CategorySkeleton = () => (
+    <div className="home-component">
+        <div className="category-title">
+            <div className="skeleton skeleton-title"></div>
+        </div>
+        <div className="category-carousel">
+            <div className="carousel-container">
+                <div className="category-content">
+                    <ul>
+                        {Array.from({ length: 14 }, (_, index) => (
+                            <li key={`skeleton-${index}`}>
+                                <div className="skeleton skeleton-image"></div>
+                                <div className="skeleton skeleton-text"></div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+export default function CategoryCarousel({ categories, isLoading = false }: CategoryCarouselProps) {
     const [currentPage, setCurrentPage] = useState(0);
-    const [itemsPerPage, setItemsPerPage] = useState(14); // Default: 2 rows × 7 items per row
+    const [itemsPerPage, setItemsPerPage] = useState(14);
+    const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
-    // Handle responsive items per page
-    useEffect(() => {
-        const updateItemsPerPage = () => {
-            const width = window.innerWidth;
-            if (width <= 480) {
-                setItemsPerPage(15); // 3 cols × 5 rows
-            } else if (width <= 768) {
-                setItemsPerPage(16); // 4 cols × 4 rows
-            } else {
-                setItemsPerPage(14); // 7 cols × 2 rows
-            }
-            setCurrentPage(0); // Reset to first page when changing layout
-        };
+    // Handle responsive items per page with debounced resize
+    const updateItemsPerPage = useCallback(() => {
+        const width = window.innerWidth;
+        let newItemsPerPage: number;
 
-        updateItemsPerPage();
-        window.addEventListener('resize', updateItemsPerPage);
+        if (width <= 480) {
+            newItemsPerPage = 15; // 3 cols × 5 rows
+        } else if (width <= 768) {
+            newItemsPerPage = 16; // 4 cols × 4 rows
+        } else {
+            newItemsPerPage = 14; // 7 cols × 2 rows
+        }
 
-        return () => window.removeEventListener('resize', updateItemsPerPage);
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(0); // Reset to first page when changing layout
     }, []);
+
+    const debouncedUpdateItemsPerPage = useCallback(
+        () => debounce(updateItemsPerPage, 150),
+        [updateItemsPerPage]
+    );
+
+    useEffect(() => {
+        updateItemsPerPage();
+        const debouncedHandler = debouncedUpdateItemsPerPage();
+        window.addEventListener('resize', debouncedHandler);
+
+        return () => {
+            window.removeEventListener('resize', debouncedHandler);
+        };
+    }, [updateItemsPerPage, debouncedUpdateItemsPerPage]);
 
     const totalPages = Math.ceil(categories.length / itemsPerPage);
     const currentCategories = categories.slice(
@@ -51,13 +103,30 @@ export default function CategoryCarousel({ categories }: CategoryCarouselProps) 
         }
     };
 
+    // Handle image error
+    const handleImageError = useCallback((categoryId: number) => {
+        setImageErrors(prev => ({ ...prev, [categoryId]: true }));
+    }, []);
+
+    // Touch/swipe handlers
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: nextPage,
+        onSwipedRight: prevPage,
+        preventScrollOnSwipe: true,
+        trackMouse: false, // Only track touch on mobile
+    });
+
+    if (isLoading || categories.length === 0) {
+        return <CategorySkeleton />;
+    }
+
     return (
         <div className="home-component">
             <div className="category-title">
                 <h2>danh mục</h2>
             </div>
             <div className="category-carousel">
-                <div className="carousel-container">
+                <div className="carousel-container" {...swipeHandlers}>
                     {/* Previous Button */}
                     {currentPage > 0 && (
                         <button
@@ -73,9 +142,20 @@ export default function CategoryCarousel({ categories }: CategoryCarouselProps) 
 
                     <div className="category-content">
                         <ul>
-                            {currentCategories.map((category, index) => (
-                                <li key={`${currentPage}-${index}`}>
-                                    <img src={category.img} alt={category.name} />
+                            {currentCategories.map((category) => (
+                                <li key={`category-${category.id}`}>
+                                    {!imageErrors[category.id] ? (
+                                        <img
+                                            src={category.img}
+                                            alt={category.name}
+                                            loading="lazy"
+                                            onError={() => handleImageError(category.id)}
+                                        />
+                                    ) : (
+                                        <div className="image-placeholder">
+                                            <span>📁</span>
+                                        </div>
+                                    )}
                                     <span>{category.name}</span>
                                 </li>
                             ))}

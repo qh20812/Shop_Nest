@@ -33,7 +33,7 @@ class PaymentReturnController extends Controller
                 'message' => $exception->getMessage(),
             ]);
 
-            return Inertia::render('PaymentResult', [
+            return Inertia::render('Customer/PaymentResult', [
                 'provider' => $provider,
                 'status' => 'failed',
                 'message' => 'Unsupported payment provider.',
@@ -172,7 +172,7 @@ class PaymentReturnController extends Controller
             }
         }
 
-        return Inertia::render('PaymentResult', [
+        return Inertia::render('Customer/PaymentResult', [
             'provider' => $provider,
             'status' => $status,
             'message' => $result['message'] ?? '',

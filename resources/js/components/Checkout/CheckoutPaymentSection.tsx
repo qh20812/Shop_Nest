@@ -26,10 +26,10 @@ const CheckoutPaymentSection: React.FC<CheckoutPaymentSectionProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <i className="fas fa-credit-card text-primary"></i>
-        <h3 className="text-lg font-semibold text-gray-900">
+    <div className="checkout-section checkout-payment">
+      <div className="checkout-section__header">
+        <i className="checkout-section__icon fas fa-credit-card" aria-hidden="true"></i>
+        <h3 className="checkout-section__title">
           Phương thức thanh toán
         </h3>
       </div>
@@ -43,10 +43,10 @@ const CheckoutPaymentSection: React.FC<CheckoutPaymentSectionProps> = ({
       <button
         onClick={onCheckout}
         disabled={processing || disabled}
-        className="w-full mt-5 px-6 py-4 btn-primary text-base font-semibold rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+        className="checkout-button checkout-button--primary checkout-payment__submit"
       >
         {processing ? (
-          <span className="flex items-center justify-center gap-2">
+          <span className="checkout-button__loading">
             <i className="fas fa-spinner fa-spin"></i>
             Đang xử lý...
           </span>

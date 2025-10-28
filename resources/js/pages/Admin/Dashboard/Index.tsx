@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import AppLayout from '@/layouts/app/AppLayout';
 import Header from '@/Components/ui/Header';
 import Insights from '@/Components/ui/Insights';
@@ -9,13 +9,24 @@ import { formatCurrency } from '@/lib/utils';
 // import '@/../css/app.css';
 import '@/../css/Page.css';
 import {Head} from '@inertiajs/react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 // Định nghĩa TypeScript interfaces
 interface Stats {
   total_revenue: number;
-  total_orders: number;
-  new_users: number;
-  total_products: number;
+  pending_orders: number;
+  user_growth_monthly: number;
+  system_health: number;
 }
 
 interface Customer {
@@ -31,7 +42,9 @@ interface Order {
   id: number;
   order_number?: string;
   created_at: string;
-  status: number;
+  status: string;
+  total_amount?: number | string;
+  total_amount_base?: number | string;
   customer: Customer;
 }
 
@@ -46,17 +59,47 @@ interface Currency {
   rates: Record<string, number>;
 }
 
+type OrderStatusKey =
+  | 'pending_confirmation'
+  | 'processing'
+  | 'pending_assignment'
+  | 'assigned_to_shipper'
+  | 'delivering'
+  | 'delivered'
+  | 'completed'
+  | 'cancelled'
+  | 'returned';
+
+interface RevenueChartPoint {
+  date: string;
+  label: string;
+  revenue: number;
+}
+
+interface UserGrowthChartPoint {
+  week: string;
+  label: string;
+  users: number;
+}
+
 interface DashboardProps {
   stats: Stats;
   recentOrders: Order[];
   newUsers: User[];
   currency: Currency;
+  revenueChart: RevenueChartPoint[];
+  userGrowthChart: UserGrowthChartPoint[];
   [key: string]: unknown;
 }
 
 export default function Index() {
   const { t, locale } = useTranslation();
-  const { stats, recentOrders, newUsers, currency } = usePage<DashboardProps>().props;
+  const { stats, recentOrders, newUsers, currency, revenueChart, userGrowthChart } = usePage<DashboardProps>().props;
+
+  const currencyCode = currency?.code ?? 'USD';
+  const currencyRates = currency?.rates ?? {};
+  const revenueChartData = Array.isArray(revenueChart) ? revenueChart : [];
+  const userGrowthChartData = Array.isArray(userGrowthChart) ? userGrowthChart : [];
 
   const breadcrumbs = [
     { label: t('Dashboard'), href: '/admin/dashboard' },
@@ -65,55 +108,60 @@ export default function Index() {
 
   // Tạo insightsData từ stats động
   const insightsData = [
-    { 
-      icon: 'bx-calendar-check', 
-      value: stats.total_orders.toLocaleString(), 
-      label: t('Total Orders'),
-      tooltip: `Total ${stats.total_orders} orders`
+    {
+      icon: 'bx-time',
+      value: stats.pending_orders.toLocaleString(locale),
+    label: t('Pending Orders'),
+    tooltip: t('Pending orders awaiting action')
     },
-    { 
-      icon: 'bx-user-plus', 
-      value: stats.new_users.toLocaleString(), 
-      label: t('New Users'),
-      tooltip: `Total ${stats.new_users} new users`
+    {
+      icon: 'bx-trending-up',
+      value: `${Number.isFinite(stats.user_growth_monthly) ? stats.user_growth_monthly.toFixed(2) : '0.00'}%`,
+      label: t('User Growth (Monthly)'),
+      tooltip: t('User growth compared to last month')
     },
-    { 
-      icon: 'bx-package', 
-      value: stats.total_products.toLocaleString(), 
-      label: t('Total Products'),
-      tooltip: `Total ${stats.total_products} products`
+    {
+      icon: 'bx-heart-circle',
+      value: `${Number.isFinite(stats.system_health) ? stats.system_health.toFixed(2) : '0.00'}%`,
+      label: t('System Health'),
+      tooltip: t('Percentage of orders completed successfully')
     },
-    { 
-      icon: 'bx-dollar-circle', 
-      value: formatCurrency(stats.total_revenue, { 
-        from: 'USD', 
-        to: currency.code, 
-        rates: currency.rates, 
-        locale, 
-        abbreviate: true 
+    {
+      icon: 'bx-dollar-circle',
+      value: formatCurrency(stats.total_revenue, {
+        from: 'USD',
+        to: currencyCode,
+        rates: currencyRates,
+        locale,
+        abbreviate: true
       }),
       label: t('Total Revenue'),
-      tooltip: formatCurrency(stats.total_revenue, { 
-        from: 'USD', 
-        to: currency.code, 
-        rates: currency.rates, 
-        locale 
+      tooltip: formatCurrency(stats.total_revenue, {
+        from: 'USD',
+        to: currencyCode,
+        rates: currencyRates,
+        locale
       })
     },
   ];
 
-  // Helper function để chuyển đổi status thành className và text
-  const getOrderStatus = (status: number) => {
-    switch (status) {
-      case 1:
-        return { className: 'pending', text: t('Pending') };
-      case 2:
-        return { className: 'process', text: t('Processing') };
-      case 3:
-        return { className: 'completed', text: t('Completed') };
-      default:
-        return { className: 'pending', text: t('Pending') };
-    }
+  const orderStatusMap = useMemo<Record<OrderStatusKey, { className: string; label: string }>>(
+    () => ({
+      pending_confirmation: { className: 'pending', label: t('Pending Confirmation') },
+      processing: { className: 'process', label: t('Processing') },
+      pending_assignment: { className: 'process', label: t('Pending Assignment') },
+      assigned_to_shipper: { className: 'process', label: t('Assigned to Shipper') },
+      delivering: { className: 'process', label: t('Delivering') },
+      delivered: { className: 'completed', label: t('Delivered') },
+      completed: { className: 'completed', label: t('Completed') },
+      cancelled: { className: 'pending', label: t('Cancelled') },
+      returned: { className: 'pending', label: t('Returned') },
+    }),
+    [t],
+  );
+
+  const getOrderStatus = (status: string) => {
+    return orderStatusMap[status as OrderStatusKey] ?? { className: 'pending', label: t('Pending') };
   };
 
   // Helper function để format ngày
@@ -140,6 +188,53 @@ export default function Index() {
       
       <Insights items={insightsData} />
 
+      <section className="charts">
+        <div className="chart-card">
+          <div className="chart-header">
+            <h3>{t('Revenue Trend')}</h3>
+            <span>{t('Last 7 days')}</span>
+          </div>
+          <div className="chart-body">
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={revenueChartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(value: number) => formatCurrency(value, { from: 'USD', to: currencyCode, rates: currencyRates, locale, abbreviate: true })} width={80} />
+                <Tooltip
+                  formatter={(value: number) => [
+                    formatCurrency(value, { from: 'USD', to: currencyCode, rates: currencyRates, locale }),
+                    t('Revenue'),
+                  ]}
+                  labelFormatter={(label: string) => `${t('Date')}: ${label}`}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#1976D2" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-header">
+            <h3>{t('User Growth')}</h3>
+            <span>{t('Last 4 weeks')}</span>
+          </div>
+          <div className="chart-body">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={userGrowthChartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
+                <Tooltip
+                  formatter={(value: number) => [value.toLocaleString(locale), t('New Users')]}
+                  labelFormatter={(label: string) => `${t('Week')}: ${label}`}
+                />
+                <Bar dataKey="users" fill="#388E3C" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
       <div className="bottom-data">
         <div className="orders">
           <div className="header">
@@ -152,12 +247,13 @@ export default function Index() {
                 <th>{t('User')}</th>
                 <th>{t('Order Date')}</th>
                 <th>{t('Status')}</th>
+                <th>{t('Total Amount')}</th>
               </tr>
             </thead>
             <tbody>
               {recentOrders && recentOrders.length > 0 ? (
                 recentOrders.map((order) => {
-                  const orderStatus = getOrderStatus(order.status);
+                  const { className, label } = getOrderStatus(order.status);
                   
                   // Create safe user object for Avatar component
                   const userForAvatar = order.customer ? {
@@ -189,16 +285,24 @@ export default function Index() {
                       </td>
                       <td>{formatDate(order.created_at)}</td>
                       <td>
-                        <span className={`status ${orderStatus.className}`}>
-                          {orderStatus.text}
+                        <span className={`status ${className}`}>
+                          {label}
                         </span>
+                      </td>
+                      <td>
+                        {formatCurrency(Number(order.total_amount ?? order.total_amount_base ?? 0), {
+                          from: 'USD',
+                          to: currencyCode,
+                          rates: currencyRates,
+                          locale,
+                        })}
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'center', padding: '20px' }}>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
                     {t('No recent orders')}
                   </td>
                 </tr>

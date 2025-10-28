@@ -24,13 +24,13 @@ class DashboardControllerTest extends TestCase
         $this->seed(RoleSeeder::class);
 
         $this->admin = User::factory()->create();
-        $this->admin->roles()->attach(Role::where('name', 'Admin')->first());
+        $this->admin->roles()->attach(Role::where('name->en', 'Admin')->first());
 
         $this->seller = User::factory()->create();
-        $this->seller->roles()->attach(Role::where('name', 'Seller')->first());
+        $this->seller->roles()->attach(Role::where('name->en', 'Seller')->first());
         
         $this->customer = User::factory()->create();
-        $this->customer->roles()->attach(Role::where('name', 'Customer')->first());
+        $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
     
     /**
@@ -57,13 +57,11 @@ class DashboardControllerTest extends TestCase
     {
         $user = $this->{$role};
 
-        // Giả sử bạn có middleware IsSeller và nó sẽ chuyển hướng về dashboard tương ứng
+        // Giả sử bạn có middleware IsSeller và nó sẽ chuyển hướng về home
         $response = $this->actingAs($user)->get(route('seller.dashboard'));
 
-        // Customer sẽ về '/dashboard', admin sẽ về '/admin/dashboard'
-        $expectedRedirect = $role === 'admin' ? route('admin.dashboard') : route('dashboard');
-        
-        $response->assertRedirect($expectedRedirect);
+        // Tất cả non-sellers đều về home
+        $response->assertRedirect(route('home'));
     }
     
     public static function nonSellerUsers(): array

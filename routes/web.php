@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\SellerRegistrationController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\Debug\InventoryDebugController;
@@ -10,7 +11,7 @@ use Inertia\Inertia;
 
 // Public routes (accessible without login)
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/cart-test', function(){
+Route::get('/cart-test', function () {
     return Inertia::render('Customer/Cart');
 });
 
@@ -35,11 +36,11 @@ if (app()->environment(['local', 'testing']) || config('app.debug')) {
 // Language switching route
 Route::post('/language', function () {
     $locale = request('locale');
-    
+
     if (in_array($locale, ['vi', 'en'])) {
         session(['locale' => $locale]);
     }
-    
+
     return redirect()->back();
 })->name('language.switch');
 
@@ -49,8 +50,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chatbot/message', [ChatbotController::class, 'send'])
         ->middleware('throttle:10,1')
         ->name('chatbot.message');
-    
-    require __DIR__.'/seller.php';
+
+    require __DIR__ . '/seller.php';
 });
 
 // Product routes (require auth for detailed actions)
@@ -64,7 +65,15 @@ Route::prefix('products')->name('products.')->group(function () {
         ->name('show');
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
-require __DIR__.'/admin.php';
-require __DIR__.'/user.php';
+Route::middleware('guest')->group(function () {
+    Route::get('register/seller', [SellerRegistrationController::class, 'create'])
+        ->name('seller.register');
+
+    Route::post('register/seller', [SellerRegistrationController::class, 'store'])
+        ->name('seller.register.store');
+});
+
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';
+require __DIR__ . '/admin.php';
+require __DIR__ . '/user.php';

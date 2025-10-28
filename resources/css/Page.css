@@ -493,6 +493,52 @@ body{
     color: var(--dark);
 }
 
+.content main .charts{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-gap: 24px;
+    margin-top: 24px;
+}
+
+.content main .chart-card{
+    background: var(--light);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    color: var(--dark);
+    box-shadow: 0 12px 24px rgba(25, 118, 210, 0.08);
+}
+
+.content main .chart-card .chart-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.content main .chart-card .chart-header h3{
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.content main .chart-card .chart-header span{
+    font-size: 13px;
+    color: var(--dark-grey);
+}
+
+.content main .chart-card .chart-body{
+    flex: 1;
+    min-height: 240px;
+}
+
+@media (max-width: 768px) {
+    .content main .charts{
+        grid-template-columns: 1fr;
+    }
+}
+
 .content main .bottom-data{
     display: flex;
     flex-wrap: wrap;
@@ -544,7 +590,7 @@ body{
 }
 
 .content main .bottom-data .orders table td{
-    padding: 16px 0;
+    padding: 16px 6px;
 }
 
 .content main .bottom-data .orders table tr td:first-child{
@@ -592,6 +638,13 @@ body{
 
 .content main .bottom-data .orders table tr td .status.pending{
     background: var(--warning);
+}
+
+.content main .bottom-data .orders table th:last-child,
+.content main .bottom-data .orders table td:last-child{
+    text-align: right;
+    white-space: nowrap;
+    padding-right: 12px;
 }
 
 .content main .bottom-data .reminders{

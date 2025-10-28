@@ -30,6 +30,12 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        
+        // Load user with roles if authenticated
+        if ($user) {
+            $user = \App\Models\User::with('role')->find($user->id);
+        }
+        
         $locale = app()->getLocale();
 
         $categories = Cache::remember("home_categories_{$locale}", 900, function () use ($locale) {
@@ -73,6 +79,7 @@ class HomeController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
                 'avatar' => $user->avatar,
+                'role' => $user->role()->pluck('name->en')->toArray(), // Load roles as array
             ] : null,
             'isLoadingCategories' => empty($categories), // Add loading indicator
         ]);

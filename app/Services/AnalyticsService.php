@@ -27,6 +27,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -518,6 +519,10 @@ class AnalyticsService
      */
     private function buildSegmentDistribution(array $filters): array
     {
+        if (!Schema::hasTable('customer_segment_memberships') || !Schema::hasTable('customer_segments')) {
+            return [];
+        }
+
         $query = CustomerSegmentMembership::query()
             ->select(['segment_id'])
             ->selectRaw('COUNT(*) as total');

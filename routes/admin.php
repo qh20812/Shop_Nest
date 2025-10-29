@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -53,5 +54,15 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
         Route::post('/stock-in', 'store')->name('store');
         Route::post('/stock-out', 'stockOut')->name('stockOut');
         Route::put('/{variant}', 'update')->name('update')->where('variant', '[0-9]+');
+    });
+
+    // Analytics Routes
+    Route::controller(AnalyticsController::class)->prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/revenue', 'revenue')->name('revenue');
+        Route::get('/users', 'users')->name('users');
+        Route::get('/products', 'products')->name('products');
+        Route::get('/orders', 'orders')->name('orders');
+        Route::get('/reports', 'reports')->name('reports');
     });
 });

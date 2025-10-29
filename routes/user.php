@@ -132,6 +132,9 @@ Route::post('/webhooks/paypal', [PaymentWebhookController::class, 'paypal'])
     ->middleware('throttle:60,1')
     ->name('webhooks.paypal');
 
+// Momo
+Route::post("/webhooks/momo/ipn", [PaymentWebhookController::class, 'momo']);
+
 Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
     ->middleware('throttle:30,1');
 Route::get('/payments/stripe/cancel', function () {

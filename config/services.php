@@ -55,6 +55,15 @@ return [
             'VND' => (float) env('EXCHANGE_RATE_FALLBACK_VND', 25000),
         ],
     ],
+    'momo' => [
+        'partner_code' => env('MOMO_PARTNER_CODE'),
+        'access_key' => env('MOMO_ACCESS_KEY'),
+        'secret_key' => env('MOMO_SECRET_KEY'),
+        'endpoint' => env('MOMO_ENDPOINT'),
+        'redirect' => env('MOMO_REDIRECT_URL'),
+        'ipn' => env('MOMO_IPN_URL'),
+        'convert_rate' => env('MOMO_CONVERT_RATE'),
+    ],
     'paypal' => [
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),

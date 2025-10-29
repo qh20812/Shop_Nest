@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'product/*/buy-now',
             'buy-now/checkout/*',
+            '/webhooks/momo/ipn',
         ]);
 
         $middleware->web(append: [

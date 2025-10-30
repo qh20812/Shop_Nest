@@ -10,7 +10,7 @@ import '../../../css/About.css'; // Quan trọng: Đảm bảo bạn import file
 
 export default function About() {
     return (
-        <HomeLayout>
+        <div>
             <Head title="Về chúng tôi - ShopNest" />
 
             <div className="about-container">
@@ -125,6 +125,6 @@ export default function About() {
                     </div>
                 </div>
             </div>
-        </HomeLayout>
+        </div>
     );
 }

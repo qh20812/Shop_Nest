@@ -5,6 +5,21 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+export function resolveCurrencyCode(value: unknown, fallback: string = 'VND'): string {
+    if (typeof value === 'string' && value.trim() !== '') {
+        return value.toUpperCase();
+    }
+
+    if (value && typeof value === 'object' && 'code' in value) {
+        const { code } = value as { code?: string | null };
+        if (typeof code === 'string' && code.trim() !== '') {
+            return code.toUpperCase();
+        }
+    }
+
+    return fallback.toUpperCase();
+}
+
 interface FormatCurrencyOptions {
     from: string;
     to: string;

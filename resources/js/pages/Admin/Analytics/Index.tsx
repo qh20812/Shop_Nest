@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
+import { resolveCurrencyCode } from '@/lib/utils';
 import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
 import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
 import type { AnalyticsChartPoint as ChartDataPoint } from '@/Components/Analytics/AnalyticsChart';
@@ -60,12 +61,6 @@ type NormalizedActivity = Record<string, unknown> & {
     actor?: string;
 };
 
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-});
-
 const percentFormatter = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 1,
 });
@@ -74,6 +69,16 @@ const Index: React.FC = () => {
     const { props } = usePage<AnalyticsPageProps>();
     const { stats, revenueChart, userGrowthChart, recentActivities = [], meta } = props;
     const locale = props.locale ?? 'en';
+    const resolvedCurrency = resolveCurrencyCode(props.currency);
+
+    const currencyFormatter = React.useMemo(() => new Intl.NumberFormat(
+        locale.startsWith('vi') ? 'vi-VN' : 'en-US',
+        {
+            style: 'currency',
+            currency: resolvedCurrency,
+            maximumFractionDigits: 0,
+        }
+    ), [locale, resolvedCurrency]);
     const { t } = useTranslation();
 
     const [selectedRange, setSelectedRange] = useState<string>('7days');
@@ -250,7 +255,7 @@ const Index: React.FC = () => {
                 />
             ),
         ];
-    }, [locale, stats, t, userGrowthChange, userGrowthLabel]);
+    }, [currencyFormatter, locale, stats, t, userGrowthChange, userGrowthLabel]);
 
     const quickActions = useMemo(
         () => [

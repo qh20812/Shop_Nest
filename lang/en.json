@@ -633,5 +633,21 @@
     "Back to home": "Back to home",
     "Order ID: ": "Order ID: ",
     "Paid via: ": "Paid via: ",
-    "Time: ": "Time: "
+    "Time: ": "Time: ",
+    "Revenue Trend": "Revenue Trend",
+    "Daily revenue within the selected range": "Daily revenue within the selected range",
+    "User Growth Trend": "User Growth Trend",
+    "New users acquired over time": "New users acquired over time",
+    "value": "value",
+    "Monitor platform performance, track key business metrics, and explore trends at a glance.": "Monitor platform performance, track key business metrics, and explore trends at a glance.",
+    "No recent activity recorded": "No recent activity recorded",
+    "Reference": "Reference",
+    "Type": "Type",
+    "Details": "Details",
+    "Timestamp": "Timestamp",
+    "User Growth": "User Growth",
+    "System Health": "System Health",
+    "vs previous period": "vs previous period",
+    "Last updated at": "Last updated at",
+    "Recent Platform Activity": "Recent Platform Activity"
 }

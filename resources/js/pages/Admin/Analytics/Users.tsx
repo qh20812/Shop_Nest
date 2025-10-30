@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
+import { resolveCurrencyCode } from '@/lib/utils';
 import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/Components/Analytics/AnalyticsFilters';
 import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
 import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
@@ -134,7 +135,7 @@ const Users: React.FC = () => {
   const analytics = useMemo<UsersAnalyticsPayload>(() => props.users ?? {}, [props.users]);
   const initialFilters = props.filters ?? {};
   const locale = typeof props.locale === 'string' ? props.locale : 'en';
-  const currency = typeof props.currency === 'string' ? props.currency : 'VND';
+  const currency = resolveCurrencyCode(props.currency);
   const { t } = useTranslation();
 
   const [range, setRange] = useState<string>(String(normalizeFilterValue(initialFilters['range'], '4weeks')));
@@ -377,7 +378,6 @@ const Users: React.FC = () => {
               {t('Understand how users engage with the platform, monitor retention trends, and identify key segments.')}
             </p>
           </div>
-
           {quickRangeOptions.length > 0 ? (
             <QuickFilter options={quickRangeOptions} activeValue={range} onChange={setRange} />
           ) : null}

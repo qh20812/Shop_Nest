@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\ExchangeRateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -60,7 +62,35 @@ class OrderController extends Controller
             });
         }
 
+        $baseCurrency = strtoupper(config('services.exchange_rate.base_currency', 'USD'));
+        $defaultCurrency = App::getLocale() === 'vi' ? 'VND' : $baseCurrency;
+        $activeCurrency = strtoupper((string) $request->session()->get('currency', $defaultCurrency));
+        $conversionRate = $activeCurrency === $baseCurrency
+            ? 1.0
+            : max(ExchangeRateService::getRate($baseCurrency, $activeCurrency), 0.0000001);
+
         $orders = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        $orders = $orders->through(function (Order $order) use ($conversionRate, $activeCurrency) {
+            $payload = $order->toArray();
+
+            $baseAmount = (float) ($order->total_amount_base ?? $order->total_amount ?? 0);
+            $payload['total_amount_base'] = round($baseAmount, 2);
+            $payload['total_amount'] = round($baseAmount * $conversionRate, 2);
+            $payload['currency'] = $activeCurrency;
+
+            if (isset($payload['customer']) && is_array($payload['customer'])) {
+                $payload['customer'] = array_filter([
+                    'first_name' => $order->customer?->first_name,
+                    'last_name' => $order->customer?->last_name,
+                    'email' => $order->customer?->email,
+                ], static fn ($value) => $value !== null);
+            }
+
+            $payload['created_at'] = $order->created_at?->toISOString();
+
+            return $payload;
+        });
 
         // Calculate summary statistics for ALL orders (not just current page)
         $pendingCount = Order::where('status', 'pending_confirmation')->count();
@@ -99,14 +129,8 @@ class OrderController extends Controller
                 'completedCount' => $completedCount,
                 'cancelledCount' => $cancelledCount,
             ],
-            'currency' => 'VND',
-            'exchangeRates' => [
-                'VND' => 25000,
-                'USD' => 1,
-                'EUR' => 0.85,
-                'GBP' => 0.73,
-                'JPY' => 110
-            ]
+            'currencyCode' => $activeCurrency,
+            'conversionRate' => $conversionRate,
         ]);
     }
 

@@ -1,36 +1,70 @@
 import React from 'react';
-import { router } from '@inertiajs/react';
-import { useTranslation } from '../../lib/i18n';
-import vietnamFlagUrl from '../../../../public/Flag_of_Vietnam.svg?url';
-import unitedKingdomFlagUrl from '../../../../public/960px-Flag_of_the_United_Kingdom.svg.svg?url';
+import { router, usePage } from '@inertiajs/react';
+import vietnamCurrencyIcon from '../../../../public/vnd-currency.svg?url';
+import dollarCurrencyIcon from '../../../../public/dollar-currency.svg?url';
 
-interface LanguageOption {
+interface CurrencyOption {
   value: string;
   label: string;
-  flag: string;
+  icon: string;
 }
 
-export default function LanguageSwitcher() {
-  const { locale } = useTranslation();
+const CURRENCY_ROUTE = '/currency';
+
+type CurrencyPageProps = {
+  currency?:
+    | string
+    | {
+        code?: string;
+      };
+};
+
+export default function CurrencyDropdown() {
+  const { props } = usePage<CurrencyPageProps>();
+  const derivedCurrency = React.useMemo(() => {
+    const source = props.currency;
+
+    if (typeof source === 'string' && source.trim() !== '') {
+      return source.toUpperCase();
+    }
+
+    if (source && typeof source === 'object' && typeof source.code === 'string') {
+      return source.code.toUpperCase();
+    }
+
+    return 'VND';
+  }, [props.currency]);
+
+  const [currentCurrency, setCurrentCurrency] = React.useState<string>(derivedCurrency);
   const [isHovering, setIsHovering] = React.useState(false);
 
-  const languageOptions: LanguageOption[] = React.useMemo(() => (
+  const currencyOptions: CurrencyOption[] = React.useMemo(() => (
     [
-      { value: 'vi', label: 'Tiếng Việt', flag: vietnamFlagUrl },
-      { value: 'en', label: 'English', flag: unitedKingdomFlagUrl },
+      { value: 'VND', label: 'VND', icon: vietnamCurrencyIcon },
+      { value: 'USD', label: 'USD', icon: dollarCurrencyIcon },
     ]
   ), []);
 
-  const switchLanguage = (newLocale: string) => {
-    if (newLocale && newLocale !== locale) {
-      router.post('/language', { locale: newLocale }, {
+  React.useEffect(() => {
+    setCurrentCurrency(derivedCurrency);
+  }, [derivedCurrency]);
+
+  const activeOption = currencyOptions.find((option) => option.value === currentCurrency) ?? currencyOptions[0];
+
+  const switchCurrency = (newCurrency: string) => {
+    const normalized = newCurrency.toUpperCase();
+
+    if (normalized && normalized !== currentCurrency) {
+      const previousCurrency = currentCurrency;
+      setCurrentCurrency(normalized);
+
+      router.post(CURRENCY_ROUTE, { currency: normalized }, {
         preserveState: true,
         preserveScroll: true,
+        onError: () => setCurrentCurrency(previousCurrency),
       });
     }
   };
-
-  const activeOption = languageOptions.find((option) => option.value === locale) ?? languageOptions[0];
 
   const visibleTriggerStyle: React.CSSProperties = {
     display: 'flex',
@@ -45,7 +79,7 @@ export default function LanguageSwitcher() {
     fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
-    minWidth: '160px',
+    minWidth: '140px',
     justifyContent: 'space-between',
   };
 
@@ -82,7 +116,7 @@ export default function LanguageSwitcher() {
         <div style={visibleTriggerStyle}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img
-              src={activeOption.flag}
+              src={activeOption.icon}
               alt={activeOption.label}
               style={{ width: '18px', height: '18px', borderRadius: '999px', objectFit: 'cover' }}
             />
@@ -91,12 +125,12 @@ export default function LanguageSwitcher() {
           <span style={arrowStyle} />
         </div>
         <select
-          value={activeOption.value}
-          onChange={(event) => switchLanguage(event.target.value)}
+          value={currentCurrency}
+          onChange={(event) => switchCurrency(event.target.value)}
           style={selectStyle}
-          aria-label="Select language"
+          aria-label="Select currency"
         >
-          {languageOptions.map((option) => (
+          {currencyOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

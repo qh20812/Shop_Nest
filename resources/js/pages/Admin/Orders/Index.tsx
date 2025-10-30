@@ -22,6 +22,8 @@ interface Order {
   customer: Customer;
   customer_id: number;
   total_amount: number;
+  total_amount_base?: number;
+  currency?: string;
   status: string;
   payment_status: string;
   created_at: string;
@@ -59,6 +61,8 @@ interface PageProps {
     completedCount: number;
     cancelledCount: number;
   };
+  currencyCode?: string;
+  conversionRate?: number;
 
 }
 
@@ -68,7 +72,7 @@ export default function Index({
   statusOptions, 
   paymentStatusOptions, 
   orderSummary, 
- 
+  
 }: PageProps) {
   const { t } = useTranslation();
   

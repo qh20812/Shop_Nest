@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\AnalyticsReport;
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Promotion;
@@ -11,6 +12,7 @@ use App\Policies\AnalyticsReportPolicy;
 use App\Policies\CartItemPolicy;
 use App\Policies\ChatbotPolicy;
 use App\Policies\InventoryPolicy;
+use App\Policies\OrderPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PromotionPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -26,6 +28,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         AnalyticsReport::class => AnalyticsReportPolicy::class,
         CartItem::class => CartItemPolicy::class,
+    Order::class => OrderPolicy::class,
         Product::class => ProductPolicy::class,
         Promotion::class => PromotionPolicy::class,
         ProductVariant::class => InventoryPolicy::class,

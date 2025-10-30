@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
+import { resolveCurrencyCode } from '@/lib/utils';
 import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/Components/Analytics/AnalyticsFilters';
 import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
 import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
@@ -123,7 +124,7 @@ const Products: React.FC = () => {
   const analytics = useMemo<ProductAnalyticsPayload>(() => props.products ?? {}, [props.products]);
   const initialFilters = props.filters ?? {};
   const locale = typeof props.locale === 'string' ? props.locale : 'en';
-  const currency = typeof props.currency === 'string' ? props.currency : 'VND';
+  const currency = resolveCurrencyCode(props.currency);
   const { t } = useTranslation();
 
   const [filters, setFilters] = useState<ProductFilterState>(() => ({

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\SellerRegistrationController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
@@ -43,6 +44,9 @@ Route::post('/language', function () {
 
     return redirect()->back();
 })->name('language.switch');
+
+// Currency switching route
+Route::post('/currency', CurrencyController::class)->name('currency.switch');
 
 // Protected routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {

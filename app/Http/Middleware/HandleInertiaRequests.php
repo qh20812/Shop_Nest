@@ -41,6 +41,15 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+    $availableRates = ExchangeRateService::getHardcodedRates();
+    $availableCodes = array_keys($availableRates);
+
+    $defaultCurrency = App::getLocale() === 'vi' ? 'VND' : 'USD';
+    $sessionCurrency = strtoupper((string) $request->session()->get('currency', $defaultCurrency));
+        if (!in_array($sessionCurrency, $availableCodes, true)) {
+            $sessionCurrency = $availableCodes[0] ?? 'VND';
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -61,8 +70,9 @@ class HandleInertiaRequests extends Middleware
             'locale' => App::getLocale(),
             'translations' => $this->getTranslations(),
             'currency' => [
-                'code' => App::getLocale() === 'vi' ? 'VND' : 'USD',
-                'rates' => ExchangeRateService::getHardcodedRates(),
+                'code' => $sessionCurrency,
+                'rates' => $availableRates,
+                'available' => $availableCodes,
             ],
         ];
     }

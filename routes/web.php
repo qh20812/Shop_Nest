@@ -73,6 +73,14 @@ Route::middleware('guest')->group(function () {
         ->name('seller.register.store');
 });
 
+//FAQ
+Route::get('/faq', function () {
+    // 'FAQPage' phải khớp với tên file component trong thư mục resources/js/Pages
+    return Inertia::render('Home/FAQPage', [
+        'title' => 'Câu Hỏi Thường Gặp',
+    ]);
+})->name('faq');
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';

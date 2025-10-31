@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
   ChevronDown,
@@ -12,8 +12,14 @@ import {
 } from 'lucide-react';
 
 interface SidebarUser {
-  name: string;
+  id?: number;
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  email?: string | null;
   avatar?: string | null;
+  avatar_url?: string | null;
 }
 
 interface SidebarProps {
@@ -39,7 +45,28 @@ interface MenuItem {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }) => {
   const { url } = usePage();
-  const [openSection, setOpenSection] = useState<string | null>('account');
+
+  const normalizedUrl = useMemo(() => {
+    const [path] = url.split('?');
+    if (!path) {
+      return '/';
+    }
+    const trimmed = path.replace(/\/+$/, '');
+    return trimmed.length > 0 ? trimmed : '/';
+  }, [url]);
+
+  const isPathActive = useCallback(
+    (target: string | undefined) => {
+      if (!target) {
+        return false;
+      }
+      if (target === '/') {
+        return normalizedUrl === '/';
+      }
+      return normalizedUrl === target || normalizedUrl.startsWith(`${target}/`);
+    },
+    [normalizedUrl],
+  );
 
   const menuItems = useMemo<MenuItem[]>(
     () => [
@@ -66,17 +93,66 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
     [],
   );
 
-  const handleToggleSection = (key: string) => {
-    setOpenSection((current) => (current === key ? null : key));
-  };
+  const [openSection, setOpenSection] = useState<string | null>(() => {
+    const defaultDropdown = menuItems.find(
+      (item) => item.isDropdown && item.subItems?.some((subItem) => isPathActive(subItem.href)),
+    );
+    return defaultDropdown?.key ?? null;
+  });
 
-  const handleClose = () => {
+  useEffect(() => {
+    const matchedDropdown = menuItems.find(
+      (item) => item.isDropdown && item.subItems?.some((subItem) => isPathActive(subItem.href)),
+    );
+    setOpenSection((current) => {
+      if (matchedDropdown) {
+        return current === matchedDropdown.key ? current : matchedDropdown.key;
+      }
+      return current ? null : current;
+    });
+  }, [isPathActive, menuItems]);
+
+  const handleToggleSection = useCallback((key: string) => {
+    setOpenSection((current) => (current === key ? null : key));
+  }, []);
+
+  const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
     }
-  };
+  }, [onClose]);
 
-  const resolvedAvatar = user?.avatar || '/images/default-avatar.png';
+  const displayName = useMemo(() => {
+    if (!user) {
+      return null;
+    }
+    if (user.name && user.name.trim().length > 0) {
+      return user.name;
+    }
+    const first = user.first_name?.trim() ?? '';
+    const last = user.last_name?.trim() ?? '';
+    const full = `${first} ${last}`.trim();
+    if (full.length > 0) {
+      return full;
+    }
+    if (user.username && user.username.trim().length > 0) {
+      return user.username;
+    }
+    return user.email ?? null;
+  }, [user]);
+
+  const resolvedAvatar = useMemo(() => {
+    if (!user) {
+      return '/images/default-avatar.png';
+    }
+    if (user.avatar_url && user.avatar_url.trim().length > 0) {
+      return user.avatar_url;
+    }
+    if (user.avatar && user.avatar.trim().length > 0) {
+      return user.avatar;
+    }
+    return '/images/default-avatar.png';
+  }, [user]);
 
   return (
     <aside
@@ -88,12 +164,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
         <div className="sidebar-avatar-wrapper">
           <img
             src={resolvedAvatar}
-            alt={user?.name ? `Avatar của ${user.name}` : 'Avatar người dùng'}
+            alt={displayName ? `Avatar của ${displayName}` : 'Avatar người dùng'}
             className="sidebar-user-avatar"
           />
         </div>
         <div className="sidebar-user-details">
-          <span className="sidebar-user-name">{user?.name ?? 'Khách hàng'}</span>
+          <span className="sidebar-user-name">{displayName ?? 'Khách hàng'}</span>
           <Link
             href="/user/profile/edit"
             className="sidebar-edit-btn"
@@ -107,8 +183,11 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
       <nav className="sidebar-menu" aria-label="Customer navigation">
         {menuItems.map((item) => {
           const isDropdown = item.isDropdown && item.subItems && item.subItems.length > 0;
-          const isActive = item.href ? url.startsWith(item.href) : false;
-          const isOpen = openSection === item.key;
+          const dropdownActive = isDropdown
+            ? item.subItems!.some((subItem) => isPathActive(subItem.href))
+            : false;
+          const isActive = isDropdown ? dropdownActive : isPathActive(item.href);
+          const isOpen = isDropdown ? openSection === item.key : false;
 
           return (
             <div className="sidebar-section" key={item.key}>
@@ -116,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
                 <>
                   <button
                     type="button"
-                    className={`sidebar-section-trigger${isOpen ? ' is-open' : ''}`}
+                    className={`sidebar-section-trigger${isOpen ? ' is-open' : ''}${dropdownActive ? ' is-active' : ''}`}
                     onClick={() => handleToggleSection(item.key)}
                     aria-expanded={isOpen}
                     aria-controls={`sidebar-section-${item.key}`}
@@ -138,13 +217,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
                     aria-hidden={!isOpen}
                   >
                     {item.subItems!.map((subItem) => {
-                      const subActive = url.startsWith(subItem.href);
+                      const subActive = isPathActive(subItem.href);
                       return (
                         <Link
                           key={subItem.href}
                           href={subItem.href}
                           className={`sidebar-subitem${subActive ? ' is-active' : ''}`}
                           onClick={handleClose}
+                          aria-current={subActive ? 'page' : undefined}
                         >
                           {subItem.icon}
                           <span className="sidebar-subitem-label">{subItem.label}</span>
@@ -158,6 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isMobileOpen = false, onClose }
                   href={item.href ?? '#'}
                   className={`sidebar-link${isActive ? ' is-active' : ''}`}
                   onClick={handleClose}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   {item.icon}
                   <span className="sidebar-link-label">{item.label}</span>

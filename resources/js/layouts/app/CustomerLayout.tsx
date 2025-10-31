@@ -3,6 +3,9 @@ import { usePage } from '@inertiajs/react';
 import { Menu } from 'lucide-react';
 import Navbar from '../../Components/home/ui/Navbar';
 import Sidebar from '../../Components/customer/ui/Sidebar';
+import '@/../css/Home.css';
+import '@/../css/Customer.css';
+import Footer from '@/Components/home/ui/Footer';
 
 interface AuthUser {
   name: string;
@@ -55,6 +58,7 @@ const CustomerLayout: React.FC<PropsWithChildren> = ({ children }) => {
           aria-label="Đóng menu khách hàng"
         />
       )}
+      <Footer />
     </div>
   );
 };

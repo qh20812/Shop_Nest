@@ -100,7 +100,7 @@ export default function AccountDropdown({ user, locale }: AccountDropdownProps) 
             <span>{locale === 'vi' ? 'Thông tin tài khoản' : 'Profile'}</span>
           </Link>
           <Link
-            href="/orders"
+            href="/user/orders"
             className="account-option"
             role="menuitem"
             onClick={() => setShowMenu(false)}

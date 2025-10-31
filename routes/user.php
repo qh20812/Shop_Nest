@@ -12,7 +12,7 @@ use App\Http\Controllers\User\AddressController;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])
-    ->prefix('dashboard/orders')
+    ->prefix('/user/orders')
     ->as('user.orders.')
     ->group(function () {
         // Danh sách đơn hàng
@@ -21,8 +21,11 @@ Route::middleware(['auth', 'verified'])
         // Chi tiết đơn hàng
         Route::get('{order}', [OrderController::class, 'show'])->name('show');
 
+        // Đánh giá đơn hàng
+        Route::post('{order}/review', [OrderController::class, 'review'])->name('review');
+
         // Hủy đơn hàng
-        Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        Route::post('{order}/cancel', [OrderController::class, 'cancel'])->name('cancel')->middleware('throttle:5,1');
 
         // Đặt lại đơn hàng (reorder)
         Route::post('{order}/reorder', [OrderController::class, 'reorder'])->name('reorder');
@@ -40,7 +43,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('{order}/review/{product}', [OrderController::class, 'createReview'])->name('create-review');
 
         // Yêu cầu trả hàng
-        Route::post('{order}/return', [OrderController::class, 'requestReturn'])->name('return');
+        Route::post('{order}/return', [OrderController::class, 'requestReturn'])->name('return')->middleware('throttle:5,1');
 
         // Hủy yêu cầu trả hàng
         Route::post('{order}/return/{returnRequest}/cancel', [OrderController::class, 'cancelReturnRequest'])->name('cancel-return');

@@ -77,6 +77,10 @@ Route::middleware('guest')->group(function () {
         ->name('seller.register.store');
 });
 
+Route::get('/customer/orders/index', function(){
+    return Inertia::render('Customer/Orders/Index');
+});
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';

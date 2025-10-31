@@ -24,7 +24,7 @@ export default function TopNav({ isLoggedIn, user, locale, currency }: TopNavPro
       <div className="top-nav-left">
         <a href="#" className="seller-link">
           <i className="bi bi-shop"></i>
-          Kênh Người Bán
+          Trở thành người bán
         </a>
       </div>
       <div className="top-nav-right">

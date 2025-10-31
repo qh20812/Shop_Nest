@@ -4,11 +4,13 @@ namespace App\Http\Controllers\User;
 
 use App\Enums\OrderStatus;
 use App\Events\OrderCancelled;
+use App\Events\OrderReviewed;
 use App\Events\ReturnRequested;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderReview;
 use App\Models\ReturnRequest;
 use App\Models\User;
 use App\Models\UserAddress;
@@ -22,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -86,6 +89,8 @@ class OrderController extends Controller
 		$ordersQuery = Order::query()
 			->where('customer_id', $user->id)
 			->with([
+				'items.variant.product.seller',
+				'items.variant.product.shop',
 				'items.variant.product.images' => fn($query) => $query->where('is_primary', true),
 			]);
 
@@ -135,6 +140,85 @@ class OrderController extends Controller
 
 		$orders = $ordersQuery->paginate(15)->withQueryString();
 
+		$locale = app()->getLocale();
+		$fallbackLocale = config('app.fallback_locale', 'en');
+
+		$orders->getCollection()->transform(function (Order $order) use ($locale, $fallbackLocale) {
+			$cacheKey = "order:{$order->order_id}:grouped_items";
+			$grouped = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($order, $locale, $fallbackLocale) {
+				return $order->items
+					->groupBy(function (OrderItem $item) {
+						$product = $item->variant?->product;
+						return optional($product?->shop)->id
+							?? optional($product?->seller)->id
+							?? 'unknown';
+					})
+					->map(function ($items) use ($locale, $fallbackLocale) {
+						$firstItem = $items->first();
+						$product = $firstItem?->variant?->product;
+						$seller = optional($product?->seller);
+						$shop = optional($product?->shop);
+
+						$sellerName = $shop?->name
+							?? $seller?->full_name
+							?? $seller?->username
+							?? $seller?->email
+							?? __('Người bán');
+
+						$shopLogo = $shop?->logo;
+						$sellerAvatar = null;
+						if ($shopLogo) {
+							$sellerAvatar = Str::startsWith($shopLogo, ['http://', 'https://'])
+								? $shopLogo
+								: asset('storage/' . ltrim($shopLogo, '/'));
+						}
+
+						if (!$sellerAvatar && $seller) {
+							$sellerAvatar = $seller->avatar_url
+								?? $seller->profile_photo_url
+								?? $seller->avatar
+								?? null;
+						}
+
+						return [
+							'seller' => [
+								'id' => $shop?->id ?? $seller?->id,
+								'shop_id' => $shop?->id,
+								'user_id' => $seller?->id,
+								'name' => $sellerName,
+								'avatar' => $sellerAvatar,
+							],
+							'items' => $items->map(function (OrderItem $item) use ($locale, $fallbackLocale) {
+								$product = $item->variant?->product;
+								$primaryImage = $product?->images?->first();
+
+								return [
+									'order_item_id' => $item->order_item_id,
+									'variant_id' => $item->variant_id,
+									'quantity' => $item->quantity,
+									'unit_price' => $item->unit_price,
+									'total_price' => $item->total_price,
+									'product_snapshot' => [
+										'product_id' => $product?->product_id,
+										'name' => $product?->getTranslation('name', $locale, false)
+											?? $product?->getTranslation('name', $fallbackLocale, false)
+											?? null,
+										'slug' => $product?->slug ?? null,
+										'image_url' => $primaryImage?->image_url ?? null,
+									],
+								];
+							})->values(),
+						];
+					})
+					->values();
+			});
+
+			// Attach grouped payload so the frontend can render shop clusters similar to Shopee.
+			$order->setAttribute('grouped_items', $grouped);
+
+			return $order;
+		});
+
 		$statusCounts = DB::table('orders')
 			->select('status', DB::raw('count(*) as count'))
 			->where('customer_id', $user->id)
@@ -179,6 +263,7 @@ class OrderController extends Controller
 		$order = Order::with([
 				'items.variant.product.images',
 				'shippingAddress',
+				'reviews.customer', // Load reviews with customer info
 			])
 			->findOrFail($orderId);
 
@@ -188,6 +273,46 @@ class OrderController extends Controller
 			'order' => $order,
 			'trackingData' => $this->resolveTrackingData($order),
 		]);
+	}
+
+	public function review(int $orderId, Request $request): RedirectResponse
+	{
+		$order = Order::findOrFail($orderId);
+
+		$this->authorize('view', $order);
+
+		// Only allow review for delivered or completed orders
+		if (!in_array($order->status, [OrderStatus::DELIVERED->value, OrderStatus::COMPLETED->value])) {
+			return redirect()->back()->withErrors(['review' => 'Chỉ có thể đánh giá đơn hàng đã giao hoặc hoàn thành.']);
+		}
+
+		$validated = $request->validate([
+			'rating' => ['required', 'integer', 'min:1', 'max:5'],
+			'comment' => ['nullable', 'string', 'max:1000'],
+		]);
+
+		/** @var User $user */
+		$user = Auth::user();
+
+		// Check if already reviewed
+		$existingReview = OrderReview::where('order_id', $order->order_id)
+			->where('customer_id', $user->id)
+			->first();
+
+		if ($existingReview) {
+			return redirect()->back()->withErrors(['review' => 'Bạn đã đánh giá đơn hàng này rồi.']);
+		}
+
+		$review = OrderReview::create([
+			'order_id' => $order->order_id,
+			'customer_id' => $user->id,
+			'rating' => $validated['rating'],
+			'comment' => $validated['comment'] ?? null,
+		]);
+
+		OrderReviewed::dispatch($review);
+
+		return redirect()->back()->with('success', 'Cảm ơn bạn đã đánh giá đơn hàng.');
 	}
 
 	public function store(Request $request): RedirectResponse
@@ -221,13 +346,15 @@ class OrderController extends Controller
 					return $item->quantity * $unitPrice;
 				});
 
+				$shippingFee = $this->shippingService->calculateFee($address, $cartItems);
+
 				$order = Order::create([
 					'customer_id' => $user->id,
 					'order_number' => $this->generateOrderNumber(),
 					'sub_total' => $totalAmount,
-					'shipping_fee' => 0,
+					'shipping_fee' => $shippingFee,
 					'discount_amount' => 0,
-					'total_amount' => $totalAmount,
+					'total_amount' => $totalAmount + $shippingFee,
 					'currency' => 'VND',
 					'exchange_rate' => 1,
 					'total_amount_base' => $totalAmount,
@@ -288,11 +415,15 @@ class OrderController extends Controller
 
 	public function reorder(int $orderId): RedirectResponse
 	{
-		$order = Order::with('items')->findOrFail($orderId);
+		$order = Order::with('items.variant')->findOrFail($orderId);
 
 		$this->authorize('reorder', $order);
 
 		foreach ($order->items as $item) {
+			if (!$item->variant || $item->variant->stock_quantity < $item->quantity) {
+				return redirect()->back()->withErrors(['reorder' => 'Một số sản phẩm không còn đủ hàng để đặt lại.']);
+			}
+
 			$cartItem = CartItem::firstOrNew([
 				'user_id' => Auth::id(),
 				'variant_id' => $item->variant_id,
@@ -311,17 +442,30 @@ class OrderController extends Controller
 
 			$this->authorize('update', $order);
 
-			$validated = $request->validate([
+			$rules = [
 				'address_id' => ['required', 'integer', Rule::exists('user_addresses', 'id')->where(fn($query) => $query->where('user_id', Auth::id()))],
 				'notes' => ['nullable', 'string', 'max:500'],
-			]);
+			];
 
-			$order->update([
+			// Allow payment_method change if order is not yet processing
+			if (!in_array($order->status, [OrderStatus::PROCESSING->value, OrderStatus::PENDING_ASSIGNMENT->value, OrderStatus::ASSIGNED_TO_SHIPPER->value, OrderStatus::DELIVERING->value, OrderStatus::DELIVERED->value, OrderStatus::COMPLETED->value, OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value])) {
+				$rules['payment_method'] = ['nullable', Rule::in(['cod', 'online'])];
+			}
+
+			$validated = $request->validate($rules);
+
+			$updateData = [
 				'shipping_address_id' => $validated['address_id'],
 				'notes' => $validated['notes'] ?? $order->notes,
-			]);
+			];
 
-			return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được cập nhật địa chỉ giao hàng.');
+			if (isset($validated['payment_method'])) {
+				$updateData['payment_method'] = $validated['payment_method'];
+			}
+
+			$order->update($updateData);
+
+			return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được cập nhật thành công.');
 		}
 
 		public function trackDelivery(int $orderId): JsonResponse

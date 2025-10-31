@@ -109,7 +109,9 @@ class OrderControllerTest extends TestCase
             'status' => OrderStatus::DELIVERED->value,
         ]);
 
-        $variant = ProductVariant::factory()->create();
+        $variant = ProductVariant::factory()->create([
+            'stock_quantity' => 10,
+        ]);
 
         OrderItem::factory()->create([
             'order_id' => $order->order_id,
@@ -124,6 +126,48 @@ class OrderControllerTest extends TestCase
             'user_id' => $user->id,
             'variant_id' => $variant->variant_id,
             'quantity' => 1,
+        ]);
+    }
+
+    public function test_user_can_review_delivered_order(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $user->id,
+            'status' => OrderStatus::DELIVERED->value,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('user.orders.review', $order->order_id), [
+            'rating' => 5,
+            'comment' => 'Great product!',
+        ]);
+
+        $response->assertRedirect(route('user.orders.show', $order->order_id));
+        $this->assertDatabaseHas('order_reviews', [
+            'order_id' => $order->order_id,
+            'customer_id' => $user->id,
+            'rating' => 5,
+            'comment' => 'Great product!',
+        ]);
+    }
+
+    public function test_user_cannot_review_pending_order(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $user->id,
+            'status' => OrderStatus::PENDING_CONFIRMATION->value,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('user.orders.review', $order->order_id), [
+            'rating' => 4,
+            'comment' => 'Good',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('review');
+        $this->assertDatabaseMissing('order_reviews', [
+            'order_id' => $order->order_id,
         ]);
     }
 }

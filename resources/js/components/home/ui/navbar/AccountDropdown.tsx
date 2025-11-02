@@ -6,6 +6,7 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
+  avatar_url?: string;
 }
 
 interface AccountDropdownProps {
@@ -75,8 +76,8 @@ export default function AccountDropdown({ user, locale }: AccountDropdownProps) 
         type="button"
         disabled={isLoggingOut}
       >
-        {user.avatar ? (
-          <img src={user.avatar} alt={locale === 'vi' ? 'Ảnh đại diện' : 'Avatar'} className="avatar-img" />
+        {user.avatar_url ? (
+          <img src={user.avatar_url} alt={locale === 'vi' ? 'Ảnh đại diện' : 'Avatar'} className="avatar-img" />
         ) : (
           <i className="bi bi-person-circle" aria-hidden="true"></i>
         )}
@@ -91,7 +92,7 @@ export default function AccountDropdown({ user, locale }: AccountDropdownProps) 
           aria-label={locale === 'vi' ? 'Menu tài khoản' : 'Account menu'}
         >
           <Link
-            href="/profile"
+            href="/user/profile"
             className="account-option"
             role="menuitem"
             onClick={() => setShowMenu(false)}

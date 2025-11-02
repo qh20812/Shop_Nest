@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AddressController;
+use App\Http\Controllers\User\ProfileController;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])
@@ -70,8 +71,8 @@ Route::middleware(['auth', 'verified'])
     });
 
 Route::middleware(['auth', 'verified'])
-    ->prefix('dashboard/addresses')
-    ->as('dashboard.addresses.')
+    ->prefix('user/addresses')
+    ->as('user.addresses.')
     ->group(function () {
         // Danh sách địa chỉ
         Route::get('/', [AddressController::class, 'index'])->name('index');
@@ -82,20 +83,36 @@ Route::middleware(['auth', 'verified'])
         // Lưu địa chỉ mới
         Route::post('/', [AddressController::class, 'store'])->name('store');
 
+        // API divisions
+        Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
+        Route::get('/provinces/{countryId}', [AddressController::class, 'provinces'])->name('provinces');
+        Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
+        Route::get('/wards/{districtId}', [AddressController::class, 'wards'])->name('wards');
+
         // Xem chi tiết địa chỉ
-        Route::get('/{address}', [AddressController::class, 'show'])->name('show');
+        Route::get('/{address}', [AddressController::class, 'show'])
+            ->whereNumber('address')
+            ->name('show');
 
         // Form chỉnh sửa địa chỉ
-        Route::get('/{address}/edit', [AddressController::class, 'edit'])->name('edit');
+        Route::get('/{address}/edit', [AddressController::class, 'edit'])
+            ->whereNumber('address')
+            ->name('edit');
 
         // Cập nhật địa chỉ
-        Route::put('/{address}', [AddressController::class, 'update'])->name('update');
+        Route::put('/{address}', [AddressController::class, 'update'])
+            ->whereNumber('address')
+            ->name('update');
 
         // Xóa địa chỉ
-        Route::delete('/{address}', [AddressController::class, 'destroy'])->name('destroy');
+        Route::delete('/{address}', [AddressController::class, 'destroy'])
+            ->whereNumber('address')
+            ->name('destroy');
 
         // Đặt địa chỉ mặc định
-        Route::patch('/{address}/default', [AddressController::class, 'setDefault'])->name('set-default');
+        Route::patch('/{address}/default', [AddressController::class, 'setDefault'])
+            ->whereNumber('address')
+            ->name('set-default');
     });
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -113,11 +130,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Checkout API routes
     Route::get('/checkout/available-promotions', [CheckoutController::class, 'getAvailablePromotions'])->name('checkout.available-promotions');
-    
-    // Address API routes
-    Route::get('/addresses/provinces', [CheckoutController::class, 'getProvinces'])->name('addresses.provinces');
-    Route::get('/addresses/districts/{provinceId}', [CheckoutController::class, 'getDistricts'])->name('addresses.districts');
-    Route::get('/addresses/wards/{districtId}', [CheckoutController::class, 'getWards'])->name('addresses.wards');
 });
 
     // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
@@ -143,3 +155,10 @@ Route::get('/payments/stripe/cancel', function () {
         'status' => 'canceled',
     ]);
 });
+Route::middleware(['auth', 'verified'])
+    ->prefix('/user/profile')
+    ->as('user.profile.')
+    ->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+    });

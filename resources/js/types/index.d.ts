@@ -40,3 +40,9 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+declare global {
+    function route(name: string, params?: unknown, absolute?: boolean): string;
+}
+
+export {}; // Ensure this file is treated as a module

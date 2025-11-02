@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Enums\AdministrativeDivisionLevel;
 
 /**
  * AdministrativeDivision Model
@@ -29,7 +30,7 @@ class AdministrativeDivision extends Model
 
     protected $casts = [
         'name' => 'array', // Assuming multilingual support
-        'level' => 'integer',
+        'level' => AdministrativeDivisionLevel::class,
     ];
 
     /**
@@ -77,7 +78,7 @@ class AdministrativeDivision extends Model
     /**
      * Scope to get divisions by level
      */
-    public function scopeByLevel($query, $level)
+    public function scopeByLevel($query, AdministrativeDivisionLevel $level)
     {
         return $query->where('level', $level);
     }
@@ -87,7 +88,7 @@ class AdministrativeDivision extends Model
      */
     public function scopeProvinces($query)
     {
-        return $query->where('level', 1);
+        return $query->where('level', AdministrativeDivisionLevel::PROVINCE);
     }
 
     /**
@@ -95,7 +96,7 @@ class AdministrativeDivision extends Model
      */
     public function scopeDistricts($query)
     {
-        return $query->where('level', 2);
+        return $query->where('level', AdministrativeDivisionLevel::DISTRICT);
     }
 
     /**
@@ -103,7 +104,7 @@ class AdministrativeDivision extends Model
      */
     public function scopeWards($query)
     {
-        return $query->where('level', 3);
+        return $query->where('level', AdministrativeDivisionLevel::WARD);
     }
 
     /**
@@ -120,5 +121,13 @@ class AdministrativeDivision extends Model
         }
 
         return implode(' > ', $path);
+    }
+
+    /**
+     * Get the label for the level
+     */
+    public function getLevelLabelAttribute()
+    {
+        return $this->level->labelVi();
     }
 }

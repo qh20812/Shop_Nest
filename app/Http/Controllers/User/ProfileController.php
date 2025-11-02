@@ -29,24 +29,15 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function edit(Request $request): Response
-    {
-        $user = $request->user();
-
-        return Inertia::render('Customer/Profile/Edit', [
-            'user' => $this->presentUser($user),
-        ]);
-    }
-
     public function update(UpdateProfileRequest $request): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
         $data = $request->validated();
 
-        $data['gender'] = $data['gender'] ?? null;
-        $data['date_of_birth'] = $data['date_of_birth'] ?? null;
-        $data['phone_number'] = $data['phone_number'] ?? null;
+    $data['gender'] = ($data['gender'] ?? null) !== '' ? $data['gender'] : null;
+    $data['date_of_birth'] = ($data['date_of_birth'] ?? null) !== '' ? $data['date_of_birth'] : null;
+    $data['phone_number'] = ($data['phone_number'] ?? null) !== '' ? $data['phone_number'] : null;
 
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
@@ -69,7 +60,7 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return Redirect::route('user.profile.edit')->with('success', 'Thông tin cá nhân đã được cập nhật thành công.');
+        return Redirect::route('user.profile.index')->with('success', 'Thông tin cá nhân đã được cập nhật thành công.');
     }
 
     private function presentUser(User $user): array

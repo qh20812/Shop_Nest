@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\SellerRegistrationController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
@@ -44,6 +45,9 @@ Route::post('/language', function () {
     return redirect()->back();
 })->name('language.switch');
 
+// Currency switching route
+Route::post('/currency', CurrencyController::class)->name('currency.switch');
+
 // Protected routes that require authentication
 Route::middleware(['auth', 'verified'])->group(function () {
     // Chatbot API endpoint (moved from api.php to use web session auth)
@@ -71,6 +75,10 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register/seller', [SellerRegistrationController::class, 'store'])
         ->name('seller.register.store');
+});
+
+Route::get('/customer/orders/index', function(){
+    return Inertia::render('Customer/Orders/Index');
 });
 
 require __DIR__ . '/settings.php';

@@ -6,9 +6,13 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\AnalyticsService;
+use App\Services\ExchangeRateService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -17,9 +21,14 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function __construct(private readonly AnalyticsService $analyticsService)
+    {
+    }
+
+    public function index(Request $request): Response
     {
         $admin = Auth::user();
+        [$baseCurrency, $activeCurrency, $conversionRate] = $this->resolveCurrencyContext($request);
         $cacheKey = $admin ? "admin_dashboard_{$admin->id}" : 'admin_dashboard_guest';
 
         $dashboardData = Cache::remember($cacheKey, 900, function () {
@@ -32,7 +41,26 @@ class DashboardController extends Controller
             ];
         });
 
-        return Inertia::render('Admin/Dashboard/Index', $dashboardData);
+        $preparedStats = $dashboardData['stats'] ?? [];
+        $preparedStats['total_revenue'] = $this->convertAmount((float) ($preparedStats['total_revenue'] ?? 0.0), $conversionRate);
+
+        $preparedRevenueChart = $this->convertSeriesValues($dashboardData['revenueChart'] ?? [], $conversionRate);
+        $preparedRecentOrders = $this->convertRecentOrders($dashboardData['recentOrders'] ?? [], $conversionRate, $activeCurrency);
+
+        return Inertia::render('Admin/Dashboard/Index', [
+            ...$dashboardData,
+            'stats' => $preparedStats,
+            'revenueChart' => $preparedRevenueChart,
+            'recentOrders' => $preparedRecentOrders,
+            'currencyCode' => $activeCurrency,
+            'meta' => [
+                'generatedAt' => now(),
+                'locale' => App::getLocale(),
+                'baseCurrency' => $baseCurrency,
+                'conversionRate' => $conversionRate,
+                'currencyCode' => $activeCurrency,
+            ],
+        ]);
     }
 
     private function getStatsCardsData(): array
@@ -45,57 +73,13 @@ class DashboardController extends Controller
         ];
 
         try {
-            $totalRevenueRaw = Order::query()
-                ->where('status', OrderStatus::COMPLETED->value)
-                ->sum('total_amount_base');
-
-            $totalRevenue = round((float) $totalRevenueRaw, 2) + 0.0;
-
-            $pendingStatuses = [
-                OrderStatus::PENDING_CONFIRMATION->value,
-                OrderStatus::PROCESSING->value,
-                OrderStatus::PENDING_ASSIGNMENT->value,
-                OrderStatus::ASSIGNED_TO_SHIPPER->value,
-                OrderStatus::DELIVERING->value,
-            ];
-
-            $pendingOrders = Order::query()
-                ->whereIn('status', $pendingStatuses)
-                ->count();
-
-            $totalOrders = Order::query()->count();
-            $completedOrders = Order::query()
-                ->where('status', OrderStatus::COMPLETED->value)
-                ->count();
-
-            $systemHealth = $totalOrders > 0
-                ? round(($completedOrders / $totalOrders) * 100, 2)
-                : 0.0;
-
-            $now = Carbon::now();
-            $currentStart = (clone $now)->startOfMonth();
-            $previousStart = (clone $currentStart)->subMonth();
-            $previousEnd = (clone $previousStart)->endOfMonth();
-
-            $currentMonthUsers = User::query()
-                ->whereBetween('created_at', [$currentStart, $now])
-                ->count();
-
-            $previousMonthUsers = User::query()
-                ->whereBetween('created_at', [$previousStart, $previousEnd])
-                ->count();
-
-            if ($previousMonthUsers === 0) {
-                $userGrowth = $currentMonthUsers > 0 ? 100.0 : 0.0;
-            } else {
-                $userGrowth = round((($currentMonthUsers - $previousMonthUsers) / $previousMonthUsers) * 100, 2);
-            }
+            $kpis = $this->analyticsService->calculateKPIs()->toArray();
 
             return [
-                'total_revenue' => $totalRevenue,
-                'pending_orders' => $pendingOrders,
-                'user_growth_monthly' => $userGrowth,
-                'system_health' => $systemHealth,
+                'total_revenue' => (float) ($kpis['totalRevenue'] ?? 0.0),
+                'pending_orders' => (int) ($kpis['pendingOrders'] ?? 0),
+                'user_growth_monthly' => (float) ($kpis['userGrowth']['change'] ?? 0.0),
+                'system_health' => (float) ($kpis['systemHealth'] ?? 0.0),
             ];
         } catch (\Throwable $throwable) {
             Log::error('Failed to fetch admin dashboard stats', [
@@ -158,7 +142,10 @@ class DashboardController extends Controller
             $startDate = (clone $endDate)->subDays(6)->startOfDay();
 
             $rawResults = Order::query()
-                ->where('status', OrderStatus::COMPLETED->value)
+                ->whereIn('status', [
+                    OrderStatus::COMPLETED->value,
+                    OrderStatus::DELIVERED->value,
+                ])
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->selectRaw('DATE(created_at) as chart_date, SUM(total_amount_base) as revenue')
                 ->groupBy('chart_date')
@@ -173,7 +160,7 @@ class DashboardController extends Controller
                 return [
                     'date' => $key,
                     'label' => $date->format('d/m'),
-                    'revenue' => (float) ($rawResults[$key] ?? 0),
+                    'revenue' => (float) ($rawResults[$key] ?? 0.0),
                 ];
             })->all();
         } catch (\Throwable $throwable) {
@@ -221,5 +208,57 @@ class DashboardController extends Controller
 
             return [];
         }
+    }
+
+    private function resolveCurrencyContext(Request $request): array
+    {
+        $baseCurrency = strtoupper(config('services.exchange_rate.base_currency', 'USD'));
+        $defaultCurrency = App::getLocale() === 'vi' ? 'VND' : $baseCurrency;
+        $activeCurrency = strtoupper((string) $request->session()->get('currency', $defaultCurrency));
+
+        if ($activeCurrency === '') {
+            $activeCurrency = $baseCurrency;
+        }
+
+        $conversionRate = $activeCurrency === $baseCurrency
+            ? 1.0
+            : max(ExchangeRateService::getRate($baseCurrency, $activeCurrency), 0.0000001);
+
+        return [$baseCurrency, $activeCurrency, $conversionRate];
+    }
+
+    private function convertAmount(float $amount, float $conversionRate): float
+    {
+        return round($amount * $conversionRate, 2);
+    }
+
+    private function convertSeriesValues(array $series, float $conversionRate): array
+    {
+        return array_map(function (array $point) use ($conversionRate) {
+            if (isset($point['value'])) {
+                $point['value'] = $this->convertAmount((float) $point['value'], $conversionRate);
+            }
+
+            if (isset($point['revenue'])) {
+                $point['revenue'] = $this->convertAmount((float) $point['revenue'], $conversionRate);
+            }
+
+            return $point;
+        }, $series);
+    }
+
+    private function convertRecentOrders(iterable $orders, float $conversionRate, string $currencyCode): array
+    {
+        return collect($orders)
+            ->map(function ($order) use ($conversionRate, $currencyCode) {
+                $orderArray = $order instanceof Order ? $order->toArray() : (array) $order;
+                $baseAmount = (float) ($orderArray['total_amount_base'] ?? $orderArray['total_amount'] ?? 0.0);
+
+                $orderArray['total_amount_converted'] = $this->convertAmount($baseAmount, $conversionRate);
+                $orderArray['currency_code'] = $currencyCode;
+
+                return $orderArray;
+            })
+            ->all();
     }
 }

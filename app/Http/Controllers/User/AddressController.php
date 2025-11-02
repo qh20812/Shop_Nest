@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Enums\AdministrativeDivisionLevel;
+use App\Models\AdministrativeDivision;
+use App\Models\Country;
 use App\Models\UserAddress;
 
 class AddressController extends Controller
@@ -18,7 +21,7 @@ class AddressController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        return Inertia::render('User/Dashboard/Addresses/Index', [
+        return Inertia::render('Customer/Profile/Address', [
             'addresses' => $addresses,
         ]);
     }
@@ -26,19 +29,20 @@ class AddressController extends Controller
     // 2. Form tạo địa chỉ mới
     public function create()
     {
-        return Inertia::render('User/Dashboard/Addresses/Create');
+        return Inertia::render('');
     }
 
     // 3. Lưu địa chỉ mới
     public function store(Request $request)
     {
         $rules = [
-            'recipient_name' => 'required|string|max:100',// Tên người nhận
-            'phone' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
-            'address_line' => 'required|string|max:255',// Địa chỉ chi tiết
+            'country_id' => 'required|exists:countries,id',
+            'full_name' => 'required|string|max:100',// Tên người nhận
+            'phone_number' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
+            'street_address' => 'required|string|max:255',// Địa chỉ chi tiết
             'province_id' => 'required|exists:administrative_divisions,id',// ID tỉnh
             'district_id' => 'required|exists:administrative_divisions,id',// ID quận
-            'ward_id' => 'required|exists:administrative_divisions,id',// ID phường
+            'ward_id' => 'nullable|exists:administrative_divisions,id',// ID phường
             'postal_code' => 'nullable|string|max:10',// Mã bưu chính
             'is_default' => 'boolean',// Địa chỉ mặc định
         ];
@@ -49,17 +53,18 @@ class AddressController extends Controller
         }
 
         Auth::user()->addresses()->create([
-            'recipient_name' => $validated['recipient_name'],// Tên người nhận
-            'phone' => $validated['phone'],// Số điện thoại
-            'address_line' => $validated['address_line'],// Địa chỉ chi tiết
+            'country_id' => $validated['country_id'],
+            'full_name' => $validated['full_name'],// Tên người nhận
+            'phone_number' => $validated['phone_number'],// Số điện thoại
+            'street_address' => $validated['street_address'],// Địa chỉ chi tiết
             'province_id' => $validated['province_id'],// ID tỉnh
             'district_id' => $validated['district_id'],// ID quận
-            'ward_id' => $validated['ward_id'],// ID phường
+            'ward_id' => $validated['ward_id'] ?? null,// ID phường
             'postal_code' => $validated['postal_code'] ?? null,
             'is_default' => $validated['is_default'] ?? false,
         ]);
 
-        return redirect()->route('dashboard.addresses.index')// Quay lại danh sách địa chỉ
+        return redirect()->route('user.addresses.index')// Quay lại danh sách địa chỉ
             ->with('success', 'Address created successfully.');// Thông báo thành công
     }
 
@@ -95,33 +100,35 @@ abort(403);// Kiểm tra quyền truy cập
         }// Kiểm tra quyền truy cập
 
         $rules = [
-            'recipient_name' => 'required|string|max:100',// Tên người nhận
-            'phone' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
-            'address_line' => 'required|string|max:255',// Địa chỉ chi tiết
+            'country_id' => 'required|exists:countries,id',
+            'full_name' => 'required|string|max:100',// Tên người nhận
+            'phone_number' => 'required|string|regex:/^([0-9\s\-\+\(\)]*)$/|min:10|max:15',// Số điện thoại
+            'street_address' => 'required|string|max:255',// Địa chỉ chi tiết
             'province_id' => 'required|exists:administrative_divisions,id',// ID tỉnh
             'district_id' => 'required|exists:administrative_divisions,id',// ID quận
-            'ward_id' => 'required|exists:administrative_divisions,id',// ID phường
+            'ward_id' => 'nullable|exists:administrative_divisions,id',// ID phường
             'postal_code' => 'nullable|string|max:10',// Mã bưu chính
             'is_default' => 'boolean',// Địa chỉ mặc định
         ];
         $validated = $request->validate($rules);
 
-        if ($request->is_default && !$address->is_default) {
-            Auth::user()->addresses()->update(['is_default' => false]);
+        if ($validated['is_default']) {
+            Auth::user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         }// Nếu đặt làm mặc định, bỏ chọn các địa chỉ khác
 
         $address->update([
-            'recipient_name' => $validated['recipient_name'],// Tên người nhận
-            'phone' => $validated['phone'],// Số điện thoại
-            'address_line' => $validated['address_line'],// Địa chỉ chi tiết
+            'country_id' => $validated['country_id'],
+            'full_name' => $validated['full_name'],// Tên người nhận
+            'phone_number' => $validated['phone_number'],// Số điện thoại
+            'street_address' => $validated['street_address'],// Địa chỉ chi tiết
             'province_id' => $validated['province_id'],// ID tỉnh
             'district_id' => $validated['district_id'],// ID quận
-            'ward_id' => $validated['ward_id'],// ID phường
+            'ward_id' => $validated['ward_id'] ?? null,// ID phường
             'postal_code' => $validated['postal_code'] ?? null,// Mã bưu chính
             'is_default' => $validated['is_default'] ?? false,// Địa chỉ mặc định
         ]);
 
-        return redirect()->route('dashboard.addresses.index')// Quay lại danh sách địa chỉ
+        return redirect()->route('user.addresses.index')// Quay lại danh sách địa chỉ
             ->with('success', 'Address updated successfully.');// Thông báo thành công
     }
 
@@ -144,7 +151,7 @@ abort(403);// Kiểm tra quyền truy cập
 
         $address->delete();// Xóa địa chỉ
 
-        return redirect()->route('dashboard.addresses.index')// Quay lại danh sách địa chỉ
+        return redirect()->route('user.addresses.index')// Quay lại danh sách địa chỉ
 ->with('success', 'Address deleted successfully.');// Thông báo thành công
     }
 
@@ -161,4 +168,81 @@ abort(403);// Kiểm tra quyền truy cập
         return redirect()->back()
             ->with('success', 'Default address updated successfully.');
     }// Đặt địa chỉ làm mặc định
+
+    // 9. Lấy danh sách quốc gia
+    public function countries()
+    {
+        $countries = Country::orderBy('name->en')->get(['id', 'name', 'iso_code_2']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $countries->map(function ($country) {
+                return [
+                    'id' => $country->id,
+                    'name' => $country->name['en'] ?? $country->name,
+                    'iso_code_2' => $country->iso_code_2,
+                ];
+            }),
+        ]);
+    }
+
+    // 10. Lấy danh sách tỉnh/thành phố theo quốc gia
+    public function provinces($countryId)
+    {
+        $provinces = AdministrativeDivision::where('country_id', $countryId)
+            ->where('level', AdministrativeDivisionLevel::PROVINCE)
+            ->orderBy('name->vi')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $provinces->map(function ($province) {
+                return [
+                    'id' => $province->id,
+                    'name' => $province->name['vi'] ?? $province->name,
+                    'code' => $province->code,
+                ];
+            }),
+        ]);
+    }
+
+    // 10. Lấy danh sách quận/huyện theo tỉnh
+    public function districts($provinceId)
+    {
+        $districts = AdministrativeDivision::where('parent_id', $provinceId)
+            ->where('level', AdministrativeDivisionLevel::DISTRICT)
+            ->orderBy('name->vi')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $districts->map(function ($district) {
+                return [
+                    'id' => $district->id,
+                    'name' => $district->name['vi'] ?? $district->name,
+                    'code' => $district->code,
+                ];
+            }),
+        ]);
+    }
+
+    // 11. Lấy danh sách phường/xã theo quận
+    public function wards($districtId)
+    {
+        $wards = AdministrativeDivision::where('parent_id', $districtId)
+            ->where('level', AdministrativeDivisionLevel::WARD)
+            ->orderBy('name->vi')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $wards->map(function ($ward) {
+                return [
+                    'id' => $ward->id,
+                    'name' => $ward->name['vi'] ?? $ward->name,
+                    'code' => $ward->code,
+                ];
+            }),
+        ]);
+    }
 }

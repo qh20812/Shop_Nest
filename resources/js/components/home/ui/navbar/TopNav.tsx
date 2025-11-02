@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react'
 import LanguageDropdown from './LanguageDropdown'
 import CurrencyDropdown from './CurrencyDropdown'
 import AccountDropdown from './AccountDropdown'
+import { useTranslation } from '@/lib//i18n';
 
 interface User {
   id: number;
@@ -19,24 +20,25 @@ interface TopNavProps {
 }
 
 export default function TopNav({ isLoggedIn, user, locale, currency }: TopNavProps) {
+  const {t} = useTranslation();
   return (
     <div className="top-nav">
       <div className="top-nav-left">
         <a href="#" className="seller-link">
           <i className="bi bi-shop"></i>
-          Kênh Người Bán
+          {t('Become a Seller')}
         </a>
       </div>
       <div className="top-nav-right">
         {isLoggedIn && (
           <Link href="/notifications" className="nav-item notification-item">
             <i className="bi bi-bell"></i>
-            {locale === 'vi' ? 'Thông báo' : 'Notifications'}
+            {t('Notifications')}
           </Link>
         )}
         <a href="#" className="nav-item help-item">
           <i className="bi bi-question-circle"></i>
-          Hỗ trợ
+          {t('Help')}
         </a>
         <LanguageDropdown locale={locale} />
         <CurrencyDropdown currency={currency} />
@@ -44,7 +46,7 @@ export default function TopNav({ isLoggedIn, user, locale, currency }: TopNavPro
           <AccountDropdown user={user} locale={locale} />
         ) : (
           <Link href="/login" className="nav-item login-btn">
-            {locale === 'vi' ? 'Đăng nhập' : 'Login'}
+            {t('Login')}
           </Link>
         )}
       </div>

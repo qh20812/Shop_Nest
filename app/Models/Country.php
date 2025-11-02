@@ -21,10 +21,12 @@ class Country extends Model
     protected $fillable = [
         'name',
         'iso_code_2',
+        'division_structure',
     ];
 
     protected $casts = [
         'name' => 'array', // Assuming multilingual support
+        'division_structure' => 'array', // Assuming division structure is stored as JSON
     ];
 
     /**
@@ -69,5 +71,22 @@ class Country extends Model
         }
 
         return is_array($this->name) ? ($this->name['en'] ?? reset($this->name)) : $this->name;
+    }
+    public function getDivisionStructure()
+    {
+        return $this->division_structure ?? match ($this->iso_code_2) {
+            'VN' => [
+                'levels' => ['province', 'commune'],
+                'labels' => ['vi' => ['Tỉnh', 'Xã/Phường'], 'en' => ['Province', 'Commune']]
+            ],
+            'US' => [
+                'levels' => ['state', 'county', 'city'],
+                'labels' => ['en' => ['State', 'County', 'City']]
+            ],
+            default => [
+                'levels' => ['province', 'district', 'ward'],
+                'labels' => ['en' => ['Province', 'District', 'Ward']]
+            ],
+        };
     }
 }

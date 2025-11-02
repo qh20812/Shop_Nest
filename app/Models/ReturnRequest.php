@@ -33,7 +33,8 @@ class ReturnRequest extends Model
         'type',
         'admin_note', // sửa thành admin_note để khớp với controller
         'processed_at',
-        'refunded_at'
+        'refunded_at',
+        'proof_attachment_path',
     ];
 
     protected $casts = [

@@ -5,7 +5,7 @@ import Insights from '@/Components/ui/Insights';
 import Avatar from '@/Components/ui/Avatar';
 import { useTranslation } from '../../../lib/i18n';
 import { usePage } from '@inertiajs/react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, resolveCurrencyCode } from '@/lib/utils';
 // import '@/../css/app.css';
 import '@/../css/Page.css';
 import {Head} from '@inertiajs/react';
@@ -39,12 +39,15 @@ interface Customer {
 }
 
 interface Order {
-  id: number;
+  id?: number;
+  order_id?: number;
   order_number?: string;
   created_at: string;
   status: string;
   total_amount?: number | string;
   total_amount_base?: number | string;
+  total_amount_converted?: number;
+  currency_code?: string;
   customer: Customer;
 }
 
@@ -52,11 +55,6 @@ interface User {
   id: number;
   username: string;
   created_at: string;
-}
-
-interface Currency {
-  code: string;
-  rates: Record<string, number>;
 }
 
 type OrderStatusKey =
@@ -82,24 +80,47 @@ interface UserGrowthChartPoint {
   users: number;
 }
 
-interface DashboardProps {
-  stats: Stats;
-  recentOrders: Order[];
-  newUsers: User[];
-  currency: Currency;
-  revenueChart: RevenueChartPoint[];
-  userGrowthChart: UserGrowthChartPoint[];
-  [key: string]: unknown;
+interface DashboardProps extends Record<string, unknown> {
+  stats?: Stats;
+  recentOrders?: Order[];
+  newUsers?: User[];
+  revenueChart?: RevenueChartPoint[];
+  userGrowthChart?: UserGrowthChartPoint[];
+  currency?: { code?: string; rates?: Record<string, number> };
+  currencyCode?: string;
+  meta?: {
+    currencyCode?: string;
+    baseCurrency?: string;
+    conversionRate?: number;
+    locale?: string;
+    generatedAt?: string;
+  };
 }
 
 export default function Index() {
   const { t, locale } = useTranslation();
-  const { stats, recentOrders, newUsers, currency, revenueChart, userGrowthChart } = usePage<DashboardProps>().props;
+  const page = usePage<DashboardProps>();
+  const props = page.props;
 
-  const currencyCode = currency?.code ?? 'USD';
-  const currencyRates = currency?.rates ?? {};
-  const revenueChartData = Array.isArray(revenueChart) ? revenueChart : [];
-  const userGrowthChartData = Array.isArray(userGrowthChart) ? userGrowthChart : [];
+  const stats = props.stats ?? {
+    total_revenue: 0,
+    pending_orders: 0,
+    user_growth_monthly: 0,
+    system_health: 0,
+  };
+
+  const recentOrders = Array.isArray(props.recentOrders) ? props.recentOrders : [];
+  const newUsers = Array.isArray(props.newUsers) ? props.newUsers : [];
+  const revenueChart = Array.isArray(props.revenueChart) ? props.revenueChart : [];
+  const userGrowthChart = Array.isArray(props.userGrowthChart) ? props.userGrowthChart : [];
+
+  const currencyCode = props.currencyCode
+    ?? props.meta?.currencyCode
+    ?? resolveCurrencyCode(props.currency)
+    ?? 'USD';
+
+  const revenueChartData = revenueChart;
+  const userGrowthChartData = userGrowthChart;
 
   const breadcrumbs = [
     { label: t('Dashboard'), href: '/admin/dashboard' },
@@ -129,17 +150,17 @@ export default function Index() {
     {
       icon: 'bx-dollar-circle',
       value: formatCurrency(stats.total_revenue, {
-        from: 'USD',
+        from: currencyCode,
         to: currencyCode,
-        rates: currencyRates,
+        rates: {},
         locale,
         abbreviate: true
       }),
       label: t('Total Revenue'),
       tooltip: formatCurrency(stats.total_revenue, {
-        from: 'USD',
+        from: currencyCode,
         to: currencyCode,
-        rates: currencyRates,
+        rates: {},
         locale
       })
     },
@@ -199,10 +220,10 @@ export default function Index() {
               <LineChart data={revenueChartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(value: number) => formatCurrency(value, { from: 'USD', to: currencyCode, rates: currencyRates, locale, abbreviate: true })} width={80} />
+                <YAxis tickFormatter={(value: number) => formatCurrency(value, { from: currencyCode, to: currencyCode, rates: {}, locale, abbreviate: true })} width={80} />
                 <Tooltip
                   formatter={(value: number) => [
-                    formatCurrency(value, { from: 'USD', to: currencyCode, rates: currencyRates, locale }),
+                    formatCurrency(value, { from: currencyCode, to: currencyCode, rates: {}, locale }),
                     t('Revenue'),
                   ]}
                   labelFormatter={(label: string) => `${t('Date')}: ${label}`}
@@ -254,6 +275,7 @@ export default function Index() {
               {recentOrders && recentOrders.length > 0 ? (
                 recentOrders.map((order) => {
                   const { className, label } = getOrderStatus(order.status);
+                  const rowKey = order.id ?? order.order_id ?? order.order_number ?? order.created_at;
                   
                   // Create safe user object for Avatar component
                   const userForAvatar = order.customer ? {
@@ -277,8 +299,13 @@ export default function Index() {
                     userForAvatar.avatar = `/storage/${userForAvatar.avatar}`;
                   }
 
+                  const orderCurrency = order.currency_code ?? currencyCode;
+                  const totalForDisplay = typeof order.total_amount_converted === 'number'
+                    ? order.total_amount_converted
+                    : Number(order.total_amount ?? order.total_amount_base ?? 0);
+
                   return (
-                    <tr key={order.id}>
+                    <tr key={String(rowKey)}>
                       <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Avatar user={userForAvatar} size={36} />
                         <p style={{ margin: 0 }}>{userForAvatar.username}</p>
@@ -290,10 +317,10 @@ export default function Index() {
                         </span>
                       </td>
                       <td>
-                        {formatCurrency(Number(order.total_amount ?? order.total_amount_base ?? 0), {
-                          from: 'USD',
-                          to: currencyCode,
-                          rates: currencyRates,
+                        {formatCurrency(totalForDisplay, {
+                          from: orderCurrency,
+                          to: orderCurrency,
+                          rates: {},
                           locale,
                         })}
                       </td>

@@ -104,7 +104,7 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
   const fallbackActions: PaymentResultAction[] = (() => {
     if (normalizedStatus === 'succeeded') {
       return [
-        { label: 'Xem lịch sử đơn hàng', href: '/dashboard/orders', primary: true },
+        { label: 'Xem lịch sử đơn hàng', href: '/user/orders', primary: true },
         { label: 'Tiếp tục mua sắm', href: '/' },
       ];
     }

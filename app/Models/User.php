@@ -36,6 +36,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'provider',
         'provider_id',
         'avatar',
+        'gender',
+        'date_of_birth',
     ];
 
     /**
@@ -59,6 +61,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'date_of_birth' => 'date',
         ];
     }
     public function role(): BelongsToMany

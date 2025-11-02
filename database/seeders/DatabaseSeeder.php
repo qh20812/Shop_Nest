@@ -9,11 +9,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            CountrySeeder::class,
+            AdministrativeDivisionSeeder::class,
+
             // 1. Core & Auth
             RoleSeeder::class,
-            PermissionSeeder::class, // <-- Mới
+            PermissionSeeder::class,
             UserSeeder::class,
-            ShipperSeeder::class, // <-- Add ShipperSeeder after UserSeeder
+            ShipperSeeder::class,
 
             // 2. Product Catalog
             CategorySeeder::class,

@@ -3,7 +3,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import '@/../css/Page.css';
 import Avatar from '@/Components/ui/Avatar';
 import { useTranslation } from '@/lib/i18n';
-import LanguageSwitcher from './LanguageSwitcher';
+import LanguageSwitcher from '@/Components/ui/LanguageSwitcher';
+import CurrencyDropdown from '@/Components/ui/CurrencyDropdown';
 
 interface User {
   id: number;
@@ -82,6 +83,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           </button>
         </div>
       </form>
+      <CurrencyDropdown />
       <LanguageSwitcher />
       <a href="#" className="notif">
         <i className='bx bx-bell'></i>

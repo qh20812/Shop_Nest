@@ -11,9 +11,9 @@ class OrderCancelled
     use Dispatchable, SerializesModels;
 
     public Order $order;
-    public string $reason;
+    public ?string $reason;
 
-    public function __construct(Order $order, string $reason)
+    public function __construct(Order $order, ?string $reason = null)
     {
         $this->order = $order;
         $this->reason = $reason;

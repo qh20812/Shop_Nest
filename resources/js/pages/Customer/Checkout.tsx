@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { usePage, router } from '@inertiajs/react';
+import { usePage, router, Head } from '@inertiajs/react';
 import axios from 'axios';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import CartTitle from '@/Components/cart/CartTitle';
@@ -320,6 +320,7 @@ export default function Checkout() {
 
   return (
     <HomeLayout>
+      <Head title={t("Checkout")} />
       <div className="max-w-6xl mx-auto px-4 py-6 font-['Poppins',sans-serif]">
         <CartTitle title={t("Checkout Order")} />
 

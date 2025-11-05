@@ -4,6 +4,7 @@ import AuthButton from './AuthButton';
 import AuthSocialIcons from './AuthSocialIcons';
 import AuthInput from './AuthInput';
 import { useTranslation } from '../../lib/i18n';
+import axios from 'axios';
 
 export default function SignInForm() {
   const { data, setData, post, processing, errors, reset } = useForm({
@@ -12,10 +13,21 @@ export default function SignInForm() {
     remember: false,
   });
 
+  const getCsrfToken = (): string | null => {
+    const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (metaToken) return metaToken;
+    const cookieToken = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1];
+    return cookieToken ? decodeURIComponent(cookieToken) : null;
+  };
+
   const { t } = useTranslation();
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const token = getCsrfToken();
+    if (token) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    }
     post('/login', {
       onFinish: () => reset('password'),
     });

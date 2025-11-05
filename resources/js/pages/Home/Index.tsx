@@ -60,7 +60,7 @@ export default function Home({ categories, flashSale, dailyDiscover }: HomeProps
 
     return (
         <HomeLayout>
-            <Head title={`ShopNest - ${t('Home')}`} />
+            <Head title={`${t('Home')}`} />
             <div className="home-content">
                 <CategoryCarousel categories={categories} />
                 <FlashSaleSection flashSale={flashSale} />

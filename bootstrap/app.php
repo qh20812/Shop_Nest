@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function(){
             Route::middleware('web')->group(base_path('routes/admin.php'));
@@ -34,10 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
-        // Exclude CSRF for Buy Now routes
+        // Exclude CSRF for Buy Now routes and login
         $middleware->validateCsrfTokens(except: [
             'product/*/buy-now',
             'buy-now/checkout/*',
+            'login',
         ]);
 
         $middleware->web(append: [

@@ -74,6 +74,7 @@ class HandleInertiaRequests extends Middleware
                 'rates' => $availableRates,
                 'available' => $availableCodes,
             ],
+            'csrfToken' => csrf_token(),
         ];
     }
 

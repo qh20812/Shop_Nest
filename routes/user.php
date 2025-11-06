@@ -133,7 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
     // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
-    Route::middleware(['web'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+    Route::middleware(['web', 'auth'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
         Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])->name('product.buy.now');
         Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])->name('product.addToCart');
         Route::get('/buy-now/checkout/{orderId}', [DetailController::class, 'showBuyNowCheckout'])->name('buy.now.checkout.show');
@@ -146,6 +146,12 @@ Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
 Route::post('/webhooks/paypal', [PaymentWebhookController::class, 'paypal'])
     ->middleware('throttle:60,1')
     ->name('webhooks.paypal');
+Route::post('/webhooks/vnpay', [PaymentWebhookController::class, 'vnpay'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.vnpay');
+Route::post('/webhooks/momo', [PaymentWebhookController::class, 'momo'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.momo');
 
 Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
     ->middleware('throttle:30,1');

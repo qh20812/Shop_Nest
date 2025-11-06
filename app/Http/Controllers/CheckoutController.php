@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\Promotion;
-use App\Models\PromotionCode;
-use App\Services\ExchangeRateService;
+use App\Models\User;
+use App\Services\PaymentService;
+use App\Support\Localization;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 class CheckoutController extends Controller
 {
@@ -22,233 +28,287 @@ class CheckoutController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        
-        // Get cart items with full product and variant details
-        $cartItems = CartItem::with([
-            'variant.product.images',
-            'variant.product.category',
-        ])
+        if (!$user instanceof User) {
+            abort(403);
+        }
+
+        $locale = app()->getLocale();
+
+        $promotion = session('applied_promotion', null);
+        $addressPayload = $this->buildAddressPayload($user);
+
+        $cartItems = CartItem::with(['variant.product.images'])
             ->where('user_id', $user->id)
             ->get();
 
-        // If cart is empty, still render page (component handles empty state)
         if ($cartItems->isEmpty()) {
             return Inertia::render('Customer/Checkout', [
                 'cartItems' => [],
                 'subtotal' => 0,
                 'shipping' => 0,
-                'tax' => 0,
                 'discount' => 0,
                 'total' => 0,
-                'addresses' => [],
-                'promotion' => null,
+                'addresses' => $addressPayload,
+                'promotion' => $promotion,
+                'paymentMethods' => PaymentService::list(),
+                'availablePromotions' => [],
+                'ineligiblePromotions' => [],
             ]);
         }
 
-        // Calculate subtotal
-        $subtotal = $cartItems->sum(function ($item) {
-            $price = $item->variant->sale_price ?? $item->variant->price;
-            return $item->quantity * $price;
+        $cartItems = $cartItems
+            ->filter(fn (CartItem $item) => $item->variant && $item->variant->product)
+            ->values();
+
+        if ($cartItems->isEmpty()) {
+            Log::warning('checkout.index.empty_after_filter', ['user_id' => $user->id]);
+
+            return Inertia::render('Customer/Checkout', [
+                'cartItems' => [],
+                'subtotal' => 0,
+                'shipping' => 0,
+                'discount' => 0,
+                'total' => 0,
+                'addresses' => $addressPayload,
+                'promotion' => $promotion,
+                'paymentMethods' => PaymentService::list(),
+                'availablePromotions' => [],
+                'ineligiblePromotions' => [],
+            ]);
+        }
+
+        $subtotal = $cartItems->sum(function (CartItem $item) use ($locale) {
+            $variant = $item->variant;
+            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+
+            return $item->quantity * $unitPrice;
         });
 
-        // Calculate shipping fee
         $shipping = $this->calculateShippingFee($subtotal);
-        
-        // Calculate tax (example: 10% tax)
-        $tax = $subtotal * 0.0; // Set to 0 or apply tax logic as needed
-        
-        // Get applied promotion/discount if exists
-        $promotion = session('applied_promotion', null);
-        $discount = 0;
-        
-        if ($promotion) {
-            // Calculate discount based on promotion type
-            if (isset($promotion['type']) && $promotion['type'] === 'percentage') {
-                $discount = $subtotal * ($promotion['discount'] / 100);
-            } elseif (isset($promotion['type']) && $promotion['type'] === 'fixed') {
-                $discount = $promotion['discount'];
-            } else {
-                // Default: treat as percentage
-                $discount = $subtotal * ($promotion['discount'] / 100);
-            }
-        }
-        
-        // Calculate total
-        $total = $subtotal + $shipping + $tax - $discount;
-        
-        // Get user addresses
-        $addresses = $user->addresses()
-            ->with(['province', 'district', 'ward'])
-            ->orderBy('is_default', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($address) {
-                return [
-                    'id' => $address->id,
-                    'name' => $address->recipient_name ?? 'Recipient',
-                    'phone' => $address->phone ?? '',
-                    'address' => $address->address_line ?? '',
-                    'province' => $address->province ? $address->province->name : '',
-                    'district' => $address->district ? $address->district->name : '',
-                    'ward' => $address->ward ? $address->ward->name : '',
-                    'province_id' => $address->province_id,
-                    'district_id' => $address->district_id,
-                    'ward_id' => $address->ward_id,
-                    'is_default' => (bool) $address->is_default,
-                ];
-            });
+        $discount = $this->calculatePromotionDiscount($promotion, $subtotal);
+        $total = max(0, $subtotal + $shipping - $discount);
 
-        // Format cart items for frontend
-        $formattedCartItems = $cartItems->map(function ($item) {
+        $formattedCartItems = $cartItems->map(function (CartItem $item) use ($locale) {
+            $variant = $item->variant;
+            $product = $variant->product;
+            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+            $productName = Localization::resolveField($product->name ?? '', $locale, 'Product');
+
             return [
-                'id' => $item->id,
-                'product_name' => $item->variant->product->name ?? 'Product',
-                'quantity' => $item->quantity,
-                'total_price' => $item->quantity * ($item->variant->sale_price ?? $item->variant->price),
+                'id' => (int) $item->getKey(),
+                'product_name' => $productName,
+                'quantity' => (int) $item->quantity,
+                'total_price' => $item->quantity * $unitPrice,
                 'variant' => [
-                    'id' => $item->variant->id,
-                    'sku' => $item->variant->sku,
-                    'size' => $item->variant->size ?? null,
-                    'color' => $item->variant->color ?? null,
-                    'price' => $item->variant->price,
-                    'sale_price' => $item->variant->sale_price ?? null,
+                    'id' => (int) $variant->getKey(),
+                    'sku' => $variant->sku,
+                    'size' => $variant->size ?? null,
+                    'color' => $variant->color ?? null,
+                    'price' => Localization::resolveNumber($variant->price, $locale),
+                    'sale_price' => $variant->sale_price !== null
+                        ? Localization::resolveNumber($variant->sale_price, $locale)
+                        : null,
                     'product' => [
-                        'id' => $item->variant->product->id,
-                        'name' => $item->variant->product->name,
-                        'slug' => $item->variant->product->slug,
-                        'images' => $item->variant->product->images->map(function ($image) {
+                        'id' => (int) $product->id,
+                        'name' => $productName,
+                        'slug' => $product->slug,
+                        'images' => $product->images->map(function ($image) {
                             return [
-                                'id' => $image->id,
+                                'id' => (int) $image->id,
                                 'image_path' => $image->image_path,
                             ];
-                        }),
+                        })->values()->all(),
                     ],
                 ],
             ];
         });
 
-        // Get available promotions
         $promotionsData = $this->getAvailablePromotions(Request::create('/checkout/available-promotions', 'GET', []))->getData();
 
         return Inertia::render('Customer/Checkout', [
             'cartItems' => $formattedCartItems,
             'subtotal' => round($subtotal, 2),
             'shipping' => round($shipping, 2),
-            'tax' => round($tax, 2),
             'discount' => round($discount, 2),
             'total' => round($total, 2),
-            'addresses' => $addresses,
+            'addresses' => $addressPayload,
             'promotion' => $promotion,
             'availablePromotions' => $promotionsData->available_promotions ?? [],
             'ineligiblePromotions' => $promotionsData->ineligible_promotions ?? [],
-            'availableCurrencies' => ExchangeRateService::getSupportedCurrencies(),
+            'paymentMethods' => PaymentService::list(),
         ]);
     }
 
     /**
-     * Process the checkout and create a new order with multi-currency support.
+     * Process the checkout and create a new order (VND only).
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): JsonResponse
     {
-        $supportedCurrencies = implode(',', ExchangeRateService::getSupportedCurrencies());
-        
-        $request->validate([
-            'currency' => "required|string|in:{$supportedCurrencies}",
-            'shipping_address_id' => 'required|exists:user_addresses,id',
-            'payment_method' => 'required|integer|in:1,2,3',
-            'notes' => 'nullable|string|max:500',
+        $user = Auth::user();
+        if (!$user instanceof User) {
+            abort(403);
+        }
+
+        $locale = app()->getLocale();
+
+        $data = $request->validate([
+            'provider' => ['required', 'string', Rule::in(['stripe', 'paypal', 'vnpay', 'momo'])],
+            'address_id' => ['required', 'integer', 'exists:user_addresses,id'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $address = $user->addresses()->where('id', $data['address_id'])->first();
+
+        if (!$address) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected address is not available.',
+            ], 422);
+        }
+
+        $cartItems = CartItem::with('variant.product')
+            ->where('user_id', $user->id)
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your cart is empty.',
+            ], 400);
+        }
+
+        $cartItems = $cartItems
+            ->filter(fn (CartItem $item) => $item->variant && $item->variant->product)
+            ->values();
+
+        if ($cartItems->isEmpty()) {
+            Log::warning('checkout.store.empty_after_filter', ['user_id' => $user->id]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process cart items. Please refresh and try again.',
+            ], 400);
+        }
+
+        $promotion = session('applied_promotion', null);
+
+        $subtotal = $cartItems->sum(function (CartItem $item) use ($locale) {
+            $variant = $item->variant;
+            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+
+            return $item->quantity * $unitPrice;
+        });
+
+        $shippingFee = $this->calculateShippingFee($subtotal);
+        $discountAmount = $this->calculatePromotionDiscount($promotion, $subtotal);
+        $totalAmount = max(0, $subtotal + $shippingFee - $discountAmount);
+
         DB::beginTransaction();
-        
+
         try {
-            // Get user's cart items
-            $cartItems = CartItem::with(['variant.product'])
-                ->where('user_id', Auth::id())
-                ->get();
-
-            if ($cartItems->isEmpty()) {
-                return redirect()->route('cart.index')
-                    ->with('error', 'Your cart is empty.');
-            }
-
-            // Calculate order totals
-            $subtotal = $cartItems->sum(function ($item) {
-                return $item->quantity * $item->variant->price;
-            });
-
-            $shippingFee = $this->calculateShippingFee($subtotal);
-            $discountAmount = 0; // Apply discount logic here if needed
-            $totalAmount = $subtotal + $shippingFee - $discountAmount;
-
-            // Get currency and exchange rate
-            $currency = $request->input('currency');
-            $exchangeRate = $this->getExchangeRate($currency);
-            
-            // Calculate base currency amount (USD)
-            $totalAmountBase = $this->convertToBaseCurrency($totalAmount, $currency);
-
-            // Create the order
             $order = Order::create([
-                'customer_id' => Auth::id(),
+                'customer_id' => $user->id,
                 'order_number' => $this->generateOrderNumber(),
                 'sub_total' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'discount_amount' => $discountAmount,
                 'total_amount' => $totalAmount,
-                'currency' => $currency,
-                'exchange_rate' => $exchangeRate,
-                'total_amount_base' => $totalAmountBase,
-                'status' => 0, // Pending
-                'payment_method' => $request->input('payment_method'),
-                'payment_status' => 0, // Unpaid
-                'shipping_address_id' => $request->input('shipping_address_id'),
-                'notes' => $request->input('notes'),
+                'currency' => 'VND',
+                'exchange_rate' => 1,
+                'total_amount_base' => $totalAmount,
+                'status' => OrderStatus::PENDING_CONFIRMATION,
+                'payment_method' => 3,
+                'payment_status' => PaymentStatus::UNPAID,
+                'shipping_address_id' => $address->id,
+                'notes' => isset($data['notes']) ? trim($data['notes']) : null,
             ]);
 
-            // Create order items
             foreach ($cartItems as $cartItem) {
+                $variant = $cartItem->variant;
+                $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+                $lineTotal = $unitPrice * $cartItem->quantity;
+
                 $order->items()->create([
-                    'variant_id' => $cartItem->variant_id,
+                    'variant_id' => $variant->getKey(),
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->variant->price,
-                    'total_price' => $cartItem->quantity * $cartItem->variant->price,
-                    'original_currency' => $currency,
-                    'original_unit_price' => $cartItem->variant->price,
-                    'original_total_price' => $cartItem->quantity * $cartItem->variant->price,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $lineTotal,
+                    'original_currency' => 'VND',
+                    'original_unit_price' => $unitPrice,
+                    'original_total_price' => $lineTotal,
                 ]);
             }
 
-            // Clear the cart
-            CartItem::where('user_id', Auth::id())->delete();
+            if ($promotion) {
+                $promotionData = is_array($promotion) ? $promotion : (array) $promotion;
+                $promotionId = $promotionData['promotion_id'] ?? $promotionData['id'] ?? null;
+
+                if ($promotionId) {
+                    $order->promotions()->syncWithoutDetaching([
+                        $promotionId => [
+                            'discount_applied' => $discountAmount,
+                        ],
+                    ]);
+                }
+            }
+
+            CartItem::where('user_id', $user->id)->delete();
 
             DB::commit();
-
-            return redirect()->route('orders.show', $order->order_id)
-                ->with('success', 'Order placed successfully!');
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $exception) {
             DB::rollBack();
-            
-            return redirect()->back()
-                ->with('error', 'Failed to process order. Please try again.');
+
+            Log::error('checkout.store.failed', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create order. Please try again.',
+            ], 500);
         }
-    }
 
-    /**
-     * Get exchange rate for the given currency to USD.
-     */
-    private function getExchangeRate(string $currency): float
-    {
-        return ExchangeRateService::getRate($currency, 'USD');
-    }
+        session()->forget('applied_promotion');
 
-    /**
-     * Convert amount to base currency (USD).
-     */
-    private function convertToBaseCurrency(float $amount, string $currency): float
-    {
-        return ExchangeRateService::convert($amount, $currency, 'USD');
+        try {
+            $gateway = PaymentService::make($data['provider']);
+        } catch (InvalidArgumentException $exception) {
+            Log::warning('checkout.store.invalid_provider', [
+                'user_id' => $user->id,
+                'provider' => $data['provider'],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid payment provider selected.',
+            ], 422);
+        }
+
+        try {
+            $paymentUrl = $gateway->createPayment($order);
+        } catch (\Throwable $exception) {
+            Log::error('checkout.store.payment_init_failed', [
+                'user_id' => $user->id,
+                'order_id' => $order->order_id,
+                'provider' => $data['provider'],
+                'error' => $exception->getMessage(),
+            ]);
+
+            $order->update(['payment_status' => PaymentStatus::FAILED]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to initiate payment. Please try again later.',
+            ], 502);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_id' => $order->order_id,
+            'payment_url' => $paymentUrl,
+            'message' => 'Redirecting to payment gateway...',
+        ]);
     }
 
     /**
@@ -256,12 +316,11 @@ class CheckoutController extends Controller
      */
     private function calculateShippingFee(float $subtotal): float
     {
-        // Example shipping logic
-        if ($subtotal >= 100) {
-            return 0; // Free shipping for orders over $100
+        if ($subtotal >= 1_000_000) {
+            return 0.0;
         }
-        
-        return 10; // Standard shipping fee
+
+        return 30_000.0;
     }
 
     /**
@@ -272,12 +331,64 @@ class CheckoutController extends Controller
         return 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
     }
 
+    private function buildAddressPayload(User $user): array
+    {
+        return $user->addresses()
+            ->with(['province', 'district', 'ward'])
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($address) {
+                return [
+                    'id' => $address->id,
+                    'name' => $address->full_name ?? 'Recipient',
+                    'phone' => $address->phone_number ?? '',
+                    'address' => $address->street_address ?? '',
+                    'province' => $address->province->name ?? '',
+                    'district' => $address->district->name ?? '',
+                    'ward' => $address->ward->name ?? '',
+                    'province_id' => $address->province_id,
+                    'district_id' => $address->district_id,
+                    'ward_id' => $address->ward_id,
+                    'is_default' => (bool) $address->is_default,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function calculatePromotionDiscount($promotion, float $subtotal): float
+    {
+        if (!$promotion || $subtotal <= 0) {
+            return 0.0;
+        }
+
+        $data = is_array($promotion) ? $promotion : (array) $promotion;
+
+        $type = $data['type'] ?? 'percentage';
+        $rawValue = (float) ($data['discount'] ?? $data['value'] ?? 0);
+        $discount = 0.0;
+
+        if ($type === 'fixed') {
+            $discount = $rawValue;
+        } else {
+            $discount = $subtotal * ($rawValue / 100);
+        }
+
+        if (isset($data['max_discount_amount'])) {
+            $discount = min($discount, (float) $data['max_discount_amount']);
+        }
+
+        return max(0.0, min($discount, $subtotal));
+    }
+
     /**
      * Get available promotions for checkout
      */
     public function getAvailablePromotions(Request $request)
     {
         $user = Auth::user();
+        $locale = app()->getLocale();
         
         // Get cart items or order items based on checkout type
         $isBuyNow = $request->has('order_id');
@@ -290,13 +401,15 @@ class CheckoutController extends Controller
                 abort(403);
             }
             $cartItems = $order->items;
-            $subtotal = $order->sub_total;
+            $subtotal = Localization::resolveNumber($order->sub_total, $locale);
         } else {
             $cartItems = CartItem::with('variant.product')
                 ->where('user_id', $user->id)
                 ->get();
-            $subtotal = $cartItems->sum(function ($item) {
-                return $item->quantity * ($item->variant->sale_price ?? $item->variant->price);
+            $subtotal = $cartItems->sum(function ($item) use ($locale) {
+                $unitPrice = Localization::resolveNumber($item->variant->sale_price ?? $item->variant->price, $locale);
+
+                return $item->quantity * $unitPrice;
             });
         }
 

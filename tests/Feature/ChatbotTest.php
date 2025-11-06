@@ -7,12 +7,13 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ChatbotTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_access_chatbot(): void
     {
     $response = $this->postJson('/chatbot/message', [
@@ -22,7 +23,7 @@ class ChatbotTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[Test]
     public function user_without_proper_role_cannot_access_chatbot(): void
     {
         /** @var User $user */
@@ -37,7 +38,7 @@ class ChatbotTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_send_message_and_get_response(): void
     {
         $this->configureProviders();
@@ -81,7 +82,7 @@ class ChatbotTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function message_is_required(): void
     {
         /** @var User $user */
@@ -96,7 +97,7 @@ class ChatbotTest extends TestCase
             ->assertJsonValidationErrors(['message']);
     }
 
-    /** @test */
+    #[Test]
     public function returns_fallback_response_when_all_providers_fail(): void
     {
         $this->configureProviders();

@@ -1,11 +1,12 @@
 import React from 'react';
+import { toNumericPrice, type PriceLike } from '@/utils/price';
 
 interface OrderSummaryProps {
-  subtotal: number;
-  shipping: number;
-  discount: number;
-  total: number;
-  currencySymbol?: string;
+  subtotal: PriceLike;
+  shipping: PriceLike;
+  discount: PriceLike;
+  total: PriceLike;
+  currencySuffix?: string;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -13,11 +14,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   shipping,
   discount,
   total,
-  currencySymbol = '₫',
+  currencySuffix = 'đ',
 }) => {
-  const formatPrice = (price: number) => {
-    return `${price.toLocaleString('vi-VN')}${currencySymbol}`;
+  const formatPrice = (price: PriceLike) => {
+    const numeric = toNumericPrice(price);
+    const formatted = new Intl.NumberFormat('vi-VN').format(numeric);
+    return currencySuffix ? `${formatted} ${currencySuffix}` : formatted;
   };
+
+  const shippingValue = toNumericPrice(shipping);
+  const discountValue = toNumericPrice(discount);
+  const subtotalValue = toNumericPrice(subtotal);
+  const totalValue = toNumericPrice(total);
 
   return (
     <div className="space-y-3">
@@ -25,7 +33,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="flex justify-between items-center text-sm">
         <span className="text-gray-600">Tạm tính:</span>
         <span className="font-medium text-gray-900">
-          {formatPrice(subtotal)}
+          {formatPrice(subtotalValue)}
         </span>
       </div>
 
@@ -33,16 +41,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="flex justify-between items-center text-sm">
         <span className="text-gray-600">Phí vận chuyển:</span>
         <span className="font-medium text-gray-900">
-          {shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}
+          {shippingValue === 0 ? 'Miễn phí' : formatPrice(shippingValue)}
         </span>
       </div>
 
       {/* Discount */}
-      {discount > 0 && (
+      {discountValue > 0 && (
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-600">Giảm giá:</span>
           <span className="font-medium text-red-600">
-            -{formatPrice(discount)}
+            -{formatPrice(discountValue)}
           </span>
         </div>
       )}
@@ -56,7 +64,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           Tổng cộng:
         </span>
         <span className="text-xl font-bold text-red-600">
-          {formatPrice(total)}
+          {formatPrice(totalValue)}
         </span>
       </div>
     </div>

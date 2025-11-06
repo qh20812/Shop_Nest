@@ -744,6 +744,9 @@ class CartService
                     'shipping_fee' => 0,
                     'discount_amount' => $totals['discount'],
                     'total_amount' => $totals['total'],
+                    'currency' => 'VND',
+                    'exchange_rate' => 1,
+                    'total_amount_base' => $totals['total'],
                     'status' => OrderStatus::PENDING_CONFIRMATION,
                     'payment_method' => 3,
                     'payment_status' => PaymentStatus::UNPAID,
@@ -781,6 +784,9 @@ class CartService
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['price'],
                         'total_price' => $item['subtotal'],
+                        'original_currency' => 'VND',
+                        'original_unit_price' => $item['price'],
+                        'original_total_price' => $item['subtotal'],
                     ]);
                 }
 

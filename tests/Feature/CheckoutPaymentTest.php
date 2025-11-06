@@ -7,7 +7,9 @@ use App\Models\CartItem;
 use App\Models\ProductVariant;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CheckoutPaymentTest extends TestCase
 {
@@ -33,7 +35,7 @@ class CheckoutPaymentTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function checkout_returns_json_with_payment_url()
     {
         // Add item to cart
@@ -68,7 +70,7 @@ class CheckoutPaymentTest extends TestCase
         $this->assertStringContainsString('https://checkout.stripe.com', $response->json('payment_url'));
     }
 
-    /** @test */
+    #[Test]
     public function checkout_fails_with_empty_cart()
     {
         // Ensure cart is empty
@@ -84,7 +86,7 @@ class CheckoutPaymentTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function checkout_fails_with_insufficient_stock()
     {
         // Update variant stock to 0
@@ -108,7 +110,7 @@ class CheckoutPaymentTest extends TestCase
         $this->assertStringContainsString('stock', strtolower($response->json('message')));
     }
 
-    /** @test */
+    #[Test]
     public function checkout_creates_order_with_correct_totals()
     {
         CartItem::create([
@@ -146,7 +148,7 @@ class CheckoutPaymentTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function checkout_reserves_inventory()
     {
         CartItem::create([
@@ -172,7 +174,7 @@ class CheckoutPaymentTest extends TestCase
         $this->assertEquals(10, $this->variant->stock_quantity); // Stock unchanged until payment
     }
 
-    /** @test */
+    #[Test]
     public function checkout_handles_invalid_payment_provider()
     {
         CartItem::create([
@@ -191,7 +193,7 @@ class CheckoutPaymentTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function successful_payment_creates_payment_transaction()
     {
         // Create an order first
@@ -238,7 +240,7 @@ class CheckoutPaymentTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function failed_payment_creates_refund_transaction_and_restores_inventory()
     {
         // Create an order
@@ -300,7 +302,7 @@ class CheckoutPaymentTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function checkout_logs_detailed_error_information()
     {
         // Force an exception by mocking CartService
@@ -317,7 +319,7 @@ class CheckoutPaymentTest extends TestCase
         ]);
 
         // Capture logs
-        \Log::shouldReceive('error')
+    Log::shouldReceive('error')
             ->once()
             ->with('cart.checkout_failed', \Mockery::on(function ($context) {
                 return isset($context['user_id'])

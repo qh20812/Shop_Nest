@@ -42,7 +42,7 @@ const CheckoutPaymentSection: React.FC<CheckoutPaymentSectionProps> = ({
       
       <button
         onClick={onCheckout}
-        disabled={processing || disabled}
+  disabled={processing || disabled || !selectedMethod}
         className="checkout-button checkout-button--primary checkout-payment__submit"
       >
         {processing ? (

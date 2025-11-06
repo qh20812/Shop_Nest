@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Broadcast;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ChatControllerTest extends TestCase
 {
@@ -60,7 +61,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_access_chat_endpoints()
     {
         // Test index
@@ -84,7 +85,7 @@ class ChatControllerTest extends TestCase
             ->assertStatus(401);
     }
 
-    /** @test */
+    #[Test]
     public function authenticated_user_can_get_conversations_list()
     {
         $this->actingAs($this->user);
@@ -115,7 +116,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($this->otherUser->id, $responseData[0]['receiver_id']);
     }
 
-    /** @test */
+    #[Test]
     public function conversations_are_ordered_by_updated_at_descending()
     {
         $this->actingAs($this->user);
@@ -153,7 +154,7 @@ class ChatControllerTest extends TestCase
             'Second conversation should be the older one');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_only_see_their_own_conversations()
     {
         $this->actingAs($this->user);
@@ -174,7 +175,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($this->conversation->id, $conversations[0]['id']);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_send_message_to_existing_conversation()
     {
         Event::fake();
@@ -214,7 +215,7 @@ class ChatControllerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_send_message_to_conversation_they_dont_participate_in()
     {
         $this->actingAs($this->thirdUser); // User not in the conversation
@@ -231,7 +232,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function send_message_validation_fails_with_invalid_data()
     {
         $this->actingAs($this->user);
@@ -277,7 +278,7 @@ class ChatControllerTest extends TestCase
           ->assertJsonValidationErrors(['conversation_id']);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_new_conversation_with_first_message()
     {
         Event::fake();
@@ -332,7 +333,7 @@ class ChatControllerTest extends TestCase
         Event::assertDispatched(MessageCreated::class);
     }
 
-    /** @test */
+    #[Test]
     public function creating_conversation_with_existing_participants_reuses_conversation()
     {
         $this->actingAs($this->user);
@@ -358,7 +359,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals(2, $conversation->messages()->count());
     }
 
-    /** @test */
+    #[Test]
     public function create_conversation_validation_fails_with_invalid_data()
     {
         $this->actingAs($this->user);
@@ -397,7 +398,7 @@ class ChatControllerTest extends TestCase
           ->assertJsonValidationErrors(['content']);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_search_for_other_users()
     {
         $this->actingAs($this->user);
@@ -423,7 +424,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($this->otherUser->username, $users[0]['username']);
     }
 
-    /** @test */
+    #[Test]
     public function user_search_filters_out_self()
     {
         $this->actingAs($this->user);
@@ -439,7 +440,7 @@ class ChatControllerTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function user_search_works_with_email()
     {
         $this->actingAs($this->user);
@@ -454,7 +455,7 @@ class ChatControllerTest extends TestCase
         $this->assertNotNull($found);
     }
 
-    /** @test */
+    #[Test]
     public function user_search_works_with_full_name()
     {
         $this->actingAs($this->user);
@@ -469,7 +470,7 @@ class ChatControllerTest extends TestCase
         $this->assertNotNull($found);
     }
 
-    /** @test */
+    #[Test]
     public function user_search_returns_empty_for_empty_query()
     {
         $this->actingAs($this->user);
@@ -481,7 +482,7 @@ class ChatControllerTest extends TestCase
             ->assertJsonValidationErrors(['q']);
     }
 
-    /** @test */
+    #[Test]
     public function user_search_respects_limit_parameter()
     {
         // Create more users with search prefix
@@ -502,7 +503,7 @@ class ChatControllerTest extends TestCase
         $this->assertCount(3, $users);
     }
 
-    /** @test */
+    #[Test]
     public function user_search_limit_defaults_to_10_and_max_is_50()
     {
         // Create 60 users
@@ -533,7 +534,7 @@ class ChatControllerTest extends TestCase
             ->assertJsonValidationErrors(['limit']);
     }
 
-    /** @test */
+    #[Test]
     public function conversations_include_latest_messages_with_sender_info()
     {
         $this->actingAs($this->user);
@@ -560,7 +561,7 @@ class ChatControllerTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function conversations_pagination_works()
     {
         $this->actingAs($this->user);
@@ -593,7 +594,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals(26, $meta['total']); // 25 new + 1 original
     }
 
-    /** @test */
+    #[Test]
     public function message_broadcasting_fails_gracefully()
     {
         // Mock broadcasting to fail
@@ -614,7 +615,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function conversation_creation_broadcasting_fails_gracefully()
     {
         Broadcast::shouldReceive('event')->andThrow(new \Exception('Broadcast failed'));
@@ -635,7 +636,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function conversation_updated_at_is_updated_when_new_message_sent()
     {
         $this->actingAs($this->user);
@@ -659,7 +660,7 @@ class ChatControllerTest extends TestCase
             'Conversation updated_at should be updated when new message is sent');
     }
 
-    /** @test */
+    #[Test]
     public function conversation_updated_at_is_updated_when_conversation_created()
     {
         $this->actingAs($this->user);
@@ -679,7 +680,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($conversation->created_at, $conversation->updated_at);
     }
 
-    /** @test */
+    #[Test]
     public function messages_are_ordered_by_created_at_ascending()
     {
         $this->actingAs($this->user);
@@ -730,7 +731,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals('Third message', $messages[3]['content']);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_create_conversation_with_unverified_user()
     {
         $unverifiedUser = User::factory()->create([
@@ -748,7 +749,7 @@ class ChatControllerTest extends TestCase
             ->assertJsonValidationErrors(['receiver_id']);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_send_message_to_conversation_with_unverified_participant()
     {
         // Create conversation with unverified user
@@ -772,7 +773,7 @@ class ChatControllerTest extends TestCase
         $response->assertStatus(201);
     }
 
-    /** @test */
+    #[Test]
     public function rate_limiting_is_applied_to_send_message_endpoint()
     {
         $this->actingAs($this->user);
@@ -792,7 +793,7 @@ class ChatControllerTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function xss_protection_in_message_content()
     {
         $this->actingAs($this->user);
@@ -812,7 +813,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function sql_injection_protection_in_search()
     {
         $this->actingAs($this->user);
@@ -827,7 +828,7 @@ class ChatControllerTest extends TestCase
         $this->assertLessThan(User::count(), count($users));
     }
 
-    /** @test */
+    #[Test]
     public function conversation_participants_are_properly_loaded()
     {
         $this->actingAs($this->user);
@@ -850,7 +851,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($this->otherUser->last_name, $conversation['receiver']['last_name']);
     }
 
-    /** @test */
+    #[Test]
     public function message_sender_info_is_properly_loaded()
     {
         $this->actingAs($this->user);

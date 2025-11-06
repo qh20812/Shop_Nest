@@ -18,16 +18,22 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   selectedId,
   onSelect,
 }) => {
-  const getIcon = (methodId: string) => {
-    switch (methodId) {
+  const resolveIcon = (method: PaymentMethod) => {
+    const key = method.icon ?? method.id;
+
+    switch (key) {
       case 'stripe':
         return 'fab fa-cc-stripe';
       case 'paypal':
         return 'fab fa-paypal';
       case 'cod':
         return 'fas fa-money-bill-wave';
+      case 'vnpay':
+        return 'fas fa-qrcode';
+      case 'momo':
+        return 'fas fa-wallet';
       default:
-        return 'fas fa-credit-card';
+        return key.includes('fa-') ? key : 'fas fa-credit-card';
     }
   };
 
@@ -52,7 +58,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             />
             
             <div className="flex items-center gap-3 flex-1">
-              <i className={`${getIcon(method.id)} text-2xl text-primary`}></i>
+              <i className={`${resolveIcon(method)} text-2xl text-primary`}></i>
               <div>
                 <p className="text-[15px] font-semibold text-gray-900">
                   {method.name}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Exceptions\CartException;
 use App\Models\Order;
@@ -11,9 +12,11 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\UserAddress;
+use App\Models\User;
 use App\Services\CartService;
 use App\Services\InventoryService;
 use App\Services\PaymentService;
+use App\Support\Localization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
@@ -24,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 class DetailController extends Controller
 {
@@ -186,7 +190,7 @@ class DetailController extends Controller
                 }),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
-            'provider' => ['nullable', 'string', 'in:stripe,paypal'],
+            'provider' => ['nullable', 'string', 'in:stripe,paypal,vnpay,momo'],
         ]);
 
         try {
@@ -215,17 +219,11 @@ class DetailController extends Controller
             DB::beginTransaction();
 
             try {
-                // Calculate prices
                 $unitPrice = $variant->sale_price ?? $variant->price;
-                
-                // Cap price at $999.99 for Stripe limit
-                $unitPrice = min($unitPrice, 999.99);
-                
                 $subtotal = $unitPrice * $data['quantity'];
-                $shippingFee = $subtotal >= 100 ? 0 : 10; // Free shipping over $100
-                $totalAmount = $subtotal + $shippingFee;
+                $shippingFee = $this->calculateShippingFee($subtotal);
+                $totalAmount = max(0, $subtotal + $shippingFee);
 
-                // Create the order
                 $order = Order::create([
                     'customer_id' => $user->id,
                     'order_number' => 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
@@ -233,27 +231,24 @@ class DetailController extends Controller
                     'shipping_fee' => $shippingFee,
                     'discount_amount' => 0,
                     'total_amount' => $totalAmount,
-                    'currency' => 'USD',
+                    'currency' => 'VND',
                     'exchange_rate' => 1.0,
                     'total_amount_base' => $totalAmount,
-                    'status' => \App\Enums\OrderStatus::PENDING_CONFIRMATION,
-                    'payment_method' => 1, // Default payment method
-                    'payment_status' => \App\Enums\PaymentStatus::UNPAID,
+                    'status' => OrderStatus::PENDING_CONFIRMATION,
+                    'payment_method' => 3,
+                    'payment_status' => PaymentStatus::UNPAID,
                     'notes' => 'Mua ngay từ trang chi tiết sản phẩm',
                 ]);
 
-                // Create order item
                 $order->items()->create([
                     'variant_id' => $variant->variant_id,
                     'quantity' => $data['quantity'],
                     'unit_price' => $unitPrice,
                     'total_price' => $subtotal,
-                    'original_currency' => 'USD',
+                    'original_currency' => 'VND',
                     'original_unit_price' => $unitPrice,
                     'original_total_price' => $subtotal,
                 ]);
-
-                // Note: Inventory will be adjusted upon successful payment in PaymentReturnController
 
                 DB::commit();
 
@@ -263,36 +258,6 @@ class DetailController extends Controller
                     'order_number' => $order->order_number,
                 ]);
 
-                // Get payment provider (default to Stripe)
-                $provider = $data['provider'] ?? 'stripe';
-                
-                try {
-                    $gateway = \App\Services\PaymentService::make($provider);
-                } catch (\InvalidArgumentException $e) {
-                    Log::error('DetailController@buyNow invalid_provider', [
-                        'user_id' => $user->id,
-                        'order_id' => $order->order_id,
-                        'provider' => $provider,
-                        'message' => $e->getMessage(),
-                    ]);
-                    
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Phương thức thanh toán không hợp lệ.',
-                    ], 400);
-                }
-
-                // Create payment and get redirect URL
-                $paymentUrl = $gateway->createPayment($order);
-
-                Log::info('DetailController@buyNow payment initiated', [
-                    'user_id' => $user->id,
-                    'order_id' => $order->order_id,
-                    'provider' => $provider,
-                    'payment_url' => $paymentUrl,
-                ]);
-
-                // Return JSON response with redirect URL to checkout page
                 return response()->json([
                     'success' => true,
                     'redirect_url' => route('buy.now.checkout.show', ['orderId' => $order->order_id]),
@@ -635,7 +600,12 @@ class DetailController extends Controller
     public function showBuyNowCheckout(int $orderId)
     {
         $user = Auth::user();
-        
+        if (!$user instanceof User) {
+            abort(403);
+        }
+
+        $locale = app()->getLocale();
+
         // Find the order and ensure it belongs to the user
         $order = Order::where('order_id', $orderId)
             ->where('customer_id', $user->id)
@@ -644,23 +614,28 @@ class DetailController extends Controller
             ->firstOrFail();
 
         // Calculate totals
-        $subtotal = $order->sub_total;
-        $shippingFee = $order->shipping_fee;
-        $discountAmount = $order->discount_amount;
-        $totalAmount = $order->total_amount;
+        $subtotal = Localization::resolveNumber($order->sub_total, $locale);
+        $shippingFee = Localization::resolveNumber($order->shipping_fee, $locale);
+        $discountAmount = Localization::resolveNumber($order->discount_amount, $locale);
+        $totalAmount = Localization::resolveNumber($order->total_amount, $locale);
 
         return Inertia::render('Customer/Checkout', [
             'order' => $order,
-            'orderItems' => $order->items->map(function ($item) {
+            'orderItems' => $order->items->map(function ($item) use ($locale) {
+                $product = $item->variant?->product;
+                $imagePath = $product?->images->first()?->image_path ?? null;
+
                 return [
-                    'id' => $item->order_item_id,
-                    'variant_id' => $item->variant_id,
-                    'product_name' => $item->variant?->product?->name ?? 'Unknown Product',
-                    'variant_name' => $item->variant?->name ?? '',
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'total_price' => $item->total_price,
-                    'image' => $item->variant?->image ?? null,
+                    'id' => (int) $item->order_item_id,
+                    'variant_id' => (int) $item->variant_id,
+                    'product_name' => $product
+                        ? Localization::resolveField($product->name, $locale, 'Unknown Product')
+                        : 'Unknown Product',
+                    'variant_name' => Localization::resolveField($item->variant?->name ?? '', $locale, ''),
+                    'quantity' => (int) $item->quantity,
+                    'unit_price' => Localization::resolveNumber($item->unit_price, $locale),
+                    'total_price' => Localization::resolveNumber($item->total_price, $locale),
+                    'image' => $imagePath ? '/storage/' . ltrim($imagePath, '/') : null,
                 ];
             }),
             'totals' => [
@@ -669,16 +644,21 @@ class DetailController extends Controller
                 'discount_amount' => $discountAmount,
                 'total' => $totalAmount,
             ],
+            'addresses' => $this->buildAddressPayload($user),
+            'paymentMethods' => PaymentService::list(),
         ]);
     }
 
     public function processBuyNowCheckout(Request $request, int $orderId)
     {
         $user = Auth::user();
+        if (!$user instanceof User) {
+            abort(403);
+        }
         
         // Validate request
         $data = $request->validate([
-            'provider' => ['required', 'string', 'in:stripe,paypal'],
+            'provider' => ['required', 'string', 'in:stripe,paypal,vnpay,momo'],
             // 'address_id' => ['nullable', 'exists:user_addresses,id'],
         ]);
 
@@ -713,6 +693,19 @@ class DetailController extends Controller
                 'message' => 'Đang chuyển đến cổng thanh toán...',
             ]);
 
+        } catch (InvalidArgumentException $exception) {
+            Log::warning('DetailController@processBuyNowCheckout invalid_provider', [
+                'order_id' => $orderId,
+                'user_id' => $user->id,
+                'provider' => $data['provider'],
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Phương thức thanh toán không hợp lệ.',
+            ], 422);
+
         } catch (\Throwable $exception) {
             Log::error('DetailController@processBuyNowCheckout failed', [
                 'order_id' => $orderId,
@@ -726,5 +719,42 @@ class DetailController extends Controller
                 'message' => 'Không thể xử lý thanh toán. Vui lòng thử lại.',
             ], 500);
         }
+    }
+
+    private function calculateShippingFee(float $subtotal): float
+    {
+        if ($subtotal >= 1_000_000) {
+            return 0.0;
+        }
+
+        return 30_000.0;
+    }
+
+    private function buildAddressPayload(User $user): array
+    {
+        $locale = app()->getLocale();
+
+        return $user->addresses()
+            ->with(['province', 'district', 'ward'])
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($address) use ($locale) {
+                return [
+                    'id' => $address->id,
+                    'name' => $address->full_name ?? 'Recipient',
+                    'phone' => $address->phone_number ?? '',
+                    'address' => $address->street_address ?? '',
+                    'province' => Localization::resolveField($address->province->name ?? '', $locale, ''),
+                    'district' => Localization::resolveField($address->district->name ?? '', $locale, ''),
+                    'ward' => Localization::resolveField($address->ward->name ?? '', $locale, ''),
+                    'province_id' => $address->province_id,
+                    'district_id' => $address->district_id,
+                    'ward_id' => $address->ward_id,
+                    'is_default' => (bool) $address->is_default,
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

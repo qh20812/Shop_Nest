@@ -84,6 +84,8 @@ class PaymentReturnController extends Controller
                         'gateway_transaction_id' => $result['transaction_id'] ?? null,
                         'gateway_event_id' => $eventId,
                         'raw_payload' => $payload,
+                        'amount' => $result['amount'] ?? null,
+                        'currency' => $result['currency'] ?? null,
                     ]);
 
                     $shouldClearCart = $order->payment_status === PaymentStatus::PAID;

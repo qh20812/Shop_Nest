@@ -8,7 +8,10 @@ use App\Http\Requests\AddToCartRequest;
 use App\Http\Requests\ApplyPromotionRequest;
 use App\Http\Requests\UpdateCartItemRequest;
 use App\Models\CartItem;
+use App\Models\User;
+use App\Models\UserAddress;
 use App\Services\CartService;
+use App\Services\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -23,7 +26,11 @@ class CartController extends Controller
 
     public function index(): Response
     {
+        /** @var User|null $user */
         $user = Auth::user();
+        if (!$user instanceof User) {
+            abort(403);
+        }
         $cartItems = $this->cartService->getCartItems($user);
         $promotion = $this->cartService->getActivePromotion($user);
         $totals = $this->cartService->calculateTotals($cartItems, $promotion);
@@ -246,10 +253,35 @@ class CartController extends Controller
         $promotion = $this->cartService->getActivePromotion($user);
         $totals = $this->cartService->calculateTotals($cartItems, $promotion);
 
+        $addresses = UserAddress::with(['province', 'district', 'ward'])
+            ->where('user_id', $user->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function (UserAddress $address) {
+                return [
+                    'id' => $address->id,
+                    'name' => $address->full_name ?? 'Recipient',
+                    'phone' => $address->phone_number ?? '',
+                    'address' => $address->street_address ?? '',
+                    'province' => $address->province->name ?? '',
+                    'district' => $address->district->name ?? '',
+                    'ward' => $address->ward->name ?? '',
+                    'province_id' => $address->province_id,
+                    'district_id' => $address->district_id,
+                    'ward_id' => $address->ward_id,
+                    'is_default' => (bool) $address->is_default,
+                ];
+            })
+            ->values()
+            ->all();
+
         return Inertia::render('Customer/Checkout', [
             'cartItems' => $cartItems->values()->all(),
             'totals' => $totals,
             'promotion' => $promotion ? $promotion->toArray() : null,
+            'addresses' => $addresses,
+            'paymentMethods' => PaymentService::list(),
         ]);
     }
 }

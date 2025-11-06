@@ -40,7 +40,7 @@ class ProductController extends Controller
 
         // Filter by status
         if ($request->status) {
-            $query->where('status', $request->status);
+            $query->where('status', (int)$request->status);
         }
 
         // Get products with variant count, total stock, and price range

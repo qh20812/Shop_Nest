@@ -227,6 +227,25 @@ export default function Index() {
     }
   }, [flash]);
 
+  // Auto filter (debounce 500ms) - giống Products
+useEffect(() => {
+  const timer = setTimeout(() => {
+    router.get('/admin/inventory', {
+      search: search || undefined,
+      seller_id: sellerId || undefined,
+      category_id: categoryId || undefined,
+      brand_id: brandId || undefined,
+      stock_status: stockStatus || undefined,
+    }, {
+      preserveState: true,
+      preserveScroll: true,
+    });
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [search, sellerId, categoryId, brandId, stockStatus]);
+
+
   const stockStatusLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
     stockStatuses.forEach((status) => {

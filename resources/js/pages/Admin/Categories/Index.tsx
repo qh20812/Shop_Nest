@@ -70,9 +70,20 @@ export default function Index() {
             setToast({ type: "error", message: flash.error });
         }
     }, [flash]);
-    const applyFilters = () => {
-        router.get('/admin/categories', { search, status }, { preserveState: true });
-    };
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            router.get('/admin/categories', {
+                search: search || undefined,
+                status: status || undefined,
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 500);
+    
+        return () => clearTimeout(timeout);
+    }, [search, status]);
+    
 
     const getCategoryName = (category: Category): string => {
         return category.name[locale as keyof typeof category.name] || category.name['en'] || 'Unnamed Category';
@@ -292,7 +303,6 @@ export default function Index() {
                         color: "success"
                     }
                 ]}
-                onApplyFilters={applyFilters}
             />
 
             {/* Bảng dữ liệu */}

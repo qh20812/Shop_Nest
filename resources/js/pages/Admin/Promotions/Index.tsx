@@ -124,6 +124,28 @@ export default function Index() {
     );
   };
 
+  // 🔥 Auto filter without pressing Enter
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    router.get(
+      '/admin/promotions',
+      {
+        search: search || undefined,
+        status: status || undefined,
+        type: type || undefined,
+      },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+      }
+    );
+  }, 500); // debounce 0.5s
+
+  return () => clearTimeout(timeout);
+}, [search, status, type]);
+
+
   const openDeleteModal = (promotion: Promotion) => {
     setConfirmState({
       open: true,

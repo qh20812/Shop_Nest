@@ -104,23 +104,23 @@ export default function Index() {
     }, [flash]);
 
     // Auto-apply search filter on typing (debounced)
-    // useEffect(() => {
-    //     const delayTimer = setTimeout(() => {
-    //         if (search !== filters.search || categoryId !== filters.category_id || brandId !== filters.brand_id || status !== filters.status) {
-    //             router.get('/admin/products', {
-    //                 search: search || undefined,
-    //                 category_id: categoryId || undefined,
-    //                 brand_id: brandId || undefined,
-    //                 status: status || undefined
-    //             }, {
-    //                 preserveState: true,
-    //                 preserveScroll: true,
-    //             });
-    //         }
-    //     }, 500);
+    // Auto search (debounce 500ms)
+useEffect(() => {
+    const delayTimer = setTimeout(() => {
+        router.get('/admin/products', {
+            search: search || undefined,
+            category_id: categoryId || undefined,
+            brand_id: brandId || undefined,
+            status: status ? Number(status) : undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }, 500);
 
-    //     return () => clearTimeout(delayTimer);
-    // }, [search, categoryId, brandId, status, filters.search, filters.category_id, filters.brand_id, filters.status]);
+    return () => clearTimeout(delayTimer);
+}, [search, categoryId, brandId, status]);
+
 
     const applyFilters = () => {
         router.get('/admin/products', { search, category_id: categoryId, brand_id: brandId, status }, { preserveState: true });
@@ -188,13 +188,18 @@ export default function Index() {
     };
 
     // Helper functions
-    const getProductStatus = React.useCallback((status: number) => {
-        switch (status) {
-            case 1: return 'pending';
-            case 2: return 'active';
-            case 3: return 'inactive';
-            default: return 'pending';
-        }
+    const getProductStatus = React.useCallback((status: number | string) => {
+        if (status === 1 || status === "1") return "pending";
+    if (status === 2 || status === "2") return "active";
+    if (status === 3 || status === "3") return "inactive";
+
+    // **Nếu backend trả chữ**
+    if (status === "pending") return "pending";
+    if (status === "active") return "active";
+    if (status === "inactive") return "inactive";
+
+    return "pending";
+        
     }, []);
 
     const getProductPrice = React.useCallback((product: Product) => {
@@ -409,7 +414,7 @@ export default function Index() {
                         ]
                     }
                 ]}
-                onApplyFilters={applyFilters}
+                
             />
 
             {/* Bảng dữ liệu */}

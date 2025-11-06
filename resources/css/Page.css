@@ -834,7 +834,8 @@ body{
 
 .content main .bottom-data .orders table th{
     padding-bottom: 12px;
-    font-size: 13px;
+    padding-left: 10px;
+    font-size: 18px;
     text-align: left;
     border-bottom: 1px solid var(--grey);
 }
@@ -896,7 +897,7 @@ body{
 
 .content main .bottom-data .orders table th:last-child,
 .content main .bottom-data .orders table td:last-child{
-    text-align: right;
+    text-align: left;
     white-space: nowrap;
     padding-right: 12px;
 }

@@ -74,6 +74,20 @@ export default function Index() {
         }
     }, [flash]);
 
+    useEffect(() => {
+        const delayTimer = setTimeout(() => {
+          if (search !== filters.search || status !== filters.status) {
+            router.get("/admin/shippers", { search, status }, {
+              preserveState: true,
+              preserveScroll: true,
+            });
+          }
+        }, 500);
+      
+        return () => clearTimeout(delayTimer);
+      }, [search, status, filters.search, filters.status]);
+      
+
     const applyFilters = () => {
         router.get("/admin/shippers", { search, status }, { preserveState: true });
     };

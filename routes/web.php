@@ -88,8 +88,20 @@ require __DIR__ . '/admin.php';
 require __DIR__ . '/user.php';
 require __DIR__ . '/chat.php';
 
+// Shipper Routes
 Route::middleware(['auth', 'verified'])->prefix('shipper')->name('shipper.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // recommended: shipments list/details routes exist elsewhere; add as needed
-    // Route::get('/shipments', [ShipmentController::class,'index'])->name('shipments.index');
+    
+    // Journey Management
+    Route::post('/journeys/{journey}/status', [DashboardController::class, 'updateJourneyStatus'])
+         ->name('journeys.updateStatus');
+    
+    // Shipper Status
+    Route::post('/toggle-status', [DashboardController::class, 'toggleStatus'])
+         ->name('toggleStatus');
+    
+    // Statistics
+    Route::get('/statistics', [DashboardController::class, 'getStatistics'])
+         ->name('statistics');
 });

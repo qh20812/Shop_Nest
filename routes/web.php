@@ -9,6 +9,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Shipper\DashboardController;
 
 // Public routes (accessible without login)
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -77,7 +78,7 @@ Route::middleware('guest')->group(function () {
         ->name('seller.register.store');
 });
 
-Route::get('/customer/orders/index', function(){
+Route::get('/customer/orders/index', function () {
     return Inertia::render('Customer/Orders/Index');
 });
 
@@ -86,3 +87,9 @@ require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';
 require __DIR__ . '/user.php';
 require __DIR__ . '/chat.php';
+
+Route::middleware(['auth', 'verified'])->prefix('shipper')->name('shipper.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // recommended: shipments list/details routes exist elsewhere; add as needed
+    // Route::get('/shipments', [ShipmentController::class,'index'])->name('shipments.index');
+});

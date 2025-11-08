@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import FilterPanel from '@/Components/ui/FilterPanel';
@@ -83,6 +83,23 @@ export default function Index({
   const [fromDate, setFromDate] = useState(filters.from_date || '');
   const [toDate, setToDate] = useState(filters.to_date || '');
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      router.get('/admin/orders', {
+        search: search || undefined,
+        status: status || undefined,
+        payment_status: paymentStatus || undefined,
+        from_date: fromDate || undefined,
+        to_date: toDate || undefined,
+      }, {
+        preserveState: true,
+        preserveScroll: true,
+      });
+    }, 500); // 0.5s delay giúp tránh spam request
+  
+    return () => clearTimeout(timeout);
+  }, [search, status, paymentStatus, fromDate, toDate]);
+  
   // Apply filters
   const handleApplyFilters = () => {
     router.get('/admin/orders', {
@@ -198,7 +215,7 @@ export default function Index({
       <FilterPanel
         title="Orders Management"
         breadcrumbs={breadcrumbs}
-        onApplyFilters={handleApplyFilters}
+        // onApplyFilters={handleApplyFilters}
         searchConfig={searchConfig}
         filterConfigs={filterConfigs}
         reportButtonConfig={{

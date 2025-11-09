@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\ReturnController;
 use App\Http\Controllers\Admin\ShipperController;
+use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -64,5 +65,29 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
         Route::get('/products', 'products')->name('products');
         Route::get('/orders', 'orders')->name('orders');
         Route::get('/reports', 'reports')->name('reports');
+    });
+
+    // Shop Management Routes
+    Route::controller(ShopController::class)->prefix('shops')->name('shops.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/pending', 'pending')->name('pending');
+        Route::get('/dashboard', 'dashboard')->name('dashboard');
+        Route::get('/export', 'export')->name('export');
+
+        // Bulk operations
+        Route::post('/bulk-approve', 'bulkApprove')->name('bulkApprove');
+        Route::post('/bulk-reject', 'bulkReject')->name('bulkReject');
+
+        // Individual shop routes
+        Route::get('/{shop}', 'show')->name('show')->where('shop', '[0-9]+');
+        Route::get('/{shop}/statistics', 'statistics')->name('statistics')->where('shop', '[0-9]+');
+        Route::get('/{shop}/violations', 'violations')->name('violations')->where('shop', '[0-9]+');
+        Route::post('/{shop}/violations', 'addViolation')->name('addViolation')->where('shop', '[0-9]+');
+
+        // Shop status management
+        Route::post('/{shop}/approve', 'approve')->name('approve')->where('shop', '[0-9]+');
+        Route::post('/{shop}/reject', 'reject')->name('reject')->where('shop', '[0-9]+');
+        Route::post('/{shop}/suspend', 'suspend')->name('suspend')->where('shop', '[0-9]+');
+        Route::post('/{shop}/reactivate', 'reactivate')->name('reactivate')->where('shop', '[0-9]+');
     });
 });

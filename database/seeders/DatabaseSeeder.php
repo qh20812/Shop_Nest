@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             UserSeeder::class,
+            ShopSeeder::class,
             ShipperSeeder::class,
 
             // 2. Product Catalog

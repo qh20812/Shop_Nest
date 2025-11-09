@@ -41,13 +41,13 @@ const PromotionInput: React.FC<PromotionInputProps> = ({
 
   if (appliedCode) {
     return (
-      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-        <i className="fas fa-check-circle text-green-600 text-lg"></i>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-green-800">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', padding: 'var(--spacing-sm)', background: 'var(--light-success)', border: '1px solid var(--success)', borderRadius: 'var(--border-radius-md)' }}>
+        <i className="fas fa-check-circle" style={{ color: 'var(--success-dark)', fontSize: 'var(--font-size-lg)' }}></i>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500, color: 'var(--success-dark)', margin: 0 }}>
             Mã giảm giá đã áp dụng
           </p>
-          <p className="text-xs text-green-600">
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--success-dark)', margin: 0, marginTop: '2px' }}>
             {appliedCode}
           </p>
         </div>
@@ -55,7 +55,8 @@ const PromotionInput: React.FC<PromotionInputProps> = ({
           <button
             onClick={handleRemove}
             disabled={loading}
-            className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded transition-colors duration-200 disabled:opacity-50"
+            className="checkout-button"
+            style={{ padding: 'var(--spacing-xs) var(--spacing-sm)', fontSize: 'var(--font-size-sm)', color: 'var(--danger)', background: 'transparent', border: 'none', minHeight: 'auto', opacity: loading ? 0.5 : 1 }}
           >
             {loading ? 'Đang xóa...' : 'Xóa'}
           </button>
@@ -65,7 +66,7 @@ const PromotionInput: React.FC<PromotionInputProps> = ({
   }
 
   return (
-    <div className="flex gap-2">
+    <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
       <input
         type="text"
         value={code}
@@ -73,12 +74,14 @@ const PromotionInput: React.FC<PromotionInputProps> = ({
         onKeyPress={(e) => e.key === 'Enter' && handleApply()}
         placeholder="Nhập mã giảm giá"
         disabled={disabled || loading}
-        className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="checkout-input"
+        style={{ flex: 1, padding: 'var(--spacing-sm) var(--spacing-md)', fontSize: 'var(--font-size-sm)' }}
       />
       <button
         onClick={handleApply}
         disabled={!code.trim() || disabled || loading}
-        className="px-6 py-2.5 btn-primary text-sm font-medium rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        className="checkout-button checkout-button--primary"
+        style={{ padding: '0 var(--spacing-lg)', fontSize: 'var(--font-size-sm)' }}
       >
         {loading ? 'Đang áp dụng...' : 'Áp dụng'}
       </button>

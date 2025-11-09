@@ -133,7 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
     // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
-    Route::middleware(['web', 'auth'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+    Route::middleware(['web'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
         Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])->name('product.buy.now');
         Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])->name('product.addToCart');
         Route::get('/buy-now/checkout/{orderId}', [DetailController::class, 'showBuyNowCheckout'])->name('buy.now.checkout.show');

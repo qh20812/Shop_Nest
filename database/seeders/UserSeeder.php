@@ -25,10 +25,21 @@ class UserSeeder extends Seeder
         ]);
         $admin->roles()->attach($adminRole);
 
+        // tạo 1 người bán bằng tài khoản cụ thể
+        $seller = User::factory()->create([
+            'username'=>'testseller',
+            'first_name'=>'Test',
+            'last_name'=>'Seller',
+            'email'=>'testseller@shopnest.com',
+            'password'=>Hash::make('password'),
+        ]);
+        $seller->roles()->attach($sellerRole);
+
         // Tạo 20 người bán
         User::factory(20)->create()->each(function ($user) use ($sellerRole) {
             $user->roles()->attach($sellerRole);
         });
+
 
         // Tạo 100 khách hàng
         User::factory(100)->create()->each(function ($user) use ($customerRole) {

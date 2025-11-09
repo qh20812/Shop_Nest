@@ -25,40 +25,54 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   onAddNew,
 }) => {
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
       {addresses.map((address) => (
         <div
           key={address.id}
           onClick={() => onSelect(address.id)}
-          className={`p-4 bg-white border-2 rounded-lg cursor-pointer transition-all duration-300 ${
-            selectedId === address.id
-              ? 'border-primary bg-primary-light'
-              : 'border-gray-200 hover:border-primary'
-          }`}
+          style={{
+            padding: 'var(--spacing-md)',
+            background: 'var(--surface)',
+            border: selectedId === address.id ? '2px solid var(--primary)' : '2px solid var(--border-color)',
+            borderRadius: 'var(--border-radius-md)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-normal)',
+            backgroundColor: selectedId === address.id ? 'var(--light-primary)' : 'var(--surface)'
+          }}
+          onMouseEnter={(e) => {
+            if (selectedId !== address.id) {
+              e.currentTarget.style.borderColor = 'var(--primary)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (selectedId !== address.id) {
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+            }
+          }}
         >
           {/* Header */}
-          <div className="flex items-center gap-3 mb-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xs)' }}>
             <input
               type="radio"
               checked={selectedId === address.id}
               onChange={() => onSelect(address.id)}
-              className="w-5 h-5 cursor-pointer accent-primary"
+              style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
             />
-            <span className="text-[15px] font-semibold text-gray-900">
+            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
               {address.name}
             </span>
             {address.is_default && (
-              <span className="px-2 py-0.5 btn-primary text-[11px] rounded">
+              <span className="checkout-button checkout-button--primary" style={{ padding: '2px 8px', fontSize: '11px', minHeight: 'auto' }}>
                 Mặc định
               </span>
             )}
-            <span className="ml-auto text-sm text-gray-500">
+            <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
               {address.phone}
             </span>
           </div>
           
           {/* Address Detail */}
-          <p className="text-sm text-gray-600 leading-relaxed ml-8">
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', lineHeight: 'var(--line-height-normal)', marginLeft: '28px', margin: 0 }}>
             {address.address}, {address.ward}, {address.district},{' '}
             {address.province}
           </p>
@@ -69,9 +83,10 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
       {onAddNew && (
         <button
           onClick={onAddNew}
-          className="w-full p-3 bg-white border-2 border-dashed border-primary rounded-lg text-primary text-sm font-medium hover:bg-primary-light transition-colors duration-200"
+          className="checkout-button checkout-button--secondary"
+          style={{ width: '100%', padding: 'var(--spacing-sm)', border: '2px dashed var(--primary)', color: 'var(--primary)', fontSize: 'var(--font-size-sm)' }}
         >
-          <i className="fas fa-plus mr-2"></i>
+          <i className="fas fa-plus" style={{ marginRight: 'var(--spacing-xs)' }}></i>
           Thêm địa chỉ mới
         </button>
       )}

@@ -8,31 +8,79 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use Carbon\Carbon;
+use App\Services\SellerDashboardService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    private SellerDashboardService $dashboardService;
+
+    /**
+     * DashboardController constructor.
+     *
+     * @param SellerDashboardService $dashboardService The service handling dashboard business logic
+     */
+    public function __construct(SellerDashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+
+    /**
+     * Display the seller dashboard with comprehensive statistics and data.
+     *
+     * This method handles the main dashboard view, including:
+     * - Authentication and authorization checks
+     * - Rate limiting to prevent abuse
+     * - Caching for performance optimization
+     * - Comprehensive error handling with fallback data
+     *
+     * @return Response Inertia response with dashboard data
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException When user lacks seller privileges
+     * @throws \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException When rate limit exceeded
+     */
     public function index(): Response
     {
         $seller = Auth::user();
 
-        if (!$seller) {
-            abort(403, 'Seller authentication required');
+        if (!$seller || !$seller->isSeller()) {
+            Log::warning('Dashboard access denied: User is not a seller', [
+                'user_id' => $seller?->id,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+            abort(403, 'Access denied. Seller privileges required.');
         }
 
-        $cacheKey = "seller_dashboard_{$seller->id}";
+        $rateLimitKey = 'dashboard_access_' . $seller->id;
+        $rateLimitConfig = config('dashboard.rate_limiting.dashboard_access');
 
-        $dashboardData = Cache::remember($cacheKey, 900, function () use ($seller) {
-            $stockAlerts = $this->getStockAlerts($seller->id);
+        if (RateLimiter::tooManyAttempts($rateLimitKey, $rateLimitConfig['max_attempts'])) {
+            $secondsUntilAvailable = RateLimiter::availableIn($rateLimitKey);
+            Log::warning('Dashboard rate limit exceeded', [
+                'user_id' => $seller->id,
+                'seconds_until_available' => $secondsUntilAvailable,
+                'ip' => request()->ip(),
+            ]);
+            abort(429, 'Too many dashboard requests. Please try again in ' . $secondsUntilAvailable . ' seconds.');
+        }
+
+        RateLimiter::hit($rateLimitKey, $rateLimitConfig['decay_minutes'] * 60);
+
+        $cacheKey = config('dashboard.cache.key_prefix') . "_{$seller->id}";
+
+        $dashboardData = Cache::remember($cacheKey, config('dashboard.cache.ttl'), function () use ($seller) {
+            $stockAlerts = $this->dashboardService->getStockAlerts($seller->id);
+            $stockAlertsCount = $this->dashboardService->getStockAlertsCount($seller->id);
 
             return [
-                'shopStats' => $this->getShopStats($seller->id, $stockAlerts),
+                'shopStats' => $this->getShopStats($seller->id, $stockAlertsCount),
                 'recentOrders' => $this->getRecentShopOrders($seller->id),
                 'topSellingProducts' => $this->getTopSellingProducts($seller->id),
                 'stockAlerts' => $stockAlerts,
@@ -42,68 +90,27 @@ class DashboardController extends Controller
         return Inertia::render('Seller/Dashboard/Index', $dashboardData);
     }
 
+    /**
+     * Build comprehensive shop statistics from various metric sources.
+     *
+     * Aggregates data from multiple metric methods to create a complete
+     * statistics array for the dashboard. Includes error handling with
+     * fallback to default values.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @param int $initialLowStockCount Initial count of low stock items
+     * @return array Complete shop statistics array
+     */
     private function getShopStats(int $sellerId, int $initialLowStockCount = 0): array
     {
-        $defaultStats = [
-            'total_revenue' => 0.0,
-            'total_orders' => 0,
-            'average_order_value' => 0.0,
-            'low_stock_alerts' => $initialLowStockCount,
-            'monthly_revenue_growth' => 0.0,
-            'pending_orders_count' => 0,
-            'unique_customers' => 0,
-            'top_selling_product' => null,
-        ];
-
         try {
-            $variantIds = ProductVariant::query()
-                ->whereHas('product', fn ($query) => $query->where('seller_id', $sellerId))
-                ->pluck('variant_id')
-                ->all();
-
-            if (empty($variantIds)) {
-                return $defaultStats;
-            }
-
-            $completedOrderIds = Order::query()
-                ->where('status', OrderStatus::COMPLETED->value)
-                ->whereHas('items', fn ($query) => $query->whereIn('variant_id', $variantIds))
-                ->pluck('order_id')
-                ->all();
-
-            $defaultStats['low_stock_alerts'] = $initialLowStockCount ?: $this->getStockAlerts($sellerId);
-            $defaultStats['pending_orders_count'] = $this->getPendingOrdersCount($sellerId);
-
-            if (empty($completedOrderIds)) {
-                return $defaultStats;
-            }
-
-            $totalRevenue = (float) OrderItem::query()
-                ->whereIn('variant_id', $variantIds)
-                ->whereIn('order_id', $completedOrderIds)
-                ->sum('total_price');
-
-            $totalOrders = count(array_unique($completedOrderIds));
-            $averageOrderValue = $totalOrders > 0 ? round($totalRevenue / $totalOrders, 2) : 0.0;
-
-            $uniqueCustomers = Order::query()
-                ->whereIn('order_id', $completedOrderIds)
-                ->distinct('customer_id')
-                ->count('customer_id');
-
-            $monthlyRevenueGrowth = $this->calculateMonthlyRevenueGrowth($variantIds);
-
-            $topProduct = $this->fetchTopSellingProductsData($sellerId, 1)->first();
-
             return [
-                'total_revenue' => $totalRevenue,
-                'total_orders' => $totalOrders,
-                'average_order_value' => $averageOrderValue,
-                'low_stock_alerts' => $defaultStats['low_stock_alerts'],
-                'monthly_revenue_growth' => $monthlyRevenueGrowth,
-                'pending_orders_count' => $defaultStats['pending_orders_count'],
-                'unique_customers' => $uniqueCustomers,
-                'top_selling_product' => $topProduct['name'] ?? null,
+                ...$this->getRevenueMetrics($sellerId),
+                ...$this->getOrderMetrics($sellerId),
+                ...$this->getCustomerMetrics($sellerId),
+                ...$this->getGrowthMetrics($sellerId),
+                ...$this->getAlertMetrics($sellerId, $initialLowStockCount),
+                'top_selling_product' => $this->getTopSellingProductName($sellerId),
             ];
         } catch (\Throwable $e) {
             Log::error('Failed to build seller stats', [
@@ -111,31 +118,23 @@ class DashboardController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return $defaultStats;
+            return $this->getDefaultStats($initialLowStockCount);
         }
     }
 
+    /**
+     * Retrieve recent completed orders for the seller's dashboard.
+     *
+     * Fetches the most recent completed orders with full customer and product details.
+     * Includes comprehensive error handling with logging.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return Collection Collection of recent orders with relationships loaded
+     */
     private function getRecentShopOrders(int $sellerId): Collection
     {
         try {
-            return Order::query()
-                ->select(['order_id', 'order_number', 'total_amount', 'status', 'customer_id', 'created_at'])
-                ->where('status', OrderStatus::COMPLETED->value)
-                ->whereHas('items.variant.product', fn ($query) => $query->where('seller_id', $sellerId))
-                ->with([
-                    'customer:id,first_name,last_name,username,email',
-                    'items' => function ($query) use ($sellerId) {
-                        $query->select(['order_item_id', 'order_id', 'variant_id', 'quantity', 'total_price'])
-                            ->whereHas('variant.product', fn ($subQuery) => $subQuery->where('seller_id', $sellerId))
-                            ->with([
-                                'variant:id,variant_id,product_id,sku',
-                                'variant.product:id,product_id,name',
-                            ]);
-                    },
-                ])
-                ->orderByDesc('created_at')
-                ->limit(10)
-                ->get();
+            return $this->dashboardService->getRecentShopOrders($sellerId);
         } catch (\Throwable $e) {
             Log::error('Failed to fetch recent seller orders', [
                 'sellerId' => $sellerId,
@@ -146,10 +145,18 @@ class DashboardController extends Controller
         }
     }
 
+    /**
+     * Retrieve top selling products data for the dashboard.
+     *
+     * Gets the best performing products by sales volume with error handling.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return array Array of top selling product data
+     */
     private function getTopSellingProducts(int $sellerId): array
     {
         try {
-            return $this->fetchTopSellingProductsData($sellerId)->toArray();
+            return $this->dashboardService->getTopSellingProductsData($sellerId)->toArray();
         } catch (\Throwable $e) {
             Log::error('Failed to fetch top selling products', [
                 'sellerId' => $sellerId,
@@ -160,130 +167,112 @@ class DashboardController extends Controller
         }
     }
 
-    private function getStockAlerts(int $sellerId): int
+    /**
+     * Get default statistics values for error fallback scenarios.
+     *
+     * Provides safe default values when dashboard data cannot be retrieved
+     * due to errors or missing data.
+     *
+     * @param int $initialLowStockCount Initial low stock count value
+     * @return array Default statistics array
+     */
+    private function getDefaultStats(int $initialLowStockCount = 0): array
     {
-        try {
-            return ProductVariant::query()
-                ->whereHas('product', fn ($query) => $query->where('seller_id', $sellerId))
-                ->where('stock_quantity', '<=', ProductVariant::LOW_STOCK_THRESHOLD)
-                ->count();
-        } catch (\Throwable $e) {
-            Log::error('Failed to fetch stock alerts', [
-                'sellerId' => $sellerId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 0;
-        }
+        return [
+            'total_revenue' => config('dashboard.defaults.revenue'),
+            'total_orders' => config('dashboard.defaults.orders_count'),
+            'average_order_value' => config('dashboard.defaults.average_order_value'),
+            'low_stock_alerts' => $initialLowStockCount,
+            'monthly_revenue_growth' => config('dashboard.defaults.growth_percentage'),
+            'pending_orders_count' => config('dashboard.defaults.pending_orders'),
+            'unique_customers' => config('dashboard.defaults.customers_count'),
+            'top_selling_product' => null,
+        ];
     }
 
-    private function getPendingOrdersCount(int $sellerId): int
+    /**
+     * Extract revenue-related metrics from aggregated statistics.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return array Revenue metrics (total_revenue, average_order_value)
+     */
+    private function getRevenueMetrics(int $sellerId): array
     {
-        try {
-            $pendingStatuses = [
-                OrderStatus::PENDING_CONFIRMATION->value,
-                OrderStatus::PROCESSING->value,
-                OrderStatus::PENDING_ASSIGNMENT->value,
-                OrderStatus::ASSIGNED_TO_SHIPPER->value,
-                OrderStatus::DELIVERING->value,
-            ];
+        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
 
-            return Order::query()
-                ->whereIn('status', $pendingStatuses)
-                ->whereHas('items.variant.product', fn ($query) => $query->where('seller_id', $sellerId))
-                ->count();
-        } catch (\Throwable $e) {
-            Log::warning('Failed to fetch pending orders count', [
-                'sellerId' => $sellerId,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 0;
-        }
+        return [
+            'total_revenue' => $aggregatedStats['total_revenue'],
+            'average_order_value' => $aggregatedStats['average_order_value'],
+        ];
     }
 
-    private function calculateMonthlyRevenueGrowth(array $variantIds): float
+    /**
+     * Extract order-related metrics from aggregated statistics.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return array Order metrics (total_orders)
+     */
+    private function getOrderMetrics(int $sellerId): array
     {
-        if (empty($variantIds)) {
-            return 0.0;
-        }
+        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
 
-        try {
-            $now = Carbon::now();
-            $currentStart = (clone $now)->startOfMonth();
-            $previousStart = (clone $currentStart)->subMonth();
-            $previousEnd = (clone $previousStart)->endOfMonth();
-
-            $currentRevenue = (float) OrderItem::query()
-                ->whereIn('variant_id', $variantIds)
-                ->whereIn('order_id', function ($query) use ($currentStart, $now) {
-                    $query->select('order_id')
-                        ->from('orders')
-                        ->where('status', OrderStatus::COMPLETED->value)
-                        ->whereBetween('created_at', [$currentStart, $now]);
-                })
-                ->sum('total_price');
-
-            $previousRevenue = (float) OrderItem::query()
-                ->whereIn('variant_id', $variantIds)
-                ->whereIn('order_id', function ($query) use ($previousStart, $previousEnd) {
-                    $query->select('order_id')
-                        ->from('orders')
-                        ->where('status', OrderStatus::COMPLETED->value)
-                        ->whereBetween('created_at', [$previousStart, $previousEnd]);
-                })
-                ->sum('total_price');
-
-            if ($previousRevenue == 0.0) {
-                return $currentRevenue > 0 ? 100.0 : 0.0;
-            }
-
-            return round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 2);
-        } catch (\Throwable $e) {
-            Log::warning('Failed to calculate monthly revenue growth', [
-                'variantIds' => $variantIds,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 0.0;
-        }
+        return [
+            'total_orders' => $aggregatedStats['total_orders'],
+        ];
     }
 
-    private function fetchTopSellingProductsData(int $sellerId, int $limit = 5): Collection
+    /**
+     * Extract customer-related metrics from aggregated statistics.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return array Customer metrics (unique_customers)
+     */
+    private function getCustomerMetrics(int $sellerId): array
     {
-        $locale = app()->getLocale();
+        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
 
-        $results = OrderItem::query()
-            ->selectRaw('product_variants.product_id, SUM(order_items.quantity) as total_quantity, SUM(order_items.total_price) as total_revenue')
-            ->join('product_variants', 'order_items.variant_id', '=', 'product_variants.variant_id')
-            ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
-            ->join('products', 'product_variants.product_id', '=', 'products.product_id')
-            ->where('orders.status', OrderStatus::COMPLETED->value)
-            ->where('products.seller_id', $sellerId)
-            ->groupBy('product_variants.product_id')
-            ->orderByDesc('total_quantity')
-            ->limit($limit)
-            ->get();
+        return [
+            'unique_customers' => $aggregatedStats['unique_customers'],
+        ];
+    }
 
-        if ($results->isEmpty()) {
-            return collect();
-        }
+    /**
+     * Calculate growth metrics for the seller.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return array Growth metrics (monthly_revenue_growth)
+     */
+    private function getGrowthMetrics(int $sellerId): array
+    {
+        return [
+            'monthly_revenue_growth' => $this->dashboardService->calculateMonthlyRevenueGrowth($sellerId),
+        ];
+    }
 
-        $products = Product::query()
-            ->select(['product_id', 'name'])
-            ->whereIn('product_id', $results->pluck('product_id'))
-            ->get()
-            ->keyBy('product_id');
+    /**
+     * Get alert-related metrics including stock alerts and pending orders.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @param int $initialLowStockCount Initial low stock count
+     * @return array Alert metrics (low_stock_alerts, pending_orders_count)
+     */
+    private function getAlertMetrics(int $sellerId, int $initialLowStockCount = 0): array
+    {
+        return [
+            'low_stock_alerts' => $initialLowStockCount ?: $this->dashboardService->getStockAlerts($sellerId),
+            'pending_orders_count' => $this->dashboardService->getPendingOrdersCount($sellerId),
+        ];
+    }
 
-        return $results->map(function ($row) use ($products, $locale) {
-            $product = $products->get($row->product_id);
-
-            return [
-                'product_id' => $row->product_id,
-                'name' => $product ? ($product->getTranslation('name', $locale) ?? $product->name) : null,
-                'total_quantity' => (int) $row->total_quantity,
-                'total_revenue' => (float) $row->total_revenue,
-            ];
-        });
+    /**
+     * Get the name of the top-selling product for display.
+     *
+     * @param int $sellerId The authenticated seller's ID
+     * @return string|null Name of the top-selling product or null if none found
+     */
+    private function getTopSellingProductName(int $sellerId): ?string
+    {
+        $topProduct = $this->dashboardService->getTopSellingProductsData($sellerId, config('dashboard.limits.top_selling_product_single'))->first();
+        return $topProduct['name'] ?? null;
     }
 }

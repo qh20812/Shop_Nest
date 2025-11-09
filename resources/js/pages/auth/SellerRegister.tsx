@@ -1,11 +1,14 @@
 import React from "react";
-import SellerRegisterForm from "../../components/auth/SellerRegisterForm";
-import "../../../css/AuthPage.css";
+import SellerRegisterForm from '@/Components/auth/SellerRegisterForm';
+import "@/../css/SellerRegister.css";
+import HomeLayout from "@/layouts/app/HomeLayout";
 
 export default function SellerRegister() {
   return (
-    <div className="auth-page">
-      <SellerRegisterForm />
-    </div>
+    <HomeLayout>
+      <div className="seller-register-page">
+        <SellerRegisterForm />
+      </div>
+    </HomeLayout>
   );
 }

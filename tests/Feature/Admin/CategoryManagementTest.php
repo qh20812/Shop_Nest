@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\NotificationType;
 use App\Models\Category;
+use App\Models\Notification;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\ImageValidationService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -182,33 +185,37 @@ class CategoryManagementTest extends TestCase
         $response->assertInertia(fn($page) => $page->component('Admin/Categories/Edit'));
     }
 
-    // public function test_admin_can_create_category_with_image(): void
-    // {
-    //     Storage::fake('public');
+    /**
+     * @requires extension gd
+     */
+    public function test_admin_can_create_category_with_image(): void
+    {
+        Storage::fake('public');
 
-    //     $image = UploadedFile::fake()->image('category.jpg');
-    //     $categoryData = [
-    //         'name' => [
-    //             'en' => 'Electronics',
-    //             'vi' => 'Điện tử'
-    //         ],
-    //         'description' => [
-    //             'en' => 'Electronic devices',
-    //             'vi' => 'Thiết bị điện tử'
-    //         ],
-    //         'is_active' => true,
-    //         'image' => $image,
-    //     ];
+        // Create a valid image for category (minimum 400x400 pixels as per ImageValidationService)
+        $image = UploadedFile::fake()->image('category.jpg', 400, 400);
+        $categoryData = [
+            'name' => [
+                'en' => 'Electronics',
+                'vi' => 'Điện tử'
+            ],
+            'description' => [
+                'en' => 'Electronic devices',
+                'vi' => 'Thiết bị điện tử'
+            ],
+            'is_active' => true,
+            'image' => $image,
+        ];
 
-    //     $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
+        $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
 
-    //     $response->assertRedirect(route('admin.categories.index'));
-    //     $response->assertSessionHas('success');
-    //     $this->assertDatabaseHas('categories', [
-    //         'name->en' => 'Electronics',
-    //     ]);
-    //     // Storage::assertExists('categories/' . $image->hashName(), 'public');
-    // }
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('categories', [
+            'name->en' => 'Electronics',
+        ]);
+        Storage::assertExists('categories/' . $image->hashName());
+    }
 
     public function test_admin_can_update_category(): void
     {
@@ -327,5 +334,155 @@ class CategoryManagementTest extends TestCase
             ->has('categories.data', 1)
             ->where('categories.data.0.name.en', 'Test Category')
         );
+    }
+
+    /**
+     * @requires extension gd
+     */
+    public function test_admin_can_create_category_with_invalid_image(): void
+    {
+        Storage::fake('public');
+
+        // Create an invalid image (too small for category requirements)
+        $image = UploadedFile::fake()->image('category.jpg', 100, 100);
+        $categoryData = [
+            'name' => [
+                'en' => 'Electronics',
+                'vi' => 'Điện tử'
+            ],
+            'is_active' => true,
+            'image' => $image,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
+
+        $response->assertSessionHasErrors(['image']);
+    }
+
+    /**
+     * @requires extension gd
+     */
+    public function test_admin_can_update_category_with_image(): void
+    {
+        Storage::fake('public');
+
+        $category = Category::factory()->create();
+        $image = UploadedFile::fake()->image('category.jpg', 400, 400);
+
+        $updateData = [
+            'name' => [
+                'en' => 'Updated Electronics',
+                'vi' => 'Điện tử cập nhật'
+            ],
+            'is_active' => true,
+            'image' => $image,
+        ];
+
+        $response = $this->actingAs($this->admin)->put(route('admin.categories.update', $category), $updateData);
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success');
+        Storage::assertExists('categories/' . $image->hashName());
+    }
+
+    public function test_notification_is_sent_when_category_is_created(): void
+    {
+        $categoryData = [
+            'name' => [
+                'en' => 'Test Category',
+                'vi' => 'Danh mục thử'
+            ],
+            'is_active' => true,
+        ];
+
+        $this->actingAs($this->admin)->post(route('admin.categories.store'), $categoryData);
+
+        $this->assertDatabaseHas('notifications', [
+            'title' => 'New Category Created',
+            'type' => NotificationType::ADMIN_CATALOG_MANAGEMENT,
+        ]);
+    }
+
+    public function test_notification_is_sent_when_category_is_updated(): void
+    {
+        $category = Category::factory()->create();
+
+        $updateData = [
+            'name' => [
+                'en' => 'Updated Category',
+                'vi' => 'Danh mục cập nhật'
+            ],
+            'is_active' => true,
+        ];
+
+        $this->actingAs($this->admin)->put(route('admin.categories.update', $category), $updateData);
+
+        $this->assertDatabaseHas('notifications', [
+            'title' => 'Category Updated',
+            'type' => NotificationType::ADMIN_CATALOG_MANAGEMENT,
+        ]);
+    }
+
+    public function test_notification_is_sent_when_category_is_deleted(): void
+    {
+        $category = Category::factory()->create();
+
+        $this->actingAs($this->admin)->delete(route('admin.categories.destroy', $category));
+
+        $this->assertDatabaseHas('notifications', [
+            'title' => 'Category Deleted',
+            'type' => NotificationType::ADMIN_CATALOG_MANAGEMENT,
+        ]);
+    }
+
+    public function test_notification_is_sent_when_category_is_restored(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $this->actingAs($this->admin)->patch(route('admin.categories.restore', $category->category_id));
+
+        $this->assertDatabaseHas('notifications', [
+            'title' => 'Category Restored',
+            'type' => NotificationType::ADMIN_CATALOG_MANAGEMENT,
+        ]);
+    }
+
+    public function test_notification_is_sent_when_category_is_force_deleted(): void
+    {
+        $category = Category::factory()->create();
+        $category->delete();
+
+        $this->actingAs($this->admin)->delete(route('admin.categories.forceDelete', $category->category_id));
+
+        $this->assertDatabaseHas('notifications', [
+            'title' => 'Category Permanently Deleted',
+            'type' => NotificationType::ADMIN_CATALOG_MANAGEMENT,
+        ]);
+    }
+
+    public function test_filter_logic_returns_correct_results(): void
+    {
+        // Create test categories with unique names
+        Category::factory()->create(['name' => ['en' => 'Active Electronics', 'vi' => 'Điện tử hoạt động'], 'is_active' => true]);
+        Category::factory()->create(['name' => ['en' => 'Inactive Books', 'vi' => 'Sách không hoạt động'], 'is_active' => false]);
+        $trashedCategory = Category::factory()->create(['name' => ['en' => 'Trashed Clothes', 'vi' => 'Quần áo đã xóa']]);
+        $trashedCategory->delete();
+
+        // Test active filter
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'active']));
+        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+
+        // Test inactive filter
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'inactive']));
+        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+
+        // Test trashed filter
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'trashed']));
+        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+
+        // Test search filter - search for unique term
+        $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['search' => 'Electronics']));
+        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
     }
 }

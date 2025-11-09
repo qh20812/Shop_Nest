@@ -295,11 +295,11 @@ export default function Checkout() {
   const handleApplyPromo = async (code: string) => {
     try {
       setPromoCode(code);
-      const response = await axios.post('/cart/apply-promotion', 
+      const response = await axios.post('/cart/apply-promotion',
         { code },
         { headers: { 'X-CSRF-TOKEN': getCsrfToken() } }
       );
-      
+
       if (response.data?.success) {
         setAppliedPromo(response.data.promotion);
         alert(t('Promotion applied successfully!'));
@@ -336,7 +336,7 @@ export default function Checkout() {
       const response = await axios.post('/addresses', newAddress, {
         headers: { 'X-CSRF-TOKEN': getCsrfToken() }
       });
-      
+
       if (response.data?.success) {
         setShowAddressModal(false);
         router.reload();
@@ -348,6 +348,17 @@ export default function Checkout() {
   };
 
   const handleCheckout = async () => {
+    if (!isBuyNowCheckout) {
+      if (addresses.length === 0) {
+        alert(t('Please add a shipping address before proceeding to checkout'));
+        return;
+      }
+      if (!selectedAddress || selectedAddress === 0) {
+        alert(t('Please select a shipping address'));
+        return;
+      }
+    }
+
     if (!selectedPayment) {
       alert(t('Please select a payment method'));
       return;
@@ -370,7 +381,8 @@ export default function Checkout() {
         provider: selectedPayment,
       };
 
-      if (!isBuyNowCheckout && selectedAddress) {
+
+      if (!isBuyNowCheckout && selectedAddress && selectedAddress !== 0) {
         payload.address_id = selectedAddress;
       }
 
@@ -402,13 +414,13 @@ export default function Checkout() {
   if (!items || items.length === 0) {
     return (
       <HomeLayout>
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <i className="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
-            <div className="text-xl text-gray-600 mb-6">{t('Your cart is empty')}</div>
-            <a 
-              href="/" 
-              className="px-6 py-3 btn-primary rounded-lg transition-colors duration-200"
+        <div className="checkout-section" style={{ maxWidth: '1152px', margin: '0 auto', padding: 'var(--spacing-lg) var(--spacing-md)' }}>
+          <div className="checkout-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--spacing-xl) 0', textAlign: 'center' }}>
+            <i className="fas fa-shopping-cart" style={{ fontSize: '60px', color: 'var(--dark-grey)', marginBottom: 'var(--spacing-md)' }} aria-hidden="true"></i>
+            <div style={{ fontSize: 'var(--font-size-xl)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-lg)' }}>{t('Your cart is empty')}</div>
+            <a
+              href="/"
+              className="checkout-button checkout-button--primary"
             >
               {t('Continue Shopping')}
             </a>
@@ -421,12 +433,12 @@ export default function Checkout() {
   return (
     <HomeLayout>
       <Head title={t("Checkout")} />
-      <div className="max-w-6xl mx-auto px-4 py-6 font-['Poppins',sans-serif]">
+      <div style={{ maxWidth: '1152px', margin: '0 auto', padding: 'var(--spacing-lg) var(--spacing-md)', fontFamily: 'var(--font-family-base)' }}>
         <CartTitle title={t("Checkout Order")} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 mt-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-lg)' }} className="checkout-grid">
           {/* Main Content */}
-          <div className="space-y-5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
             {/* Product List */}
             <CheckoutProductList
               items={items!}
@@ -437,23 +449,24 @@ export default function Checkout() {
             />
 
             {/* Shipping Address */}
-            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <i className="fas fa-map-marker-alt text-primary"></i>
-                  <h3 className="text-lg font-semibold text-gray-900">
+            <div className="checkout-section" style={{ background: 'var(--light)', boxShadow: 'var(--shadow-sm)' }}>
+              <div className="checkout-section__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <i className="checkout-section__icon fas fa-map-marker-alt"></i>
+                  <h3 className="checkout-section__title">
                     {t("Shipping Address")}
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowAddressModal(true)}
-                  className="px-4 py-2 text-sm text-primary border-2 border-dashed border-primary rounded-lg hover:bg-primary-light transition-colors duration-200"
+                  className="checkout-button checkout-button--secondary"
+                  style={{ padding: 'var(--spacing-sm) var(--spacing-md)', fontSize: 'var(--font-size-sm)', border: '2px dashed var(--primary)', minHeight: 'auto' }}
                 >
-                  <i className="fas fa-plus mr-2"></i>
+                  <i className="fas fa-plus" style={{ marginRight: 'var(--spacing-xs)' }}></i>
                   {t("Add New")}
                 </button>
               </div>
-              
+
               {addresses.length > 0 ? (
                 <AddressSelector
                   addresses={addresses}
@@ -461,11 +474,11 @@ export default function Checkout() {
                   onSelect={setSelectedAddress}
                 />
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">{t("You don't have any shipping address yet")}</p>
+                <div style={{ textAlign: 'center', padding: 'var(--spacing-xl) 0' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)' }}>{t("You don't have any shipping address yet")}</p>
                   <button
                     onClick={() => setShowAddressModal(true)}
-                    className="px-6 py-2.5 btn-primary rounded-lg transition-colors duration-200"
+                    className="checkout-button checkout-button--primary"
                   >
                     {t("Add Shipping Address")}
                   </button>
@@ -474,14 +487,14 @@ export default function Checkout() {
             </div>
 
             {/* Promotion Code */}
-            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <i className="fas fa-gift text-primary"></i>
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="checkout-section" style={{ background: 'var(--light)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+                <i className="checkout-section__icon fas fa-gift"></i>
+                <h3 className="checkout-section__title">
                   {t("Promotions & Vouchers")}
                 </h3>
               </div>
-              
+
               <PromotionInput
                 onApply={handleApplyPromo}
                 onRemove={handleRemovePromo}
@@ -496,7 +509,7 @@ export default function Checkout() {
               onMethodChange={setSelectedPayment}
               onCheckout={handleCheckout}
               processing={processing}
-              disabled={!isBuyNowCheckout && addresses.length > 0 && !selectedAddress}
+              disabled={!isBuyNowCheckout && (addresses.length === 0 || !selectedAddress || selectedAddress === 0)}
             />
 
             {/* Order Notes */}
@@ -507,12 +520,12 @@ export default function Checkout() {
           </div>
 
           {/* Sidebar - Order Summary */}
-          <div className="lg:sticky lg:top-4 h-fit">
-            <div className="bg-white rounded-lg p-5 shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+          <div className="checkout-sidebar">
+            <div className="checkout-section" style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--border-color)' }}>
                 {t("Order Summary")}
               </h3>
-              
+
               <OrderSummary
                 subtotal={finalSubtotal}
                 shipping={finalShipping}
@@ -520,8 +533,8 @@ export default function Checkout() {
                 total={finalTotal}
               />
 
-              <div className="mt-4 p-3 bg-primary-light rounded-lg text-xs text-gray-600 flex items-start gap-2">
-                <i className="fas fa-shield-alt text-primary mt-0.5"></i>
+              <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-sm)', background: 'var(--light-primary)', borderRadius: 'var(--border-radius-md)', fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' }}>
+                <i className="fas fa-shield-alt" style={{ color: 'var(--primary)', marginTop: '2px' }}></i>
                 <span>{t("Your payment information is secure and encrypted")}</span>
               </div>
             </div>

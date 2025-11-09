@@ -1,4 +1,3 @@
-// @ts-nocheck 
 import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 

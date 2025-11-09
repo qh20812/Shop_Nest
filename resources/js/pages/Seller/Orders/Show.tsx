@@ -49,15 +49,6 @@ interface Order {
 }
 
 // ✅ FIXED: define global PageProps for Inertia
-interface InertiaPageProps<T> {
-    props: T;
-}
-
-// ✅ Use type-safe PageProps
-interface PageProps {
-    order: Order;
-    flash?: { success?: string; error?: string };
-}
 
 // ==================== Status Helper ====================
 
@@ -91,7 +82,7 @@ const STATUS_OPTIONS = [
 export default function Show() {
     // ✅ No more TS error here
     const page = usePage<{ order: Order; flash?: { success?: string; error?: string } }>();
-    const { order, flash } = page.props;
+    const { order } = page.props;
 
     const [status, setStatus] = useState(order.status);
     const [loading, setLoading] = useState(false);

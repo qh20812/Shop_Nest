@@ -13,35 +13,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, migrate existing integer status values to their string equivalents
-        DB::table('products')
-            ->where('status', 1)
-            ->update(['status' => 'draft']);
-        
-        DB::table('products')
-            ->where('status', 2)
-            ->update(['status' => 'pending_approval']);
-        
-        DB::table('products')
-            ->where('status', 3)
-            ->update(['status' => 'published']);
-        
-        DB::table('products')
-            ->where('status', 4)
-            ->update(['status' => 'hidden']);
-
-        // Handle any invalid or unexpected status values
-        DB::table('products')
-            ->whereNotIn('status', ['draft', 'pending_approval', 'published', 'hidden'])
-            ->update(['status' => 'draft']);
-
-        // Now modify the column to be ENUM
+        // First, modify the column to be ENUM
         Schema::table('products', function (Blueprint $table) {
             $table->enum('status', ProductStatus::values())
                 ->default('draft')
                 ->comment('Product status using ENUM values')
                 ->change();
         });
+
+        // Then, migrate existing integer status values to their string equivalents
+        DB::statement("UPDATE products SET status = 'draft' WHERE status = 1");
+        DB::statement("UPDATE products SET status = 'pending_approval' WHERE status = 2");
+        DB::statement("UPDATE products SET status = 'published' WHERE status = 3");
+        DB::statement("UPDATE products SET status = 'hidden' WHERE status = 4");
+
+        // Handle any invalid or unexpected status values
+        DB::statement("UPDATE products SET status = 'draft' WHERE status NOT IN ('draft', 'pending_approval', 'published', 'hidden')");
     }
 
     /**
@@ -50,10 +37,10 @@ return new class extends Migration
     public function down(): void
     {
         // Convert enum strings back to integers for rollback
-        DB::table('products')->where('status', 'draft')->update(['status' => 1]);
-        DB::table('products')->where('status', 'pending_approval')->update(['status' => 2]);
-        DB::table('products')->where('status', 'published')->update(['status' => 3]);
-        DB::table('products')->where('status', 'hidden')->update(['status' => 4]);
+        DB::statement("UPDATE products SET status = 1 WHERE status = 'draft'");
+        DB::statement("UPDATE products SET status = 2 WHERE status = 'pending_approval'");
+        DB::statement("UPDATE products SET status = 3 WHERE status = 'published'");
+        DB::statement("UPDATE products SET status = 4 WHERE status = 'hidden'");
 
         // Change column back to integer
         Schema::table('products', function (Blueprint $table) {

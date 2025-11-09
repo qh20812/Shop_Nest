@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Events\OrderCancelled;
 use App\Events\OrderReviewed;
 use App\Events\ReturnRequested;
@@ -188,25 +189,8 @@ class OrderController extends Controller
 								'name' => $sellerName,
 								'avatar' => $sellerAvatar,
 							],
-							'items' => $items->map(function (OrderItem $item) use ($locale, $fallbackLocale) {
-								$product = $item->variant?->product;
-								$primaryImage = $product?->images?->first();
-
-								return [
-									'order_item_id' => $item->order_item_id,
-									'variant_id' => $item->variant_id,
-									'quantity' => $item->quantity,
-									'unit_price' => $item->unit_price,
-									'total_price' => $item->total_price,
-									'product_snapshot' => [
-										'product_id' => $product?->product_id,
-										'name' => $product?->getTranslation('name', $locale, false)
-											?? $product?->getTranslation('name', $fallbackLocale, false)
-											?? null,
-										'slug' => $product?->slug ?? null,
-										'image_url' => $primaryImage?->image_url ?? null,
-									],
-								];
+							'items' => $items->map(function (OrderItem $item) {
+								return $this->transformSingleOrderItem($item);
 							})->values(),
 						];
 					})
@@ -243,9 +227,10 @@ class OrderController extends Controller
 		}
 
 		$totalSpent = Order::where('customer_id', $user->id)
-			->whereIn('status', [
-				OrderStatus::DELIVERED->value,
-				OrderStatus::COMPLETED->value,
+			->where('payment_status', PaymentStatus::PAID->value)
+			->whereNotIn('status', [
+				OrderStatus::CANCELLED->value,
+				OrderStatus::RETURNED->value,
 			])
 			->sum('total_amount');
 
@@ -268,6 +253,9 @@ class OrderController extends Controller
 			->findOrFail($orderId);
 
 		$this->authorize('view', $order);
+
+		// Transform order items to match frontend expectations
+		$this->transformOrderItemsForFrontend($order);
 
 		return Inertia::render('Customer/Orders/Show', [
 			'order' => $order,
@@ -315,86 +303,6 @@ class OrderController extends Controller
 		return redirect()->back()->with('success', 'Cảm ơn bạn đã đánh giá đơn hàng.');
 	}
 
-	public function store(Request $request): RedirectResponse
-	{
-		$this->authorize('create', Order::class);
-
-		/** @var User $user */
-		$user = Auth::user();
-
-		$validated = $request->validate([
-			'address_id' => ['required', 'integer', Rule::exists('user_addresses', 'id')->where(fn($query) => $query->where('user_id', $user->id))],
-			'payment_method' => ['required', Rule::in(['cod', 'online'])],
-		]);
-
-		$cartItems = CartItem::where('user_id', $user->id)
-			->with(['variant.product'])
-			->get();
-
-		if ($cartItems->isEmpty()) {
-			return redirect()->back()->withErrors(['cart' => 'Giỏ hàng trống, không thể tạo đơn hàng.']);
-		}
-
-		try {
-			$order = DB::transaction(function () use ($cartItems, $user, $validated) {
-				$address = UserAddress::where('id', $validated['address_id'])
-					->where('user_id', $user->id)
-					->firstOrFail();
-
-				$totalAmount = $cartItems->sum(function ($item) {
-					$unitPrice = $item->variant->discount_price ?? $item->variant->price;
-					return $item->quantity * $unitPrice;
-				});
-
-				$shippingFee = $this->shippingService->calculateFee($address, $cartItems);
-
-				$order = Order::create([
-					'customer_id' => $user->id,
-					'order_number' => $this->generateOrderNumber(),
-					'sub_total' => $totalAmount,
-					'shipping_fee' => $shippingFee,
-					'discount_amount' => 0,
-					'total_amount' => $totalAmount + $shippingFee,
-					'currency' => 'VND',
-					'exchange_rate' => 1,
-					'total_amount_base' => $totalAmount,
-					'status' => OrderStatus::PENDING_CONFIRMATION->value,
-					'shipping_address_id' => $address->id,
-					'payment_method' => $validated['payment_method'],
-				]);
-
-				foreach ($cartItems as $cartItem) {
-					$unitPrice = $cartItem->variant->discount_price ?? $cartItem->variant->price;
-					$totalPrice = $unitPrice * $cartItem->quantity;
-
-					OrderItem::create([
-						'order_id' => $order->order_id,
-						'variant_id' => $cartItem->variant_id,
-						'quantity' => $cartItem->quantity,
-						'unit_price' => $unitPrice,
-						'total_price' => $totalPrice,
-						'original_currency' => 'VND',
-						'original_unit_price' => $unitPrice,
-						'original_total_price' => $totalPrice,
-					]);
-				}
-
-				CartItem::where('user_id', $user->id)->delete();
-
-				return $order;
-			});
-		} catch (\Throwable $exception) {
-			Log::error('Không thể tạo đơn hàng', [
-				'user_id' => $user->id,
-				'message' => $exception->getMessage(),
-			]);
-
-			return redirect()->back()->withErrors(['order' => 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.']);
-		}
-
-		return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được tạo thành công.');
-	}
-
 	public function cancel(int $orderId, Request $request): RedirectResponse
 	{
 		$order = Order::findOrFail($orderId);
@@ -407,7 +315,17 @@ class OrderController extends Controller
 			'reason' => ['nullable', 'string', 'max:255'],
 		]);
 
+		$oldStatus = $order->status;
 		$order->update(['status' => OrderStatus::CANCELLED->value]);
+
+		Log::info('Order cancelled by user', [
+			'order_id' => $order->order_id,
+			'user_id' => Auth::id(),
+			'old_status' => $oldStatus,
+			'new_status' => OrderStatus::CANCELLED->value,
+			'reason' => $validated['reason'] ?? null,
+		]);
+
 		OrderCancelled::dispatch($order, $validated['reason'] ?? 'User requested cancellation');
 
 		return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được hủy.');
@@ -420,7 +338,12 @@ class OrderController extends Controller
 		$this->authorize('reorder', $order);
 
 		foreach ($order->items as $item) {
-			if (!$item->variant || $item->variant->stock_quantity < $item->quantity) {
+			if (!$item->variant) {
+				return redirect()->back()->withErrors(['reorder' => 'Một số sản phẩm không còn tồn tại.']);
+			}
+
+			$availableStock = $item->variant->stock_quantity - ($item->variant->reserved_quantity ?? 0);
+			if ($availableStock < $item->quantity) {
 				return redirect()->back()->withErrors(['reorder' => 'Một số sản phẩm không còn đủ hàng để đặt lại.']);
 			}
 
@@ -449,7 +372,7 @@ class OrderController extends Controller
 
 			// Allow payment_method change if order is not yet processing
 			if (!in_array($order->status, [OrderStatus::PROCESSING->value, OrderStatus::PENDING_ASSIGNMENT->value, OrderStatus::ASSIGNED_TO_SHIPPER->value, OrderStatus::DELIVERING->value, OrderStatus::DELIVERED->value, OrderStatus::COMPLETED->value, OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value])) {
-				$rules['payment_method'] = ['nullable', Rule::in(['cod', 'online'])];
+				$rules['payment_method'] = ['nullable', Rule::in(['online'])];
 			}
 
 			$validated = $request->validate($rules);
@@ -463,7 +386,15 @@ class OrderController extends Controller
 				$updateData['payment_method'] = $validated['payment_method'];
 			}
 
+			$oldData = $order->only(array_keys($updateData));
 			$order->update($updateData);
+
+			Log::info('Order updated by user', [
+				'order_id' => $order->order_id,
+				'user_id' => Auth::id(),
+				'old_data' => $oldData,
+				'new_data' => $updateData,
+			]);
 
 			return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được cập nhật thành công.');
 		}
@@ -534,6 +465,75 @@ class OrderController extends Controller
 	protected function generateOrderNumber(): string
 	{
 		return 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999);
+	}
+
+	/**
+	 * Transform order items to match frontend expectations
+	 */
+	protected function transformOrderItemsForFrontend(Order $order): void
+	{
+		$order->items->transform(function (OrderItem $item) {
+			return $this->transformSingleOrderItem($item);
+		});
+	}
+
+	/**
+	 * Transform a single order item for frontend consumption
+	 */
+	protected function transformSingleOrderItem(OrderItem $item): array
+	{
+		$variant = $item->variant;
+		$product = $variant?->product;
+
+		// Handle missing variant/product gracefully
+		if (!$variant || !$product) {
+			Log::warning('Missing variant or product for order item', [
+				'order_item_id' => $item->order_item_id,
+				'variant_id' => $item->variant_id,
+			]);
+
+			return [
+				'order_item_id' => $item->order_item_id,
+				'variant_id' => $item->variant_id,
+				'quantity' => $item->quantity,
+				'unit_price' => $item->unit_price,
+				'total_price' => $item->total_price,
+				'product_snapshot' => [
+					'product_id' => null,
+					'name' => __('Sản phẩm không còn tồn tại'),
+					'slug' => null,
+					'image_url' => null,
+				],
+			];
+		}
+
+		// Cache key for product translation and image data
+		$locale = app()->getLocale();
+		$cacheKey = "product_snapshot:{$product->product_id}:{$locale}";
+
+		$productSnapshot = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($product, $locale) {
+			$fallbackLocale = config('app.fallback_locale', 'en');
+			$primaryImage = $product->images?->first();
+
+			return [
+				'product_id' => $product->product_id,
+				'name' => $product->getTranslation('name', $locale)
+					?? $product->getTranslation('name', $fallbackLocale)
+					?? $product->name
+					?? __('Tên sản phẩm'),
+				'slug' => $product->slug,
+				'image_url' => $primaryImage?->image_url,
+			];
+		});
+
+		return [
+			'order_item_id' => $item->order_item_id,
+			'variant_id' => $item->variant_id,
+			'quantity' => $item->quantity,
+			'unit_price' => $item->unit_price,
+			'total_price' => $item->total_price,
+			'product_snapshot' => $productSnapshot,
+		];
 	}
 
 	protected function resolveTrackingData(Order $order): ?array

@@ -1,0 +1,211 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --light: #f6f6f9;
+    --primary: #1976D2;
+    --light-primary: #CFE8FF;
+    --grey: #eee;
+    --dark-grey: #AAAAAA;
+    --dark: #363949;
+    --danger: #D32F2F;
+	--light-danger: #FECDD3;
+    --warning: #FBC02D;
+    --light-warning: #FFF2C6;
+    --success: #388E3C;
+    --light-success: #BBF7D0;
+}
+
+/* Seller Register Form Styles */
+.seller-register-page {
+    background-color: var(--light);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.seller-register-container {
+    background-color: var(--light);
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+    width: 900px;
+    max-width: 95%;
+    min-height: 600px;
+}
+
+.seller-register-form {
+    background-color: var(--light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+    height: 100%;
+}
+
+.seller-register-form h1 {
+    font-weight: bold;
+    font-size: 2rem;
+    text-transform: uppercase;
+    margin: 5px 0 10px 0;
+    color: var(--primary);
+    text-align: center;
+}
+
+.seller-register-form p {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.3px;
+    margin: 0 0 30px 0;
+    text-align: center;
+    color: var(--dark-grey);
+}
+
+.seller-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.seller-form-field {
+    width: 100%;
+}
+
+.seller-form-field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: var(--dark);
+}
+
+.seller-form-field input {
+    background-color: var(--grey);
+    border: none;
+    margin: 0;
+    padding: 12px 15px;
+    font-size: 13px;
+    border-radius: 8px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.seller-form-field input:focus {
+    border: 1px solid var(--primary);
+    scale: 1.02;
+    color: var(--primary);
+    background-color: var(--light);
+}
+
+.seller-form-field input::placeholder {
+    color: var(--dark-grey);
+}
+
+.seller-form-field .input-error {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--danger);
+}
+
+.seller-submit-btn {
+    background-color: var(--primary);
+    color: var(--light);
+    font-size: 12px;
+    padding: 12px 45px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 20px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.seller-submit-btn:hover:not(:disabled) {
+    background-color: var(--dark-grey);
+    color: var(--light);
+}
+
+.seller-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Seller Form Links */
+.seller-form-links {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--dark-grey);
+    line-height: 1.4;
+}
+
+.seller-form-links p {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+}
+
+.seller-links-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.seller-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.seller-link:hover {
+    color: var(--dark);
+    text-decoration: underline;
+}
+
+.seller-link-separator {
+    color: var(--dark);
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+@media (max-width: 768px) {
+    .seller-register-container {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .seller-form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .seller-register-form {
+        padding: 20px;
+    }
+
+    .seller-links-list {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .seller-link-separator {
+        display: none;
+    }
+}

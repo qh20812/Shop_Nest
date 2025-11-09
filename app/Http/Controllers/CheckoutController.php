@@ -79,7 +79,7 @@ class CheckoutController extends Controller
 
         $subtotal = $cartItems->sum(function (CartItem $item) use ($locale) {
             $variant = $item->variant;
-            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+            $unitPrice = Localization::resolveNumber($variant->discount_price ?? $variant->price, $locale);
 
             return $item->quantity * $unitPrice;
         });
@@ -91,7 +91,7 @@ class CheckoutController extends Controller
         $formattedCartItems = $cartItems->map(function (CartItem $item) use ($locale) {
             $variant = $item->variant;
             $product = $variant->product;
-            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+            $unitPrice = Localization::resolveNumber($variant->discount_price ?? $variant->price, $locale);
             $productName = Localization::resolveField($product->name ?? '', $locale, 'Product');
 
             return [
@@ -105,8 +105,8 @@ class CheckoutController extends Controller
                     'size' => $variant->size ?? null,
                     'color' => $variant->color ?? null,
                     'price' => Localization::resolveNumber($variant->price, $locale),
-                    'sale_price' => $variant->sale_price !== null
-                        ? Localization::resolveNumber($variant->sale_price, $locale)
+                    'sale_price' => $variant->discount_price !== null
+                        ? Localization::resolveNumber($variant->discount_price, $locale)
                         : null,
                     'product' => [
                         'id' => (int) $product->id,
@@ -194,7 +194,7 @@ class CheckoutController extends Controller
 
         $subtotal = $cartItems->sum(function (CartItem $item) use ($locale) {
             $variant = $item->variant;
-            $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+            $unitPrice = Localization::resolveNumber($variant->discount_price ?? $variant->price, $locale);
 
             return $item->quantity * $unitPrice;
         });
@@ -225,7 +225,7 @@ class CheckoutController extends Controller
 
             foreach ($cartItems as $cartItem) {
                 $variant = $cartItem->variant;
-                $unitPrice = Localization::resolveNumber($variant->sale_price ?? $variant->price, $locale);
+                $unitPrice = Localization::resolveNumber($variant->discount_price ?? $variant->price, $locale);
                 $lineTotal = $unitPrice * $cartItem->quantity;
 
                 $order->items()->create([
@@ -407,7 +407,7 @@ class CheckoutController extends Controller
                 ->where('user_id', $user->id)
                 ->get();
             $subtotal = $cartItems->sum(function ($item) use ($locale) {
-                $unitPrice = Localization::resolveNumber($item->variant->sale_price ?? $item->variant->price, $locale);
+                $unitPrice = Localization::resolveNumber($item->variant->discount_price ?? $item->variant->price, $locale);
 
                 return $item->quantity * $unitPrice;
             });

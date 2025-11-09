@@ -659,7 +659,7 @@ class DetailController extends Controller
         // Validate request
         $data = $request->validate([
             'provider' => ['required', 'string', 'in:stripe,paypal,vnpay,momo'],
-            // 'address_id' => ['nullable', 'exists:user_addresses,id'],
+            'address_id' => ['nullable', 'exists:user_addresses,id'],
         ]);
 
         // Find the order and ensure it belongs to the user
@@ -668,13 +668,23 @@ class DetailController extends Controller
             ->where('status', OrderStatus::PENDING_CONFIRMATION)
             ->firstOrFail();
 
-        // Verify the address belongs to the user
-        // $address = UserAddress::where('id', $data['address_id'])
-        //     ->where('user_id', $user->id)
-        //     ->firstOrFail();
+        // Update shipping address if provided, otherwise use default
+        if (!empty($data['address_id'])) {
+            $address = UserAddress::where('id', $data['address_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
-        // Update order with shipping address
-        // $order->update(['shipping_address_id' => $address->id]);
+            $order->update(['shipping_address_id' => $address->id]);
+        } else {
+            // Use default address if no address_id provided
+            $defaultAddress = UserAddress::where('user_id', $user->id)
+                ->where('is_default', true)
+                ->first();
+
+            if ($defaultAddress) {
+                $order->update(['shipping_address_id' => $defaultAddress->id]);
+            }
+        }
 
         try {
             $gateway = PaymentService::make($data['provider']);

@@ -13,6 +13,7 @@
     --light-warning: #FFF2C6;
     --success: #388E3C;
     --light-success: #BBF7D0;
+    --common-border-radius: 20px;
 }
 
 *{
@@ -346,6 +347,22 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .content nav .profile img{
@@ -3063,5 +3080,358 @@ html.dark body {
 
     .modal-footer .btn {
         width: 100%;
+    }
+}
+
+/* ==============================
+   SELLER DASHBOARD STYLES
+   ============================== */
+
+.seller-widgets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.widget-card {
+    background: var(--light);
+    margin-top: 24px;
+    border-radius: var(--common-border-radius);
+    overflow: hidden;
+}
+
+.widget-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--grey);
+    background: var(--light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.widget-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.widget-header span {
+    font-size: 14px;
+    color: var(--dark-grey);
+    font-weight: 500;
+}
+
+.widget-body {
+    padding: 24px;
+}
+
+/* Top Products List */
+.top-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--light);
+    border: 1px solid var(--grey);
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    background: var(--light-grey);
+    border-color: var(--primary);
+}
+
+.product-rank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.product-info {
+    flex: 1;
+}
+
+.product-info h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.product-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--dark-grey);
+}
+
+.quantity {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.revenue {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Stock Alerts */
+.alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-item.warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-left-color: var(--warning);
+}
+
+.alert-item.danger {
+    background: rgba(220, 53, 69, 0.1);
+    border-left-color: var(--danger);
+}
+
+.alert-item .bx {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.alert-item.warning .bx {
+    color: var(--warning);
+}
+
+.alert-item.danger .bx {
+    color: var(--danger);
+}
+
+.alert-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--dark-grey);
+    line-height: 1.4;
+}
+
+/* Performance Metrics */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.metric-card {
+    background: var(--light);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--grey);
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
+}
+
+.metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.metric-icon .bx {
+    font-size: 24px;
+    color: var(--dark);
+}
+
+.metric-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+}
+
+.metric-value.top-product {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.metric-value.alert-count {
+    color: var(--danger);
+}
+
+/* Order Products */
+.order-products {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.product-summary {
+    font-size: 13px;
+    color: var(--dark-grey);
+    line-height: 1.3;
+}
+
+.no-products {
+    font-size: 13px;
+    color: var(--dark-grey);
+    font-style: italic;
+}
+
+.more-items {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Responsive Design for Seller Dashboard */
+@media (max-width: 1024px) {
+    .seller-widgets {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .widget-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .widget-header h3 {
+        font-size: 16px;
+    }
+
+    .widget-body {
+        padding: 20px;
+    }
+
+    .product-item {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .product-rank {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .product-info h4 {
+        font-size: 14px;
+    }
+
+    .product-stats {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .alert-item {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .metric-card {
+        padding: 16px;
+    }
+
+    .metric-icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 12px;
+    }
+
+    .metric-icon .bx {
+        font-size: 20px;
+    }
+
+    .metric-value {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .seller-widgets {
+        gap: 16px;
+    }
+
+    .widget-header {
+        padding: 12px 16px;
+    }
+
+    .widget-body {
+        padding: 16px;
+    }
+
+    .top-products-list {
+        gap: 12px;
+    }
+
+    .alerts-list {
+        gap: 10px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .product-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .product-rank {
+        align-self: flex-start;
     }
 }

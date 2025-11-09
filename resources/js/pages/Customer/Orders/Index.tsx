@@ -150,6 +150,7 @@ const Index: React.FC = () => {
   const [orderCollection, setOrderCollection] = useState<OrderSummary[]>(orders?.data ?? []);
   const [hasMore, setHasMore] = useState<boolean>((orders?.current_page ?? 1) < (orders?.last_page ?? 1));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const appendModeRef = useRef(false);
 
@@ -223,6 +224,7 @@ const Index: React.FC = () => {
     (event?: React.FormEvent<HTMLFormElement>) => {
       event?.preventDefault();
       appendModeRef.current = false;
+      setIsSearching(true);
 
       const query = createQueryParams({ page: 1 });
 
@@ -232,6 +234,7 @@ const Index: React.FC = () => {
         preserveScroll: true,
         preserveState: true,
         replace: true,
+        onFinish: () => setIsSearching(false),
       });
     },
     [createQueryParams],
@@ -305,7 +308,13 @@ const Index: React.FC = () => {
 
         <OrdersTabs tabs={tabEntries} activeTab={activeTab} onTabClick={handleTabClick} />
 
-        <OrdersSearchBar value={searchValue} onValueChange={setSearchValue} onSubmit={handleSearchSubmit} />
+        <OrdersSearchBar 
+          value={searchValue} 
+          onValueChange={setSearchValue} 
+          onSubmit={handleSearchSubmit}
+          isLoading={isSearching}
+          minLength={2}
+        />
 
         <section className="orders-list" aria-label="Danh sách đơn hàng">
           {orderCollection.length === 0 ? (

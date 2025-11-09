@@ -1,4 +1,3 @@
-// @ts-nocheck 
 import React from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 // Giả sử bạn có một Layout cho Seller
@@ -28,6 +27,7 @@ interface PageProps {
     flash?: {
         success?: string;
     };
+    [key: string]: unknown;
 }
 
 export default function Index() {

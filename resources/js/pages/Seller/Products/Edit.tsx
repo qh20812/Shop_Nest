@@ -1,4 +1,3 @@
-// @ts-nocheck 
 import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 
@@ -18,18 +17,12 @@ interface Category {
     name: string;
 }
 
-interface Brand {
-    brand_id: number;
-    name: string;
-}
-
 interface PageProps {
     product: Product;
     categories: Category[];
-    brands: Brand[];
 }
 
-export default function Edit({ product, categories, brands }: PageProps) {
+export default function Edit({ product, categories }: PageProps) {
     const { data, setData, put, processing, errors } = useForm({
         name: product.name || '',
         description: product.description || '',

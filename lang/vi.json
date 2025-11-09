@@ -405,7 +405,7 @@
     "Are you sure you want to rejected this shipper? This action will update their status.": "Bạn có chắc chắn muốn từ chối shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
     "Are you sure you want to approved this shipper? This action will update their status.": "Bạn có chắc chắn muốn phê duyệt shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
     "Are you sure you want to suspended this shipper? This action will update their status.": "Bạn có chắc chắn muốn tạm ngưng shipper này? Hành động này sẽ cập nhật trạng thái của họ.",
-    "Seller Dashboard": "Bảng điều khiển Seller",
+    "Seller Dashboard": "Tổng quan",
     "My Products": "Sản phẩm của tôi",
     "Add Product": "Thêm sản phẩm",
     "Inventory": "Kho hàng",
@@ -609,5 +609,32 @@
     "System Health": "Tình trạng hệ thống",
     "vs previous period": "so với kỳ trước",
     "Last updated at": "Cập nhật lần cuối lúc",
-    "Recent Platform Activity": "Hoạt động nền tảng gần đây"
+    "Recent Platform Activity": "Hoạt động nền tảng gần đây",
+    "Top Selling Products": "Sản phẩm bán chạy nhất",
+    "This month": "Tháng này",
+    "Stock Alerts": "Cảnh báo tồn kho",
+    "items": "mặt hàng",
+    "Only 2 items left in stock": "Chỉ còn 2 sản phẩm trong kho",
+    "Only 1 item left in stock": "Chỉ còn 1 sản phẩm trong kho",
+    "Performance Metrics": "Chỉ số hiệu suất",
+    "Average Order Value": "Giá trị đơn hàng trung bình",
+    "Top Product": "Sản phẩm hàng đầu",
+    "No data": "Không có dữ liệu",
+    "more": "thêm",
+    "Monthly Growth": "Tăng trưởng hàng tháng",
+    "Unique Customers": "Khách hàng độc nhất",
+    "Low Stock Alert": "Cảnh báo hàng tồn kho thấp",
+    "You have": "Bạn có",
+    "products with low stock": "sản phẩm tồn kho thấp",
+    "Stock Management": "Quản lý tồn kho",
+    "Monitor your inventory levels regularly": "Theo dõi mức tồn kho thường xuyên",
+    "All Stock Levels Good": "Tất cả mức tồn kho đều tốt",
+    "No low stock alerts at this time": "Không có cảnh báo tồn kho thấp vào lúc này",
+    "auth": {
+        "unauthenticated": "Chưa xác thực.",
+        "login_required": "Bạn cần đăng nhập để truy cập trang này"
+    },
+    "middleware": {
+        "seller_access_denied": "Bạn không có quyền truy cập trang này"
+    }
 }

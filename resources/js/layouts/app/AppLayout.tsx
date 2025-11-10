@@ -49,11 +49,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { icon: 'bx bxs-dashboard', label: t('Seller Dashboard'), href: '/seller/dashboard' },
     { icon: 'bx bx-package', label: t('My Products'), href: '/seller/products' },
     { icon: 'bx bx-plus-circle', label: t('Add Product'), href: '/seller/products/create' },
-    { icon: 'bx bx-cube', label: t('Inventory'), href: '/seller/inventory' },
+    // { icon: 'bx bx-cube', label: t('Inventory'), href: '/seller/inventory' },
     { icon: 'bx bx-receipt', label: t('Orders'), href: '/seller/orders' },
-    { icon: 'bx bx-dollar-circle', label: t('Revenue'), href: '/seller/revenue' },
-    { icon: 'bx bx-store-alt', label: t('Shop Profile'), href: '/seller/profile' },
-    { icon: 'bx bx-star', label: t('Customer Reviews'), href: '/seller/reviews' },
+    // { icon: 'bx bx-dollar-circle', label: t('Revenue'), href: '/seller/revenue' },
+    // { icon: 'bx bx-store-alt', label: t('Shop Profile'), href: '/seller/profile' },
+    // { icon: 'bx bx-star', label: t('Customer Reviews'), href: '/seller/reviews' },
     { icon: 'bx bx-gift', label: t('Promotions'), href: '/seller/promotions' },
     { icon: 'bx bx-cog', label: t('Settings'), href: '/settings' },
   ];
@@ -72,7 +72,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Determine sidebar items based on user role
   const getSidebarItems = () => {
-    if (!user) return adminSidebarItems; // fallback
+     if (!user) return adminSidebarItems; // fallback
 
     // Check if user has admin role
     if (user.role?.includes('Admin')) {

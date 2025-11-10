@@ -34,6 +34,12 @@ class ProductController extends Controller
             ->latest()
             ->paginate(10);
 
+        // Map product_id -> id nếu bạn đang dùng product_id
+        $products->getCollection()->transform(function ($product) {
+            $product->id = $product->product_id;
+            return $product;
+        });
+
         return Inertia::render('Seller/Products/Index', [
             'products' => $products,
         ]);
@@ -76,5 +82,3 @@ class ProductController extends Controller
         return redirect()->route('seller.products.index')->with('success', 'Xóa sản phẩm thành công.');
     }
 }
-
-

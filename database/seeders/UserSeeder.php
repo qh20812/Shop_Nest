@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
         $adminRole = Role::where('name->en', 'Admin')->first();
         $sellerRole = Role::where('name->en', 'Seller')->first();
         $customerRole = Role::where('name->en', 'Customer')->first();
+        $shipperRole = Role::where('name->en', 'Shipper')->first();
 
         // Tạo SUPER ADMIN
         $admin = User::factory()->create([
@@ -24,6 +25,15 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
         $admin->roles()->attach($adminRole);
+
+        $shipper = User::factory()->create([
+            'username' => 'shipper1',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john@gmail.com',
+            'password' => Hash::make('password'),
+        ]);
+        $shipper->roles()->attach($shipperRole);
 
         // Tạo 20 người bán
         User::factory(20)->create()->each(function ($user) use ($sellerRole) {

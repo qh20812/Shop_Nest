@@ -3,11 +3,20 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Shipper\DashboardController;
 
-Route::middleware(['auth', 'verified', 'shipper'])->prefix('shipper')->name('shipper.')->group(function () {
+// Shipper Routes
+Route::middleware(['auth', 'verified'])->prefix('shipper')->name('shipper.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Add more shipper routes here
-    // Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    // Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
-    // Route::get('/earnings', [EarningsController::class, 'index'])->name('earnings.index');
+
+    // Journey Management
+    Route::post('/journeys/{journey}/status', [DashboardController::class, 'updateJourneyStatus'])
+        ->name('journeys.updateStatus');
+
+    // Shipper Status
+    Route::post('/toggle-status', [DashboardController::class, 'toggleStatus'])
+        ->name('toggleStatus');
+
+    // Statistics
+    Route::get('/statistics', [DashboardController::class, 'getStatistics'])
+        ->name('statistics');
 });

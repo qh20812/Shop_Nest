@@ -1,3 +1,4 @@
+import HomeLayout from '@/layouts/app/HomeLayout';
 import React, { useState } from 'react';
 // Do dự án gốc sử dụng Font Awesome cho icon, chúng ta sẽ giữ lại liên kết này.
 // Trong môi trường React thực tế, nên dùng một thư viện icon React như 'lucide-react'.
@@ -70,12 +71,12 @@ const globalStyles = `
         background-color: var(--light);
         line-height: 1.6;
         color: var(--dark);
-        padding: 20px;
+        padding: 0px;
     }
 
     .faq-container {
         max-width: 900px;
-        margin: 40px auto;
+        margin: 0px;
         background: var(--light-2);
         border-radius: 12px;
         box-shadow: 0 4px 20px var(--shadow-medium);
@@ -213,29 +214,30 @@ const FAQPage: React.FC = () => {
     };
 
     return (
-        // Wrapper để đảm bảo CSS chỉ áp dụng bên trong component
-        <div className="faq-wrapper">
-            {/* 7. Nhúng CSS vào head (hoặc component) */}
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-            <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
+        <HomeLayout>
+            <div className="faq-wrapper">
+                {/* 7. Nhúng CSS vào head (hoặc component) */}
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+                <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
 
-            <div className="faq-container">
-                <div className="faq-header">
-                    <h1>Câu Hỏi Thường Gặp (FAQ)</h1>
-                    <p>Giải đáp nhanh chóng các thắc mắc phổ biến của khách hàng.</p>
+                <div className="faq-container">
+                    <div className="faq-header">
+                        <h1>Câu Hỏi Thường Gặp (FAQ)</h1>
+                        <p>Giải đáp nhanh chóng các thắc mắc phổ biến của khách hàng.</p>
+                    </div>
+
+                    {/* 8. Render danh sách FAQ */}
+                    {faqData.map(item => (
+                        <FAQItemComponent
+                            key={item.id}
+                            item={item}
+                            isActive={activeIndex === item.id}
+                            onToggle={handleToggle}
+                        />
+                    ))}
                 </div>
-
-                {/* 8. Render danh sách FAQ */}
-                {faqData.map(item => (
-                    <FAQItemComponent
-                        key={item.id}
-                        item={item}
-                        isActive={activeIndex === item.id}
-                        onToggle={handleToggle}
-                    />
-                ))}
             </div>
-        </div>
+        </HomeLayout>
     );
 };
 

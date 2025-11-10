@@ -21,11 +21,15 @@ class Product extends Model
     protected $fillable = [
         'name',
         'description',
+        'shop_id',
         'category_id',
         'brand_id',
         'seller_id',
         'status',
         'is_active',
+        'meta_title',
+        'meta_slug',
+        'meta_description',
     ];
 
     protected $casts = [

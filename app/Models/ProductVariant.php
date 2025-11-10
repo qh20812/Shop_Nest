@@ -21,11 +21,20 @@ class ProductVariant extends Model
     protected $primaryKey = 'variant_id';
     protected $fillable = [
         'product_id',
+        'variant_name',
         'sku',
         'price',
         'discount_price',
         'stock_quantity',
-        'image_id'
+        'image_id',
+        'is_primary',
+        'option_values',
+        'option_signature',
+    ];
+
+    protected $casts = [
+        'option_values' => 'array',
+        'is_primary' => 'boolean',
     ];
 
     /**

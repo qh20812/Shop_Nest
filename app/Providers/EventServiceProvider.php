@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Events\Cart\LowStockDetected;
 use App\Events\OrderCancelled;
+use App\Events\ProductUpdated;
 use App\Events\ReturnRequested;
 use App\Listeners\Auth\MergeGuestCart;
 use App\Listeners\Cart\SendLowStockNotification;
+use App\Listeners\ClearProductReviewsCache;
 use App\Listeners\Orders\SendOrderCancelledNotification;
 use App\Listeners\Orders\SendReturnRequestNotification;
 use Illuminate\Auth\Events\Login;
@@ -26,6 +28,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         ReturnRequested::class => [
             SendReturnRequestNotification::class,
+        ],
+        ProductUpdated::class => [
+            ClearProductReviewsCache::class,
         ],
     ];
 

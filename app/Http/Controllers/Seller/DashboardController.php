@@ -25,6 +25,8 @@ class DashboardController extends Controller
      * DashboardController constructor.
      *
      * @param SellerDashboardService $dashboardService The service handling dashboard business logic
+     * Constructor của DashboardController.
+     * @param SellerDashboardService $dashboardService Dịch vụ xử lý logic nghiệp vụ của dashboard
      */
     public function __construct(SellerDashboardService $dashboardService)
     {
@@ -44,6 +46,15 @@ class DashboardController extends Controller
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException When user lacks seller privileges
      * @throws \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException When rate limit exceeded
+     * Hiển thị dashboard của người bán với thống kê và dữ liệu toàn diện.
+     * Phương thức này xử lý view dashboard chính, bao gồm:
+     * - Kiểm tra xác thực và ủy quyền
+     * - Giới hạn tốc độ để ngăn chặn lạm dụng
+     * - Lưu cache để tối ưu hiệu suất
+     * - Xử lý lỗi toàn diện với dữ liệu dự phòng
+     * @return Response Phản hồi Inertia với dữ liệu dashboard
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Khi người dùng thiếu quyền seller
+     * @throws \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException Khi vượt quá giới hạn tốc độ
      */
     public function index(): Response
     {
@@ -100,6 +111,12 @@ class DashboardController extends Controller
      * @param int $sellerId The authenticated seller's ID
      * @param int $initialLowStockCount Initial count of low stock items
      * @return array Complete shop statistics array
+     * Xây dựng thống kê cửa hàng toàn diện từ các nguồn chỉ số khác nhau.
+     * Tổng hợp dữ liệu từ nhiều phương thức chỉ số để tạo mảng thống kê hoàn chỉnh
+     * cho dashboard. Bao gồm xử lý lỗi với giá trị mặc định dự phòng.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @param int $initialLowStockCount Số lượng hàng tồn kho thấp ban đầu
+     * @return array Mảng thống kê cửa hàng hoàn chỉnh
      */
     private function getShopStats(int $sellerId, int $initialLowStockCount = 0): array
     {
@@ -130,6 +147,11 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return Collection Collection of recent orders with relationships loaded
+     * Lấy các đơn hàng đã hoàn thành gần đây cho dashboard của người bán.
+     * Lấy các đơn hàng đã hoàn thành gần đây nhất với chi tiết đầy đủ về khách hàng và sản phẩm.
+     * Bao gồm xử lý lỗi toàn diện với ghi log.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return Collection Bộ sưu tập các đơn hàng gần đây với quan hệ đã tải
      */
     private function getRecentShopOrders(int $sellerId): Collection
     {
@@ -152,6 +174,10 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return array Array of top selling product data
+     * Lấy dữ liệu sản phẩm bán chạy nhất cho dashboard.
+     * Lấy các sản phẩm hoạt động tốt nhất theo khối lượng bán hàng với xử lý lỗi.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return array Mảng dữ liệu sản phẩm bán chạy nhất
      */
     private function getTopSellingProducts(int $sellerId): array
     {
@@ -175,6 +201,11 @@ class DashboardController extends Controller
      *
      * @param int $initialLowStockCount Initial low stock count value
      * @return array Default statistics array
+     * Lấy giá trị thống kê mặc định cho các tình huống dự phòng lỗi.
+     * Cung cấp giá trị mặc định an toàn khi không thể lấy dữ liệu dashboard
+     * do lỗi hoặc dữ liệu thiếu.
+     * @param int $initialLowStockCount Giá trị số lượng hàng tồn kho thấp ban đầu
+     * @return array Mảng thống kê mặc định
      */
     private function getDefaultStats(int $initialLowStockCount = 0): array
     {
@@ -195,6 +226,9 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return array Revenue metrics (total_revenue, average_order_value)
+     * Trích xuất các chỉ số liên quan đến doanh thu từ thống kê tổng hợp.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return array Các chỉ số doanh thu (total_revenue, average_order_value)
      */
     private function getRevenueMetrics(int $sellerId): array
     {
@@ -211,6 +245,9 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return array Order metrics (total_orders)
+     * Trích xuất các chỉ số liên quan đến đơn hàng từ thống kê tổng hợp.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return array Các chỉ số đơn hàng (total_orders)
      */
     private function getOrderMetrics(int $sellerId): array
     {
@@ -226,6 +263,9 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return array Customer metrics (unique_customers)
+     * Trích xuất các chỉ số liên quan đến khách hàng từ thống kê tổng hợp.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return array Các chỉ số khách hàng (unique_customers)
      */
     private function getCustomerMetrics(int $sellerId): array
     {
@@ -241,6 +281,9 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return array Growth metrics (monthly_revenue_growth)
+     * Tính toán các chỉ số tăng trưởng cho người bán.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return array Các chỉ số tăng trưởng (monthly_revenue_growth)
      */
     private function getGrowthMetrics(int $sellerId): array
     {
@@ -255,6 +298,10 @@ class DashboardController extends Controller
      * @param int $sellerId The authenticated seller's ID
      * @param int $initialLowStockCount Initial low stock count
      * @return array Alert metrics (low_stock_alerts, pending_orders_count)
+     * Lấy các chỉ số liên quan đến cảnh báo bao gồm cảnh báo tồn kho và đơn hàng đang chờ.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @param int $initialLowStockCount Số lượng tồn kho thấp ban đầu
+     * @return array Các chỉ số cảnh báo (low_stock_alerts, pending_orders_count)
      */
     private function getAlertMetrics(int $sellerId, int $initialLowStockCount = 0): array
     {
@@ -269,6 +316,9 @@ class DashboardController extends Controller
      *
      * @param int $sellerId The authenticated seller's ID
      * @return string|null Name of the top-selling product or null if none found
+     * Lấy tên của sản phẩm bán chạy nhất để hiển thị.
+     * @param int $sellerId ID của người bán đã xác thực
+     * @return string|null Tên của sản phẩm bán chạy nhất hoặc null nếu không tìm thấy
      */
     private function getTopSellingProductName(int $sellerId): ?string
     {

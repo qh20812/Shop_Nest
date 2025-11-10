@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app/AppLayout';
 import Header from '@/Components/ui/Header';
 import Insights from '@/Components/ui/Insights';
 import Avatar from '@/Components/ui/Avatar';
-import { useTranslation } from '../../../lib/i18n';
+import { useTranslation } from '@/lib/i18n';
 import { usePage } from '@inertiajs/react';
 import { formatCurrency } from '@/lib/utils';
 import '@/../css/Page.css';

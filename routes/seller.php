@@ -13,7 +13,9 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->grou
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Seller Products
-    Route::resource('products', ProductController::class);
+    Route::resource('products', ProductController::class)->only(['index', 'create', 'show', 'edit', 'destroy']);
+    Route::post('products', [ProductController::class, 'store'])->middleware('throttle:5,1')->name('products.store');
+    Route::put('products/{product}', [ProductController::class, 'update'])->middleware('throttle:5,1')->name('products.update');
 
     // Seller Orders
     Route::get('/orders',[OrderController::class, 'index'])->name('orders.index');

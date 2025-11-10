@@ -12,19 +12,13 @@ interface Message {
     role?: string;
 }
 
-interface User {
-    roles?: Array<{
-        name?: {
-            en?: string;
-        };
-    }>;
-}
+type SupportedRole = 'admin' | 'seller' | 'shipper' | 'customer';
 
 interface ChatWindowProps {
     messages: Message[];
     isTyping: boolean;
     input: string;
-    user?: User;
+    userRole: SupportedRole;
     soundEnabled: boolean;
     onClose: () => void;
     onSendMessage: (message?: string | null) => void;
@@ -37,7 +31,7 @@ export default function ChatWindow({
     messages, 
     isTyping,
     input, 
-    user, 
+    userRole,
     soundEnabled,
     onClose, 
     onSendMessage, 
@@ -91,9 +85,7 @@ export default function ChatWindow({
 
     // Get role-based quick questions
     const getQuickQuestions = (): string[] => {
-        const userRole = user?.roles?.[0]?.name?.en?.toLowerCase() || 'customer';
-        
-        const questions: Record<string, string[]> = {
+        const questions: Record<SupportedRole, string[]> = {
             admin: [
                 'Doanh thu tháng này?',
                 'Báo cáo tồn kho thấp',

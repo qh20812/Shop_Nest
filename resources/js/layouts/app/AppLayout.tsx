@@ -19,13 +19,21 @@ interface AppLayoutProps {
     children: React.ReactNode;
 }
 
+interface UserRole {
+  name?: Record<string, string> | string;
+  display_name?: Record<string, string> | string;
+  title?: Record<string, string> | string;
+  slug?: string | null;
+  key?: string | null;
+}
+
 interface User {
-    id: number;
-    email: string;
-    first_name: string;
-    last_name: string;
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
   role_name?: string | null;
-  roles: Array<{name: Record<string, string>}>;
+  roles: UserRole[];
 }
 
 interface PageProps extends Record<string, unknown> {
@@ -59,7 +67,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     seller: [
       { icon: 'bx bxs-dashboard', label: t('Seller Dashboard'), href: '/seller/dashboard' },
       { icon: 'bx bx-package', label: t('My Products'), href: '/seller/products' },
-      { icon: 'bx bx-plus-circle', label: t('Add Product'), href: '/seller/products/create' },
       { icon: 'bx bx-cube', label: t('Inventory'), href: '/seller/inventory' },
       { icon: 'bx bx-receipt', label: t('Orders'), href: '/seller/orders' },
       { icon: 'bx bx-dollar-circle', label: t('Revenue'), href: '/seller/revenue' },
@@ -81,38 +88,75 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }), [t]);
 
   const resolveRoleKey = (): RoleKey => {
-    const normalizedRoleName = user?.role_name?.toLowerCase();
-    if (normalizedRoleName && VALID_ROLES.includes(normalizedRoleName as RoleKey)) {
-      return normalizedRoleName as RoleKey;
-    }
+    const normalizeString = (value?: string | null): string | null => {
+      if (!value) return null;
+      return value.toLowerCase().trim();
+    };
 
-    if (!user?.roles?.length) {
-      return ROLE_FALLBACK;
-    }
+    const normalizeWithLocales = (input?: Record<string, string> | string | null): string | null => {
+      if (!input) return null;
+      if (typeof input === 'string') {
+        return normalizeString(input);
+      }
 
-    const preferredLocales = ['en', 'vi'];
-
-    for (const role of user.roles) {
-      const roleLabels = role?.name ?? {};
-
+      const preferredLocales = ['en', 'vi'];
       for (const locale of preferredLocales) {
-        const localizedName = roleLabels?.[locale];
-        if (typeof localizedName === 'string') {
-          const normalized = localizedName.toLowerCase();
-          if (VALID_ROLES.includes(normalized as RoleKey)) {
-            return normalized as RoleKey;
+        const localized = input[locale];
+        if (typeof localized === 'string') {
+          const normalized = normalizeString(localized);
+          if (normalized) {
+            return normalized;
           }
         }
       }
 
-      const fallback = Object.values(roleLabels).find(
+      const fallbackValue = Object.values(input).find(
         (value) => typeof value === 'string' && value.trim().length > 0
       );
 
-      if (typeof fallback === 'string') {
-        const normalizedFallback = fallback.toLowerCase();
-        if (VALID_ROLES.includes(normalizedFallback as RoleKey)) {
-          return normalizedFallback as RoleKey;
+      return typeof fallbackValue === 'string' ? normalizeString(fallbackValue) : null;
+    };
+
+    const stripDiacritics = (value: string): string =>
+      value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const roleMatches: Array<string | null> = [];
+
+    roleMatches.push(normalizeString(user?.role_name));
+
+    if (Array.isArray(user?.roles)) {
+      for (const role of user.roles) {
+        if (!role) continue;
+
+        roleMatches.push(normalizeWithLocales(role.name ?? null));
+        roleMatches.push(normalizeWithLocales(role.display_name ?? null));
+        roleMatches.push(normalizeWithLocales(role.title ?? null));
+        roleMatches.push(normalizeString(role.slug ?? null));
+        roleMatches.push(normalizeString(role.key ?? null));
+      }
+    }
+
+    const ROLE_KEYWORDS: Record<RoleKey, string[]> = {
+      admin: ['admin', 'administrator', 'nguoi quan tri', 'người quản trị', 'quan tri'],
+      seller: ['seller', 'vendor', 'shop', 'nguoi ban', 'người bán', 'nha ban hang', 'nhà bán hàng', 'merchant'],
+      shipper: ['shipper', 'delivery', 'nguoi giao hang', 'người giao hàng', 'giao hang', 'courier'],
+    };
+
+    for (const match of roleMatches) {
+      if (!match) continue;
+      const normalizedKey = match.replace(/\s+/g, '_');
+      if (VALID_ROLES.includes(normalizedKey as RoleKey)) {
+        return normalizedKey as RoleKey;
+      }
+
+      const normalizedStripped = stripDiacritics(match);
+
+      for (const [roleKey, keywords] of Object.entries(ROLE_KEYWORDS) as Array<[RoleKey, string[]]>) {
+        if (keywords.some((keyword) => match.includes(keyword))) {
+          return roleKey;
+        }
+        if (keywords.some((keyword) => normalizedStripped.includes(keyword))) {
+          return roleKey;
         }
       }
     }

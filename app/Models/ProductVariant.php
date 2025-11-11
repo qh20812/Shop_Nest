@@ -40,9 +40,9 @@ class ProductVariant extends Model
     /**
      * Lấy sản phẩm cha của biến thể này.
      */
-    public function product(): BelongsTo // <-- THÊM PHƯƠNG THỨC NÀY
+    public function product(): BelongsTo 
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class, 'product_id', 'product_id');
     }
 
     /**
@@ -162,7 +162,7 @@ class ProductVariant extends Model
             return $query;
         }
 
-        return $query->whereHas('product', fn ($q) => $q->where('seller_id', $sellerId));
+        return $query->whereHas('product', fn($q) => $q->where('seller_id', $sellerId));
     }
 
     public function scopeForCategory($query, ?int $categoryId)
@@ -171,7 +171,7 @@ class ProductVariant extends Model
             return $query;
         }
 
-        return $query->whereHas('product', fn ($q) => $q->where('category_id', $categoryId));
+        return $query->whereHas('product', fn($q) => $q->where('category_id', $categoryId));
     }
 
     public function scopeForBrand($query, ?int $brandId)
@@ -180,7 +180,7 @@ class ProductVariant extends Model
             return $query;
         }
 
-        return $query->whereHas('product', fn ($q) => $q->where('brand_id', $brandId));
+        return $query->whereHas('product', fn($q) => $q->where('brand_id', $brandId));
     }
 
     public function scopeSearch($query, ?string $term)

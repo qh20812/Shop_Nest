@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
 
         $shipper = User::factory()->create([
             
-        ])
+        ]);
 
         // Tạo 20 người bán
         User::factory(20)->create()->each(function ($user) use ($sellerRole) {

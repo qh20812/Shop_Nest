@@ -17,7 +17,7 @@ class ProductVariantFactory extends Factory
      */
     public function definition(): array
     {
-        $price = fake()->numberBetween(10000, 1000000);
+        $price = fake()->numberBetween(100000,50000000);
         return [
             'product_id'=>Product::factory(),
             'sku'=>fake()->unique()->bothify('SKU-#####??'),

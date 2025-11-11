@@ -28,11 +28,4 @@ class OrderItemFactory extends Factory
             'original_total_price' => $quantity * $price,
         ];
     }
-
-    public function forOrder(Order $order): self
-    {
-        return $this->state([
-            'order_id' => $order->order_id,
-        ]);
-    }
 }

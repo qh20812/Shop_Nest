@@ -12,16 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, migrate existing data from integers to enum strings
-        $this->migrateExistingPaymentStatusData();
-
-        // Then modify the column to use ENUM type
+        // 1️⃣ Đầu tiên đổi cột sang ENUM
         Schema::table('orders', function (Blueprint $table) {
             $table->enum('payment_status', ['unpaid', 'paid', 'failed', 'refunded'])
-                  ->default('unpaid')
-                  ->change();
+                ->default('unpaid')
+                ->change();
         });
+
+        // 2️⃣ Sau đó migrate dữ liệu
+        $this->migrateExistingPaymentStatusData();
     }
+
 
     /**
      * Reverse the migrations.
@@ -48,7 +49,7 @@ return new class extends Migration
         // Mapping from old integer values to new enum strings
         $mappings = [
             0 => 'unpaid',
-            1 => 'paid', 
+            1 => 'paid',
             2 => 'failed',
             3 => 'refunded',
         ];

@@ -13,43 +13,35 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, migrate existing integer status values to their string equivalents
-        DB::table('returns')
-            ->where('status', 1)
-            ->update(['status' => 'pending']);
-        
-        DB::table('returns')
-            ->where('status', 2)
-            ->update(['status' => 'approved']);
-        
-        DB::table('returns')
-            ->where('status', 3)
-            ->update(['status' => 'rejected']);
-        
-        DB::table('returns')
-            ->where('status', 4)
-            ->update(['status' => 'refunded']);
-        
-        DB::table('returns')
-            ->where('status', 5)
-            ->update(['status' => 'exchanged']);
-        
-        DB::table('returns')
-            ->where('status', 6)
-            ->update(['status' => 'cancelled']);
-
-        // Handle any invalid or unexpected status values
-        DB::table('returns')
-            ->whereNotIn('status', ['pending', 'approved', 'rejected', 'refunded', 'exchanged', 'cancelled'])
-            ->update(['status' => 'pending']);
-
-        // Now modify the column to be ENUM
+        // 1️⃣ Đổi cột status sang ENUM trước
         Schema::table('returns', function (Blueprint $table) {
             $table->enum('status', ReturnStatus::values())
                 ->default('pending')
                 ->comment('Return status using ENUM values')
                 ->change();
         });
+
+        // 2️⃣ Sau đó migrate dữ liệu từ integer → enum string
+        $mapping = [
+            1 => 'pending',
+            2 => 'approved',
+            3 => 'rejected',
+            4 => 'refunded',
+            5 => 'exchanged',
+            6 => 'cancelled',
+        ];
+
+        foreach ($mapping as $int => $str) {
+            DB::table('returns')
+                ->where('status', (string)$int) // ép kiểu về chuỗi để an toàn
+                ->update(['status' => $str]);
+        }
+
+        // 3️⃣ Xử lý các giá trị không hợp lệ hoặc null
+        DB::table('returns')
+            ->whereNotIn('status', ['pending', 'approved', 'rejected', 'refunded', 'exchanged', 'cancelled'])
+            ->orWhereNull('status')
+            ->update(['status' => 'pending']);
     }
 
     /**
@@ -57,20 +49,28 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Convert enum strings back to integers for rollback
-        DB::table('returns')->where('status', 'pending')->update(['status' => 1]);
-        DB::table('returns')->where('status', 'approved')->update(['status' => 2]);
-        DB::table('returns')->where('status', 'rejected')->update(['status' => 3]);
-        DB::table('returns')->where('status', 'refunded')->update(['status' => 4]);
-        DB::table('returns')->where('status', 'exchanged')->update(['status' => 5]);
-        DB::table('returns')->where('status', 'cancelled')->update(['status' => 6]);
-
-        // Change column back to integer
+        // 1️⃣ Đổi ENUM → tinyInteger
         Schema::table('returns', function (Blueprint $table) {
             $table->tinyInteger('status')
                 ->default(1)
                 ->comment('1: Pending, 2: Approved, 3: Rejected, 4: Refunded, 5: Exchanged, 6: Cancelled')
                 ->change();
         });
+
+        // 2️⃣ Migrate ngược lại enum string → integer
+        $reverse = [
+            'pending'   => 1,
+            'approved'  => 2,
+            'rejected'  => 3,
+            'refunded'  => 4,
+            'exchanged' => 5,
+            'cancelled' => 6,
+        ];
+
+        foreach ($reverse as $str => $int) {
+            DB::table('returns')
+                ->where('status', $str)
+                ->update(['status' => $int]);
+        }
     }
 };

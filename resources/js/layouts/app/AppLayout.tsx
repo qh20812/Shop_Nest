@@ -90,7 +90,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
 
     // Default to admin items
-    return adminSidebarItems;
+    return sellerSidebarItems;
   };
 
   

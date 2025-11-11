@@ -46,22 +46,27 @@ const STATUS_OPTIONS = [
 ];
 
 
-const getStatusInfo = (status: number) => {
-    switch (Number(status)) {
-        case 0:
+const getStatusInfo = (status: string) => {
+    switch (status) {
+        case 'pending_confirmation':
             return { text: 'Pending', className: 'bg-yellow-100 text-yellow-800' };
-        case 1:
+        case 'processing':
             return { text: 'Processing', className: 'bg-blue-100 text-blue-800' };
-        case 2:
+        case 'pending_assignment':
+        case 'assigned_to_shipper':
+        case 'delivering':
             return { text: 'Shipped', className: 'bg-indigo-100 text-indigo-800' };
-        case 3:
+        case 'delivered':
+        case 'completed':
             return { text: 'Delivered', className: 'bg-green-100 text-green-800' };
-        case 4:
+        case 'cancelled':
+        case 'returned':
             return { text: 'Cancelled', className: 'bg-red-100 text-red-800' };
         default:
             return { text: 'Unknown', className: 'bg-gray-100 text-gray-800' };
     }
 };
+
 
 export default function Index() {
     const { orders, filters = {}, stats, flash } = usePage<PageProps>().props;
@@ -110,13 +115,13 @@ export default function Index() {
         {
             header: 'Status',
             cell: (order: Order) => {
-                const s = getStatusInfo(order.status);
+                const s = getStatusInfo(order.status); 
                 return (
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.className}`}>
                         {s.text}
                     </span>
                 );
-            },
+            },            
         },
         {
             header: 'Action',

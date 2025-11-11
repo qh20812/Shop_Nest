@@ -79,11 +79,15 @@ const getStatusInfo = (status: number) => {
 };
 
 const STATUS_OPTIONS = [
-    { value: 0, label: 'Pending' },
-    { value: 1, label: 'Processing' },
-    { value: 2, label: 'Shipped' },
-    { value: 3, label: 'Delivered' },
-    { value: 4, label: 'Cancelled' },
+    { value: 'pending_confirmation', label: 'Pending' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'pending_assignment', label: 'Pending Assignment' },
+    { value: 'assigned_to_shipper', label: 'Assigned to Shipper' },
+    { value: 'delivering', label: 'Delivering' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'returned', label: 'Returned' },
 ];
 
 // ==================== Component ====================
@@ -100,7 +104,7 @@ export default function Show() {
     const handleUpdateStatus = () => {
         setLoading(true);
         router.put(
-            `/seller/orders/${order.id}/status`,
+            `/seller/orders/${order.order_id}/status`,
             { status },
             {
                 preserveScroll: true,
@@ -211,7 +215,7 @@ export default function Show() {
                     <div className="card rounded-2xl bg-white p-6 shadow">
                         <h3 className="mb-4 text-lg font-semibold">Update Order Status</h3>
                         <div className="flex flex-wrap gap-3">
-                            <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="form-input-field w-60">
+                            <select value={status} onChange={(e) => setStatus(e.target.value)} className="form-input-field w-60">
                                 {STATUS_OPTIONS.map((s) => (
                                     <option key={s.value} value={s.value}>
                                         {s.label}

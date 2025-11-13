@@ -56,8 +56,8 @@ class DetailController extends Controller
         );
 
         $productPayload = $productBase;
-        $productPayload['rating'] = $this->calculateRatingSummary($productId);
-        $productPayload['sold_count'] = $this->calculateSoldCount($productId);
+        $ratingSummary = $this->calculateRatingSummary($productId);
+        $soldCount = $this->calculateSoldCount($productId);
 
         $relatedProducts = Cache::remember(
             "product_detail_related_{$productId}_{$locale}",
@@ -78,6 +78,8 @@ class DetailController extends Controller
         return Inertia::render('Customer/Detail', [
             'product' => $productPayload,
             'reviews' => $reviews,
+            'rating' => $ratingSummary,
+            'sold_count' => $soldCount,
             'relatedProducts' => $relatedProducts,
             'cartItems' => $cartItems->values()->all(),
             'user' => $user ? [
@@ -296,6 +298,7 @@ class DetailController extends Controller
             ->with([
                 'category',
                 'brand',
+                'shop',
                 'images' => function ($query) {
                     $query->orderByDesc('is_primary')->orderBy('display_order');
                 },
@@ -429,6 +432,14 @@ class DetailController extends Controller
                     'value' => implode(', ', array_map(fn ($value) => $value['value'], $attribute['values'])),
                 ];
             }, $attributesArray),
+            'shop' => $product->shop ? [
+                'id' => (int) $product->shop->id,
+                'name' => $product->shop->name,
+                'logo' => $product->shop->logo,
+                'rating' => (float) ($product->shop->rating ?? 0),
+                'total_products' => (int) ($product->shop->products()->count() ?? 0),
+                'last_active_at' => $product->shop->last_active_at?->diffForHumans(),
+            ] : null,
         ];
     }
 

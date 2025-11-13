@@ -1,76 +1,74 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import NotificationToast from '@/Components/ui/NotificationToast';
-
-interface ToastNotification {
-  id: string;
-  type: 'success' | 'danger' | 'warning' | 'primary';
-  message: string;
-  duration?: number;
-}
+import NotificationToast, { Toast } from '@/Components/ui/NotificationToast';
 
 interface ToastContextType {
-  showToast: (type: ToastNotification['type'], message: string, duration?: number) => void;
-  hideToast: (id: string) => void;
-  clearAll: () => void;
+    toasts: Toast[];
+    addToast: (toast: Omit<Toast, 'id'>) => void;
+    removeToast: (id: string) => void;
+    success: (title: string, message?: string, duration?: number) => void;
+    error: (title: string, message?: string, duration?: number) => void;
+    warning: (title: string, message?: string, duration?: number) => void;
+    info: (title: string, message?: string, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
+    const context = useContext(ToastContext);
+    if (!context) {
+        throw new Error('useToast must be used within a ToastProvider');
+    }
+    return context;
 }
 
 interface ToastProviderProps {
-  children: ReactNode;
+    children: ReactNode;
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
-  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+    const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const hideToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
+    const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
+        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const newToast: Toast = { ...toast, id };
+        
+        setToasts((prev) => [...prev, newToast]);
+    }, []);
 
-  const showToast = useCallback((type: ToastNotification['type'], message: string, duration = 5000) => {
-    const id = Date.now().toString();
-    const toast: ToastNotification = { id, type, message, duration };
+    const removeToast = useCallback((id: string) => {
+        setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, []);
 
-    setToasts(prev => [...prev, toast]);
+    const success = useCallback((title: string, message?: string, duration?: number) => {
+        addToast({ type: 'success', title, message, duration });
+    }, [addToast]);
 
-    // Auto hide after duration
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts(currentToasts => currentToasts.filter(t => t.id !== id));
-      }, duration);
-    }
-  }, []);
+    const error = useCallback((title: string, message?: string, duration?: number) => {
+        addToast({ type: 'danger', title, message, duration });
+    }, [addToast]);
 
-  const clearAll = useCallback(() => {
-    setToasts([]);
-  }, []);
+    const warning = useCallback((title: string, message?: string, duration?: number) => {
+        addToast({ type: 'warning', title, message, duration });
+    }, [addToast]);
 
-  return (
-    <ToastContext.Provider value={{ showToast, hideToast, clearAll }}>
-      {children}
+    const info = useCallback((title: string, message?: string, duration?: number) => {
+        addToast({ type: 'info', title, message, duration });
+    }, [addToast]);
 
-      {/* Toast Container */}
-      <div
-        className="toast-container position-fixed top-0 end-0 p-3"
-        style={{ zIndex: 9999 }}
-      >
-        {toasts.map(toast => (
-          <NotificationToast
-            key={toast.id}
-            type={toast.type}
-            message={toast.message}
-            onClose={() => hideToast(toast.id)}
-          />
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
+    return (
+        <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, warning, info }}>
+            {children}
+            
+            {/* Toast Container */}
+            <div className="toast-container">
+                {toasts.map((toast) => (
+                    <NotificationToast
+                        key={toast.id}
+                        toast={toast}
+                        onClose={removeToast}
+                    />
+                ))}
+            </div>
+        </ToastContext.Provider>
+    );
 }

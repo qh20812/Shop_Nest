@@ -42,7 +42,7 @@ class UpdateProductRequest extends FormRequest
 
         return [
             'name' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255'
             ], // Removed unique rule as name is JSON multilingual
@@ -51,20 +51,20 @@ class UpdateProductRequest extends FormRequest
             'description_en' => ['nullable', 'string', 'max:1000'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['nullable', 'integer', 'min:0'],
-            'category_id' => ['required', 'exists:categories,category_id'],
-            'brand_id' => ['required', 'exists:brands,brand_id'],
-            'status' => ['required', Rule::in(ProductStatus::values())],
+            'category_id' => ['nullable', 'exists:categories,category_id'],
+            'brand_id' => ['nullable', 'exists:brands,brand_id'],
+            'status' => ['nullable', Rule::in(ProductStatus::values())],
             'sku' => [
                 'nullable',
                 'string',
                 'max:100',
                 Rule::unique('product_variants', 'sku')->ignore($primaryVariantId, 'variant_id')
             ],
-            'variants' => ['required', 'array', 'min:1'],
+            'variants' => ['nullable', 'array', 'min:1'],
             'variants.*.variant_name' => ['nullable', 'string', 'max:255'],
             'variants.*.sku' => ['nullable', 'string', 'max:100', Rule::unique('product_variants', 'sku')->ignore($primaryVariantId, 'variant_id')],
-            'variants.*.price' => ['required', 'numeric', 'min:0'],
-            'variants.*.stock_quantity' => ['required', 'integer', 'min:0'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.stock_quantity' => ['nullable', 'integer', 'min:0'],
             'variants.*.option_values' => ['nullable', 'array'],
             'variants.*.option_values.*.name' => ['required_with:variants.*.option_values', 'string', 'max:100'],
             'variants.*.option_values.*.value' => ['required_with:variants.*.option_values', 'string', 'max:255'],

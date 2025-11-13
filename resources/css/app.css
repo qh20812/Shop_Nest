@@ -1,7 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 @import './chatbot-animations.css';
-@plugin 'tailwindcss-animate';
+
+@theme {
+    --color-light: #f6f6f9;
+    --color-primary: #1976D2;
+    --color-light-primary: #CFE8FF;
+    --color-secondary: #9C27B0;
+    --color-light-secondary: #E1BEE7;
+    --color-info: #2196F3;
+    --color-light-info: #E3F2FD;
+    --color-neutral: #F5F5F5;
+    --color-tertiary: #FF9800;
+    --color-light-tertiary: #FFE0B2;
+    --color-grey: #eee;
+    --color-dark-grey: #AAAAAA;
+    --color-dark: #363949;
+    --color-danger: #D32F2F;
+    --color-light-danger: #FECDD3;
+    --color-warning: #FBC02D;
+    --color-light-warning: #FFF2C6;
+    --color-success: #388E3C;
+    --color-light-success: #BBF7D0;
+
+    --font-family-display: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
+    --font-family-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --border-radius: var(--common-border-radius);
+
+    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
+    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
+    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
+}
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -12,6 +42,17 @@
     --light: #f6f6f9;
     --primary: #1976D2;
     --light-primary: #CFE8FF;
+    --secondary: #9C27B0;
+    --light-secondary: #E1BEE7;
+    --info: #2196F3;
+    --light-info: #E3F2FD;
+    --neutral: #F5F5F5;
+    --tertiary: #FF9800;
+    --light-tertiary: #FFE0B2;
+    --focus-outline: 2px solid var(--primary);
+    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
+    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
+    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
     --grey: #eee;
     --dark-grey: #AAAAAA;
     --dark: #363949;
@@ -21,6 +62,7 @@
     --light-warning: #FFF2C6;
     --success: #388E3C;
     --light-success: #BBF7D0;
+    --common-border-radius: 20px;
 }
 
 .dark {

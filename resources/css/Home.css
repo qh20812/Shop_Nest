@@ -1,9 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 :root {
     --light: #f6f6f9;
-    --light-2: #ffffff;
     --primary: #1976D2;
     --light-primary: #CFE8FF;
+    --secondary: #9C27B0;
+    --light-secondary: #E1BEE7;
+    --info: #2196F3;
+    --light-info: #E3F2FD;
+    --neutral: #F5F5F5;
+    --tertiary: #FF9800;
+    --light-tertiary: #FFE0B2;
+    --focus-outline: 2px solid var(--primary);
+    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
+    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
+    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
     --grey: #eee;
     --dark-grey: #AAAAAA;
     --dark: #363949;
@@ -13,6 +23,7 @@
     --light-warning: #FFF2C6;
     --success: #388E3C;
     --light-success: #BBF7D0;
+    --common-border-radius: 20px;
 
     /* New variables for rgba values */
     --primary-hover: rgba(255, 255, 255, 0.1);
@@ -122,12 +133,12 @@
 }
 
 .nav-item {
-    color: white;
+    color: var(--light-2);
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 8px;
+    padding: 3px 8px;
     border-radius: 4px;
     transition: var(--transition-normal);
     white-space: nowrap;
@@ -135,11 +146,9 @@
 
 .nav-item:hover,
 .nav-item:focus {
-    background: var(--primary-hover);
+    background: transparent;
     text-decoration: none;
-    color: white;
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+    color: var(--light-primary);
 }
 
 .login-btn {
@@ -443,27 +452,25 @@
 }
 
 .generic-current {
-    color: white;
+    color: var(--light-2);
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 3px 8px;
     cursor: pointer;
     transition: var(--transition-normal);
-    background: none;
+    background: transparent;
     border: none;
-    font-size: inherit;
-    font-family: inherit;
+    font-size: var(--font-md);
+    font-family: var(--font-md);
     min-width: 0;
     white-space: nowrap;
 }
 
 .generic-current:hover:not(:disabled),
 .generic-current:focus {
-    background: var(--primary-hover);
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+    background: transparent;
+    color: var(--light-primary);
 }
 
 .generic-current:disabled {
@@ -510,7 +517,7 @@
     text-decoration: none;
     font-size: var(--font-sm);
     border-radius: 4px;
-    margin: 2px;
+    margin: 0px;
     transition: var(--transition-fast);
     background: none;
     border: none;
@@ -748,36 +755,33 @@
 .search-container {
     display: flex;
     height: 44px;
-    background: white;
-    border-radius: 6px;
+    background: var(--light-2);
+    border-radius: var(--common-border-radius);
     overflow: hidden;
-    box-shadow: var(--box-shadow-light);
 }
 
 .search-input {
     flex: 1;
-    border: none;
+    outline: none;
     padding: 0 16px;
     font-size: var(--font-md);
-    outline: none;
     background: transparent;
     color: var(--dark);
 }
 
 .search-input::placeholder {
-    color: var(--dark-grey);
+    color: var(--primary);
 }
 
 .search-input:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
+    outline: none;
 }
 
 .search-button {
     width: 60px;
-    background: var(--warning);
+    background: var(--light-info);
     border: none;
-    color: white;
+    color: var(--primary);
     font-size: var(--font-lg);
     cursor: pointer;
     transition: var(--transition-normal);
@@ -884,10 +888,10 @@
 }
 
 .cart-preview-content {
-    padding: 16px;
+    padding: 10px;
     min-height: 200px;
     display: flex;
-    align-items: center;
+    align-items: start;
     justify-content: center;
 }
 

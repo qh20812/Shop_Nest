@@ -1,7 +1,7 @@
 import React from 'react';
 import '@/../css/ProductCard.css';
 
-interface DailyDiscoverCardProps {
+interface ProductCardProps {
     image: string;
     name: string;
     rating: number;
@@ -14,7 +14,7 @@ interface DailyDiscoverCardProps {
     onFavorite?: () => void;
 }
 
-export default function DailyDiscoverCard({
+export default function ProductCard({
     image,
     name,
     rating,
@@ -25,7 +25,7 @@ export default function DailyDiscoverCard({
     onAddToCart,
     onViewDetails,
     onFavorite
-}: DailyDiscoverCardProps) {
+}: ProductCardProps) {
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', {

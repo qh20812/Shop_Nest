@@ -16,7 +16,7 @@ interface SidebarItem {
 }
 
 interface AppLayoutProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 interface UserRole {
@@ -37,9 +37,9 @@ interface User {
 }
 
 interface PageProps extends Record<string, unknown> {
-    auth: {
-        user: User;
-    };
+  auth: {
+    user: User;
+  };
 }
 
 const VALID_ROLES: RoleKey[] = ['admin', 'seller', 'shipper'];

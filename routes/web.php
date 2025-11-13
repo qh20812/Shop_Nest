@@ -10,6 +10,10 @@ use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::get('/test', function(){
+    return Inertia::render('Customer/detail-test');
+});
+
 // Public routes (accessible without login)
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/cart-test', function () {

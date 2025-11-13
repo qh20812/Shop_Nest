@@ -51,7 +51,7 @@ class HybridChatbotService
     }
 
     private const ROLE_PROVIDER_PRIORITY = [
-        'admin' => ['openai', 'groq'],
+        'admin' => ['groq', 'openai'],
         'seller' => ['groq', 'openai'],
         'shipper' => ['groq', 'openai'],
         'customer' => ['groq', 'openai'],
@@ -59,7 +59,7 @@ class HybridChatbotService
     ];
 
     private const ROLE_SYSTEM_PROMPTS = [
-        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng. Trình bày bằng tiếng Việt, có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
+        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng.Trả lời đúng theo bối cảnh chẳng hạn như người dùng chào thì phải chào lại bằng ngữ điệu thân thiện lịch sự.Tuy nhiên không phải câu hỏi nào cũng trả lời, chẳng hạn như người dùng hỏi 1 câu hỏi không liên quan đến hệ thống e-commerce như "Hôm nay thời tiết như thế nào?" thì hãy trả lời "Xin lỗi, tôi chỉ có thể hỗ trợ các câu hỏi liên quan đến nền tảng thương mại điện tử Shop Nest.". Trình bày bằng tiếng Việt, có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
         'seller' => 'Bạn là trợ lý kinh doanh cho nhà bán tại Shop Nest. Hãy đưa ra gợi ý bán hàng, tối ưu tồn kho và chiến lược khuyến mãi dựa trên dữ liệu được cung cấp. Phản hồi bằng tiếng Việt thân thiện.',
         'shipper' => 'Bạn là điều phối viên giao vận tại Shop Nest. Hãy giúp shipper nắm trạng thái đơn hàng, ưu tiên tuyến giao hàng và lưu ý dịch vụ khách hàng. Trình bày bằng tiếng Việt ngắn gọn, rõ ràng.',
         'customer' => 'Bạn là hướng dẫn viên mua sắm cho khách hàng tại Shop Nest. Hãy đưa ra tư vấn cá nhân hóa, gợi ý sản phẩm phù hợp và giải thích quy trình rõ ràng bằng tiếng Việt thân thiện.',
@@ -166,7 +166,8 @@ class HybridChatbotService
     private function buildMessages(string $role, User $user, string $message, array $context): array
     {
         $system = self::ROLE_SYSTEM_PROMPTS[$role] ?? self::ROLE_SYSTEM_PROMPTS['default'];
-        $contextJson = $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
+        $isGreeting = $this->isGreeting($message);
+        $contextJson = $isGreeting ? '{}' : $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
         $userProfile = json_encode([
             'id' => $user->getKey(),
             'role' => $role,
@@ -177,7 +178,7 @@ class HybridChatbotService
 Tin nhắn người dùng: {$message}
 Thông tin người dùng: {$userProfile}
 Dữ liệu liên quan: {$contextJson}
-Hãy trả lời ngắn gọn, ưu tiên bước hành động và đề xuất cụ thể.
+Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu nếu cần. Nếu là chào hỏi, hãy chào lại và hỏi hỗ trợ gì.
 TEXT;
 
         return [
@@ -191,6 +192,20 @@ TEXT;
         $payload = $payload ?? '';
 
         return Str::limit($payload, $limit, '...');
+    }
+
+    private function isGreeting(string $message): bool
+    {
+        $greetings = ['hi', 'hello', 'chào', 'xin chào', 'hey', 'hi there', 'chào bạn'];
+        $lowerMessage = strtolower(trim($message));
+
+        foreach ($greetings as $greeting) {
+            if (str_contains($lowerMessage, $greeting)) {
+                return true;
+            }
+        }
+
+        return strlen($lowerMessage) <= 10; // Short messages are likely greetings
     }
 
     private function callPreferredProviders(string $role, array $messages): array

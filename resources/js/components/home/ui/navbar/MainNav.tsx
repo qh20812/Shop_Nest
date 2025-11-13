@@ -44,9 +44,6 @@ export default function MainNav({ cartItems }: MainNavProps) {
             className="search-input"
             placeholder="Tìm kiếm sản phẩm, thương hiệu và nhiều hơn nữa..."
           />
-          <button className="search-button">
-            <i className="bi bi-search"></i>
-          </button>
         </div>
       </div>
       <div className="nav-cart">

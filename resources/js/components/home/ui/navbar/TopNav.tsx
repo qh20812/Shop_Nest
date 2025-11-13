@@ -24,7 +24,7 @@ export default function TopNav({ isLoggedIn, user, locale, currency }: TopNavPro
   return (
     <div className="top-nav">
       <div className="top-nav-left">
-        <Link href={route('seller.register')} className="seller-link">
+        <Link href={route('seller.register')} className="nav-item">
           <i className="bi bi-shop"></i>
           {t('Become a Seller')}
         </Link>

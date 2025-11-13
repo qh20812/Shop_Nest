@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ShopNest - Giỏ Hàng</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f47b25",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221710",
+                        "success": "#28a745",
+                        "danger": "#dc3545",
+                        "text-light": "#181411",
+                        "text-dark": "#f8f7f5",
+                        "subtext-light": "#8a7260",
+                        "subtext-dark": "#a19993",
+                        "border-light": "#f5f2f0",
+                        "border-dark": "#3a3029",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <main class="mx-auto max-w-[1200px] w-full px-4 py-8 md:py-12">
+            <div class="flex flex-col gap-8">
+                <div class="flex flex-col gap-2">
+                    <h1
+                        class="text-text-light dark:text-text-dark text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">
+                        Giỏ Hàng Của Bạn</h1>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div class="lg:col-span-2 flex flex-col gap-6">
+                        <div
+                            class="p-4 bg-background-dark/5 dark:bg-background-light/5 rounded-lg border border-border-light dark:border-border-dark flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <input checked=""
+                                    class="form-checkbox rounded text-primary focus:ring-primary/50 bg-background-light dark:bg-background-dark border-subtext-light/50 dark:border-subtext-dark/50"
+                                    id="select-all" type="checkbox" />
+                                <label class="font-medium" for="select-all">Chọn tất cả (3 sản phẩm)</label>
+                            </div>
+                            <button
+                                class="text-subtext-light dark:text-subtext-dark hover:text-danger text-sm font-medium flex items-center gap-1">
+                                <span class="material-symbols-outlined text-lg"
+                                    style="font-variation-settings: 'FILL' 0, 'wght' 400;">delete</span> Xóa
+                            </button>
+                        </div>
+                        <div class="flex flex-col divide-y divide-border-light dark:divide-border-dark">
+                            <div class="py-6 flex flex-col sm:flex-row gap-6">
+                                <div class="flex items-start gap-4 flex-1">
+                                    <input checked=""
+                                        class="form-checkbox rounded text-primary focus:ring-primary/50 bg-background-light dark:bg-background-dark border-subtext-light/50 dark:border-subtext-dark/50 mt-1"
+                                        type="checkbox" />
+                                    <div class="w-24 h-24 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
+                                        data-alt="Premium Cotton Crewneck T-Shirt"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCDSr0x3PxLjATXuTfPtzDb4I1IQWSUzeX7RNowfkAcY4gEmj58McNpTVkts55YhJUx6CURFq1rSOlab6kCwreJeNtRhYNnhcGunb6WFlvRTRbigmp4SVbiQI74i6KUOoFX_tfsVgGR7AikUmXub3BNg2J9IRijV_hCyrOEGWcCC6RbSrS53gJLpYPtvVLdzlv1w3Q-SsFhiWJBSm8UG0XpISwXAFdXuHva8ST_kAcv9EVvD4rRebgrrnrZEstp-7DsfcgH_W-A6Yfz");'>
+                                    </div>
+                                    <div class="flex flex-col gap-1.5">
+                                        <p class="font-bold text-base leading-normal">Áo Thun Cổ Tròn Cotton Cao Cấp</p>
+                                        <p class="text-subtext-light dark:text-subtext-dark text-sm">Màu: Trắng, Cỡ: M
+                                        </p>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <p class="text-danger line-through">899,000₫</p>
+                                            <p class="text-success font-bold">499,000₫</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-auto">
+                                    <div
+                                        class="flex items-center border border-border-light dark:border-border-dark rounded-lg w-fit">
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">-</button>
+                                        <input
+                                            class="w-10 text-center bg-transparent border-x border-border-light dark:border-border-dark focus:outline-none focus:ring-0 text-sm"
+                                            type="text" value="1" />
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">+</button>
+                                    </div>
+                                    <p class="font-bold text-lg text-primary">499,000₫</p>
+                                </div>
+                            </div>
+                            <div class="py-6 flex flex-col sm:flex-row gap-6">
+                                <div class="flex items-start gap-4 flex-1">
+                                    <input checked=""
+                                        class="form-checkbox rounded text-primary focus:ring-primary/50 bg-background-light dark:bg-background-dark border-subtext-light/50 dark:border-subtext-dark/50 mt-1"
+                                        type="checkbox" />
+                                    <div class="w-24 h-24 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
+                                        data-alt="Classic Leather Watch"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCXu9OVs7B3G_0IsgJ4uCmLyOHwrjZsK1rgTyYTZIkjx0W1teFzvMUhTFidMY2UyEmDAEojC8YDbl885-Dw4r4fJ8Q6F6yPQ2KrSpJJJOSTKR7wcL4BW8KxFcTwkwMoQbE8aaGsaCwVPI9IkHnO8jAe-b7hmN5p20pQDBUI2X6kVE91hto5fiHKJx4d-_euvRQbx5gAsZ_NvfD9K8pYkOOuJrZro4FlwcVtHVC9DnUWPtWap0h3W6gVbB-l8IWBDBa-NifC4pIhLQvt");'>
+                                    </div>
+                                    <div class="flex flex-col gap-1.5">
+                                        <p class="font-bold text-base leading-normal">Đồng Hồ Da Cổ Điển</p>
+                                        <p class="text-subtext-light dark:text-subtext-dark text-sm">Màu: Nâu</p>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <p class="text-text-light dark:text-text-dark font-bold">2,850,000₫</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-auto">
+                                    <div
+                                        class="flex items-center border border-border-light dark:border-border-dark rounded-lg w-fit">
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">-</button>
+                                        <input
+                                            class="w-10 text-center bg-transparent border-x border-border-light dark:border-border-dark focus:outline-none focus:ring-0 text-sm"
+                                            type="text" value="1" />
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">+</button>
+                                    </div>
+                                    <p class="font-bold text-lg text-primary">2,850,000₫</p>
+                                </div>
+                            </div>
+                            <div class="py-6 flex flex-col sm:flex-row gap-6">
+                                <div class="flex items-start gap-4 flex-1">
+                                    <input
+                                        class="form-checkbox rounded text-primary focus:ring-primary/50 bg-background-light dark:bg-background-dark border-subtext-light/50 dark:border-subtext-dark/50 mt-1"
+                                        type="checkbox" />
+                                    <div class="w-24 h-24 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
+                                        data-alt="Wireless Noise-Cancelling Headphones"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC9PA9WBgOvjl3FJ5BT3hzNpCGH8TPaOuX8iepuwod4liIXtFzMqz2eVjTB570-Q9XJJCX29_87q_bYQOimwNpzBPRpPZulJq83zlRZqb8g6LRsCEoXwf6ZrHwL0hCRRXmVqkONaGII3OoeAgnf-B-yJTTujsp_z-us8Brc9XjkXKRRDvnvqPse5onMs2jPQ7EEtQnm8iJ0Pw0VqpNehs9h1q0ajTBGoJFe2BhmGrG1C3cbPWUddNDmnrsd4VtVoVQcWFJEy8orMpeL");'>
+                                    </div>
+                                    <div class="flex flex-col gap-1.5">
+                                        <p class="font-bold text-base leading-normal">Tai Nghe Chống Ồn Không Dây</p>
+                                        <p class="text-subtext-light dark:text-subtext-dark text-sm">Màu: Đen mờ</p>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <p class="text-danger line-through">5,999,000₫</p>
+                                            <p class="text-success font-bold">4,999,000₫</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-auto">
+                                    <div
+                                        class="flex items-center border border-border-light dark:border-border-dark rounded-lg w-fit">
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">-</button>
+                                        <input
+                                            class="w-10 text-center bg-transparent border-x border-border-light dark:border-border-dark focus:outline-none focus:ring-0 text-sm"
+                                            type="text" value="2" />
+                                        <button
+                                            class="px-3 py-1.5 text-subtext-light dark:text-subtext-dark hover:text-primary">+</button>
+                                    </div>
+                                    <p class="font-bold text-lg text-primary">9,998,000₫</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-between items-center pt-6">
+                            <a class="flex w-full sm:w-auto cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 border-2 border-primary bg-transparent text-primary gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-6 hover:bg-primary/10"
+                                href="#">
+                                <span class="material-symbols-outlined text-xl"
+                                    style="font-variation-settings: 'FILL' 0, 'wght' 400;">arrow_back</span>
+                                <span>Tiếp tục mua sắm</span>
+                            </a>
+                            <button
+                                class="flex w-full sm:w-auto max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 border-2 border-subtext-light/50 dark:border-subtext-dark/50 bg-transparent text-subtext-light dark:text-subtext-dark gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-6 hover:bg-black/5 dark:hover:bg-white/5">
+                                <span class="material-symbols-outlined text-xl"
+                                    style="font-variation-settings: 'FILL' 0, 'wght' 400;">refresh</span>
+                                <span>Cập nhật giỏ hàng</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div
+                            class="p-6 bg-background-dark/5 dark:bg-background-light/5 rounded-lg flex flex-col gap-4 border border-border-light dark:border-border-dark">
+                            <h2 class="text-xl font-bold">Tóm tắt đơn hàng</h2>
+                            <div class="flex flex-col gap-4">
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-11 placeholder:text-subtext-light dark:placeholder:text-subtext-dark px-4 text-sm font-normal leading-normal"
+                                        placeholder="Nhập mã khuyến mãi" />
+                                    <button
+                                        class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 border-2 border-primary bg-transparent text-primary gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-4 hover:bg-primary/10">Áp
+                                        dụng</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-3 text-base pt-4">
+                                <div class="flex justify-between">
+                                    <span class="text-subtext-light dark:text-subtext-dark">Tạm tính (2 sản phẩm)</span>
+                                    <span class="font-medium">3,349,000₫</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-subtext-light dark:text-subtext-dark">Giảm giá khuyến mãi</span>
+                                    <span class="font-medium text-success">-400,000₫</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-subtext-light dark:text-subtext-dark">Phí vận chuyển</span>
+                                    <span class="font-medium">30,000₫</span>
+                                </div>
+                            </div>
+                            <div class="w-full h-px bg-border-light dark:bg-border-dark my-2"></div>
+                            <div class="flex justify-between font-bold text-lg">
+                                <span>Tổng cộng</span>
+                                <span>2,979,000₫</span>
+                            </div>
+                            <button
+                                class="w-full flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-primary text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-6 hover:bg-opacity-90 mt-4">
+                                <span>Tiến hành thanh toán</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

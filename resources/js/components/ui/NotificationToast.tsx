@@ -1,25 +1,66 @@
-import React from 'react'
-import '../../../css/Notification.css'
+import React, { useEffect, useState, useCallback } from 'react';
+import '@/../css/NotificationToast.css';
+
+export interface Toast {
+    id: string;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message?: string;
+    duration?: number;
+}
 
 interface NotificationToastProps {
-    type?: 'success' | 'danger' | 'warning' | 'primary';
-    message?: string;
-    onClose?: () => void;
+    toast: Toast;
+    onClose: (id: string) => void;
 }
 
-function NotificationToast({ type = 'primary', message = 'Hello, world! This is a toast message.', onClose }: NotificationToastProps) {
-    const toastClass = `toast align-items-center border-0 toast-${type}`;
+const iconMap = {
+    success: 'bi-check',
+    danger: 'bi-x',
+    warning: 'bi-exclamation-triangle',
+    info: 'bi-info-circle',
+};
+
+function NotificationToast({ toast, onClose }: NotificationToastProps) {
+    const [isExiting, setIsExiting] = useState(false);
+
+    const handleClose = useCallback(() => {
+        setIsExiting(true);
+        setTimeout(() => {
+            onClose(toast.id);
+        }, 300); // Match animation duration
+    }, [toast.id, onClose]);
+
+    useEffect(() => {
+        const duration = toast.duration ?? 5000;
+        
+        const timer = setTimeout(() => {
+            handleClose();
+        }, duration);
+
+        return () => clearTimeout(timer);
+    }, [toast.duration, handleClose]);
 
     return (
-        <div className={toastClass} role="alert" aria-live="assertive" aria-atomic="true">
-            <div className="d-flex">
-                <div className="toast-body">
-                    {message}
-                </div>
-                <button type="button" className="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" onClick={onClose}></button>
+        <div className={`notification-toast ${isExiting ? 'toast-exit' : ''}`}>
+            <div className={`toast-icon-wrapper toast-icon-wrapper--${toast.type}`}>
+                <i className={`bi ${iconMap[toast.type]} toast-icon`}></i>
             </div>
+            <div className="toast-content">
+                <p className="toast-title">{toast.title}</p>
+                {toast.message && (
+                    <p className="toast-message">{toast.message}</p>
+                )}
+            </div>
+            <button 
+                className="toast-close"
+                onClick={handleClose}
+                aria-label="Đóng"
+            >
+                <i className="bi bi-x toast-close-icon"></i>
+            </button>
         </div>
-    )
+    );
 }
 
-export default NotificationToast
+export default NotificationToast;

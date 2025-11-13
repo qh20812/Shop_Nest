@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function DailyDiscover() {
+export default function DailyDiscoverPage() {
   return (
     <div>
       <h2>Khám Phá Hàng Ngày</h2>

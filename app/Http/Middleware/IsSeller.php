@@ -69,10 +69,10 @@ class IsSeller
         // Get user and check seller role
         // Cache result for CACHE_TTL_SECONDS to improve performance
         $user = Auth::user();
-        $isSeller = Cache::remember(self::CACHE_KEY_PREFIX . $user->id, Config::get('middleware.seller.cache.ttl_seconds'), function () use ($user) {
-            return $user->isSeller();
+        $isSellerOrAdmin = Cache::remember(self::CACHE_KEY_PREFIX . $user->id, Config::get('middleware.seller.cache.ttl_seconds'), function () use ($user) {
+            return $user->isSeller() || $user->isAdmin();
         });
-        if (!$isSeller) {
+        if (!$isSellerOrAdmin) {
             $rateLimitResponse = $this->handleRateLimitedAccess($request, $user, 'authorization');
             if ($rateLimitResponse) {
                 return $rateLimitResponse;
@@ -171,8 +171,7 @@ class IsSeller
     private function isJsonRequest(Request $request): bool
     {
         return $request->expectsJson() ||
-               (method_exists($request, 'inertia') && $request->inertia()) ||
-               $request->header('X-Inertia');
+               ($request->header('Accept') === 'application/json' && !$request->header('X-Inertia'));
     }
 
     /**

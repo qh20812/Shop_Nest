@@ -49,6 +49,7 @@ interface DailyDiscoverProduct {
     sold_count: number;
 }
 
+
 interface HomeProps {
     categories: Category[];
     flashSale: FlashSale | null;

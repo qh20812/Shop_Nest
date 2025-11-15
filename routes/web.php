@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/test', function(){
-    return Inertia::render('Customer/detail-test');
+    return Inertia::render('auth/seller-register-page');
 });
 
 // Public routes (accessible without login)

@@ -18,7 +18,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('auth/Login', [
+        return Inertia::render('auth/login-page', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
         ]);
@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
             
             return back()->withErrors([
-                'email' => 'Your account has been deactivated. Please contact support for assistance.',
+                'identifier' => 'Your account has been deactivated. Please contact support for assistance.',
             ]);
         }
         

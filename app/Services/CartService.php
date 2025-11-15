@@ -36,7 +36,7 @@ class CartService
         if ($user) {
             $results = collect();
 
-            CartItem::with(['variant.product'])
+            CartItem::with(['variant.product.images'])
                 ->where('user_id', $user->id)
                 ->orderBy('cart_item_id')
                 ->chunkById(100, function ($chunk) use (&$results) {
@@ -544,6 +544,9 @@ class CartService
                 'product' => $product ? [
                     'product_id' => $product->product_id,
                     'name' => $product->name,
+                    'images' => $product->relationLoaded('images') 
+                        ? $product->images->map(fn($img) => ['image_url' => $img->image_url])->toArray()
+                        : [],
                 ] : null,
             ],
         ];

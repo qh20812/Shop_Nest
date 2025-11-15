@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -36,7 +37,10 @@ class ProductFactory extends Factory
             ],
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
-            'seller_id' => User::factory(),
+            'shop_id' => Shop::factory(),
+            'seller_id' => function (array $attributes) {
+                return Shop::find($attributes['shop_id'])->owner_id;
+            },
             'status' => fake()->randomElement(['draft', 'pending_approval', 'published']),
             'is_active' => true,
         ];

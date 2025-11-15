@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 import axios from 'axios';
-import '@/../css/Home.css';
-import CartTitle from '@/Components/cart/CartTitle';
-import CartColumnTitle from '@/Components/cart/CartColumnTitle';
-import CartShopCard from '@/Components/cart/CartShopCard';
 import HomeLayout from '@/layouts/app/HomeLayout';
+import '@/../css/cart-page.css';
 
 interface CartItem {
   cart_item_id: number;
@@ -25,6 +22,7 @@ interface CartItem {
     product: {
       product_id: number;
       name: string;
+      images?: Array<{ image_url: string }>;
     } | null;
   };
 }
@@ -42,6 +40,7 @@ interface Totals {
   subtotal: number;
   discount: number;
   total: number;
+  shipping: number;
 }
 
 interface PageProps {
@@ -51,111 +50,13 @@ interface PageProps {
   [key: string]: unknown;
 }
 
-interface CartProduct {
-  id: number;
-  name: string;
-  image: string;
-  variant: string;
-  price: number;
-  quantity: number;
-  maxQuantity?: number;
-}
-
-interface Shop {
-  id: number;
-  name: string;
-  products: CartProduct[];
-}
-
 export default function Cart() {
-  const { cartItems, promotion } = usePage<PageProps>().props;
-
-  // Transform cartItems to shops format
-  const shops: Shop[] = React.useMemo(() => {
-    const shopMap = new Map<number, Shop>();
-
-    cartItems.forEach((item) => {
-      const product = item.variant.product;
-      if (!product) return;
-
-      const shopId = product.product_id; // Using product_id as shop_id for simplicity
-      const shopName = 'Shop'; // You might want to get actual shop name
-
-      if (!shopMap.has(shopId)) {
-        shopMap.set(shopId, {
-          id: shopId,
-          name: shopName,
-          products: []
-        });
-      }
-
-      const shop = shopMap.get(shopId)!;
-      shop.products.push({
-        id: item.cart_item_id,
-        name: product.name,
-        image: '/image/ShopnestLogo.png', // Default image
-        variant: item.variant.sku,
-        price: item.price,
-        quantity: item.quantity,
-        maxQuantity: item.variant.available_quantity
-      });
-    });
-
-    return Array.from(shopMap.values());
-  }, [cartItems]);
-
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
-
-  const allProducts = shops.flatMap(shop => shop.products);
-  const isAllSelected = allProducts.length > 0 && allProducts.every(product => 
-    selectedProducts.includes(product.id)
+  const { cartItems, totals, promotion } = usePage<PageProps>().props;
+  const [selectedItems, setSelectedItems] = useState<number[]>(cartItems.map(item => item.cart_item_id));
+  const [couponCode, setCouponCode] = useState('');
+  const [quantities, setQuantities] = useState<Record<number, number>>(
+    cartItems.reduce((acc, item) => ({ ...acc, [item.cart_item_id]: item.quantity }), {})
   );
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(allProducts.map(product => product.id));
-    } else {
-      setSelectedProducts([]);
-    }
-  };
-
-  const handleSelectShop = (shopId: number, checked: boolean) => {
-    const shop = shops.find(s => s.id === shopId);
-    if (!shop) return;
-
-    const shopProductIds = shop.products.map(p => p.id);
-    
-    if (checked) {
-      setSelectedProducts(prev => [
-        ...prev.filter(id => !shopProductIds.includes(id)),
-        ...shopProductIds
-      ]);
-    } else {
-      setSelectedProducts(prev => prev.filter(id => !shopProductIds.includes(id)));
-    }
-  };
-
-  const handleSelectProduct = (productId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(prev => [...prev, productId]);
-    } else {
-      setSelectedProducts(prev => prev.filter(id => id !== productId));
-    }
-  };
-
-  const handleQuantityChange = (productId: number, quantity: number) => {
-    // Update quantity logic here
-    console.log(`Update product ${productId} quantity to ${quantity}`);
-  };
-
-  const handleRemoveProduct = (productId: number) => {
-    // Remove product logic here
-    console.log(`Remove product ${productId}`);
-  };
-
-  const selectedTotal = allProducts
-    .filter(product => selectedProducts.includes(product.id))
-    .reduce((sum, product) => sum + (product.price * product.quantity), 0);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -163,87 +64,327 @@ export default function Cart() {
       currency: 'VND'
     }).format(price);
   };
-  
+
+  const isAllSelected = cartItems.length > 0 && selectedItems.length === cartItems.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(cartItems.map(item => item.cart_item_id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+    const item = cartItems.find(i => i.cart_item_id === itemId);
+    if (!item) return;
+
+    const clampedQuantity = Math.max(1, Math.min(item.variant.available_quantity, newQuantity));
+    setQuantities(prev => ({ ...prev, [itemId]: clampedQuantity }));
+  };
+
+  const handleUpdateCart = async () => {
+    try {
+      for (const [itemId, quantity] of Object.entries(quantities)) {
+        await axios.put(`/cart/${itemId}`, { quantity: Number(quantity) });
+      }
+      router.reload();
+    } catch (error) {
+      console.error('Failed to update cart:', error);
+      alert('Không thể cập nhật giỏ hàng');
+    }
+  };
+
+  const handleRemoveItem = async (itemId: number) => {
+    try {
+      await axios.delete(`/cart/${itemId}`);
+      router.reload();
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+      alert('Không thể xóa sản phẩm');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return;
+    
+    if (!confirm(`Bạn có chắc muốn xóa ${selectedItems.length} sản phẩm đã chọn?`)) return;
+
+    try {
+      await Promise.all(selectedItems.map(itemId => axios.delete(`/cart/${itemId}`)));
+      router.reload();
+    } catch (error) {
+      console.error('Failed to delete selected items:', error);
+      alert('Không thể xóa sản phẩm đã chọn');
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+
+    try {
+      await axios.post('/cart/apply-promotion', { code: couponCode });
+      router.reload();
+      setCouponCode('');
+    } catch (error) {
+      console.error('Failed to apply coupon:', error);
+      alert('Mã khuyến mãi không hợp lệ');
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (selectedItems.length === 0) {
+      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
+
+    try {
+      const response = await axios.post('/cart/checkout', {
+        provider: 'stripe',
+      });
+
+      if (response.data?.success && response.data?.payment_url) {
+        window.location.href = response.data.payment_url;
+      } else {
+        alert(response.data?.message || 'Không thể xử lý thanh toán');
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || 'Không thể xử lý thanh toán';
+        alert(errorMessage);
+      } else {
+        alert('Đã xảy ra lỗi không xác định');
+      }
+    }
+  };
+
+  const selectedTotal = cartItems
+    .filter(item => selectedItems.includes(item.cart_item_id))
+    .reduce((sum, item) => {
+      const quantity = quantities[item.cart_item_id] || item.quantity;
+      const price = item.discount_price || item.price;
+      return sum + (price * quantity);
+    }, 0);
+
+  const selectedCount = selectedItems.length;
+
+  if (cartItems.length === 0) {
+    return (
+      <HomeLayout>
+        <div className="cart-page-container">
+          <div className="cart-empty-state">
+            <div className="cart-empty-icon">
+              <span className="material-symbols-outlined" style={{ fontSize: '64px' }}>shopping_cart</span>
+            </div>
+            <h4 className="cart-empty-title">Giỏ hàng trống</h4>
+            <p className="cart-empty-text">
+              Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy tiếp tục mua sắm và thêm sản phẩm yêu thích!
+            </p>
+            <button 
+              className="cart-action-btn cart-continue-shopping-btn"
+              onClick={() => router.visit('/')}
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+              <span>Tiếp tục mua sắm</span>
+            </button>
+          </div>
+        </div>
+      </HomeLayout>
+    );
+  }
 
   return (
     <HomeLayout>
-      <div className="max-w-[1200px] mx-auto p-5 bg-[var(--light)] min-h-[calc(100vh-200px)]">
-        <CartTitle title="Giỏ hàng của tôi" />
-        
-        <CartColumnTitle 
-          isAllSelected={isAllSelected}
-          onSelectAll={handleSelectAll}
-        />
-
-        <div className="flex flex-col gap-4">
-          {shops.map(shop => (
-            <CartShopCard
-              key={shop.id}
-              shop={shop}
-              selectedProducts={selectedProducts}
-              onSelectShop={(checked) => handleSelectShop(shop.id, checked)}
-              onSelectProduct={handleSelectProduct}
-              onQuantityChange={handleQuantityChange}
-              onRemoveProduct={handleRemoveProduct}
-            />
-          ))}
-        </div>
-
-        {selectedProducts.length > 0 && (
-          <div className="sticky bottom-0 bg-[var(--light-2)] border-t-2 border-[var(--primary)] p-5 mt-5 rounded-t-lg shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
-            <div className="max-w-[1200px] mx-auto flex justify-between items-center">
-              <div className="flex flex-col gap-1">
-                <span className="text-[var(--dark-grey)] text-sm font-['Poppins',sans-serif]">
-                  Tổng thanh toán ({selectedProducts.length} sản phẩm): 
-                </span>
-                <span className="text-xl font-bold text-[var(--danger)]">
-                  {formatPrice(selectedTotal)}
-                </span>
+      <div className="cart-page-container">
+        <div className="cart-grid">
+          <div className="cart-items-section">
+            <div className="cart-select-all-header">
+              <div className="cart-select-all-left">
+                <input
+                  type="checkbox"
+                  className="cart-checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+                <label className="cart-select-all-label">
+                  Chọn tất cả ({cartItems.length} sản phẩm)
+                </label>
               </div>
-              {promotion && (
-                <div className="promotion-info">
-                  <span>Mã khuyến mãi: {promotion.code}</span>
-                </div>
-              )}
+              <button className="cart-delete-selected-btn" onClick={handleDeleteSelected}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                Xóa
+              </button>
+            </div>
+
+            <div className="cart-items-list">
+              {cartItems.map((item) => {
+                const product = item.variant.product;
+                if (!product) return null;
+
+                const productImage = product.images?.[0]?.image_url || '/image/ShopnestLogo.png';
+                const currentQuantity = quantities[item.cart_item_id] || item.quantity;
+                const itemTotal = (item.discount_price || item.price) * currentQuantity;
+                const hasDiscount = item.discount_price && item.discount_price < item.price;
+
+                return (
+                  <div key={item.cart_item_id} className="cart-shop-card">
+                    <div className="cart-shop-header">
+                      <input
+                        type="checkbox"
+                        className="cart-checkbox"
+                        checked={selectedItems.includes(item.cart_item_id)}
+                        onChange={(e) => handleSelectItem(item.cart_item_id, e.target.checked)}
+                      />
+                      <div 
+                        className="cart-shop-avatar"
+                        style={{ backgroundImage: `url(${productImage})` }}
+                      />
+                      <span className="cart-shop-name">ShopNest Official</span>
+                    </div>
+
+                    <div className="cart-products-list">
+                      <div className="cart-product-item">
+                        <div className="cart-product-left">
+                          <input
+                            type="checkbox"
+                            className="cart-checkbox cart-product-checkbox"
+                            checked={selectedItems.includes(item.cart_item_id)}
+                            onChange={(e) => handleSelectItem(item.cart_item_id, e.target.checked)}
+                          />
+                          <div 
+                            className="cart-product-image"
+                            style={{ backgroundImage: `url(${productImage})` }}
+                          />
+                          <div className="cart-product-info">
+                            <p className="cart-product-name">{product.name}</p>
+                            <p className="cart-product-variant">SKU: {item.variant.sku}</p>
+                            <div className="cart-product-prices">
+                              {hasDiscount && (
+                                <p className="cart-product-original-price">{formatPrice(item.price)}</p>
+                              )}
+                              <p className={hasDiscount ? 'cart-product-sale-price' : 'cart-product-regular-price'}>
+                                {formatPrice(item.discount_price || item.price)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="cart-product-right">
+                          <div className="cart-quantity-control">
+                            <button
+                              className="cart-quantity-btn"
+                              onClick={() => handleQuantityChange(item.cart_item_id, currentQuantity - 1)}
+                              disabled={currentQuantity <= 1}
+                            >
+                              -
+                            </button>
+                            <input
+                              type="text"
+                              className="cart-quantity-input"
+                              value={currentQuantity}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 1;
+                                handleQuantityChange(item.cart_item_id, value);
+                              }}
+                            />
+                            <button
+                              className="cart-quantity-btn"
+                              onClick={() => handleQuantityChange(item.cart_item_id, currentQuantity + 1)}
+                              disabled={currentQuantity >= item.variant.available_quantity}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <p className="cart-product-total">{formatPrice(itemTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="cart-actions">
               <button 
-                className="bg-[var(--primary)] text-white border-none px-8 py-3 rounded-md text-base font-semibold cursor-pointer transition-all duration-300 font-['Poppins',sans-serif] hover:bg-[#1565C0] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(25,118,210,0.3)]" 
-                type="button"
-                onClick={handleCheckout}
+                className="cart-action-btn cart-continue-shopping-btn"
+                onClick={() => router.visit('/')}
               >
-                Mua hàng
+                <span className="material-symbols-outlined">arrow_back</span>
+                <span>Tiếp tục mua sắm</span>
+              </button>
+              <button 
+                className="cart-action-btn cart-update-btn"
+                onClick={handleUpdateCart}
+              >
+                <span className="material-symbols-outlined">refresh</span>
+                <span>Cập nhật giỏ hàng</span>
               </button>
             </div>
           </div>
-        )}
+
+          <div className="cart-summary">
+            <h2 className="cart-summary-title">Tóm tắt đơn hàng</h2>
+
+            <div className="cart-coupon-section">
+              <div className="cart-coupon-input-wrapper">
+                <div className="cart-coupon-input-container">
+                  <input
+                    type="text"
+                    className="cart-coupon-input"
+                    placeholder="Nhập mã khuyến mãi"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <button className="cart-apply-coupon-btn" onClick={handleApplyCoupon}>
+                    Áp dụng
+                  </button>
+                </div>
+                <button className="cart-select-voucher-btn">Chọn voucher</button>
+              </div>
+            </div>
+
+            <div className="cart-summary-details">
+              <div className="cart-summary-row">
+                <span className="cart-summary-label">Tạm tính ({selectedCount} sản phẩm)</span>
+                <span className="cart-summary-value">{formatPrice(selectedTotal)}</span>
+              </div>
+              {promotion && (
+                <div className="cart-summary-row">
+                  <span className="cart-summary-label">Giảm giá khuyến mãi</span>
+                  <span className="cart-summary-discount">-{formatPrice(totals.discount)}</span>
+                </div>
+              )}
+              <div className="cart-summary-row">
+                <span className="cart-summary-label">Phí vận chuyển</span>
+                <span className="cart-summary-value">{formatPrice(totals.shipping || 30000)}</span>
+              </div>
+            </div>
+
+            <div className="cart-summary-divider" />
+
+            <div className="cart-summary-total">
+              <span>Tổng cộng</span>
+              <span>{formatPrice(selectedTotal + (totals.shipping || 30000) - (totals.discount || 0))}</span>
+            </div>
+
+            <button 
+              className="cart-checkout-btn"
+              onClick={handleCheckout}
+              disabled={selectedCount === 0}
+            >
+              <span>Tiến hành thanh toán</span>
+            </button>
+          </div>
+        </div>
       </div>
     </HomeLayout>
   );
 }
-
-  const handleCheckout = async () => {
-    try {
-      // Use Axios to POST to checkout endpoint and get JSON response
-      const response = await axios.post('/cart/checkout', {
-        provider: 'stripe', // Default to Stripe, can be changed to 'paypal'
-      });
-
-      // Check if response contains payment URL
-      if (response.data?.success && response.data?.payment_url) {
-        // Redirect to payment gateway using client-side navigation
-        window.location.href = response.data.payment_url;
-      } else {
-        console.error('Invalid response from checkout:', response.data);
-        alert(response.data?.message || 'Failed to process checkout. Please try again.');
-      }
-    } catch (error: unknown) {
-      // Handle Axios errors
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'Failed to process checkout. Please try again.';
-        console.error('Checkout failed:', error.response?.data);
-        alert(errorMessage);
-      } else {
-        console.error('Unexpected error during checkout:', error);
-        alert('An unexpected error occurred. Please try again.');
-      }
-    }
-  };

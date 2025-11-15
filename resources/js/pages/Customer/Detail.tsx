@@ -16,7 +16,8 @@ interface Variant {
   sale_price: number | null;
   final_price: number;
   stock_quantity: number;
-  available: number;
+  available_quantity: number;
+  reserved_quantity: number;
   attribute_values: AttributeValue[];
 }
 
@@ -158,8 +159,30 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
   };
 
   const handleQuantityChange = (delta: number) => {
-    const newQty = Math.max(1, Math.min(99, quantity + delta));
+    if (!selectedVariant) return;
+    
+    const maxQty = Math.min(selectedVariant.available_quantity, 99);
+    const newQty = Math.max(1, Math.min(maxQty, quantity + delta));
     setQuantity(newQty);
+  };
+
+  const handleQuantityInput = (value: string) => {
+    if (!selectedVariant) return;
+    
+    // Allow empty string for user to clear and type
+    if (value === '') {
+      setQuantity(1);
+      return;
+    }
+    
+    // Only allow numeric input
+    const numValue = parseInt(value, 10);
+    if (isNaN(numValue)) return;
+    
+    // Clamp between 1 and available quantity
+    const maxQty = Math.min(selectedVariant.available_quantity, 99);
+    const clampedValue = Math.max(1, Math.min(maxQty, numValue));
+    setQuantity(clampedValue);
   };
 
   const handleAddToCart = async () => {
@@ -357,12 +380,37 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
               <div className="pd-variant-group">
                 <p className="pd-variant-label">Quantity</p>
                 <div className="pd-qty">
-                  <button className="pd-qty-btn" aria-label="Decrease" onClick={() => handleQuantityChange(-1)}>-</button>
-                  <input className="pd-qty-input" type="text" value={quantity} readOnly />
-                  <button className="pd-qty-btn" aria-label="Increase" onClick={() => handleQuantityChange(1)}>+</button>
+                  <button 
+                    className="pd-qty-btn" 
+                    aria-label="Decrease" 
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= 1}
+                  >
+                    -
+                  </button>
+                  <input 
+                    className="pd-qty-input" 
+                    type="text" 
+                    value={quantity} 
+                    onChange={(e) => handleQuantityInput(e.target.value)}
+                    onBlur={(e) => {
+                      // If empty on blur, set to 1
+                      if (e.target.value === '') {
+                        setQuantity(1);
+                      }
+                    }}
+                  />
+                  <button 
+                    className="pd-qty-btn" 
+                    aria-label="Increase" 
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={!selectedVariant || quantity >= selectedVariant.available_quantity || quantity >= 99}
+                  >
+                    +
+                  </button>
                 </div>
                 {selectedVariant && (
-                  <p className="pd-stock-info">{selectedVariant.available} available</p>
+                  <p className="pd-stock-info">{selectedVariant.available_quantity} còn lại</p>
                 )}
               </div>
             </div>
@@ -432,30 +480,42 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 ) : (
                   <div className="pd-reviews" id="reviews">
                     <h3 className="pd-reviews-title">Customer Reviews</h3>
-                    <div className="pd-review-list">
-                      {reviews.data.map(review => (
-                        <div key={review.id} className="pd-review-item">
-                          <div
-                            className="pd-review-avatar"
-                            style={{
-                              backgroundImage: review.user.avatar
-                                ? `url(${review.user.avatar})`
-                                : 'url(https://ui-avatars.com/api/?name=' + encodeURIComponent(review.user.username) + ')',
-                            }}
-                          />
-                          <div className="pd-review-body">
-                            <div className="pd-review-row">
-                              <p className="pd-review-name">{review.user.username}</p>
-                              <p className="pd-review-date">{review.created_at}</p>
-                            </div>
-                            <div className="pd-review-stars">
-                              {renderStars(review.rating)}
-                            </div>
-                            <p className="pd-review-text">{review.comment}</p>
-                          </div>
+                    {reviews.data.length === 0 ? (
+                      <div className="pd-no-reviews">
+                        <div className="pd-no-reviews-icon">
+                          <span className="material-symbols-outlined">rate_review</span>
                         </div>
-                      ))}
-                    </div>
+                        <h4 className="pd-no-reviews-title">Chưa có đánh giá nào</h4>
+                        <p className="pd-no-reviews-text">
+                          Sản phẩm này chưa có đánh giá từ khách hàng. Hãy là người đầu tiên đánh giá sau khi mua hàng!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="pd-review-list">
+                        {reviews.data.map(review => (
+                          <div key={review.id} className="pd-review-item">
+                            <div
+                              className="pd-review-avatar"
+                              style={{
+                                backgroundImage: review.user.avatar
+                                  ? `url(${review.user.avatar})`
+                                  : 'url(https://ui-avatars.com/api/?name=' + encodeURIComponent(review.user.username) + ')',
+                              }}
+                            />
+                            <div className="pd-review-body">
+                              <div className="pd-review-row">
+                                <p className="pd-review-name">{review.user.username}</p>
+                                <p className="pd-review-date">{review.created_at}</p>
+                              </div>
+                              <div className="pd-review-stars">
+                                {renderStars(review.rating)}
+                              </div>
+                              <p className="pd-review-text">{review.comment}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {reviews.meta.last_page > 1 && (
                       <div className="pd-pagination">

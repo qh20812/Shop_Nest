@@ -22,7 +22,7 @@ class ProductVariantFactory extends Factory
             'product_id'=>Product::factory(),
             'sku'=>fake()->unique()->bothify('SKU-#####??'),
             'price'=>$price,
-            'discount_price'=>$price - fake()->numberBetween(10000,100000),
+            'discount_price'=>fake()->numberBetween(1000, $price),
             'stock_quantity'=>fake()->numberBetween(0,100),
         ];
     }

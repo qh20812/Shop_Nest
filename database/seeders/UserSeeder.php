@@ -37,8 +37,13 @@ class UserSeeder extends Seeder
         $seller->roles()->attach($sellerRole);
 
         $shipper = User::factory()->create([
-            
-        ])
+            'username' => 'testshipper',
+            'first_name' => 'Test',
+            'last_name' => 'Shipper',
+            'email' => 'testshipper@shopnest.com',
+            'password' => Hash::make('password'),
+        ]);
+        $shipper->roles()->attach($shipperRole);
 
         // Tạo 20 người bán
         User::factory(20)->create()->each(function ($user) use ($sellerRole) {

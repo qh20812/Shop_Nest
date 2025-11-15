@@ -77,8 +77,10 @@ export default function DailyDiscoverCard({
                 
                 {(isSale || isNew) && (
                     <div className="product-card-badges">
-                        {isSale && (
-                            <span className="product-badge product-badge-sale">Sale</span>
+                        {isSale && originalPrice && originalPrice > currentPrice && (
+                            <span className="product-badge product-badge-sale">
+                                {Math.round(((originalPrice - currentPrice) / originalPrice) * 100)}%
+                            </span>
                         )}
                         {isNew && (
                             <span className="product-badge product-badge-new">New</span>

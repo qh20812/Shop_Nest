@@ -342,6 +342,41 @@
 .pd-review-stars { display: inline-flex; gap: 2px; color: var(--primary); margin: 4px 0; }
 .pd-review-text { color: var(--dark); }
 
+/* No Reviews State */
+.pd-no-reviews {
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--light);
+    border-radius: 12px;
+    border: 2px dashed var(--grey);
+    margin: 24px 0;
+}
+
+.pd-no-reviews-icon {
+    font-size: 48px;
+    color: var(--dark-grey);
+    margin-bottom: 16px;
+}
+
+.pd-no-reviews-icon .material-symbols-outlined {
+    font-size: 48px;
+}
+
+.pd-no-reviews-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.pd-no-reviews-text {
+    font-size: 14px;
+    color: var(--dark-grey);
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
 /* Pagination */
 .pd-pagination {
     display: flex;

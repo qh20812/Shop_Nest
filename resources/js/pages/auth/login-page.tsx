@@ -148,7 +148,7 @@ export default function LoginPage() {
                                 />
                                 <p className="login-checkbox-text">Ghi nhớ tôi</p>
                             </label>
-                            <a className="login-forgot-link" href="#">
+                            <a className="login-forgot-link" href="/forgot-password">
                                 Quên mật khẩu?
                             </a>
                         </div>

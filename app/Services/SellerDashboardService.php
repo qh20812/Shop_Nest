@@ -383,7 +383,7 @@ class SellerDashboardService
                 'product_variants.variant_id',
                 'products.product_id'
             ])
-            ->with('product:id,name')
+            ->with('product:product_id,name')
             ->get()
             ->map(function ($variant) {
                 return [

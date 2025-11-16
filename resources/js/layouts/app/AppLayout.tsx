@@ -70,7 +70,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       { icon: 'bx bx-cube', label: t('Inventory'), href: '/seller/inventory' },
       { icon: 'bx bx-receipt', label: t('Orders'), href: '/seller/orders' },
       { icon: 'bx bx-dollar-circle', label: t('Revenue'), href: '/seller/revenue' },
-      { icon: 'bx bx-store-alt', label: t('Shop Profile'), href: '/seller/profile' },
+      { icon: 'bx bx-store-alt', label: t('Shop Profile'), href: '/seller/shop' },
       { icon: 'bx bx-star', label: t('Customer Reviews'), href: '/seller/reviews' },
       { icon: 'bx bx-gift', label: t('Promotions'), href: '/seller/promotions' },
       { icon: 'bx bx-cog', label: t('Settings'), href: '/settings' }

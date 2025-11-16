@@ -92,15 +92,6 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
   order,
   actions,
 }) => {
-  useEffect(() => {
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
   const normalizedStatus = status?.toLowerCase?.() ?? 'failed';
   const config = statusConfig[normalizedStatus] ?? {
     icon: 'bi-info-circle-fill',
@@ -140,13 +131,13 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
     router.get('/');
   };
 
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleClose();
-    }
-  };
-
   useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
@@ -155,11 +146,8 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
     <>
       <Head title="Kết quả thanh toán" />
       <div className="payment-result-container">
-        {/* Background with overlay */}
-        <div className="payment-result-bg" style={{
-          backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAxNxnqUnFuTMMrB8MpM77RAiJbUFqbfxr33x8Z8E-EavI5qBlnvt_1gevk81moZ440PPxuKdd4e4-MwtqKMuc1Z0s1wJuPcfDnKbr1EiMT9VEK3CmYVplZ70cy83q5a8YBuD-DwJMkvl7_zxj-W0BmypR1Wgw6BV44b9qYqsizv-0wcHrQ7LEBRW-OMjTYWUU8brIiHct8eYwY67_-79bAaA2N6LTVF8wy2ICKmg3H86z9xX3weE5xtcjc-Fp6XKZjlFpPiEP9SpJT")'
-        }} />
-        <div className="payment-result-overlay" />
+        {/* Overlay */}
+        <div className="payment-result-overlay" onClick={handleClose} />
 
         {/* Modal */}
         <div className="payment-result-modal">

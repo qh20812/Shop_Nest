@@ -21,7 +21,7 @@ interface Variant {
   size?: LocalizedValue;
   color?: LocalizedValue;
   price: PriceLike;
-  sale_price?: PriceLike;
+  discount_price?: PriceLike;
   product: Product;
 }
 
@@ -29,6 +29,8 @@ interface CartItem {
   id: number;
   product_name: LocalizedValue;
   quantity: number;
+  price: PriceLike;
+  discount_price?: PriceLike;
   total_price: PriceLike;
   variant?: Variant;
   product?: Product;

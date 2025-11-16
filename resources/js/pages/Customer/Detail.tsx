@@ -248,15 +248,15 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
 
       const data = await response.json();
 
-      if (data.success && data.redirect) {
-        window.location.href = data.redirect;
-      } else {
-        if (data.action === 'login_required' && data.redirect) {
-          window.location.href = data.redirect;
-        } else {
-          alert(data.message || 'Không thể mua ngay');
-        }
+      if (data.success && (data.redirect_url || data.redirect)) {
+        window.location.href = data.redirect_url || data.redirect;
+        return;
       }
+      if (data.action === 'login_required' && data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
+      alert(data.message || 'Không thể mua ngay');
     } catch (error) {
       console.error('Buy now error:', error);
       alert('Đã xảy ra lỗi khi mua ngay');

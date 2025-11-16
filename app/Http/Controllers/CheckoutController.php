@@ -98,6 +98,10 @@ class CheckoutController extends Controller
                 'id' => (int) $item->getKey(),
                 'product_name' => $productName,
                 'quantity' => (int) $item->quantity,
+                'price' => $unitPrice, // Effective price (discount_price if available, otherwise price)
+                'discount_price' => $variant->discount_price !== null
+                    ? Localization::resolveNumber($variant->discount_price, $locale)
+                    : null,
                 'total_price' => $item->quantity * $unitPrice,
                 'variant' => [
                     'id' => (int) $variant->getKey(),
@@ -105,7 +109,7 @@ class CheckoutController extends Controller
                     'size' => $variant->size ?? null,
                     'color' => $variant->color ?? null,
                     'price' => Localization::resolveNumber($variant->price, $locale),
-                    'sale_price' => $variant->discount_price !== null
+                    'discount_price' => $variant->discount_price !== null
                         ? Localization::resolveNumber($variant->discount_price, $locale)
                         : null,
                     'product' => [

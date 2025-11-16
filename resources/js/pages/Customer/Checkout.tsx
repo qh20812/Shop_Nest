@@ -37,7 +37,7 @@ interface Variant {
   size?: LocalizedValue;
   color?: LocalizedValue;
   price: PriceLike;
-  sale_price?: PriceLike;
+  discount_price?: PriceLike;
   product: Product;
 }
 
@@ -45,6 +45,8 @@ interface CartItem {
   id: number;
   product_name: LocalizedValue;
   quantity: number;
+  price: PriceLike;
+  discount_price?: PriceLike;
   total_price: PriceLike;
   variant?: Variant;
   product?: Product;
@@ -247,15 +249,19 @@ export default function Checkout() {
   const getItemPrice = (item: CartItem | OrderItem): number => {
     const quantity = item.quantity > 0 ? item.quantity : 1;
 
+    // For cart items, prioritize variant discount_price over price
     if ('variant' in item && item.variant) {
-      if (item.variant.sale_price !== null && item.variant.sale_price !== undefined) {
-        return toNumericPrice(item.variant.sale_price);
+      // Use discount_price if available (this is the sale price)
+      if (item.variant.discount_price !== null && item.variant.discount_price !== undefined) {
+        return toNumericPrice(item.variant.discount_price);
       }
 
+      // Fallback to variant price (original price)
       if (item.variant.price !== null && item.variant.price !== undefined) {
         return toNumericPrice(item.variant.price);
       }
 
+      // Final fallback
       const fallbackTotal = toNumericPrice(item.total_price);
       return fallbackTotal / quantity;
     }
@@ -271,7 +277,7 @@ export default function Checkout() {
   const getOriginalPrice = (item: CartItem | OrderItem): number | null => {
     if ('variant' in item && item.variant) {
       const basePrice = item.variant.price;
-      const salePrice = item.variant.sale_price;
+      const salePrice = item.variant.discount_price;
 
       if (
         salePrice !== null &&

@@ -526,13 +526,18 @@ class CartService
     {
         $product = $variant->relationLoaded('product') ? $variant->product : $variant->product()->first();
 
+        // Use discount_price if available, otherwise use regular price
+        $effectivePrice = $variant->discount_price !== null && $variant->discount_price > 0 
+            ? (float) $variant->discount_price 
+            : (float) $variant->price;
+
         return [
             'cart_item_id' => $cartItem?->cart_item_id,
             'variant_id' => $variant->variant_id,
             'quantity' => $quantity,
-            'price' => (float) $variant->price,
+            'price' => $effectivePrice,
             'discount_price' => $variant->discount_price ? (float) $variant->discount_price : null,
-            'subtotal' => (float) $variant->price * $quantity,
+            'subtotal' => $effectivePrice * $quantity,
             'variant' => [
                 'variant_id' => $variant->variant_id,
                 'sku' => $variant->sku,
@@ -782,13 +787,16 @@ class CartService
                         }
                     }
 
+                    // Use the effective price from cart item (which already considers discount_price)
+                    $effectivePrice = $item['price']; // This now contains the sale price if available
+                    
                     $order->items()->create([
                         'variant_id' => $variant->variant_id,
                         'quantity' => $item['quantity'],
-                        'unit_price' => $item['price'],
+                        'unit_price' => $effectivePrice,
                         'total_price' => $item['subtotal'],
                         'original_currency' => 'VND',
-                        'original_unit_price' => $item['price'],
+                        'original_unit_price' => $effectivePrice,
                         'original_total_price' => $item['subtotal'],
                     ]);
                 }

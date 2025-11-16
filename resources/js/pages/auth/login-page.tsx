@@ -148,7 +148,7 @@ export default function LoginPage() {
                                 />
                                 <p className="login-checkbox-text">Ghi nhớ tôi</p>
                             </label>
-                            <a className="login-forgot-link" href="#">
+                            <a className="login-forgot-link" href="/forgot-password">
                                 Quên mật khẩu?
                             </a>
                         </div>
@@ -193,7 +193,7 @@ export default function LoginPage() {
 
                     <p className="login-footer">
                         <span className="login-footer-text">Chưa có tài khoản? </span>
-                        <a className="login-footer-link" href="#">
+                        <a className="login-footer-link" href="/register">
                             Đăng ký ngay
                         </a>
                     </p>

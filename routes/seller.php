@@ -4,6 +4,7 @@ use App\Http\Controllers\Seller\DashboardController;
 use App\Http\Controllers\Seller\OrderController;
 use App\Http\Controllers\Seller\ProductController;
 use App\Http\Controllers\Seller\PromotionController;
+use App\Http\Controllers\Seller\ShopController;
 use App\Http\Controllers\Seller\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,4 +34,8 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->grou
     Route::post('wallet/top-up', [WalletController::class, 'topUp'])->name('wallet.top-up');
     Route::get('wallet/top-up/{transaction}/status', [WalletController::class, 'topUpStatus'])->name('wallet.top-up.status');
     Route::post('wallet/transfer', [WalletController::class, 'transfer'])->name('wallet.transfer');
+
+    // Shop profile
+    Route::get('/shop', [ShopController::class, 'edit'])->name('shop.edit');
+    Route::post('/shop', [ShopController::class, 'update'])->name('shop.update');
 });

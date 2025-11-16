@@ -1,5 +1,7 @@
 import React from 'react';
 import ProductCard from '@/Components/Shared/ProductCard';
+import { toNumericPrice, type PriceLike } from '@/utils/price';
+import { type LocalizedValue } from '@/utils/localization';
 
 interface ProductImage {
   id: number;
@@ -8,7 +10,7 @@ interface ProductImage {
 
 interface Product {
   id: number;
-  name: string;
+  name: LocalizedValue;
   slug: string;
   images: ProductImage[];
 }
@@ -16,18 +18,20 @@ interface Product {
 interface Variant {
   id: number;
   sku: string;
-  size?: string;
-  color?: string;
-  price: number;
-  sale_price?: number;
+  size?: LocalizedValue;
+  color?: LocalizedValue;
+  price: PriceLike;
+  discount_price?: PriceLike;
   product: Product;
 }
 
 interface CartItem {
   id: number;
-  product_name: string;
+  product_name: LocalizedValue;
   quantity: number;
-  total_price: number;
+  price: PriceLike;
+  discount_price?: PriceLike;
+  total_price: PriceLike;
   variant?: Variant;
   product?: Product;
 }
@@ -35,11 +39,11 @@ interface CartItem {
 interface OrderItem {
   id: number;
   variant_id: number;
-  product_name: string;
-  variant_name: string;
+  product_name: LocalizedValue;
+  variant_name: LocalizedValue;
   quantity: number;
-  unit_price: number;
-  total_price: number;
+  unit_price: PriceLike;
+  total_price: PriceLike;
   image?: string;
 }
 
@@ -47,8 +51,8 @@ interface CheckoutProductListProps {
   items: (CartItem | OrderItem)[];
   getProductImage: (item: CartItem | OrderItem) => string;
   getVariantText: (item: CartItem | OrderItem) => string;
-  getItemPrice: (item: CartItem | OrderItem) => number;
-  getOriginalPrice: (item: CartItem | OrderItem) => number | null;
+  getItemPrice: (item: CartItem | OrderItem) => PriceLike;
+  getOriginalPrice: (item: CartItem | OrderItem) => PriceLike | null;
 }
 
 const CheckoutProductList: React.FC<CheckoutProductListProps> = ({
@@ -71,8 +75,9 @@ const CheckoutProductList: React.FC<CheckoutProductListProps> = ({
         {items.map((item, index) => {
           const image = getProductImage(item);
           const variant = getVariantText(item);
-          const price = getItemPrice(item);
-          const originalPrice = getOriginalPrice(item);
+          const price = toNumericPrice(getItemPrice(item));
+          const rawOriginalPrice = getOriginalPrice(item);
+          const originalPrice = rawOriginalPrice !== null ? toNumericPrice(rawOriginalPrice) : null;
 
           return (
             <ProductCard
@@ -81,7 +86,7 @@ const CheckoutProductList: React.FC<CheckoutProductListProps> = ({
               name={item.product_name}
               variant={variant}
               price={price}
-              originalPrice={originalPrice || undefined}
+              originalPrice={originalPrice ?? undefined}
               quantity={item.quantity}
               showQuantity={true}
             />

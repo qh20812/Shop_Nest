@@ -1,11 +1,12 @@
 import React from 'react';
+import { toNumericPrice, type PriceLike } from '@/utils/price';
 
 interface OrderSummaryProps {
-  subtotal: number;
-  shipping: number;
-  discount: number;
-  total: number;
-  currencySymbol?: string;
+  subtotal: PriceLike;
+  shipping: PriceLike;
+  discount: PriceLike;
+  total: PriceLike;
+  currencySuffix?: string;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -13,50 +14,57 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   shipping,
   discount,
   total,
-  currencySymbol = '₫',
+  currencySuffix = 'đ',
 }) => {
-  const formatPrice = (price: number) => {
-    return `${price.toLocaleString('vi-VN')}${currencySymbol}`;
+  const formatPrice = (price: PriceLike) => {
+    const numeric = toNumericPrice(price);
+    const formatted = new Intl.NumberFormat('vi-VN').format(numeric);
+    return currencySuffix ? `${formatted} ${currencySuffix}` : formatted;
   };
 
+  const shippingValue = toNumericPrice(shipping);
+  const discountValue = toNumericPrice(discount);
+  const subtotalValue = toNumericPrice(subtotal);
+  const totalValue = toNumericPrice(total);
+
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
       {/* Subtotal */}
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-600">Tạm tính:</span>
-        <span className="font-medium text-gray-900">
-          {formatPrice(subtotal)}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-sm)' }}>
+        <span style={{ color: 'var(--text-secondary)' }}>Tạm tính:</span>
+        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+          {formatPrice(subtotalValue)}
         </span>
       </div>
 
       {/* Shipping */}
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-600">Phí vận chuyển:</span>
-        <span className="font-medium text-gray-900">
-          {shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-sm)' }}>
+        <span style={{ color: 'var(--text-secondary)' }}>Phí vận chuyển:</span>
+        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+          {shippingValue === 0 ? 'Miễn phí' : formatPrice(shippingValue)}
         </span>
       </div>
 
       {/* Discount */}
-      {discount > 0 && (
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600">Giảm giá:</span>
-          <span className="font-medium text-red-600">
-            -{formatPrice(discount)}
+      {discountValue > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-sm)' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>Giảm giá:</span>
+          <span style={{ fontWeight: 500, color: 'var(--danger)' }}>
+            -{formatPrice(discountValue)}
           </span>
         </div>
       )}
 
       {/* Divider */}
-      <div className="border-t border-gray-200 my-3"></div>
+      <div style={{ borderTop: '1px solid var(--border-color)', margin: 'var(--spacing-sm) 0' }}></div>
 
       {/* Total */}
-      <div className="flex justify-between items-center">
-        <span className="text-base font-semibold text-gray-900">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, color: 'var(--text-primary)' }}>
           Tổng cộng:
         </span>
-        <span className="text-xl font-bold text-red-600">
-          {formatPrice(total)}
+        <span style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--danger)' }}>
+          {formatPrice(totalValue)}
         </span>
       </div>
     </div>

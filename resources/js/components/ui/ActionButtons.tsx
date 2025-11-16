@@ -55,7 +55,7 @@ export default function ActionButtons({ actions }: ActionButtonsProps) {
   };
 
   return (
-    <div style={{ display: "flex", gap: "8px" }}>
+    <div style={{ display: "flex", gap: "8px"}}>
       {actions.map((action, index) => {
         const styles = getVariantStyles(action.variant, action.disabled);
 
@@ -66,7 +66,7 @@ export default function ActionButtons({ actions }: ActionButtonsProps) {
               href={action.href!}
               style={styles}
             >
-              <i className={action.icon}></i>
+              <i className={action.icon} style={{ verticalAlign: 'middle' }}></i>
               {t(action.label)}
             </Link>
           );
@@ -78,7 +78,7 @@ export default function ActionButtons({ actions }: ActionButtonsProps) {
               disabled={action.disabled}
               style={styles}
             >
-              <i className={action.icon}></i>
+              <i className={action.icon} style={{ verticalAlign: 'middle' }}></i>
               {t(action.label)}
             </button>
           );

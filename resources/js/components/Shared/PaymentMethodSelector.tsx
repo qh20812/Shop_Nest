@@ -18,46 +18,66 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   selectedId,
   onSelect,
 }) => {
-  const getIcon = (methodId: string) => {
-    switch (methodId) {
+  const resolveIcon = (method: PaymentMethod) => {
+    const key = method.icon ?? method.id;
+
+    switch (key) {
       case 'stripe':
         return 'fab fa-cc-stripe';
       case 'paypal':
         return 'fab fa-paypal';
       case 'cod':
         return 'fas fa-money-bill-wave';
+      case 'vnpay':
+        return 'fas fa-qrcode';
+      case 'momo':
+        return 'fas fa-wallet';
       default:
-        return 'fas fa-credit-card';
+        return key.includes('fa-') ? key : 'fas fa-credit-card';
     }
   };
 
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
       {methods.map((method) => (
         <div
           key={method.id}
           onClick={() => onSelect(method.id)}
-          className={`p-4 bg-white border-2 rounded-lg cursor-pointer transition-all duration-300 ${
-            selectedId === method.id
-              ? 'border-primary bg-primary-light'
-              : 'border-gray-200 hover:border-primary'
-          }`}
+          style={{
+            padding: 'var(--spacing-md)',
+            background: 'var(--surface)',
+            border: selectedId === method.id ? '2px solid var(--primary)' : '2px solid var(--border-color)',
+            borderRadius: 'var(--border-radius-md)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-normal)',
+            backgroundColor: selectedId === method.id ? 'var(--light-primary)' : 'var(--surface)'
+          }}
+          onMouseEnter={(e) => {
+            if (selectedId !== method.id) {
+              e.currentTarget.style.borderColor = 'var(--primary)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (selectedId !== method.id) {
+              e.currentTarget.style.borderColor = 'var(--border-color)';
+            }
+          }}
         >
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <input
               type="radio"
               checked={selectedId === method.id}
               onChange={() => onSelect(method.id)}
-              className="w-5 h-5 cursor-pointer accent-primary"
+              style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
             />
             
-            <div className="flex items-center gap-3 flex-1">
-              <i className={`${getIcon(method.id)} text-2xl text-primary`}></i>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', flex: 1 }}>
+              <i className={resolveIcon(method)} style={{ fontSize: 'var(--font-size-2xl)', color: 'var(--primary)' }}></i>
               <div>
-                <p className="text-[15px] font-semibold text-gray-900">
+                <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                   {method.name}
                 </p>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginTop: '2px', margin: 0 }}>
                   {method.description}
                 </p>
               </div>

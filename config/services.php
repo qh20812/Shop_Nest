@@ -61,6 +61,14 @@ return [
         'mode' => env('PAYPAL_MODE', 'sandbox'),
     ],
 
+    'vnpay' => [
+        'tmn_code' => env('VNP_TMN_CODE'),
+        'hash_secret' => env('VNP_HASH_SECRET'),
+        'payment_url' => env('VNP_PAYMENT_URL'),
+        'return_url' => env('VNP_RETURN_URL'),
+        'convert_rate' => (int) env('VNP_CONVERT_RATE', 27000),
+    ],
+
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
@@ -75,6 +83,16 @@ return [
         'default_model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
         'timeout' => (int) env('OPENAI_TIMEOUT', 20),
         'verify_ssl' => env('OPENAI_VERIFY_SSL', false),
+    ],
+
+    'momo' => [
+        'partner_code' => env('MOMO_PARTNER_CODE'),
+        'access_key' => env('MOMO_ACCESS_KEY'),
+        'secret_key' => env('MOMO_SECRET_KEY'),
+        'endpoint' => env('MOMO_ENDPOINT'),
+        'redirect' => env('MOMO_REDIRECT_URL'),
+        'ipn' => env('MOMO_IPN_URL'),
+        'convert_rate' => (int) env('MOMO_CONVERT_RATE', 25000),
     ],
 
     'chatbot' => [

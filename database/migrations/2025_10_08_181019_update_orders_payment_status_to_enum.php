@@ -12,15 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, migrate existing data from integers to enum strings
-        $this->migrateExistingPaymentStatusData();
-
-        // Then modify the column to use ENUM type
+        // First, modify the column to use ENUM type
         Schema::table('orders', function (Blueprint $table) {
             $table->enum('payment_status', ['unpaid', 'paid', 'failed', 'refunded'])
                   ->default('unpaid')
                   ->change();
         });
+
+        // Then, migrate existing data from integers to enum strings
+        $this->migrateExistingPaymentStatusData();
     }
 
     /**
@@ -34,10 +34,10 @@ return new class extends Migration
         });
 
         // Restore integer values
-        DB::table('orders')->where('payment_status', 'unpaid')->update(['payment_status' => 0]);
-        DB::table('orders')->where('payment_status', 'paid')->update(['payment_status' => 1]);
-        DB::table('orders')->where('payment_status', 'failed')->update(['payment_status' => 2]);
-        DB::table('orders')->where('payment_status', 'refunded')->update(['payment_status' => 3]);
+        DB::statement("UPDATE orders SET payment_status = 0 WHERE payment_status = 'unpaid'");
+        DB::statement("UPDATE orders SET payment_status = 1 WHERE payment_status = 'paid'");
+        DB::statement("UPDATE orders SET payment_status = 2 WHERE payment_status = 'failed'");
+        DB::statement("UPDATE orders SET payment_status = 3 WHERE payment_status = 'refunded'");
     }
 
     /**
@@ -54,15 +54,10 @@ return new class extends Migration
         ];
 
         foreach ($mappings as $oldValue => $newValue) {
-            DB::table('orders')
-                ->where('payment_status', $oldValue)
-                ->update(['payment_status' => $newValue]);
+            DB::statement("UPDATE orders SET payment_status = ? WHERE payment_status = ?", [$newValue, $oldValue]);
         }
 
         // Handle any null or invalid values
-        DB::table('orders')
-            ->whereNotIn('payment_status', ['unpaid', 'paid', 'failed', 'refunded'])
-            ->orWhereNull('payment_status')
-            ->update(['payment_status' => 'unpaid']);
+        DB::statement("UPDATE orders SET payment_status = 'unpaid' WHERE payment_status NOT IN ('unpaid', 'paid', 'failed', 'refunded') OR payment_status IS NULL");
     }
 };

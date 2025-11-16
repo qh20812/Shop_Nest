@@ -36,7 +36,7 @@ class CartService
         if ($user) {
             $results = collect();
 
-            CartItem::with(['variant.product'])
+            CartItem::with(['variant.product.images'])
                 ->where('user_id', $user->id)
                 ->orderBy('cart_item_id')
                 ->chunkById(100, function ($chunk) use (&$results) {
@@ -526,13 +526,18 @@ class CartService
     {
         $product = $variant->relationLoaded('product') ? $variant->product : $variant->product()->first();
 
+        // Use discount_price if available, otherwise use regular price
+        $effectivePrice = $variant->discount_price !== null && $variant->discount_price > 0 
+            ? (float) $variant->discount_price 
+            : (float) $variant->price;
+
         return [
             'cart_item_id' => $cartItem?->cart_item_id,
             'variant_id' => $variant->variant_id,
             'quantity' => $quantity,
-            'price' => (float) $variant->price,
+            'price' => $effectivePrice,
             'discount_price' => $variant->discount_price ? (float) $variant->discount_price : null,
-            'subtotal' => (float) $variant->price * $quantity,
+            'subtotal' => $effectivePrice * $quantity,
             'variant' => [
                 'variant_id' => $variant->variant_id,
                 'sku' => $variant->sku,
@@ -544,6 +549,9 @@ class CartService
                 'product' => $product ? [
                     'product_id' => $product->product_id,
                     'name' => $product->name,
+                    'images' => $product->relationLoaded('images') 
+                        ? $product->images->map(fn($img) => ['image_url' => $img->image_url])->toArray()
+                        : [],
                 ] : null,
             ],
         ];
@@ -744,6 +752,9 @@ class CartService
                     'shipping_fee' => 0,
                     'discount_amount' => $totals['discount'],
                     'total_amount' => $totals['total'],
+                    'currency' => 'VND',
+                    'exchange_rate' => 1,
+                    'total_amount_base' => $totals['total'],
                     'status' => OrderStatus::PENDING_CONFIRMATION,
                     'payment_method' => 3,
                     'payment_status' => PaymentStatus::UNPAID,
@@ -776,11 +787,17 @@ class CartService
                         }
                     }
 
+                    // Use the effective price from cart item (which already considers discount_price)
+                    $effectivePrice = $item['price']; // This now contains the sale price if available
+                    
                     $order->items()->create([
                         'variant_id' => $variant->variant_id,
                         'quantity' => $item['quantity'],
-                        'unit_price' => $item['price'],
+                        'unit_price' => $effectivePrice,
                         'total_price' => $item['subtotal'],
+                        'original_currency' => 'VND',
+                        'original_unit_price' => $effectivePrice,
+                        'original_total_price' => $item['subtotal'],
                     ]);
                 }
 

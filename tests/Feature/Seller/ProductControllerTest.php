@@ -3,13 +3,17 @@
 
 namespace Tests\Feature\Seller;
 
+use App\Enums\ProductStatus;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\ImageValidationService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -92,11 +96,18 @@ class ProductControllerTest extends TestCase
     {
         $productData = [
             'name' => 'Sản phẩm tuyệt vời mới',
+            'name_en' => 'Amazing New Product',
             'description' => 'Đây là một sản phẩm rất tốt.',
+            'description_en' => 'A fantastic product description.',
             'price' => 199.99,
             'stock' => 100,
             'category_id' => $this->category->category_id,
             'brand_id' => $this->brand->brand_id,
+            'status' => ProductStatus::DRAFT->value,
+            'sku' => 'SKU-TEST-001',
+            'meta_title' => 'Meta Title',
+            'meta_slug' => 'meta-title',
+            'meta_description' => 'Meta description content',
         ];
 
         $response = $this->actingAs($this->sellerOne)->post(route('seller.products.store'), $productData);
@@ -104,19 +115,95 @@ class ProductControllerTest extends TestCase
         $response->assertRedirect(route('seller.products.index'));
         $response->assertSessionHas('success');
 
+        $product = Product::whereJsonContains('name->vi', 'Sản phẩm tuyệt vời mới')->first();
+        $this->assertNotNull($product);
+        $this->assertSame($this->sellerOne->id, $product->seller_id);
+        $this->assertEquals(ProductStatus::DRAFT, $product->status);
         $this->assertDatabaseHas('products', [
-            'name' => 'Sản phẩm tuyệt vời mới',
-            'seller_id' => $this->sellerOne->id, // Kiểm tra seller_id được gán đúng
+            'product_id' => $product->product_id,
+            'meta_slug' => 'meta-title',
+        ]);
+        $this->assertDatabaseHas('product_variants', [
+            'product_id' => $product->product_id,
+            'price' => 199.99,
+            'stock_quantity' => 100,
+            'sku' => 'SKU-TEST-001',
         ]);
     }
 
     public function test_luu_san_pham_that_bai_voi_du_lieu_khong_hop_le(): void
     {
-        $invalidData = ['name' => '', 'price' => -10];
+        $invalidData = [
+            'name' => '',
+            'price' => -10,
+            'variants' => [
+                [
+                    'price' => -10,
+                    'stock_quantity' => -5,
+                ]
+            ]
+        ];
 
         $response = $this->actingAs($this->sellerOne)->post(route('seller.products.store'), $invalidData);
 
-        $response->assertSessionHasErrors(['name', 'price', 'stock', 'category_id', 'brand_id']);
+        $response->assertSessionHasErrors(['name', 'category_id', 'brand_id', 'variants.0.price', 'variants.0.stock_quantity']);
+    }
+
+    public function test_seller_creation_handles_images_and_numeric_status(): void
+    {
+        $this->mock(ImageValidationService::class)
+            ->shouldReceive('validateImage')
+            ->andReturnTrue();
+
+        Storage::fake('public');
+
+        $sampleImagePath = base_path('public/image/default-product.png');
+        $this->assertFileExists($sampleImagePath);
+        $imageContents = file_get_contents($sampleImagePath);
+
+        $payload = [
+            'name' => 'Loa Bluetooth Mini',
+            'name_en' => 'Bluetooth Speaker Mini',
+            'description' => 'Mô tả sản phẩm bằng tiếng Việt.',
+            'description_en' => 'English description.',
+            'price' => 499000,
+            'stock' => 12,
+            'category_id' => $this->category->category_id,
+            'brand_id' => $this->brand->brand_id,
+            'status' => 2, // legacy numeric pending approval
+            'sku' => 'SPK-0001',
+            'meta_title' => 'Loa Bluetooth Mini',
+            'meta_slug' => 'loa-bluetooth-mini',
+            'meta_description' => 'Mô tả ngắn cho loa bluetooth.',
+            'images' => [
+                UploadedFile::fake()->createWithContent('front.png', $imageContents),
+                UploadedFile::fake()->createWithContent('side.png', $imageContents),
+            ],
+        ];
+
+        $response = $this->actingAs($this->sellerOne)->post(route('seller.products.store'), $payload);
+
+        $response->assertRedirect(route('seller.products.index'));
+
+        $product = Product::with(['images', 'variants'])
+            ->whereJsonContains('name->vi', 'Loa Bluetooth Mini')
+            ->first();
+
+        $this->assertNotNull($product);
+        $this->assertSame(ProductStatus::PENDING_APPROVAL, $product->status);
+        $this->assertSame('loa-bluetooth-mini', $product->meta_slug);
+        $this->assertCount(1, $product->variants);
+        $this->assertSame('SPK-0001', $product->variants->first()->sku);
+
+        $this->assertCount(2, $product->images);
+        $primary = $product->images->firstWhere('is_primary', true);
+        $this->assertNotNull($primary);
+        $this->assertSame(0, $primary->display_order);
+        $this->assertTrue(Storage::disk('public')->exists($primary->image_url));
+
+        $second = $product->images->firstWhere('display_order', 1);
+        $this->assertNotNull($second);
+        $this->assertTrue(Storage::disk('public')->exists($second->image_url));
     }
 
     // --- EDIT & UPDATE ---
@@ -141,17 +228,22 @@ class ProductControllerTest extends TestCase
     {
         $updateData = [
             'name' => 'Tên sản phẩm đã cập nhật',
+            'name_en' => 'Updated product name',
             'price' => 99.99,
             'stock' => 50,
             'category_id' => $this->category->category_id,
             'brand_id' => $this->brand->brand_id,
+            'status' => ProductStatus::PUBLISHED->value,
         ];
 
         $response = $this->actingAs($this->sellerOne)->put(route('seller.products.update', $this->productOfSellerOne), $updateData);
 
         $response->assertRedirect(route('seller.products.index'));
         $response->assertSessionHas('success');
-        $this->assertDatabaseHas('products', ['product_id' => $this->productOfSellerOne->product_id, 'name' => 'Tên sản phẩm đã cập nhật']);
+        $this->assertDatabaseHas('products', [
+            'product_id' => $this->productOfSellerOne->product_id,
+            'status' => ProductStatus::PUBLISHED->value,
+        ]);
     }
 
     // --- DESTROY ---

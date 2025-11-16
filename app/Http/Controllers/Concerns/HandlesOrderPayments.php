@@ -11,16 +11,30 @@ trait HandlesOrderPayments
 {
     private function persistPayment(Order $order, string $provider, array $attributes): void
     {
+        $amount = array_key_exists('amount', $attributes)
+            ? (float) $attributes['amount']
+            : (float) $order->total_amount;
+
+        $currency = $attributes['currency'] ?? ($order->currency ?? 'VND');
+
         $transaction = $this->lockPaymentTransaction($order, $provider);
 
         if (!$transaction) {
             $transaction = $order->transactions()->create([
                 'type' => 'payment',
-                'amount' => $order->total_amount,
-                'currency' => $order->currency ?? 'VND',
+                'amount' => $amount,
+                'currency' => $currency,
                 'gateway' => $provider,
                 'status' => 'pending',
             ]);
+        } else {
+            if (array_key_exists('amount', $attributes)) {
+                $transaction->amount = $amount;
+            }
+
+            if (array_key_exists('currency', $attributes)) {
+                $transaction->currency = $currency;
+            }
         }
 
         $eventId = $attributes['gateway_event_id'] ?? null;

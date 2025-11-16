@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ProfileControllerTest extends TestCase
 {
@@ -22,7 +23,7 @@ class ProfileControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function authenticated_user_can_view_profile()
     {
         $response = $this->actingAs($this->user)->get(route('user.profile.index'));
@@ -35,7 +36,7 @@ class ProfileControllerTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_view_profile()
     {
         $response = $this->get(route('user.profile.index'));
@@ -43,9 +44,10 @@ class ProfileControllerTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    /** @test */
+    #[Test]
     public function unverified_user_cannot_view_profile()
     {
+        /** @var User $unverifiedUser */
         $unverifiedUser = User::factory()->create([
             'email_verified_at' => null,
         ]);
@@ -55,7 +57,7 @@ class ProfileControllerTest extends TestCase
         $response->assertRedirect(route('verification.notice'));
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_profile_successfully()
     {
         $data = [
@@ -78,7 +80,7 @@ class ProfileControllerTest extends TestCase
         $this->assertNull($this->user->email_verified_at); // Should reset verification
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_profile_with_avatar()
     {
         if (!function_exists('imagecreatetruecolor')) {
@@ -103,7 +105,7 @@ class ProfileControllerTest extends TestCase
         Storage::assertExists('public/' . $this->user->avatar);
     }
 
-    /** @test */
+    #[Test]
     public function old_avatar_is_deleted_when_uploading_new_one()
     {
         if (!function_exists('imagecreatetruecolor')) {
@@ -128,7 +130,7 @@ class ProfileControllerTest extends TestCase
         Storage::assertExists('public/' . $this->user->avatar); // New exists
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_invalid_email()
     {
         $data = [
@@ -141,7 +143,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_duplicate_email()
     {
         $anotherUser = User::factory()->create(['email' => 'existing@example.com']);
@@ -156,7 +158,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_invalid_phone_number()
     {
         $data = [
@@ -169,7 +171,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('phone_number');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_negative_phone_number()
     {
         $data = [
@@ -182,7 +184,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('phone_number');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_invalid_gender()
     {
         $data = [
@@ -195,7 +197,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('gender');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_future_date_of_birth()
     {
         $data = [
@@ -208,7 +210,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('date_of_birth');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_underage_date_of_birth()
     {
         $data = [
@@ -221,7 +223,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('date_of_birth');
     }
 
-    /** @test */
+    #[Test]
     public function validation_fails_for_invalid_avatar_file()
     {
         $invalidFile = UploadedFile::fake()->create('document.pdf', 100);
@@ -236,7 +238,7 @@ class ProfileControllerTest extends TestCase
         $response->assertSessionHasErrors('avatar');
     }
 
-    /** @test */
+    #[Test]
     public function avatar_url_accessor_returns_correct_url()
     {
         // Test local avatar

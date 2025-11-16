@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { usePage, router } from '@inertiajs/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { usePage, router, Head } from '@inertiajs/react';
 import axios from 'axios';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import CartTitle from '@/Components/cart/CartTitle';
 import { useTranslation } from '@/lib/i18n';
+import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
+import { toNumericPrice, type PriceLike } from '@/utils/price';
 
 // Import new components
 import OrderSummary from '@/Components/Shared/OrderSummary';
@@ -24,7 +26,7 @@ interface ProductImage {
 
 interface Product {
   id: number;
-  name: string;
+  name: LocalizedValue;
   slug: string;
   images: ProductImage[];
 }
@@ -32,18 +34,20 @@ interface Product {
 interface Variant {
   id: number;
   sku: string;
-  size?: string;
-  color?: string;
-  price: number;
-  sale_price?: number;
+  size?: LocalizedValue;
+  color?: LocalizedValue;
+  price: PriceLike;
+  discount_price?: PriceLike;
   product: Product;
 }
 
 interface CartItem {
   id: number;
-  product_name: string;
+  product_name: LocalizedValue;
   quantity: number;
-  total_price: number;
+  price: PriceLike;
+  discount_price?: PriceLike;
+  total_price: PriceLike;
   variant?: Variant;
   product?: Product;
 }
@@ -72,11 +76,11 @@ interface PaymentMethod {
 interface OrderItem {
   id: number;
   variant_id: number;
-  product_name: string;
-  variant_name: string;
+  product_name: LocalizedValue;
+  variant_name: LocalizedValue;
   quantity: number;
-  unit_price: number;
-  total_price: number;
+  unit_price: PriceLike;
+  total_price: PriceLike;
   image?: string;
 }
 
@@ -109,6 +113,13 @@ interface PageProps {
   [key: string]: unknown;
 }
 
+const PAYMENT_METHOD_FALLBACK: PaymentMethod[] = [
+  { id: 'stripe', name: 'Stripe (Thẻ quốc tế)', description: 'Thanh toán bằng thẻ Visa/MasterCard/JCB' },
+  { id: 'paypal', name: 'PayPal', description: 'Thanh toán nhanh qua tài khoản PayPal' },
+  { id: 'vnpay', name: 'VNPay', description: 'Thanh toán qua ngân hàng nội địa và QR' },
+  { id: 'momo', name: 'MoMo', description: 'Thanh toán bằng ví điện tử MoMo' },
+];
+
 // Helper function to get CSRF token
 const getCsrfToken = (): string => {
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -116,40 +127,67 @@ const getCsrfToken = (): string => {
 };
 
 export default function Checkout() {
-  const { 
-    cartItems, 
-    order, 
-    orderItems, 
-    totals, 
-    subtotal, 
-    shipping = 0, 
-    discount = 0, 
-    total, 
-    addresses = [], 
-    paymentMethods = [
-      { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe' },
-      { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account' },
-    ],
-    promotion 
-  } = usePage<PageProps>().props;
-  
-  const { t } = useTranslation();
-  
-  // Determine checkout type
-  const isBuyNowCheckout = !!(order && orderItems && totals);
-  
-  // Use appropriate data based on checkout type
+  const pageProps = usePage<PageProps>().props;
+
+  const cartItems = pageProps.cartItems ?? [];
+  const orderItems = pageProps.orderItems ?? [];
+  const order = pageProps.order;
+  const totals = pageProps.totals;
+  const promotion = pageProps.promotion ?? null;
+  const addresses = useMemo<Address[]>(() => (
+    Array.isArray(pageProps.addresses) ? pageProps.addresses : []
+  ), [pageProps.addresses]);
+  const cartSubtotal = pageProps.subtotal ?? 0;
+  const cartShipping = pageProps.shipping ?? 0;
+  const cartDiscount = pageProps.discount ?? 0;
+  const cartTotal = pageProps.total ?? 0;
+  const serverPaymentMethods = Array.isArray(pageProps.paymentMethods)
+    ? (pageProps.paymentMethods as PaymentMethod[])
+    : undefined;
+
+  const { t, locale: currentLocale } = useTranslation();
+
+  const isBuyNowCheckout = Boolean(order && orderItems.length > 0 && totals);
   const items = isBuyNowCheckout ? orderItems : cartItems;
-  const finalSubtotal = isBuyNowCheckout ? totals!.subtotal : subtotal!;
-  const finalShipping = isBuyNowCheckout ? totals!.shipping_fee : shipping;
-  const finalDiscount = isBuyNowCheckout ? totals!.discount_amount : discount;
-  const finalTotal = isBuyNowCheckout ? totals!.total : total!;
-  
-  // State management
-  const [selectedAddress, setSelectedAddress] = useState<number>(
-    addresses.find(addr => addr.is_default)?.id || (addresses[0]?.id || 0)
-  );
-  const [selectedPayment, setSelectedPayment] = useState<string>('stripe');
+
+  const resolvedTotals = totals ?? null;
+  const finalSubtotal = isBuyNowCheckout ? (resolvedTotals?.subtotal ?? 0) : cartSubtotal;
+  const finalShipping = isBuyNowCheckout ? (resolvedTotals?.shipping_fee ?? 0) : cartShipping;
+  const finalDiscount = isBuyNowCheckout ? (resolvedTotals?.discount_amount ?? 0) : cartDiscount;
+  const finalTotal = isBuyNowCheckout ? (resolvedTotals?.total ?? 0) : cartTotal;
+
+  const availablePaymentMethods = useMemo<PaymentMethod[]>(() => {
+    if (serverPaymentMethods && serverPaymentMethods.length > 0) {
+      return serverPaymentMethods;
+    }
+    return PAYMENT_METHOD_FALLBACK;
+  }, [serverPaymentMethods]);
+
+  const [selectedAddress, setSelectedAddress] = useState<number>(() => {
+    const defaultAddress = addresses.find((addr) => addr.is_default) ?? addresses[0];
+    return defaultAddress ? defaultAddress.id : 0;
+  });
+
+  useEffect(() => {
+    if (addresses.length === 0) {
+      setSelectedAddress(0);
+      return;
+    }
+
+    if (!addresses.some((addr) => addr.id === selectedAddress)) {
+      const fallback = addresses.find((addr) => addr.is_default) ?? addresses[0];
+      setSelectedAddress(fallback ? fallback.id : 0);
+    }
+  }, [addresses, selectedAddress]);
+
+  const [selectedPayment, setSelectedPayment] = useState<string>(() => availablePaymentMethods[0]?.id ?? '');
+
+  useEffect(() => {
+    if (!availablePaymentMethods.some((method) => method.id === selectedPayment)) {
+      setSelectedPayment(availablePaymentMethods[0]?.id ?? '');
+    }
+  }, [availablePaymentMethods, selectedPayment]);
+
   const [promoCode, setPromoCode] = useState<string>('');
   const [appliedPromo, setAppliedPromo] = useState(promotion);
   const [orderNotes, setOrderNotes] = useState<string>('');
@@ -157,13 +195,8 @@ export default function Checkout() {
   const [showAddressModal, setShowAddressModal] = useState<boolean>(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
-  // Track unsaved changes
-  React.useEffect(() => {
-    if (orderNotes.trim() || promoCode.trim()) {
-      setHasUnsavedChanges(true);
-    } else {
-      setHasUnsavedChanges(false);
-    }
+  useEffect(() => {
+    setHasUnsavedChanges(Boolean(orderNotes.trim() || promoCode.trim()));
   }, [orderNotes, promoCode]);
 
   // Helper functions
@@ -178,45 +211,101 @@ export default function Checkout() {
     return '/image/ShopnestLogo.png';
   };
 
+  const localeKey = currentLocale ?? 'vi';
+
   const getVariantText = (item: CartItem | OrderItem): string => {
     if ('variant' in item && item.variant) {
       const variant = item.variant;
-      const parts = [];
-      if (variant.color) parts.push(variant.color);
-      if (variant.size) parts.push(variant.size);
-      return parts.length > 0 ? parts.join(' / ') : variant.sku;
+      const parts: string[] = [];
+
+      if (variant.color) {
+        const color = resolveLocalizedString(variant.color, localeKey);
+        if (color) {
+          parts.push(color);
+        }
+      }
+
+      if (variant.size) {
+        const size = resolveLocalizedString(variant.size, localeKey);
+        if (size) {
+          parts.push(size);
+        }
+      }
+
+      if (parts.length > 0) {
+        return parts.join(' / ');
+      }
+
+      return variant.sku;
     }
+
     if ('variant_name' in item) {
-      return item.variant_name;
+      return resolveLocalizedString(item.variant_name, localeKey);
     }
+
     return '';
   };
 
   const getItemPrice = (item: CartItem | OrderItem): number => {
+    const quantity = item.quantity > 0 ? item.quantity : 1;
+
+    // For cart items, prioritize variant discount_price over price
     if ('variant' in item && item.variant) {
-      return item.variant.sale_price || item.variant.price || item.total_price / item.quantity;
+      // Use discount_price if available (this is the sale price)
+      if (item.variant.discount_price !== null && item.variant.discount_price !== undefined) {
+        return toNumericPrice(item.variant.discount_price);
+      }
+
+      // Fallback to variant price (original price)
+      if (item.variant.price !== null && item.variant.price !== undefined) {
+        return toNumericPrice(item.variant.price);
+      }
+
+      // Final fallback
+      const fallbackTotal = toNumericPrice(item.total_price);
+      return fallbackTotal / quantity;
     }
+
     if ('unit_price' in item) {
-      return item.unit_price;
+      return toNumericPrice(item.unit_price);
     }
-    return item.total_price / item.quantity;
+
+    const fallbackTotal = toNumericPrice(item.total_price);
+    return fallbackTotal / quantity;
   };
 
   const getOriginalPrice = (item: CartItem | OrderItem): number | null => {
-    if ('variant' in item && item.variant?.sale_price && item.variant?.price) {
-      return item.variant.price;
+    if ('variant' in item && item.variant) {
+      const basePrice = item.variant.price;
+      const salePrice = item.variant.discount_price;
+
+      if (
+        salePrice !== null &&
+        salePrice !== undefined &&
+        basePrice !== null &&
+        basePrice !== undefined
+      ) {
+        const resolvedBase = toNumericPrice(basePrice);
+        const resolvedSale = toNumericPrice(salePrice);
+
+        if (resolvedBase > resolvedSale) {
+          return resolvedBase;
+        }
+      }
     }
+
     return null;
   };
 
   // Handlers
   const handleApplyPromo = async (code: string) => {
     try {
-      const response = await axios.post('/cart/apply-promotion', 
+      setPromoCode(code);
+      const response = await axios.post('/cart/apply-promotion',
         { code },
         { headers: { 'X-CSRF-TOKEN': getCsrfToken() } }
       );
-      
+
       if (response.data?.success) {
         setAppliedPromo(response.data.promotion);
         alert(t('Promotion applied successfully!'));
@@ -253,7 +342,7 @@ export default function Checkout() {
       const response = await axios.post('/addresses', newAddress, {
         headers: { 'X-CSRF-TOKEN': getCsrfToken() }
       });
-      
+
       if (response.data?.success) {
         setShowAddressModal(false);
         router.reload();
@@ -265,19 +354,47 @@ export default function Checkout() {
   };
 
   const handleCheckout = async () => {
-    if (!isBuyNowCheckout && !selectedAddress && addresses.length > 0) {
+    if (!isBuyNowCheckout) {
+      if (addresses.length === 0) {
+        alert(t('Please add a shipping address before proceeding to checkout'));
+        return;
+      }
+      if (!selectedAddress || selectedAddress === 0) {
+        alert(t('Please select a shipping address'));
+        return;
+      }
+    }
+
+    if (!selectedPayment) {
+      alert(t('Please select a payment method'));
+      return;
+    }
+
+    if (!isBuyNowCheckout && addresses.length > 0 && !selectedAddress) {
       alert(t('Please select a shipping address'));
       return;
     }
 
     setProcessing(true);
-    setHasUnsavedChanges(false); // Clear unsaved changes when proceeding
-    
+    setHasUnsavedChanges(false);
+
     try {
-      const endpoint = isBuyNowCheckout ? `/buy-now/checkout/${order!.order_id}` : '/checkout';
-      const payload = isBuyNowCheckout 
-        ? { provider: selectedPayment }
-        : { provider: selectedPayment, address_id: selectedAddress, notes: orderNotes };
+      const endpoint = isBuyNowCheckout && order
+        ? `/buy-now/checkout/${order.order_id}`
+        : '/checkout';
+
+      const payload: Record<string, unknown> = {
+        provider: selectedPayment,
+      };
+
+
+      if (!isBuyNowCheckout && selectedAddress && selectedAddress !== 0) {
+        payload.address_id = selectedAddress;
+      }
+
+      if (!isBuyNowCheckout && orderNotes.trim()) {
+        payload.notes = orderNotes.trim();
+      }
 
       const response = await axios.post(endpoint, payload, {
         headers: { 'X-CSRF-TOKEN': getCsrfToken() }
@@ -285,10 +402,11 @@ export default function Checkout() {
 
       if (response.data?.success && response.data?.payment_url) {
         window.location.href = response.data.payment_url;
-      } else {
-        alert(response.data?.message || t('Failed to process checkout. Please try again.'));
-        setProcessing(false);
+        return;
       }
+
+      alert(response.data?.message || t('Failed to process checkout. Please try again.'));
+      setProcessing(false);
     } catch (error: unknown) {
       setProcessing(false);
       if (axios.isAxiosError(error)) {
@@ -302,13 +420,13 @@ export default function Checkout() {
   if (!items || items.length === 0) {
     return (
       <HomeLayout>
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <i className="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
-            <div className="text-xl text-gray-600 mb-6">{t('Your cart is empty')}</div>
-            <a 
-              href="/" 
-              className="px-6 py-3 btn-primary rounded-lg transition-colors duration-200"
+        <div className="checkout-section" style={{ maxWidth: '1152px', margin: '0 auto', padding: 'var(--spacing-lg) var(--spacing-md)' }}>
+          <div className="checkout-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--spacing-xl) 0', textAlign: 'center' }}>
+            <i className="fas fa-shopping-cart" style={{ fontSize: '60px', color: 'var(--dark-grey)', marginBottom: 'var(--spacing-md)' }} aria-hidden="true"></i>
+            <div style={{ fontSize: 'var(--font-size-xl)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-lg)' }}>{t('Your cart is empty')}</div>
+            <a
+              href="/"
+              className="checkout-button checkout-button--primary"
             >
               {t('Continue Shopping')}
             </a>
@@ -320,12 +438,13 @@ export default function Checkout() {
 
   return (
     <HomeLayout>
-      <div className="max-w-6xl mx-auto px-4 py-6 font-['Poppins',sans-serif]">
+      <Head title={t("Checkout")} />
+      <div style={{ maxWidth: '1152px', margin: '0 auto', padding: 'var(--spacing-lg) var(--spacing-md)', fontFamily: 'var(--font-family-base)' }}>
         <CartTitle title={t("Checkout Order")} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 mt-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-lg)' }} className="checkout-grid">
           {/* Main Content */}
-          <div className="space-y-5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
             {/* Product List */}
             <CheckoutProductList
               items={items!}
@@ -336,23 +455,24 @@ export default function Checkout() {
             />
 
             {/* Shipping Address */}
-            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <i className="fas fa-map-marker-alt text-primary"></i>
-                  <h3 className="text-lg font-semibold text-gray-900">
+            <div className="checkout-section" style={{ background: 'var(--light)', boxShadow: 'var(--shadow-sm)' }}>
+              <div className="checkout-section__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                  <i className="checkout-section__icon fas fa-map-marker-alt"></i>
+                  <h3 className="checkout-section__title">
                     {t("Shipping Address")}
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowAddressModal(true)}
-                  className="px-4 py-2 text-sm text-primary border-2 border-dashed border-primary rounded-lg hover:bg-primary-light transition-colors duration-200"
+                  className="checkout-button checkout-button--secondary"
+                  style={{ padding: 'var(--spacing-sm) var(--spacing-md)', fontSize: 'var(--font-size-sm)', border: '2px dashed var(--primary)', minHeight: 'auto' }}
                 >
-                  <i className="fas fa-plus mr-2"></i>
+                  <i className="fas fa-plus" style={{ marginRight: 'var(--spacing-xs)' }}></i>
                   {t("Add New")}
                 </button>
               </div>
-              
+
               {addresses.length > 0 ? (
                 <AddressSelector
                   addresses={addresses}
@@ -360,11 +480,11 @@ export default function Checkout() {
                   onSelect={setSelectedAddress}
                 />
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">{t("You don't have any shipping address yet")}</p>
+                <div style={{ textAlign: 'center', padding: 'var(--spacing-xl) 0' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--spacing-md)' }}>{t("You don't have any shipping address yet")}</p>
                   <button
                     onClick={() => setShowAddressModal(true)}
-                    className="px-6 py-2.5 btn-primary rounded-lg transition-colors duration-200"
+                    className="checkout-button checkout-button--primary"
                   >
                     {t("Add Shipping Address")}
                   </button>
@@ -373,14 +493,14 @@ export default function Checkout() {
             </div>
 
             {/* Promotion Code */}
-            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <i className="fas fa-gift text-primary"></i>
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="checkout-section" style={{ background: 'var(--light)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+                <i className="checkout-section__icon fas fa-gift"></i>
+                <h3 className="checkout-section__title">
                   {t("Promotions & Vouchers")}
                 </h3>
               </div>
-              
+
               <PromotionInput
                 onApply={handleApplyPromo}
                 onRemove={handleRemovePromo}
@@ -390,12 +510,12 @@ export default function Checkout() {
 
             {/* Payment Method */}
             <CheckoutPaymentSection
-              methods={paymentMethods}
+              methods={availablePaymentMethods}
               selectedMethod={selectedPayment}
               onMethodChange={setSelectedPayment}
               onCheckout={handleCheckout}
               processing={processing}
-              disabled={!selectedAddress && addresses.length > 0}
+              disabled={!isBuyNowCheckout && (addresses.length === 0 || !selectedAddress || selectedAddress === 0)}
             />
 
             {/* Order Notes */}
@@ -406,12 +526,12 @@ export default function Checkout() {
           </div>
 
           {/* Sidebar - Order Summary */}
-          <div className="lg:sticky lg:top-4 h-fit">
-            <div className="bg-white rounded-lg p-5 shadow-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+          <div className="checkout-sidebar">
+            <div className="checkout-section" style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 'var(--spacing-md)', paddingBottom: 'var(--spacing-sm)', borderBottom: '1px solid var(--border-color)' }}>
                 {t("Order Summary")}
               </h3>
-              
+
               <OrderSummary
                 subtotal={finalSubtotal}
                 shipping={finalShipping}
@@ -419,8 +539,8 @@ export default function Checkout() {
                 total={finalTotal}
               />
 
-              <div className="mt-4 p-3 bg-primary-light rounded-lg text-xs text-gray-600 flex items-start gap-2">
-                <i className="fas fa-shield-alt text-primary mt-0.5"></i>
+              <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-sm)', background: 'var(--light-primary)', borderRadius: 'var(--border-radius-md)', fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' }}>
+                <i className="fas fa-shield-alt" style={{ color: 'var(--primary)', marginTop: '2px' }}></i>
                 <span>{t("Your payment information is secure and encrypted")}</span>
               </div>
             </div>

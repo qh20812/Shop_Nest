@@ -13,6 +13,7 @@ use App\Services\PaymentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\Localization;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -84,6 +85,8 @@ class PaymentReturnController extends Controller
                         'gateway_transaction_id' => $result['transaction_id'] ?? null,
                         'gateway_event_id' => $eventId,
                         'raw_payload' => $payload,
+                        'amount' => $result['amount'] ?? null,
+                        'currency' => $result['currency'] ?? null,
                     ]);
 
                     $shouldClearCart = $order->payment_status === PaymentStatus::PAID;
@@ -109,7 +112,7 @@ class PaymentReturnController extends Controller
                         ]);
                     }
 
-                    $processedOrder = $order->fresh('items.variant');
+                    $processedOrder = $order->fresh('items.variant.product');
 
                     Log::info('payment_return.processed', [
                         'provider' => $provider,
@@ -172,10 +175,73 @@ class PaymentReturnController extends Controller
             }
         }
 
+        $orderPayload = null;
+
+        if ($processedOrder) {
+            $locale = app()->getLocale();
+
+            $orderPayload = [
+                'id' => $processedOrder->order_id,
+                'reference' => $processedOrder->order_number ?? null,
+                'code' => $processedOrder->order_number ?? null,
+                'total' => Localization::resolveNumber($processedOrder->total_amount ?? $processedOrder->total, $locale),
+                'total_amount' => Localization::resolveNumber($processedOrder->total_amount ?? $processedOrder->total, $locale),
+                'currency' => $processedOrder->currency ?? 'VND',
+                'payment_method' => $processedOrder->payment_method ?? null,
+                'created_at' => $processedOrder->created_at?->toDateTimeString() ?? null,
+                'items' => $processedOrder->items->map(function ($item) use ($locale) {
+                    $variant = $item->variant;
+                    $product = $variant?->product;
+
+                    return [
+                        'id' => $item->order_item_id ?? null,
+                        'product_name' => $product ? Localization::resolveField($product->name ?? '', $locale, '') : null,
+                        'quantity' => (int) $item->quantity,
+                        'unit_price' => Localization::resolveNumber($item->unit_price ?? 0, $locale),
+                        'total_price' => Localization::resolveNumber($item->total_price ?? 0, $locale),
+                    ];
+                })->values()->all(),
+            ];
+        }
+        elseif ($sanitizedOrderId) {
+            // As a fallback (for idempotent returns or early returns), try to load the order
+            // even if it wasn't freshly processed in this event. This allows the UI to still
+            // display the order totals and items when available.
+            $maybeOrder = Order::with(['items.variant.product'])->find($sanitizedOrderId);
+
+            if ($maybeOrder) {
+                $locale = app()->getLocale();
+
+                $orderPayload = [
+                    'id' => $maybeOrder->order_id,
+                    'reference' => $maybeOrder->order_number ?? null,
+                    'code' => $maybeOrder->order_number ?? null,
+                    'total' => Localization::resolveNumber($maybeOrder->total_amount ?? $maybeOrder->total, $locale),
+                    'total_amount' => Localization::resolveNumber($maybeOrder->total_amount ?? $maybeOrder->total, $locale),
+                    'currency' => $maybeOrder->currency ?? 'VND',
+                    'payment_method' => $maybeOrder->payment_method ?? null,
+                    'created_at' => $maybeOrder->created_at?->toDateTimeString() ?? null,
+                    'items' => $maybeOrder->items->map(function ($item) use ($locale) {
+                        $variant = $item->variant;
+                        $product = $variant?->product;
+
+                        return [
+                            'id' => $item->order_item_id ?? null,
+                            'product_name' => $product ? Localization::resolveField($product->name ?? '', $locale, '') : null,
+                            'quantity' => (int) $item->quantity,
+                            'unit_price' => Localization::resolveNumber($item->unit_price ?? 0, $locale),
+                            'total_price' => Localization::resolveNumber($item->total_price ?? 0, $locale),
+                        ];
+                    })->values()->all(),
+                ];
+            }
+        }
+
         return Inertia::render('Customer/PaymentResult', [
             'provider' => $provider,
             'status' => $status,
             'message' => $result['message'] ?? '',
+            'order' => $orderPayload,
         ]);
     }
 }

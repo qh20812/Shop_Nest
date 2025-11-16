@@ -22,6 +22,7 @@ class ProfileController extends Controller
     public function edit(Request $request): Response
     {
         $user = $request->user();
+        $layout = $request->get('layout','AppLayout');
         
         return Inertia::render('Settings/Profile', [
             'user' => array_merge($user->toArray(), [

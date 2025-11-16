@@ -69,7 +69,6 @@ export default function Index() {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (flash?.success) setToast({ type: 'success', message: flash.success });
@@ -77,7 +76,6 @@ export default function Index() {
     }, [flash]);
 
     const applyFilters = (pageUrl?: string) => {
-        setLoading(true);
         const url = pageUrl || '/seller/orders';
         router.get(
             url,
@@ -85,7 +83,6 @@ export default function Index() {
             {
                 preserveState: true,
                 replace: true,
-                onFinish: () => setLoading(false),
             },
         );
     };
@@ -189,18 +186,12 @@ export default function Index() {
                 headerTitle="Orders List"
                 headerIcon="bx-cart"
                 emptyMessage="No orders found"
-                {...({ loading } as any)}
             />
 
             {/* Pagination */}
             <Pagination
                 links={orders?.links || []}
-                {...({
-                    onClick: (linkUrl: string | null) => {
-                        if (!linkUrl) return;
-                        applyFilters(linkUrl);
-                    },
-                } as any)}
+                filters={{ search, status }}
             />
         </AppLayout>
     );

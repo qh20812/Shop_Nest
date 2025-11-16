@@ -8,12 +8,13 @@ use App\Services\HybridChatbotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class HybridChatbotServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function admin_role_prefers_openai_provider(): void
     {
         $this->configureProviders();
@@ -40,7 +41,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function customer_role_prefers_groq_provider(): void
     {
         $this->configureProviders();
@@ -67,7 +68,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function seller_role_prefers_groq_provider(): void
     {
         $this->configureProviders();
@@ -94,7 +95,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function fallback_to_openai_when_groq_fails(): void
     {
         $this->configureProviders();
@@ -121,7 +122,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function handles_api_timeout(): void
     {
         $this->configureProviders();
@@ -142,7 +143,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function handles_invalid_response(): void
     {
         $this->configureProviders();
@@ -167,7 +168,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotEmpty($result['reply']);
     }
 
-    /** @test */
+    #[Test]
     public function gathers_context_for_admin(): void
     {
         $this->configureProviders();

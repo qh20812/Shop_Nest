@@ -13,43 +13,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, migrate existing integer status values to their string equivalents
-        DB::table('returns')
-            ->where('status', 1)
-            ->update(['status' => 'pending']);
-        
-        DB::table('returns')
-            ->where('status', 2)
-            ->update(['status' => 'approved']);
-        
-        DB::table('returns')
-            ->where('status', 3)
-            ->update(['status' => 'rejected']);
-        
-        DB::table('returns')
-            ->where('status', 4)
-            ->update(['status' => 'refunded']);
-        
-        DB::table('returns')
-            ->where('status', 5)
-            ->update(['status' => 'exchanged']);
-        
-        DB::table('returns')
-            ->where('status', 6)
-            ->update(['status' => 'cancelled']);
-
-        // Handle any invalid or unexpected status values
-        DB::table('returns')
-            ->whereNotIn('status', ['pending', 'approved', 'rejected', 'refunded', 'exchanged', 'cancelled'])
-            ->update(['status' => 'pending']);
-
-        // Now modify the column to be ENUM
+        // First, modify the column to be ENUM
         Schema::table('returns', function (Blueprint $table) {
             $table->enum('status', ReturnStatus::values())
                 ->default('pending')
                 ->comment('Return status using ENUM values')
                 ->change();
         });
+
+        // Then, migrate existing integer status values to their string equivalents
+        DB::statement("UPDATE returns SET status = 'pending' WHERE status = 1");
+        DB::statement("UPDATE returns SET status = 'approved' WHERE status = 2");
+        DB::statement("UPDATE returns SET status = 'rejected' WHERE status = 3");
+        DB::statement("UPDATE returns SET status = 'refunded' WHERE status = 4");
+        DB::statement("UPDATE returns SET status = 'exchanged' WHERE status = 5");
+        DB::statement("UPDATE returns SET status = 'cancelled' WHERE status = 6");
+
+        // Handle any invalid or unexpected status values
+        DB::statement("UPDATE returns SET status = 'pending' WHERE status NOT IN ('pending', 'approved', 'rejected', 'refunded', 'exchanged', 'cancelled')");
     }
 
     /**
@@ -58,14 +39,14 @@ return new class extends Migration
     public function down(): void
     {
         // Convert enum strings back to integers for rollback
-        DB::table('returns')->where('status', 'pending')->update(['status' => 1]);
-        DB::table('returns')->where('status', 'approved')->update(['status' => 2]);
-        DB::table('returns')->where('status', 'rejected')->update(['status' => 3]);
-        DB::table('returns')->where('status', 'refunded')->update(['status' => 4]);
-        DB::table('returns')->where('status', 'exchanged')->update(['status' => 5]);
-        DB::table('returns')->where('status', 'cancelled')->update(['status' => 6]);
+        DB::statement("UPDATE returns SET status = 1 WHERE status = 'pending'");
+        DB::statement("UPDATE returns SET status = 2 WHERE status = 'approved'");
+        DB::statement("UPDATE returns SET status = 3 WHERE status = 'rejected'");
+        DB::statement("UPDATE returns SET status = 4 WHERE status = 'refunded'");
+        DB::statement("UPDATE returns SET status = 5 WHERE status = 'exchanged'");
+        DB::statement("UPDATE returns SET status = 6 WHERE status = 'cancelled'");
 
-        // Change column back to integer
+        // Convert back to integer
         Schema::table('returns', function (Blueprint $table) {
             $table->tinyInteger('status')
                 ->default(1)

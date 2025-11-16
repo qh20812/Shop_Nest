@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DashboardControllerTest extends TestCase
 {
@@ -48,9 +49,7 @@ class DashboardControllerTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    /**
-     * @dataProvider nonAdminUsers
-     */
+    #[DataProvider('nonAdminUsers')]
     public function test_nguoi_dung_khong_phai_admin_bi_chuyen_huong(string $role): void
     {
         $user = $this->{$role};

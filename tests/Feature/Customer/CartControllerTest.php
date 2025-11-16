@@ -11,6 +11,7 @@ use App\Models\Promotion;
 use App\Models\PromotionCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\Test;
 
 class CartControllerTest extends TestCase
 {
@@ -45,7 +46,7 @@ class CartControllerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_cart_items_for_logged_in_user()
     {
         CartItem::factory()->create([
@@ -58,14 +59,14 @@ class CartControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_guests_to_view_cart_index()
     {
         $response = $this->get('/cart');
         $this->assertEquals(200, $response->getStatusCode());
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_product_to_cart()
     {
         // SQLite không hỗ trợ DB::raw quantity + x, ta chỉ kiểm tra có record
@@ -86,7 +87,7 @@ class CartControllerTest extends TestCase
         $this->assertEquals(2, $item->quantity);
     }
 
-    /** @test */
+    #[Test]
     public function guest_can_add_item_to_cart_session()
     {
         $response = $this->post('/cart/add', [
@@ -103,7 +104,7 @@ class CartControllerTest extends TestCase
         $this->assertEquals(1, $guestItems[0]['quantity']);
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_to_add_if_stock_not_enough()
     {
         $this->variant->update(['stock_quantity' => 1]);
@@ -121,7 +122,7 @@ class CartControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_updates_cart_item_quantity()
     {
         $cartItem = CartItem::factory()->create([
@@ -142,7 +143,7 @@ class CartControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_item_when_quantity_set_to_zero()
     {
         $cartItem = CartItem::factory()->create([
@@ -161,7 +162,7 @@ class CartControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_cart_item()
     {
         $cartItem = CartItem::factory()->create([
@@ -180,7 +181,7 @@ class CartControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_clears_entire_cart()
     {
         CartItem::factory()->count(2)->create([
@@ -195,7 +196,7 @@ class CartControllerTest extends TestCase
         $this->assertDatabaseMissing('cart_items', ['user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_valid_promotion_code()
     {
         CartItem::factory()->create([
@@ -228,7 +229,7 @@ class CartControllerTest extends TestCase
         $this->assertEquals($promotion->promotion_id, $sessionPromotion['promotion_id']);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_promotion_code()
     {
         CartItem::factory()->create([
@@ -245,7 +246,7 @@ class CartControllerTest extends TestCase
     $response->assertSessionHas('error', 'The promotion code you entered is not valid.');
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_promotion()
     {
         session(['cart.applied_promotion' => [
@@ -261,7 +262,7 @@ class CartControllerTest extends TestCase
     $this->assertFalse(session()->has('cart.applied_promotion'));
     }
 
-    /** @test */
+    #[Test]
     public function it_redirects_to_checkout_page()
     {
         CartItem::factory()->create([

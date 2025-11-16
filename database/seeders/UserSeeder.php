@@ -14,6 +14,7 @@ class UserSeeder extends Seeder
         $adminRole = Role::where('name->en', 'Admin')->first();
         $sellerRole = Role::where('name->en', 'Seller')->first();
         $customerRole = Role::where('name->en', 'Customer')->first();
+        $shipperRole = Role::where('name->en','Shipper')->first();
 
         // Tạo SUPER ADMIN
         $admin = User::factory()->create([
@@ -25,10 +26,30 @@ class UserSeeder extends Seeder
         ]);
         $admin->roles()->attach($adminRole);
 
+        // tạo 1 người bán bằng tài khoản cụ thể
+        $seller = User::factory()->create([
+            'username'=>'testseller',
+            'first_name'=>'Test',
+            'last_name'=>'Seller',
+            'email'=>'testseller@shopnest.com',
+            'password'=>Hash::make('password'),
+        ]);
+        $seller->roles()->attach($sellerRole);
+
+        $shipper = User::factory()->create([
+            'username' => 'testshipper',
+            'first_name' => 'Test',
+            'last_name' => 'Shipper',
+            'email' => 'testshipper@shopnest.com',
+            'password' => Hash::make('password'),
+        ]);
+        $shipper->roles()->attach($shipperRole);
+
         // Tạo 20 người bán
         User::factory(20)->create()->each(function ($user) use ($sellerRole) {
             $user->roles()->attach($sellerRole);
         });
+
 
         // Tạo 100 khách hàng
         User::factory(100)->create()->each(function ($user) use ($customerRole) {

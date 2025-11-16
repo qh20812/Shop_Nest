@@ -1,12 +1,14 @@
 import React from 'react';
+import { formatVnd, toNumericPrice, type PriceLike } from '@/utils/price';
+import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
 
 interface ProductCardProps {
   image: string;
-  name: string;
-  variant?: string;
-  price: number;
-  originalPrice?: number;
-  quantity?: number;
+  name: LocalizedValue;
+  variant?: LocalizedValue;
+  price: PriceLike;
+  originalPrice?: PriceLike;
+  quantity?: number | string;
   showQuantity?: boolean;
   onRemove?: () => void;
 }
@@ -21,48 +23,82 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showQuantity = true,
   onRemove,
 }) => {
+  const textLocale = typeof window !== 'undefined' ? window.navigator?.language ?? 'vi' : 'vi';
+  const currencyLocale = 'vi-VN';
+  const resolvedName = resolveLocalizedString(name, textLocale);
+  const resolvedVariant = variant ? resolveLocalizedString(variant, textLocale) : '';
+  const numericQuantity = (() => {
+    if (typeof quantity === 'number' && Number.isFinite(quantity)) {
+      return Math.max(1, Math.floor(quantity));
+    }
+
+    const parsed = Number(quantity);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.floor(parsed)) : 1;
+  })();
+  const safePrice = toNumericPrice(price);
+  const originalPriceValue =
+    typeof originalPrice !== 'undefined' ? toNumericPrice(originalPrice) : null;
+  const showOriginal = originalPriceValue !== null && originalPriceValue > safePrice;
+  const total = safePrice * numericQuantity;
+
   return (
-    <div className="grid grid-cols-[80px_1fr_auto] gap-4 p-4 bg-white rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-lg">
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: '80px 1fr auto', 
+      gap: 'var(--spacing-md)', 
+      padding: 'var(--spacing-md)', 
+      background: 'var(--surface)', 
+      borderRadius: 'var(--border-radius-md)', 
+      border: '1px solid var(--border-color)', 
+      transition: 'all var(--transition-normal)' 
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.boxShadow = 'none';
+    }}
+    >
       {/* Product Image */}
       <img 
         src={image} 
-        alt={name} 
-        className="w-20 h-20 object-cover rounded-md border border-gray-100"
+        alt={resolvedName || 'Product image'} 
+        style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--grey)' }}
       />
       
       {/* Product Details */}
-      <div className="flex flex-col gap-1.5">
-        <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">
-          {name}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' }}>
+        <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 'var(--line-height-tight)', margin: 0 }}>
+          {resolvedName}
         </h3>
         
-        {variant && (
-          <p className="text-[13px] text-gray-500">
-            {variant}
+        {resolvedVariant && (
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+            {resolvedVariant}
           </p>
         )}
         
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-base font-semibold text-red-600">
-            {price.toLocaleString('vi-VN')}₫
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginTop: '4px' }}>
+          <span style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, color: 'var(--danger)' }}>
+            {formatVnd(safePrice, currencyLocale)}
           </span>
-          {originalPrice && (
-            <span className="text-sm text-gray-400 line-through">
-              {originalPrice.toLocaleString('vi-VN')}₫
+          {showOriginal && originalPriceValue !== null && (
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--dark-grey)', textDecoration: 'line-through' }}>
+              {formatVnd(originalPriceValue, currencyLocale)}
             </span>
           )}
         </div>
       </div>
       
       {/* Quantity & Actions */}
-      <div className="flex flex-col items-end gap-2">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--spacing-xs)' }}>
         {showQuantity && (
           <>
-            <p className="text-sm text-gray-500">
-              x{quantity}
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', margin: 0 }}>
+              x{numericQuantity}
             </p>
-            <p className="text-[17px] font-bold text-gray-900">
-              {(price * quantity).toLocaleString('vi-VN')}₫
+            <p style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          {formatVnd(total, currencyLocale)}
             </p>
           </>
         )}
@@ -70,7 +106,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {onRemove && (
           <button
             onClick={onRemove}
-            className="p-1.5 text-red-600 text-xl hover:bg-red-50 rounded transition-colors duration-200"
+            style={{ 
+              padding: 'var(--spacing-xs)', 
+              color: 'var(--danger)', 
+              fontSize: 'var(--font-size-xl)', 
+              background: 'transparent', 
+              border: 'none', 
+              borderRadius: '50%', 
+              cursor: 'pointer', 
+              transition: 'background var(--transition-normal)' 
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--light-danger)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
             aria-label="Remove item"
           >
             <i className="fas fa-times"></i>

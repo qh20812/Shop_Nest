@@ -117,4 +117,12 @@ class Order extends Model
     {
         return $this->morphMany(InternationalAddress::class, 'addressable');
     }
+
+    /**
+     * Get reviews for this order
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(OrderReview::class, 'order_id', 'order_id');
+    }
 }

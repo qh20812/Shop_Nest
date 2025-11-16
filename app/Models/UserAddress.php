@@ -54,4 +54,34 @@ class UserAddress extends Model
     {
         return $this->belongsTo(AdministrativeDivision::class, 'ward_id');
     }
+
+    /**
+     * Get the full address as a formatted string
+     */
+    public function getFullAddressAttribute(): string
+    {
+        $parts = [];
+
+        if ($this->street_address) {
+            $parts[] = $this->street_address;
+        }
+
+        if ($this->ward && $this->ward->name) {
+            $parts[] = $this->ward->name['vi'] ?? $this->ward->name;
+        }
+
+        if ($this->district && $this->district->name) {
+            $parts[] = $this->district->name['vi'] ?? $this->district->name;
+        }
+
+        if ($this->province && $this->province->name) {
+            $parts[] = $this->province->name['vi'] ?? $this->province->name;
+        }
+
+        if ($this->country && $this->country->name) {
+            $parts[] = $this->country->name['vi'] ?? $this->country->name;
+        }
+
+        return implode(', ', array_filter($parts));
+    }
 }

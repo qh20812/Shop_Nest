@@ -1,0 +1,298 @@
+:root {
+    --light: #f6f6f9;
+    --primary: #1976D2;
+    --light-primary: #CFE8FF;
+    --secondary: #9C27B0;
+    --light-secondary: #E1BEE7;
+    --info: #2196F3;
+    --light-info: #E3F2FD;
+    --neutral: #F5F5F5;
+    --tertiary: #FF9800;
+    --light-tertiary: #FFE0B2;
+    --focus-outline: 2px solid var(--primary);
+    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
+    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
+    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
+    --grey: #eee;
+    --dark-grey: #AAAAAA;
+    --dark: #363949;
+    --danger: #D32F2F;
+	--light-danger: #FECDD3;
+    --warning: #FBC02D;
+    --light-warning: #FFF2C6;
+    --success: #388E3C;
+    --light-success: #BBF7D0;
+    --common-border-radius: 20px;
+}
+
+/* Popup Overlay */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.dark .popup-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Modal Container */
+.popup-modal {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 28rem;
+    flex-direction: column;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .popup-modal {
+    background-color: #221710;
+}
+
+/* Close Button */
+.popup-close-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    color: #475569;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border: none;
+    background-color: transparent;
+}
+
+.popup-close-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.dark .popup-close-btn {
+    color: #94a3b8;
+}
+
+.dark .popup-close-btn:hover {
+    background-color: #1e293b;
+}
+
+.popup-close-icon {
+    font-size: 1.5rem;
+}
+
+/* Modal Content */
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Success Icon */
+.popup-success-icon-wrapper {
+    display: flex;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: #dcfce7;
+    margin-bottom: 1rem;
+}
+
+.dark .popup-success-icon-wrapper {
+    background-color: rgba(22, 101, 52, 0.5);
+}
+
+.popup-success-icon {
+    font-size: 1.875rem;
+    color: #16a34a;
+}
+
+.dark .popup-success-icon {
+    color: #4ade80;
+}
+
+/* Headline Text */
+.popup-headline {
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    padding-bottom: 0.5rem;
+    margin: 0;
+}
+
+.dark .popup-headline {
+    color: #ffffff;
+}
+
+/* Product Information Card */
+.popup-product-card {
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    padding: 1rem;
+}
+
+.dark .popup-product-card {
+    border-color: #334155;
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+.popup-product-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+}
+
+.popup-product-image {
+    aspect-ratio: 1;
+    width: 4rem;
+    height: 4rem;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 0.375rem;
+    flex-shrink: 0;
+}
+
+.popup-product-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.popup-product-name {
+    color: #1e293b;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.5;
+    margin: 0 0 0.25rem 0;
+}
+
+.dark .popup-product-name {
+    color: #f1f5f9;
+}
+
+.popup-product-quantity {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.dark .popup-product-quantity {
+    color: #94a3b8;
+}
+
+/* Button Group */
+.popup-button-group {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.popup-btn {
+    display: flex;
+    min-width: 84px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    height: 3rem;
+    padding: 0 1.25rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0.015em;
+    width: 100%;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.popup-btn-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+}
+
+.popup-btn-primary:hover {
+    opacity: 0.9;
+}
+
+.popup-btn-secondary {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.popup-btn-secondary:hover {
+    background-color: #e2e8f0;
+}
+
+.dark .popup-btn-secondary {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+
+.dark .popup-btn-secondary:hover {
+    background-color: #334155;
+}
+
+.popup-btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.popup-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.popup-modal {
+    animation: slideUp 0.3s ease-out;
+}

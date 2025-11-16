@@ -14,7 +14,7 @@ class ShopController extends Controller
     public function edit()
     {
         $sellerId = Auth::id();
-        $shop = Shop::where('seller_id', $sellerId)->firstOrFail();
+        $shop = Shop::where('owner_id', $sellerId)->firstOrFail();
 
         return Inertia::render('Seller/Shop/Edit', [
             'shop' => $shop
@@ -25,7 +25,7 @@ class ShopController extends Controller
     public function update(Request $request)
     {
         $sellerId = Auth::id();
-        $shop = Shop::where('seller_id', $sellerId)->firstOrFail();
+        $shop = Shop::where('owner_id', $sellerId)->firstOrFail();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

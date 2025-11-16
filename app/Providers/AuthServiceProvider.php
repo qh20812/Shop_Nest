@@ -17,6 +17,7 @@ use App\Policies\ProductPolicy;
 use App\Policies\PromotionPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,9 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('chatbot.access', [ChatbotPolicy::class, 'access']);
+        Gate::define('manage shops', function (User $user): bool {
+            return $user->isAdmin();
+        });
     }
 }
 

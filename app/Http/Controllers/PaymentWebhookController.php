@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Http\Controllers\Concerns\HandlesOrderPayments;
 use App\Services\InventoryService;
@@ -71,6 +72,16 @@ class PaymentWebhookController extends Controller
     public function paypal(Request $request)
     {
         return $this->generic('paypal', $request);
+    }
+
+    public function vnpay(Request $request)
+    {
+        return $this->generic('vnpay', $request);
+    }
+
+    public function momo(Request $request)
+    {
+        return $this->generic('momo', $request);
     }
 
     private function complete(?string $orderId, ?string $paymentIntentId, string $eventId, string $provider, array $payload): void
@@ -174,11 +185,17 @@ class PaymentWebhookController extends Controller
                 return;
             }
 
+            if (($result['status'] ?? null) === 'succeeded' && $order->payment_status !== PaymentStatus::PAID) {
+                $this->inventoryService->adjustInventoryForOrder($order);
+            }
+
             $this->persistPayment($order, $provider, [
                 'status' => $result['status'] ?? 'failed',
                 'gateway_transaction_id' => $result['transaction_id'] ?? null,
                 'gateway_event_id' => $eventId,
                 'raw_payload' => $payload,
+                'amount' => $result['amount'] ?? null,
+                'currency' => $result['currency'] ?? null,
             ]);
 
             Log::info('webhooks.payment.processed', [

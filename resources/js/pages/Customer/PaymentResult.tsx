@@ -1,5 +1,7 @@
 
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect } from 'react';
+import '@/../css/payment-result-popup.css';
 
 interface PaymentResultAction {
   label: string;
@@ -37,25 +39,31 @@ interface PaymentResultProps {
   actions?: PaymentResultAction[];
 }
 
-const statusConfig: Record<string, { icon: string; title: string; badge: string; tone: 'success' | 'warning' | 'danger'; fallbackMessage: string }> = {
+const statusConfig: Record<string, { 
+  icon: string; 
+  iconClass: string;
+  title: string; 
+  tone: 'success' | 'warning' | 'danger'; 
+  fallbackMessage: string 
+}> = {
   succeeded: {
-    icon: 'fa-check-circle',
-    title: 'Thanh toán thành công',
-    badge: 'Thành công',
+    icon: 'bi-check-circle-fill',
+    iconClass: 'success',
+    title: 'Thanh toán thành công!',
     tone: 'success',
     fallbackMessage: 'Cảm ơn bạn! Đơn hàng của bạn đã được ghi nhận và sẽ được xử lý trong thời gian sớm nhất.',
   },
   canceled: {
-    icon: 'fa-exclamation-triangle',
-    title: 'Thanh toán đã hủy',
-    badge: 'Đã hủy',
+    icon: 'bi-exclamation-triangle-fill',
+    iconClass: 'warning',
+    title: 'Thanh toán đã hủy!',
     tone: 'warning',
     fallbackMessage: 'Thanh toán đã bị hủy. Bạn có thể thử lại hoặc chọn phương thức khác.',
   },
   failed: {
-    icon: 'fa-times-circle',
-    title: 'Thanh toán thất bại',
-    badge: 'Thất bại',
+    icon: 'bi-x-circle-fill',
+    iconClass: 'danger',
+    title: 'Thanh toán thất bại!',
     tone: 'danger',
     fallbackMessage: 'Thanh toán không thành công. Vui lòng kiểm tra lại thông tin hoặc liên hệ hỗ trợ.',
   },
@@ -86,25 +94,20 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
 }) => {
   const normalizedStatus = status?.toLowerCase?.() ?? 'failed';
   const config = statusConfig[normalizedStatus] ?? {
-    icon: 'fa-info-circle',
+    icon: 'bi-info-circle-fill',
+    iconClass: 'warning',
     title: 'Trạng thái thanh toán',
-    badge: 'Đang xử lý',
     tone: 'warning' as const,
     fallbackMessage: 'Thanh toán đang được xử lý. Vui lòng kiểm tra lại sau.',
   };
 
-  const statusTone = config.tone;
-  const badgeClass = `payment-result__badge payment-result__badge--${statusTone}`;
-  const statusClass = `payment-result__status payment-result__status--${statusTone}`;
-
   const currency = order?.currency ?? 'VND';
   const totalAmount = order?.total ?? order?.total_amount ?? null;
-  const orderItems = order?.items ?? [];
 
   const fallbackActions: PaymentResultAction[] = (() => {
     if (normalizedStatus === 'succeeded') {
       return [
-        { label: 'Xem lịch sử đơn hàng', href: '/user/orders', primary: true },
+        { label: 'Xem chi tiết đơn hàng', href: '/user/orders', primary: true },
         { label: 'Tiếp tục mua sắm', href: '/' },
       ];
     }
@@ -124,89 +127,89 @@ const PaymentResult: React.FC<PaymentResultProps> = ({
 
   const resolvedActions = actions && actions.length > 0 ? actions : fallbackActions;
 
+  const handleClose = () => {
+    router.get('/');
+  };
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
   return (
     <>
       <Head title="Kết quả thanh toán" />
-      <div className="payment-result">
-        <div className="payment-result__wrapper">
-          <div className="payment-result__card">
-            <div className={statusClass}>
-              <i className={`fas ${config.icon}`} aria-hidden="true"></i>
+      <div className="payment-result-container">
+        {/* Overlay */}
+        <div className="payment-result-overlay" onClick={handleClose} />
+
+        {/* Modal */}
+        <div className="payment-result-modal">
+          {/* Close Button */}
+          <button 
+            className="payment-result-close"
+            onClick={handleClose}
+            aria-label="Đóng"
+          >
+            <i className="bi bi-x payment-result-close-icon"></i>
+          </button>
+
+          {/* Content */}
+          <div className="payment-result-content">
+            {/* Status Icon */}
+            <div className={`payment-result-icon-wrapper payment-result-icon-wrapper--${config.iconClass}`}>
+              <i className={`bi ${config.icon} payment-result-icon payment-result-icon--${config.iconClass}`}></i>
             </div>
 
-            <div>
-              <h1 className="payment-result__title">{config.title}</h1>
-              <span className={badgeClass}>{config.badge}</span>
-            </div>
+            {/* Title */}
+            <h3 className="payment-result-title">{config.title}</h3>
 
-            <p className="payment-result__provider">
-              Cổng thanh toán: <span>{provider.toUpperCase()}</span>
-            </p>
-            <p className="payment-result__message">{message || config.fallbackMessage}</p>
-
-            {order && (
-              <div className="payment-result__sections">
-                <div>
-                  <h2 className="payment-result__section-title">Tổng quan đơn hàng</h2>
-                  <div className="payment-result__meta">
-                    {order.id && (
-                      <span>Mã đơn hàng: <strong>{order.reference ?? order.code ?? order.id}</strong></span>
-                    )}
-                    {order.payment_method && (
-                      <span>Thanh toán qua: <strong>{order.payment_method}</strong></span>
-                    )}
-                    {order.created_at && (
-                      <span>Thời gian: <strong>{order.created_at}</strong></span>
-                    )}
-                  </div>
-                </div>
-
-                {orderItems.length > 0 && (
-                  <div>
-                    <h3 className="payment-result__section-title">Sản phẩm</h3>
-                    <div className="payment-result__order-list">
-                      {orderItems.map((item, index) => {
-                        const name = item.name ?? item.product_name ?? `Sản phẩm #${item.id ?? ''}`;
-                        const quantity = item.quantity ?? 1;
-                        const lineTotal = item.total_price ?? item.unit_price ?? item.price ?? null;
-                        const formattedTotal = formatCurrency(lineTotal, currency);
-
-                        return (
-                          <div key={`${item.id ?? name}-${index}`} className="payment-result__order-item">
-                            <span>{name}</span>
-                            <span>
-                              x{quantity}
-                              {formattedTotal ? ` · ${formattedTotal}` : ''}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+            {/* Info Card */}
+            <div className="payment-result-info-card">
+              <div className="payment-result-info-list">
+                {order?.payment_method && (
+                  <div className="payment-result-info-row">
+                    <p className="payment-result-info-label">Phương thức thanh toán</p>
+                    <p className="payment-result-info-value">{order.payment_method}</p>
                   </div>
                 )}
-
-                <div className="payment-result__total">
-                  <span>Tổng cộng</span>
-                  <span>{formatCurrency(totalAmount, currency) ?? 'Đang cập nhật'}</span>
-                </div>
+                {order && (order.id || order.reference || order.code) && (
+                  <div className="payment-result-info-row">
+                    <p className="payment-result-info-label">Mã đơn hàng</p>
+                    <p className="payment-result-info-value">
+                      #{order.reference ?? order.code ?? order.id}
+                    </p>
+                  </div>
+                )}
+                {totalAmount !== null && (
+                  <div className="payment-result-info-row">
+                    <p className="payment-result-info-label">Tổng cộng</p>
+                    <p className="payment-result-info-value">
+                      {formatCurrency(totalAmount, currency) ?? 'Đang cập nhật'}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            <div className="payment-result__actions">
+            {/* Actions */}
+            <div className="payment-result-actions">
               {resolvedActions.map((action) => (
                 <Link
                   key={`${action.href}-${action.label}`}
                   href={action.href}
-                  className={`checkout-button ${action.primary ? 'checkout-button--primary' : 'checkout-button--secondary'}`}
+                  className={`payment-result-btn ${action.primary ? 'payment-result-btn-primary' : 'payment-result-btn-secondary'}`}
                 >
-                  {action.label}
+                  <span className="payment-result-btn-text">{action.label}</span>
                 </Link>
               ))}
             </div>
-
-            <p className="payment-result__support">
-              Cần trợ giúp? Liên hệ đội ngũ hỗ trợ của chúng tôi nếu bạn gặp vấn đề trong quá trình thanh toán.
-            </p>
           </div>
         </div>
       </div>

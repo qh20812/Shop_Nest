@@ -115,6 +115,11 @@ class Promotion extends Model
         );
     }
 
+    public function codes(): HasMany
+    {
+        return $this->hasMany(PromotionCode::class, 'promotion_id', 'promotion_id');
+    }
+
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');

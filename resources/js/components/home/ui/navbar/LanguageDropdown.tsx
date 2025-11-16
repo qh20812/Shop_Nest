@@ -6,8 +6,8 @@ export default function LanguageDropdown({ locale }: { locale: string }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const options = [
-    { value: 'vi', label: 'Tiếng Việt', icon: '🇻🇳' },
-    { value: 'en', label: 'English', icon: '🇺🇸' }
+    { value: 'vi', label: 'Tiếng Việt' },
+    { value: 'en', label: 'English' }
   ]
 
   const handleLanguageChange = async (newLocale: string) => {

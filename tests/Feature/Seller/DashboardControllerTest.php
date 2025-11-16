@@ -8,6 +8,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DashboardControllerTest extends TestCase
 {
@@ -51,8 +52,8 @@ class DashboardControllerTest extends TestCase
 
     /**
      * Kịch bản 2: Người dùng không phải Seller không thể truy cập.
-     * @dataProvider nonSellerUsers
      */
+    #[DataProvider('nonSellerUsers')]
     public function test_khong_phai_seller_users_bi_chuyen_huong(string $role): void
     {
         $user = $this->{$role};

@@ -13,14 +13,23 @@ interface Message {
     role?: string;
 }
 
+type SupportedRole = 'admin' | 'seller' | 'shipper' | 'customer';
+
+interface ChatbotUserRole {
+    name?: Record<string, string> | string;
+    display_name?: Record<string, string> | string;
+    title?: Record<string, string> | string;
+    slug?: string | null;
+    key?: string | null;
+}
+
+interface ChatbotUser {
+    role_name?: string | null;
+    roles?: ChatbotUserRole[];
+}
+
 interface ChatbotProps {
-    user?: {
-        roles?: Array<{
-            name?: {
-                en?: string;
-            };
-        }>;
-    };
+    user?: ChatbotUser;
 }
 
 interface ChatState {
@@ -115,6 +124,89 @@ export default function Chatbot({ user }: ChatbotProps) {
     const closeChat = () => {
         setIsOpen(false);
     };
+
+    const resolveUserRole = (currentUser?: ChatbotUser): SupportedRole => {
+        const normalizeString = (value?: string | null): string | null => {
+            if (!value) return null;
+            return value.toLowerCase().trim();
+        };
+
+        const normalizeWithLocales = (input?: Record<string, string> | string | null): string | null => {
+            if (!input) return null;
+            if (typeof input === 'string') {
+                return normalizeString(input);
+            }
+
+            const preferredLocales = ['en', 'vi'];
+            for (const locale of preferredLocales) {
+                const localized = input[locale];
+                if (typeof localized === 'string') {
+                    const normalized = normalizeString(localized);
+                    if (normalized) {
+                        return normalized;
+                    }
+                }
+            }
+
+            const fallbackValue = Object.values(input).find(
+                (value) => typeof value === 'string' && value.trim().length > 0
+            );
+
+            return typeof fallbackValue === 'string' ? normalizeString(fallbackValue) : null;
+        };
+
+        const stripDiacritics = (value: string): string =>
+            value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        const roleMatches: Array<string | null> = [];
+
+        roleMatches.push(normalizeString(currentUser?.role_name ?? null));
+
+        if (Array.isArray(currentUser?.roles)) {
+            for (const role of currentUser.roles) {
+                if (!role) continue;
+
+                roleMatches.push(normalizeWithLocales(role.name ?? null));
+                roleMatches.push(normalizeWithLocales(role.display_name ?? null));
+                roleMatches.push(normalizeWithLocales(role.title ?? null));
+                roleMatches.push(normalizeString(role.slug ?? null));
+                roleMatches.push(normalizeString(role.key ?? null));
+            }
+        }
+
+        const ROLE_KEYWORDS: Record<Exclude<SupportedRole, 'customer'>, string[]> = {
+            admin: ['admin', 'administrator', 'nguoi quan tri', 'người quản trị', 'quan tri'],
+            seller: ['seller', 'vendor', 'shop', 'nguoi ban', 'người bán', 'nha ban hang', 'nhà bán hàng', 'merchant'],
+            shipper: ['shipper', 'delivery', 'nguoi giao hang', 'người giao hàng', 'giao hang', 'courier'],
+        };
+
+        for (const match of roleMatches) {
+            if (!match) continue;
+
+            const normalizedKey = match.replace(/\s+/g, '_');
+            if (normalizedKey === 'admin' || normalizedKey === 'seller' || normalizedKey === 'shipper') {
+                return normalizedKey as SupportedRole;
+            }
+
+            const normalizedStripped = stripDiacritics(match);
+
+            for (const [roleKey, keywords] of Object.entries(ROLE_KEYWORDS) as Array<[
+                Exclude<SupportedRole, 'customer'>,
+                string[]
+            ]>) {
+                if (keywords.some((keyword) => match.includes(keyword))) {
+                    return roleKey;
+                }
+                if (keywords.some((keyword) => normalizedStripped.includes(keyword))) {
+                    return roleKey;
+                }
+            }
+        }
+
+        return 'customer';
+    };
+
+    const detectedRole = resolveUserRole(user);
 
     const sendMessage = async (messageText: string | null = null) => {
         const textToSend = messageText || input.trim();
@@ -219,7 +311,7 @@ export default function Chatbot({ user }: ChatbotProps) {
                     messages={messages}
                     isTyping={isTyping}
                     input={input}
-                    user={user}
+                    userRole={detectedRole}
                     soundEnabled={soundEnabled}
                     onClose={closeChat}
                     onSendMessage={sendMessage}

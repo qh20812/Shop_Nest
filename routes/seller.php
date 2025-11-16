@@ -4,6 +4,7 @@ use App\Http\Controllers\Seller\DashboardController;
 use App\Http\Controllers\Seller\OrderController;
 use App\Http\Controllers\Seller\ProductController;
 use App\Http\Controllers\Seller\PromotionController;
+use App\Http\Controllers\Seller\ShopController;
 use App\Http\Controllers\Seller\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,7 +14,9 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->grou
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Seller Products
-    Route::resource('products', ProductController::class);
+    Route::resource('products', ProductController::class)->only(['index', 'create', 'show', 'edit', 'destroy']);
+    Route::post('products', [ProductController::class, 'store'])->middleware('throttle:5,1')->name('products.store');
+    Route::put('products/{product}', [ProductController::class, 'update'])->middleware('throttle:5,1')->name('products.update');
 
     // Seller Orders
     Route::get('/orders',[OrderController::class, 'index'])->name('orders.index');
@@ -31,4 +34,8 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->grou
     Route::post('wallet/top-up', [WalletController::class, 'topUp'])->name('wallet.top-up');
     Route::get('wallet/top-up/{transaction}/status', [WalletController::class, 'topUpStatus'])->name('wallet.top-up.status');
     Route::post('wallet/transfer', [WalletController::class, 'transfer'])->name('wallet.transfer');
+
+    // Shop profile
+    Route::get('/shop', [ShopController::class, 'edit'])->name('shop.edit');
+    Route::post('/shop', [ShopController::class, 'update'])->name('shop.update');
 });

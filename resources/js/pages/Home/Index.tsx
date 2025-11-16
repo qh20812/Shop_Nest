@@ -49,6 +49,7 @@ interface DailyDiscoverProduct {
     sold_count: number;
 }
 
+
 interface HomeProps {
     categories: Category[];
     flashSale: FlashSale | null;
@@ -60,7 +61,7 @@ export default function Home({ categories, flashSale, dailyDiscover }: HomeProps
 
     return (
         <HomeLayout>
-            <Head title={`ShopNest - ${t('Home')}`} />
+            <Head title={`${t('Home')}`} />
             <div className="home-content">
                 <CategoryCarousel categories={categories} />
                 <FlashSaleSection flashSale={flashSale} />

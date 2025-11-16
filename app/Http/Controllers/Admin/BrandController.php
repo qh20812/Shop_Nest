@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\NotificationType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBrandRequest;
 use App\Http\Requests\Admin\UpdateBrandRequest;
 use App\Models\Brand;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -70,7 +73,17 @@ class BrandController extends Controller
             $data['logo_url'] = $request->file('logo')->store('brands/logos', 'public');
         }
 
-        Brand::create($data);
+        $brand = Brand::create($data);
+
+        $actor = Auth::user()?->username ?? 'System';
+        NotificationService::sendToRole(
+            'admin',
+            'Brand Created',
+            sprintf('Brand "%s" was created by %s.', $brand->name, $actor),
+            NotificationType::ADMIN_CATALOG_MANAGEMENT,
+            $brand,
+            route('admin.brands.index')
+        );
         return redirect()->route('admin.brands.index')->with('success', 'Brand created successfully.');
     }
 
@@ -103,6 +116,18 @@ class BrandController extends Controller
     public function destroy($id)
     {
         $brand = Brand::findOrFail($id);
+        $actor = Auth::user()?->username ?? 'System';
+        $brandName = $brand->name;
+
+        NotificationService::sendToRole(
+            'admin',
+            'Brand Deactivated',
+            sprintf('Brand "%s" was deactivated by %s.', $brandName, $actor),
+            NotificationType::ADMIN_CATALOG_MANAGEMENT,
+            $brand,
+            route('admin.brands.index')
+        );
+
         $brand->delete();
         return redirect()->route('admin.brands.index')->with('success', 'Brand deactivated successfully.');
     }
@@ -111,6 +136,16 @@ class BrandController extends Controller
     {
         $brand = Brand::withTrashed()->findOrFail($id);
         $brand->restore();
+
+        $actor = Auth::user()?->username ?? 'System';
+        NotificationService::sendToRole(
+            'admin',
+            'Brand Restored',
+            sprintf('Brand "%s" was restored by %s.', $brand->name, $actor),
+            NotificationType::ADMIN_CATALOG_MANAGEMENT,
+            $brand,
+            route('admin.brands.index')
+        );
         return redirect()->route('admin.brands.index')->with('success', 'Brand restored successfully.');
     }
 }

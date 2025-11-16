@@ -2,7 +2,8 @@ import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/app/CustomerLayout';
 import { Button } from '@/Components/ui/button';
-import { Star, Download, RotateCcw } from 'lucide-react';
+import OrderShowHeader from '@/Components/customer/ui/orders/OrderShowHeader';
+import { Star, Download, RotateCcw, ArrowLeft } from 'lucide-react';
 
 interface Order {
   order_id: number;
@@ -31,16 +32,48 @@ interface Order {
   }>;
 }
 
-interface Props {
-  order: Order;
-  trackingData?: any;
-}
+const orderStatusThemeMap: Record<string, string> = {
+  pending_confirmation: 'pending',
+  pending_assignment: 'processing',
+  processing: 'processing',
+  assigned_to_shipper: 'processing',
+  delivering: 'processing',
+  shipped: 'processing',
+  delivered: 'completed',
+  completed: 'completed',
+  cancelled: 'cancelled',
+  returned: 'cancelled',
+  returned_refunded: 'cancelled',
+};
 
-export default function Show({ order, trackingData }: Props) {
+const resolveStatusTheme = (status: string): string =>
+  orderStatusThemeMap[status] ?? 'processing';
+
+const orderStatusLabelMap: Record<string, string> = {
+  pending_confirmation: 'Chờ xác nhận',
+  pending_assignment: 'Chờ phân tài xế',
+  processing: 'Đang xử lý',
+  assigned_to_shipper: 'Đã giao cho tài xế',
+  delivering: 'Đang giao',
+  shipped: 'Đang giao',
+  delivered: 'Đã giao',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã hủy',
+  returned: 'Đã trả',
+  returned_refunded: 'Đã hoàn tiền',
+};
+
+const resolveStatusLabel = (status: string) =>
+  orderStatusLabelMap[status] ?? status.replace(/_/g, ' ');
+
+export default function Show({ order }: Props) {
   const { data, setData, post, processing, errors } = useForm({
     rating: 5,
     comment: '',
   });
+
+  const formatPrice = (amount: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,49 +87,55 @@ export default function Show({ order, trackingData }: Props) {
 
   const canReview = ['delivered', 'completed'].includes(order.status);
   const hasReviewed = order.reviews && order.reviews.length > 0;
+  const statusTheme = resolveStatusTheme(order.status);
+  const statusLabel = resolveStatusLabel(order.status);
 
   return (
     <CustomerLayout>
       <Head title={`Đơn hàng ${order.order_number}`} />
 
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Order Header */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Đơn hàng #{order.order_number}</h2>
-            <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">{order.status}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Ngày đặt</p>
-              <p>{new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
+      <div className="orders-page" aria-labelledby="order-show-title">
+        <OrderShowHeader
+          orderNumber={order.order_number}
+          status={statusLabel}
+          totalAmount={formatPrice(order.total_amount)}
+          createdAt={order.created_at}
+          statusTheme={statusTheme}
+        />
+
+        {/* Order Details Card */}
+        <div className="order-card">
+          <div className="order-card-header">
+            <div className="order-card-heading">
+              <p className="order-number">Thông tin đơn hàng</p>
+              <p className="order-meta">Đặt lúc: {new Date(order.created_at).toLocaleDateString('vi-VN')}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Tổng tiền</p>
-              <p className="font-semibold">{order.total_amount.toLocaleString()} VND</p>
+            <div className="order-card-insight">
+              <span className={`order-status-badge order-status-badge--${statusTheme}`}>
+                {statusLabel}
+              </span>
+              <span className="order-total">{formatPrice(order.total_amount)}</span>
             </div>
           </div>
         </div>
 
         {/* Order Items */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Sản phẩm</h3>
-          <div className="space-y-4">
-            {order.items.map((item, index) => (
-              <div key={index} className="flex items-center space-x-4">
+        <div className="order-card">
+          <h3 className="profile-section-title">Sản phẩm</h3>
+          <div className="order-shop-items">
+            {order.items.map((item: Order['items'][0], index: number) => (
+              <div key={index} className="order-item">
                 <img
                   src={item.product_snapshot.image_url || '/placeholder.jpg'}
                   alt={item.product_snapshot.name}
-                  className="w-16 h-16 object-cover rounded"
+                  className="order-item-thumbnail"
                 />
-                <div className="flex-1">
-                  <h4 className="font-medium">{item.product_snapshot.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    Số lượng: {item.quantity} × {item.unit_price.toLocaleString()} VND
-                  </p>
+                <div className="order-item-info">
+                  <p className="order-item-name">{item.product_snapshot.name}</p>
+                  <p className="order-item-meta">Số lượng: {item.quantity} × {formatPrice(item.unit_price)}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">{item.total_price.toLocaleString()} VND</p>
+                <div className="order-item-pricing">
+                  <span className="order-item-total">{formatPrice(item.total_price)}</span>
                 </div>
               </div>
             ))}
@@ -104,57 +143,63 @@ export default function Show({ order, trackingData }: Props) {
         </div>
 
         {/* Shipping Address */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Địa chỉ giao hàng</h3>
+        <div className="order-card">
+          <h3 className="profile-section-title">Địa chỉ giao hàng</h3>
           <p>{order.shipping_address?.full_address || 'N/A'}</p>
         </div>
 
         {/* Review Section */}
         {canReview && !hasReviewed && (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <div className="order-card">
+            <h3 className="profile-section-title flex items-center">
               <Star className="w-5 h-5 mr-2" />
               Đánh giá đơn hàng
             </h3>
-            <form onSubmit={handleReviewSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Đánh giá</label>
-                <select
-                  value={data.rating}
-                  onChange={(e) => setData('rating', parseInt(e.target.value))}
-                  className="w-full p-2 border rounded"
-                >
-                  {[5, 4, 3, 2, 1].map((star) => (
-                    <option key={star} value={star}>
-                      {star} sao
-                    </option>
-                  ))}
-                </select>
-                {errors.rating && <p className="text-red-500 text-sm">{errors.rating}</p>}
+            <form onSubmit={handleReviewSubmit} className="profile-form">
+              <div className="profile-field">
+                <label className="profile-field-label">Đánh giá</label>
+                <div className="profile-field-body">
+                  <select
+                    value={data.rating}
+                    onChange={(e) => setData('rating', parseInt(e.target.value))}
+                    className="profile-field-input"
+                  >
+                    {[5, 4, 3, 2, 1].map((star) => (
+                      <option key={star} value={star}>
+                        {star} sao
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.rating && <p className="profile-field-error">{errors.rating}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Bình luận (tùy chọn)</label>
-                <textarea
-                  value={data.comment}
-                  onChange={(e) => setData('comment', e.target.value)}
-                  rows={4}
-                  className="w-full p-2 border rounded"
-                  placeholder="Hãy chia sẻ trải nghiệm của bạn..."
-                />
-                {errors.comment && <p className="text-red-500 text-sm">{errors.comment}</p>}
+              <div className="profile-field">
+                <label className="profile-field-label">Bình luận (tùy chọn)</label>
+                <div className="profile-field-body">
+                  <textarea
+                    value={data.comment}
+                    onChange={(e) => setData('comment', e.target.value)}
+                    rows={4}
+                    className="profile-field-input"
+                    placeholder="Hãy chia sẻ trải nghiệm của bạn..."
+                  />
+                </div>
+                {errors.comment && <p className="profile-field-error">{errors.comment}</p>}
               </div>
-              <Button type="submit" disabled={processing}>
-                Gửi đánh giá
-              </Button>
+              <div className="profile-form-actions">
+                <Button type="submit" disabled={processing} className="profile-action-btn profile-action-btn--primary">
+                  Gửi đánh giá
+                </Button>
+              </div>
             </form>
           </div>
         )}
 
         {/* Existing Reviews */}
         {hasReviewed && (
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4">Đánh giá của bạn</h3>
-            {order.reviews?.map((review, index) => (
+          <div className="order-card">
+            <h3 className="profile-section-title">Đánh giá của bạn</h3>
+            {order.reviews?.map((review: NonNullable<Order['reviews']>[0], index: number) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
@@ -174,20 +219,25 @@ export default function Show({ order, trackingData }: Props) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex space-x-4">
-          <Button variant="outline" onClick={() => window.history.back()}>
+        <div className="order-card-actions">
+          <button
+            type="button"
+            className="order-action"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="order-action-icon" />
             Quay lại
-          </Button>
+          </button>
           {order.status === 'delivered' && (
-            <Button variant="outline">
-              <RotateCcw className="w-4 h-4 mr-2" />
+            <button type="button" className="order-action">
+              <RotateCcw className="order-action-icon" />
               Yêu cầu trả hàng
-            </Button>
+            </button>
           )}
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
+          <button type="button" className="order-action">
+            <Download className="order-action-icon" />
             Tải hóa đơn
-          </Button>
+          </button>
         </div>
       </div>
     </CustomerLayout>

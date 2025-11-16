@@ -26,7 +26,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'identifier' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:1'],
         ];
     }
@@ -37,8 +37,7 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please enter a valid email address.',
+            'identifier.required' => 'Email, phone number or username is required.',
             'password.required' => 'Password is required.',
         ];
     }
@@ -52,11 +51,17 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $identifier = $this->string('identifier')->trim()->value();
+        $password = (string) $this->input('password');
+        $remember = $this->boolean('remember');
+
+        $field = $this->determineIdentifierField($identifier);
+
+        if (! Auth::attempt([$field => $identifier, 'password' => $password], $remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                'identifier' => __('auth.failed'),
             ]);
         }
 
@@ -79,7 +84,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => __('auth.throttle', [
+            'identifier' => __('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -91,10 +96,28 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return $this->string('email')
+        return $this->string('identifier')
             ->lower()
             ->append('|'.$this->ip())
             ->transliterate()
             ->value();
+    }
+
+    /**
+     * Determine which field the identifier refers to.
+     */
+    protected function determineIdentifierField(string $identifier): string
+    {
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return 'email';
+        }
+
+        // Simple phone check: digits with optional leading +, length 8-15
+        $normalized = preg_replace('/[\s\-\.\(\)]/', '', $identifier);
+        if (preg_match('/^\+?\d{8,15}$/', $normalized)) {
+            return 'phone_number';
+        }
+
+        return 'username';
     }
 }

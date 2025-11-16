@@ -23,7 +23,7 @@
 }
 
 .auth-page{
-    background-image: url('../../public/martin-martz-rMRT4hF-Fsg-unsplash.jpg');
+    background-color: var(--light);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

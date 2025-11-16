@@ -6,8 +6,8 @@ export default function CurrencyDropdown({ currency }: { currency: string }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const options = [
-    { value: 'VND', label: 'VND', icon: '₫' },
-    { value: 'USD', label: 'USD', icon: '$' }
+    { value: 'VND', label: 'VND'},
+    { value: 'USD', label: 'USD'}
   ]
 
   const handleCurrencyChange = async (newCurrency: string) => {
@@ -26,7 +26,7 @@ export default function CurrencyDropdown({ currency }: { currency: string }) {
       currentValue={currency}
       options={options}
       onChange={handleCurrencyChange}
-      placeholder="Select Currency"
+      placeholder={`${currency === 'VND' ? 'VND' : 'USD'}`}
       buttonIcon="bi bi-cash"
       ariaLabel={`Select currency. Current: ${currency}`}
       isLoading={isLoading}

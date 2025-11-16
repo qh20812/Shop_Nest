@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Services\CartService;
+use App\Models\User;
 
 class HomeController extends Controller
 {
@@ -31,9 +32,8 @@ class HomeController extends Controller
     {
         $user = Auth::user();
         
-        // Load user with roles if authenticated
         if ($user) {
-            $user = \App\Models\User::with('role')->find($user->id);
+            $user = User::with('roles')->find($user->id);
         }
         
         $locale = app()->getLocale();
@@ -79,7 +79,7 @@ class HomeController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
                 'avatar' => $user->avatar,
-                'role' => $user->role()->pluck('name->en')->toArray(), // Load roles as array
+                'role' => $user->roles->pluck('name')->toArray(), // Load roles as array
             ] : null,
             'isLoadingCategories' => empty($categories), // Add loading indicator
         ]);

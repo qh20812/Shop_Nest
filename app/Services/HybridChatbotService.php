@@ -23,15 +23,35 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Throwable;
+use App\Services\ContextGatherers\AdminContextGatherer;
+use App\Services\ContextGatherers\ContextGathererInterface;
+use App\Services\ContextGatherers\CustomerContextGatherer;
+use App\Services\ContextGatherers\DefaultContextGatherer;
+use App\Services\ContextGatherers\SellerContextGatherer;
+use App\Services\ContextGatherers\ShipperContextGatherer;
 
 class HybridChatbotService
 {
     private const CACHE_TTL_MINUTES = 5;
 
+    private array $contextGatherers;
+
+    public function __construct()
+    {
+        $this->contextGatherers = [
+            'admin' => new AdminContextGatherer(),
+            'seller' => new SellerContextGatherer(),
+            'shipper' => new ShipperContextGatherer(),
+            'customer' => new CustomerContextGatherer(),
+            'default' => new DefaultContextGatherer(),
+        ];
+    }
+
     private const ROLE_PROVIDER_PRIORITY = [
-        'admin' => ['openai', 'groq'],
+        'admin' => ['groq', 'openai'],
         'seller' => ['groq', 'openai'],
         'shipper' => ['groq', 'openai'],
         'customer' => ['groq', 'openai'],
@@ -39,7 +59,7 @@ class HybridChatbotService
     ];
 
     private const ROLE_SYSTEM_PROMPTS = [
-        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng. Trình bày bằng tiếng Việt, có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
+        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng.Trả lời đúng theo bối cảnh chẳng hạn như người dùng chào thì phải chào lại bằng ngữ điệu thân thiện lịch sự.Tuy nhiên không phải câu hỏi nào cũng trả lời, chẳng hạn như người dùng hỏi 1 câu hỏi không liên quan đến hệ thống e-commerce như "Hôm nay thời tiết như thế nào?" thì hãy trả lời "Xin lỗi, tôi chỉ có thể hỗ trợ các câu hỏi liên quan đến nền tảng thương mại điện tử Shop Nest.". Trình bày bằng tiếng Việt, có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
         'seller' => 'Bạn là trợ lý kinh doanh cho nhà bán tại Shop Nest. Hãy đưa ra gợi ý bán hàng, tối ưu tồn kho và chiến lược khuyến mãi dựa trên dữ liệu được cung cấp. Phản hồi bằng tiếng Việt thân thiện.',
         'shipper' => 'Bạn là điều phối viên giao vận tại Shop Nest. Hãy giúp shipper nắm trạng thái đơn hàng, ưu tiên tuyến giao hàng và lưu ý dịch vụ khách hàng. Trình bày bằng tiếng Việt ngắn gọn, rõ ràng.',
         'customer' => 'Bạn là hướng dẫn viên mua sắm cho khách hàng tại Shop Nest. Hãy đưa ra tư vấn cá nhân hóa, gợi ý sản phẩm phù hợp và giải thích quy trình rõ ràng bằng tiếng Việt thân thiện.',
@@ -66,6 +86,20 @@ class HybridChatbotService
     public function sendMessage(User $user, string $rawMessage): array
     {
         $message = $this->sanitizeMessage($rawMessage);
+
+        $validator = Validator::make(['message' => $message], [
+            'message' => 'required|string|min:1|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            throw new ChatbotApiException('Tin nhắn không hợp lệ: ' . $validator->errors()->first());
+        }
+
+        if (RateLimiter::tooManyAttempts('chatbot:' . $user->getKey(), 10)) {
+            throw new ChatbotApiException('Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau.');
+        }
+
+        RateLimiter::hit('chatbot:' . $user->getKey(), 60); // 10 per minute
 
         if ($message === '') {
             throw new ChatbotApiException('Tin nhắn không hợp lệ.');
@@ -121,262 +155,19 @@ class HybridChatbotService
         $cacheKey = sprintf('chatbot:context:%s:%d', $role, $user->getKey());
 
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($user, $role) {
-            return match ($role) {
-                'admin' => $this->gatherAdminContext(),
-                'seller' => $this->gatherSellerContext($user),
-                'shipper' => $this->gatherShipperContext($user),
-                'customer' => $this->gatherCustomerContext($user),
-                default => $this->gatherDefaultContext($user),
-            };
+            $gatherer = $this->contextGatherers[$role] ?? $this->contextGatherers['default'];
+
+            return $gatherer->gather($user);
         });
     }
 
-    private function gatherAdminContext(): array
-    {
-        $locale = App::getLocale();
-        $pendingStatuses = [
-            OrderStatus::PENDING_CONFIRMATION,
-            OrderStatus::PROCESSING,
-            OrderStatus::PENDING_ASSIGNMENT,
-            OrderStatus::ASSIGNED_TO_SHIPPER,
-            OrderStatus::DELIVERING,
-        ];
 
-        $now = Carbon::now();
-        $ordersLast30Query = Order::query()
-            ->where('created_at', '>=', $now->copy()->subDays(30));
-
-        $lowStockVariants = ProductVariant::query()
-            ->lowStock()
-            ->with(['product.category'])
-            ->orderBy('stock_quantity')
-            ->take(5)
-            ->get();
-
-        $topCategories = Product::query()
-            ->select('category_id', DB::raw('COUNT(*) as total_products'))
-            ->whereNotNull('category_id')
-            ->groupBy('category_id')
-            ->orderByDesc('total_products')
-            ->with('category')
-            ->take(5)
-            ->get();
-
-        $recentReports = AnalyticsReport::query()
-            ->latest('created_at')
-            ->take(5)
-            ->get(['title', 'type', 'status', 'created_at']);
-
-        return [
-            'summary' => [
-                'total_orders' => Order::count(),
-                'orders_last_30_days' => (clone $ordersLast30Query)->count(),
-                'revenue_last_30_days' => (float) (clone $ordersLast30Query)->sum('total_amount'),
-                'pending_orders' => Order::whereIn('status', array_map(fn ($status) => $status->value, $pendingStatuses))->count(),
-            ],
-            'low_stock_alerts' => $lowStockVariants->map(function (ProductVariant $variant) use ($locale) {
-                return [
-                    'sku' => $variant->sku,
-                    'stock' => (int) $variant->stock_quantity,
-                    'product' => $variant->product?->getTranslation('name', $locale),
-                    'category' => $variant->product?->category?->getTranslation('name', $locale),
-                ];
-            })->values()->all(),
-            'top_categories' => $topCategories->map(function (Product $product) use ($locale) {
-                return [
-                    'category' => $product->category?->getTranslation('name', $locale),
-                    'total_products' => (int) $product->total_products,
-                ];
-            })->values()->all(),
-            'inventory_movements_7_days' => (function () {
-                $row = InventoryLog::query()
-                    ->where('created_at', '>=', Carbon::now()->subDays(7))
-                    ->selectRaw('SUM(CASE WHEN quantity_change > 0 THEN quantity_change ELSE 0 END) as stock_in')
-                    ->selectRaw('SUM(CASE WHEN quantity_change < 0 THEN ABS(quantity_change) ELSE 0 END) as stock_out')
-                    ->first();
-
-                return [
-                    'stock_in' => (int) ($row->stock_in ?? 0),
-                    'stock_out' => (int) ($row->stock_out ?? 0),
-                ];
-            })(),
-            'recent_reports' => $recentReports->map(fn (AnalyticsReport $report) => [
-                'title' => $report->title,
-                'type' => $report->type,
-                'status' => $report->status,
-                'generated_on' => optional($report->created_at)->toDateString(),
-            ])->values()->all(),
-        ];
-    }
-
-    private function gatherSellerContext(User $user): array
-    {
-        $locale = App::getLocale();
-        $now = Carbon::now();
-
-        $ordersQuery = Order::query()->whereHas('items.variant.product', function ($query) use ($user) {
-            $query->where('seller_id', $user->getKey());
-        });
-
-        $ordersLast7DaysQuery = (clone $ordersQuery)
-            ->where('created_at', '>=', $now->copy()->subDays(7));
-
-        $topProducts = OrderItem::query()
-            ->select('variant_id', DB::raw('SUM(quantity) as total_quantity'))
-            ->whereHas('variant.product', function ($query) use ($user) {
-                $query->where('seller_id', $user->getKey());
-            })
-            ->groupBy('variant_id')
-            ->orderByDesc('total_quantity')
-            ->with(['variant.product.category'])
-            ->take(5)
-            ->get();
-
-        $recentInventory = InventoryLog::query()
-            ->whereHas('variant.product', function ($query) use ($user) {
-                $query->where('seller_id', $user->getKey());
-            })
-            ->latest('created_at')
-            ->take(5)
-            ->get();
-
-        return [
-            'summary' => [
-                'active_products' => $user->products()->count(),
-                'orders_last_7_days' => (clone $ordersLast7DaysQuery)->count(),
-                'revenue_last_7_days' => (float) (clone $ordersLast7DaysQuery)->sum('total_amount'),
-                'total_orders' => $ordersQuery->count(),
-            ],
-            'top_products' => $topProducts->map(function (OrderItem $item) use ($locale) {
-                $product = $item->variant?->product;
-
-                return [
-                    'sku' => $item->variant?->sku,
-                    'product' => $product?->getTranslation('name', $locale),
-                    'category' => $product?->category?->getTranslation('name', $locale),
-                    'sold_quantity' => (int) $item->total_quantity,
-                ];
-            })->values()->all(),
-            'inventory_updates' => $recentInventory->map(function (InventoryLog $log) use ($locale) {
-                return [
-                    'sku' => $log->variant?->sku,
-                    'product' => $log->variant?->product?->getTranslation('name', $locale),
-                    'change' => (int) $log->quantity_change,
-                    'reason' => $log->reason,
-                    'updated_at' => optional($log->created_at)->toDateTimeString(),
-                ];
-            })->values()->all(),
-        ];
-    }
-
-    private function gatherShipperContext(User $user): array
-    {
-        $now = Carbon::now();
-        $assignedOrders = Order::query()
-            ->where('shipper_id', $user->getKey());
-
-        $pendingStatuses = [
-            OrderStatus::ASSIGNED_TO_SHIPPER,
-            OrderStatus::DELIVERING,
-        ];
-
-        $recentDelivered = (clone $assignedOrders)
-            ->where('status', OrderStatus::DELIVERED)
-            ->latest('updated_at')
-            ->take(5)
-            ->get(['order_id', 'order_number', 'updated_at']);
-
-        return [
-            'summary' => [
-                'active_deliveries' => (clone $assignedOrders)->whereIn('status', array_map(fn ($status) => $status->value, $pendingStatuses))->count(),
-                'completed_last_7_days' => (clone $assignedOrders)->where('status', OrderStatus::DELIVERED)->where('updated_at', '>=', $now->copy()->subDays(7))->count(),
-                'total_assigned' => $assignedOrders->count(),
-            ],
-            'recent_deliveries' => $recentDelivered->map(fn (Order $order) => [
-                'order_number' => $order->order_number,
-                'delivered_at' => optional($order->updated_at)->toDateTimeString(),
-            ])->values()->all(),
-        ];
-    }
-
-    private function gatherCustomerContext(User $user): array
-    {
-        $locale = App::getLocale();
-
-        $recentOrders = $user->orders()
-            ->latest('created_at')
-            ->with(['items.variant.product'])
-            ->take(3)
-            ->get();
-
-        $cartItems = CartItem::query()
-            ->where('user_id', $user->getKey())
-            ->with('variant.product')
-            ->take(5)
-            ->get();
-
-        $favoriteCategoryIds = $recentOrders->flatMap(function (Order $order) {
-            return $order->items->map(fn (OrderItem $item) => $item->variant?->product?->category_id)->filter();
-        })->unique()->values()->all();
-
-        $recommendations = Product::query()
-            ->with(['category', 'brand'])
-            ->when($favoriteCategoryIds, function ($query, $categoryIds) {
-                $query->whereIn('category_id', $categoryIds);
-            })
-            ->latest('updated_at')
-            ->take(5)
-            ->get();
-
-        return [
-            'recent_orders' => $recentOrders->map(function (Order $order) use ($locale) {
-                return [
-                    'order_number' => $order->order_number,
-                    'status' => $order->status instanceof OrderStatus ? $order->status->value : (string) $order->status,
-                    'total' => (float) $order->total_amount,
-                    'placed_at' => optional($order->created_at)->toDateString(),
-                    'top_items' => $order->items->take(2)->map(function (OrderItem $item) use ($locale) {
-                        return [
-                            'sku' => $item->variant?->sku,
-                            'product' => $item->variant?->product?->getTranslation('name', $locale),
-                            'quantity' => (int) $item->quantity,
-                        ];
-                    })->values()->all(),
-                ];
-            })->values()->all(),
-            'cart_preview' => $cartItems->map(function (CartItem $item) use ($locale) {
-                return [
-                    'sku' => $item->variant?->sku,
-                    'product' => $item->variant?->product?->getTranslation('name', $locale),
-                    'quantity' => (int) $item->quantity,
-                    'price' => (float) ($item->variant?->price ?? 0),
-                ];
-            })->values()->all(),
-            'recommendations' => $recommendations->map(function (Product $product) use ($locale) {
-                return [
-                    'product' => $product->getTranslation('name', $locale),
-                    'category' => $product->category?->getTranslation('name', $locale),
-                    'brand' => $product->brand?->getTranslation('name', $locale),
-                ];
-            })->values()->all(),
-        ];
-    }
-
-    private function gatherDefaultContext(User $user): array
-    {
-        return [
-            'profile' => [
-                'username' => $user->username,
-                'email_verified' => (bool) $user->email_verified_at,
-                'has_orders' => $user->orders()->exists(),
-            ],
-        ];
-    }
 
     private function buildMessages(string $role, User $user, string $message, array $context): array
     {
         $system = self::ROLE_SYSTEM_PROMPTS[$role] ?? self::ROLE_SYSTEM_PROMPTS['default'];
-        $contextJson = $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
+        $isGreeting = $this->isGreeting($message);
+        $contextJson = $isGreeting ? '{}' : $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
         $userProfile = json_encode([
             'id' => $user->getKey(),
             'role' => $role,
@@ -387,7 +178,7 @@ class HybridChatbotService
 Tin nhắn người dùng: {$message}
 Thông tin người dùng: {$userProfile}
 Dữ liệu liên quan: {$contextJson}
-Hãy trả lời ngắn gọn, ưu tiên bước hành động và đề xuất cụ thể.
+Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu nếu cần. Nếu là chào hỏi, hãy chào lại và hỏi hỗ trợ gì.
 TEXT;
 
         return [
@@ -401,6 +192,20 @@ TEXT;
         $payload = $payload ?? '';
 
         return Str::limit($payload, $limit, '...');
+    }
+
+    private function isGreeting(string $message): bool
+    {
+        $greetings = ['hi', 'hello', 'chào', 'xin chào', 'hey', 'hi there', 'chào bạn'];
+        $lowerMessage = strtolower(trim($message));
+
+        foreach ($greetings as $greeting) {
+            if (str_contains($lowerMessage, $greeting)) {
+                return true;
+            }
+        }
+
+        return strlen($lowerMessage) <= 10; // Short messages are likely greetings
     }
 
     private function callPreferredProviders(string $role, array $messages): array
@@ -645,12 +450,12 @@ TEXT;
 
     private function trimContextForStorage(array $context): array
     {
-        $maxItems = 5;
+        $maxItems = 3; // Reduced from 5
 
         return collect($context)
             ->map(function ($value) use ($maxItems) {
                 if (is_array($value)) {
-                    return collect($value)->take($maxItems)->map(function ($item) use ($maxItems) {
+                    return collect($value)->take($maxItems)->map(function ($item) {
                         if (is_array($item)) {
                             return collect($item)->map(fn ($field) => $this->truncateForPrompt(is_scalar($field) ? (string) $field : json_encode($field)))->all();
                         }

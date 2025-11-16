@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -38,6 +39,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar',
         'gender',
         'date_of_birth',
+        'shop_status',
+        'approved_at',
+        'suspended_until',
+        'shop_settings',
+        'rejection_reason',
+        'suspension_reason',
+        'shop_logo',
+        'shop_description',
     ];
 
     /**
@@ -62,6 +71,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'is_active' => 'boolean',
             'date_of_birth' => 'date',
+            'approved_at' => 'datetime',
+            'suspended_until' => 'datetime',
+            'shop_settings' => 'array',
         ];
     }
     public function role(): BelongsToMany
@@ -82,11 +94,26 @@ class User extends Authenticatable implements MustVerifyEmail
     }
     public function isAdmin(): bool
     {
-        return $this->role()->where('name->en', 'Admin')->exists();
+        return $this->roles()->where('name->en', 'Admin')->exists();
     }
     public function roles():BelongsToMany
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    public function scopeSellers(Builder $query): Builder
+    {
+        return $query->whereHas('roles', fn (Builder $roleQuery) => $roleQuery->where('name->en', 'Seller'));
+    }
+
+    public function scopeActiveShops(Builder $query): Builder
+    {
+        return $query->sellers()->where('shop_status', 'active');
+    }
+
+    public function scopeShopStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('shop_status', $status);
     }
 
     /**
@@ -102,7 +129,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isShipper(): bool
     {
-        return $this->role()->where('name->en', 'Shipper')->exists();
+        return $this->roles()->where('name->en', 'Shipper')->exists();
     }
 
     /**
@@ -180,7 +207,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isSeller(): bool
     {
-        return $this->role()->where('name->en', 'Seller')->exists();
+        return $this->roles()->where('name->en', 'Seller')->exists();
     }
 
     /**
@@ -188,7 +215,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isCustomer(): bool
     {
-        return $this->role()->where('name->en', 'Customer')->exists();
+        return $this->roles()->where('name->en', 'Customer')->exists();
     }
 
     /**
@@ -213,6 +240,26 @@ class User extends Authenticatable implements MustVerifyEmail
     public function givenShipperRatings(): HasMany
     {
         return $this->hasMany(ShipperRating::class, 'customer_id');
+    }
+
+    public function shopAuditLogs(): HasMany
+    {
+        return $this->hasMany(ShopAuditLog::class, 'shop_id');
+    }
+
+    public function managedShopAuditLogs(): HasMany
+    {
+        return $this->hasMany(ShopAuditLog::class, 'admin_id');
+    }
+
+    public function shopViolations(): HasMany
+    {
+        return $this->hasMany(ShopViolation::class, 'shop_id');
+    }
+
+    public function reportedShopViolations(): HasMany
+    {
+        return $this->hasMany(ShopViolation::class, 'reported_by');
     }
 
     /**
@@ -296,10 +343,43 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get user's notifications
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'user_id', 'id');
+    }
+
+    /**
+     * Get user's primary role name (lowercase)
+     */
+    public function getRoleNameAttribute(): ?string
+    {
+        $role = $this->role()->first();
+        if (!$role) {
+            return null;
+        }
+        
+        $roleName = $role->name['en'] ?? null;
+        return $roleName ? strtolower($roleName) : null;
+    }
+
+    /**
      * Get average shipper rating
      */
     public function getAverageShipperRatingAttribute()
     {
         return $this->shipperRatings()->avg('rating');
+    }
+
+    public function getShopStatusBadgeAttribute(): string
+    {
+        return match ($this->shop_status) {
+            'pending' => 'warning',
+            'active' => 'success',
+            'suspended' => 'danger',
+            'rejected' => 'secondary',
+            default => 'secondary',
+        };
     }
 }

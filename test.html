@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Quên mật khẩu - ShopNest</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .form-input {
+            @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary dark:focus:border-primary;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f47b25",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221710",
+                        "text-light": "#181411",
+                        "text-dark": "#f8f7f5",
+                        "subtext-light": "#8a7260",
+                        "subtext-dark": "#a39181",
+                        "border-light": "#e6dfdb",
+                        "border-dark": "#443931"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="absolute top-6 right-6">
+            <button
+                class="p-2 rounded-full text-text-light dark:text-text-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm"
+                id="theme-toggle">
+                <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
+            </button>
+        </div>
+        <div class="flex flex-1 items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="w-full max-w-md space-y-8">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-auto text-primary" fill="none" stroke="currentColor" stroke-width="1.5"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5-1.5-.5M6.75 7.364l-1.5 .545m0 0l-1.5-.5m12 5.564v4.5m1.5-4.5v4.5m-1.5-1.125V21m-12-1.125V21"
+                            stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <div class="flex min-w-72 flex-col gap-3 mt-4">
+                        <p
+                            class="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">
+                            Quên mật khẩu?</p>
+                        <p class="text-subtext-light dark:text-subtext-dark text-base font-normal leading-normal">Vui
+                            lòng nhập địa chỉ email bạn đã đăng ký để nhận liên kết đặt lại mật khẩu.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-1">
+                        <label class="flex flex-col min-w-40 flex-1">
+                            <p class="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Địa
+                                chỉ Email</p>
+                            <input
+                                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-0 border border-border-light dark:border-border-dark bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-subtext-light dark:placeholder:text-subtext-dark p-[15px] text-base font-normal leading-normal"
+                                placeholder="Nhập địa chỉ email của bạn" type="email" value="" />
+                        </label>
+                    </div>
+                    <div>
+                        <button
+                            class="flex w-full items-center justify-center rounded-lg bg-primary h-14 px-6 text-base font-medium leading-6 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">Gửi
+                            liên kết đặt lại</button>
+                    </div>
+                    <p class="text-center text-sm text-subtext-light dark:text-subtext-dark">
+                        <a class="font-semibold text-primary hover:underline inline-flex items-center gap-1" href="#">
+                            <span class="material-symbols-outlined text-base">arrow_back</span>
+                            <span>Quay lại Đăng nhập</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+            }
+        });
+    </script>
+</body>
+
+</html>

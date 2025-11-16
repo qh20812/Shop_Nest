@@ -24,6 +24,7 @@ interface NavbarProps {
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const [isSearchShow, setIsSearchShow] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { props } = usePage<{ auth: { user: User } }>();
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +63,28 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     };
   }, []);
 
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/notifications/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.unread_count);
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = () => {
     router.post('/logout');
   };
@@ -85,10 +108,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       </form>
       <CurrencyDropdown />
       <LanguageSwitcher />
-      <a href="#" className="notif">
+      <Link href={route('notifications.index')} className="notif" title={t('Notifications')}>
         <i className='bx bx-bell'></i>
-        <span className="count">12</span>
-      </a>
+        {unreadCount > 0 && (
+          <span className="count">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </Link>
 
       {/* Profile Dropdown */}
       <div

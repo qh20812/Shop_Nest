@@ -405,7 +405,7 @@
     "Are you sure you want to rejected this shipper? This action will update their status.": "Are you sure you want to rejected this shipper? This action will update their status.",
     "Are you sure you want to approved this shipper? This action will update their status.": "Are you sure you want to approved this shipper? This action will update their status.",
     "Are you sure you want to suspended this shipper? This action will update their status.": "Are you sure you want to suspended this shipper? This action will update their status.",
-    "Seller Dashboard": "Seller Dashboard",
+    "Seller Dashboard": "Overview",
     "My Products": "My Products",
     "Add Product": "Add Product",
     "Inventory": "Inventory",
@@ -649,5 +649,32 @@
     "System Health": "System Health",
     "vs previous period": "vs previous period",
     "Last updated at": "Last updated at",
-    "Recent Platform Activity": "Recent Platform Activity"
+    "Recent Platform Activity": "Recent Platform Activity",
+    "Top Selling Products": "Top Selling Products",
+    "This month": "This month",
+    "Stock Alerts": "Stock Alerts",
+    "items": "items",
+    "Only 2 items left in stock": "Only 2 items left in stock",
+    "Only 1 item left in stock": "Only 1 item left in stock",
+    "Performance Metrics": "Performance Metrics",
+    "Average Order Value": "Average Order Value",
+    "Top Product": "Top Product",
+    "No data": "No data",
+    "more": "more",
+    "Monthly Growth": "Monthly Growth",
+    "Unique Customers": "Unique Customers",
+    "Low Stock Alert": "Low Stock Alert",
+    "You have": "You have",
+    "products with low stock": "products with low stock",
+    "Stock Management": "Stock Management",
+    "Monitor your inventory levels regularly": "Monitor your inventory levels regularly",
+    "All Stock Levels Good": "All Stock Levels Good",
+    "No low stock alerts at this time": "No low stock alerts at this time",
+    "auth": {
+        "unauthenticated": "Unauthenticated.",
+        "login_required": "You need to log in to access this page"
+    },
+    "middleware": {
+        "seller_access_denied": "You do not have permission to access this page"
+    }
 }

@@ -146,6 +146,12 @@ Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
 Route::post('/webhooks/paypal', [PaymentWebhookController::class, 'paypal'])
     ->middleware('throttle:60,1')
     ->name('webhooks.paypal');
+Route::post('/webhooks/vnpay', [PaymentWebhookController::class, 'vnpay'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.vnpay');
+Route::post('/webhooks/momo', [PaymentWebhookController::class, 'momo'])
+    ->middleware('throttle:60,1')
+    ->name('webhooks.momo');
 
 Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
     ->middleware('throttle:30,1');

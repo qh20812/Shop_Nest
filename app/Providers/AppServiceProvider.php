@@ -64,7 +64,8 @@ class AppServiceProvider extends ServiceProvider
                 $driver->setHttpClient(new \GuzzleHttp\Client($guzzleConfig));
                 return $driver;
             });
-            if (request()->isSecure()||request()->header('X-Forwarded-Proto') === 'https') {
+            $request = request();
+            if ($request->isSecure() || $request->header('X-Forwarded-Proto') === 'https') {
                 URL::forceScheme('https');
             }
         }

@@ -10,6 +10,7 @@ use App\Http\Middleware\SetLocale;
 use App\Providers\AppServiceProvider;
 use App\Providers\AuthServiceProvider;
 use App\Providers\EventServiceProvider;
+use Illuminate\Broadcasting\BroadcastServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        BroadcastServiceProvider::class,
     ])
     ->withRouting(
         api: __DIR__.'/../routes/api.php',

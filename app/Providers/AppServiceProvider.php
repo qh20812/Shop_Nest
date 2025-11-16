@@ -6,6 +6,7 @@ use App\Http\Middleware\IsSeller;
 use App\Models\ProductVariant;
 use App\Observers\ProductVariantObserver;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Stripe\StripeClient;
 
@@ -63,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
                 $driver->setHttpClient(new \GuzzleHttp\Client($guzzleConfig));
                 return $driver;
             });
+            if (request()->isSecure()||request()->header('X-Forwarded-Proto') === 'https') {
+                URL::forceScheme('https');
+            }
         }
     }
 }

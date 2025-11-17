@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'identifier' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:1'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'],
         ];
     }
 
@@ -37,8 +37,10 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'identifier.required' => 'Email, phone number or username is required.',
-            'password.required' => 'Password is required.',
+            'identifier.required' => 'Email, số điện thoại hoặc tên người dùng là bắt buộc.',
+            'password.required' => 'Mật khẩu là bắt buộc.',
+            'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+            'password.regex' => 'Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một số và một ký tự đặc biệt.',
         ];
     }
 
@@ -56,6 +58,20 @@ class LoginRequest extends FormRequest
         $remember = $this->boolean('remember');
 
         $field = $this->determineIdentifierField($identifier);
+
+        // Normalize identifier based on field
+        if ($field === 'phone_number') {
+            // Remove spaces, convert leading 0 to +84, ensure starts with +
+            $identifier = str_replace(' ', '', $identifier);
+            if (str_starts_with($identifier, '0')) {
+                $identifier = '+84' . substr($identifier, 1);
+            }
+            if (!str_starts_with($identifier, '+')) {
+                $identifier = '+' . $identifier;
+            }
+        } elseif ($field === 'username') {
+            $identifier = strtolower($identifier);
+        }
 
         if (! Auth::attempt([$field => $identifier, 'password' => $password], $remember)) {
             RateLimiter::hit($this->throttleKey());

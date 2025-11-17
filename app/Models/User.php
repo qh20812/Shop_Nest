@@ -382,4 +382,38 @@ class User extends Authenticatable implements MustVerifyEmail
             default => 'secondary',
         };
     }
+
+    /**
+     * Determine if the user has verified their email address.
+     * Only check if user has an email address.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->email && !is_null($this->email_verified_at);
+    }
+
+    /**
+     * Mark the given user's email as verified.
+     * Only mark if user has an email address.
+     */
+    public function markEmailAsVerified(): bool
+    {
+        if ($this->email) {
+            return $this->forceFill([
+                'email_verified_at' => $this->freshTimestamp(),
+            ])->save();
+        }
+        return true; // Consider verified if no email
+    }
+
+    /**
+     * Send the email verification notification.
+     * Only send if user has an email address.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if ($this->email) {
+            parent::sendEmailVerificationNotification();
+        }
+    }
 }

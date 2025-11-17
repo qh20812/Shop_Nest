@@ -384,6 +384,26 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Set the phone number attribute, normalizing it.
+     */
+    public function setPhoneNumberAttribute($value)
+    {
+        if ($value) {
+            // Remove all spaces
+            $value = str_replace(' ', '', $value);
+            // If starts with 0, replace with +84 (assuming Vietnam)
+            if (str_starts_with($value, '0')) {
+                $value = '+84' . substr($value, 1);
+            }
+            // Ensure it starts with +
+            if (!str_starts_with($value, '+')) {
+                $value = '+' . $value;
+            }
+        }
+        $this->attributes['phone_number'] = $value;
+    }
+
+    /**
      * Determine if the user has verified their email address.
      * Only check if user has an email address.
      */

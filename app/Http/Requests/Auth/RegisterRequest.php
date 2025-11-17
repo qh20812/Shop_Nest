@@ -23,7 +23,7 @@ class RegisterRequest extends FormRequest
     {
         return [
               'identifier' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'],
             'confirmPassword' => ['required', 'string', 'same:password'],
             'agreeToTerms' => ['required', 'accepted'],
         ];
@@ -38,6 +38,7 @@ class RegisterRequest extends FormRequest
               'identifier.required' => 'Email, số điện thoại hoặc tên người dùng là bắt buộc.',
             'password.required' => 'Mật khẩu là bắt buộc.',
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+            'password.regex' => 'Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một số và một ký tự đặc biệt.',
             'confirmPassword.required' => 'Xác nhận mật khẩu là bắt buộc.',
             'confirmPassword.same' => 'Mật khẩu xác nhận không khớp.',
             'agreeToTerms.required' => 'Bạn phải đồng ý với Điều khoản Dịch vụ.',
@@ -70,7 +71,7 @@ class RegisterRequest extends FormRequest
                         }
                     } else {
                         // Validate as username - check format and uniqueness
-                        if (!preg_match('/^[a-zA-Z0-9_]+$/', $identifier)) {
+                        if (!preg_match('/^[a-zA-Z0-9_.]+$/', $identifier)) {
                             $validator->errors()->add('identifier', 'Tên người dùng không hợp lệ.');
                         } elseif (\App\Models\User::where('username', $identifier)->exists()) {
                             $validator->errors()->add('identifier', 'Tên người dùng đã tồn tại.');

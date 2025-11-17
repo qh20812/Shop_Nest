@@ -253,7 +253,7 @@ export default function RegisterPage() {
 
                     <p className="register-footer">
                         <span className="register-footer-text">Đã có tài khoản? </span>
-                        <a className="register-footer-link" href="#">
+                        <a className="register-footer-link" href="/login">
                             Đăng nhập ngay
                         </a>
                     </p>

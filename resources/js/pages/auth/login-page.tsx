@@ -84,7 +84,7 @@ export default function LoginPage() {
                         <img
                             src="/image/ShopnestLogoSVG.svg"
                             alt="ShopNest logo"
-                            className="login-logo"
+                            className="login-logo" 
                         />
 
                         <div className="login-title-wrapper">

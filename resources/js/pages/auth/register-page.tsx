@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router, Link } from '@inertiajs/react';
 import '@/../css/register-page.css';
 
 export default function RegisterPage() {
@@ -253,9 +253,10 @@ export default function RegisterPage() {
 
                     <p className="register-footer">
                         <span className="register-footer-text">Đã có tài khoản? </span>
-                        <a className="register-footer-link" href="#">
+                        {/* <a className="register-footer-link" href="/login">
                             Đăng nhập ngay
-                        </a>
+                        </a> */}
+                        <Link className='register-footer-link' href="/login">Đăng nhập ngay</Link>
                     </p>
                 </div>
             </div>

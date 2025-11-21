@@ -28,9 +28,41 @@
     
     /* Additional navbar colors */
     --background-light: #ffffff;
-    --text-primary: #1976D2;
+    --background-dark: #1a1a1a;
+    --text-primary: #1a1a1a;
+    --text-primary-dark: #ffffff;
     --text-secondary: #666666;
+    --text-secondary-dark: #a0a0a0;
     --border-light: #e5e5e5;
+    --border-dark: #333333;
+    --surface-dark: #2d2d2d;
+}
+
+/* Dark Mode */
+.dark-mode {
+    --background-light: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --border-light: #333333;
+    --grey: #2d2d2d;
+}
+
+.dark-mode .navbar-sticky {
+    background-color: rgba(26, 26, 26, 0.8);
+}
+
+.dark-mode .navbar-dropdown {
+    background-color: var(--background-dark);
+    border-color: var(--border-dark);
+}
+
+.dark-mode .navbar-search-input {
+    background-color: var(--surface-dark);
+    color: var(--text-primary-dark);
+}
+
+.dark-mode .navbar-search-input::placeholder {
+    color: var(--text-secondary-dark);
 }
 
 /* Navbar Sticky Header */
@@ -232,6 +264,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    width: 100%;
     padding: 0.75rem 1rem;
     color: var(--text-primary);
     text-decoration: none;

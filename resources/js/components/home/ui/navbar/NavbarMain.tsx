@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from '@inertiajs/react'
 import { useTranslation } from '@/lib/i18n'
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
 
 interface CartItem {
   cart_item_id: number;
@@ -31,6 +32,9 @@ interface NavbarMainProps {
 
 export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
   const { t } = useTranslation();
+  
+  // Performance monitoring
+  usePerformanceMonitor('NavbarMain');
 
   return (
     <nav className="navbar-main">

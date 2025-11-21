@@ -68,7 +68,7 @@
     background: var(--light);
 }
 .home-content{
-    max-width: 1200px;
+    max-width: 100%;
     justify-content: center;
     align-items: center;
     margin: 0 auto;
@@ -86,7 +86,7 @@
 }
 
 .navbar-container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     padding: 0 20px;
 }

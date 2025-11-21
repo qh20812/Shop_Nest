@@ -75,7 +75,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex h-14 w-full items-center justify-center rounded-[8px] !bg-primary bg-primary text-base font-semibold !text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:brightness-110 focus:ring-4 focus:ring-primary/40 focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-14 w-full items-center justify-center rounded-[8px] !bg-primary bg-primary text-base font-semibold text-white! shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:brightness-110 focus:ring-4 focus:ring-primary/40 focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {processing ? t('Sending...') : t('Send Password Reset Link')}
                         </button>

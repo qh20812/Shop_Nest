@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react'
 import DropdownErrorBoundary from './navbar/DropdownErrorBoundary'
 import NavbarTop from './navbar/NavbarTop'
 import NavbarMain from './navbar/NavbarMain'
+import NavbarMobileMenu from './navbar/NavbarMobileMenu'
 import '@/../css/navbar.css'
 
 interface User {
@@ -59,6 +60,11 @@ export default function Navbar() {
         <NavbarMain
           cartItems={cartItems}
           isLoggedIn={isLoggedIn}
+        />
+        <NavbarMobileMenu
+          isLoggedIn={isLoggedIn}
+          user={auth.user}
+          locale={locale}
         />
       </DropdownErrorBoundary>
     </header>

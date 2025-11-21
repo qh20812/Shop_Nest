@@ -39,7 +39,7 @@ export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
   return (
     <nav className="navbar-main">
       <div className="navbar-container-fluid">
-        {/* Logo */}
+        {/* Logo (visible on all screens) */}
         <Link href="/" className="navbar-logo">
           <div className="navbar-logo-icon">
             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">

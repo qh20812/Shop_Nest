@@ -405,11 +405,18 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Determine if the user has verified their email address.
-     * Only check if user has an email address.
+     * Users without email are considered "verified" (registered via phone/username).
+     * Only users with email need verification.
      */
     public function hasVerifiedEmail(): bool
     {
-        return $this->email && !is_null($this->email_verified_at);
+        // If no email, consider verified (phone/username registration)
+        if (!$this->email) {
+            return true;
+        }
+        
+        // If has email, check if it's verified
+        return !is_null($this->email_verified_at);
     }
 
     /**

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Shipper\DashboardController;
 
-Route::middleware(['auth', 'verified', 'shipper'])->prefix('shipper')->name('shipper.')->group(function () {
+Route::middleware(['auth', 'verified.optional', 'shipper'])->prefix('shipper')->name('shipper.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Add more shipper routes here

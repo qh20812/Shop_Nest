@@ -91,7 +91,7 @@ class PaymentReturnController extends Controller
 
                     $shouldClearCart = $order->payment_status === PaymentStatus::PAID;
                     $shouldRestoreInventory = $order->payment_status === PaymentStatus::FAILED;
-                    
+
                     // If payment failed or canceled, create a refund transaction
                     if ($shouldRestoreInventory) {
                         $order->transactions()->create([
@@ -141,13 +141,13 @@ class PaymentReturnController extends Controller
                 'provider' => $provider,
                 'order_id' => $sanitizedOrderId,
             ]);
-            
+
             // Clear the cart for this user
             $this->cartService->clearCart(Auth::user());
-            
+
             // Verify cart was cleared
             $remainingItems = CartItem::where('user_id', Auth::id())->count();
-            
+
             if ($remainingItems > 0) {
                 Log::warning('payment_return.cart_not_fully_cleared', [
                     'user_id' => Auth::id(),
@@ -158,7 +158,7 @@ class PaymentReturnController extends Controller
                     'user_id' => Auth::id(),
                 ]);
             }
-            
+
             // Clear any promotion session data
             session()->forget('applied_promotion');
         }
@@ -202,8 +202,7 @@ class PaymentReturnController extends Controller
                     ];
                 })->values()->all(),
             ];
-        }
-        elseif ($sanitizedOrderId) {
+        } elseif ($sanitizedOrderId) {
             // As a fallback (for idempotent returns or early returns), try to load the order
             // even if it wasn't freshly processed in this event. This allows the UI to still
             // display the order totals and items when available.

@@ -1,3 +1,4 @@
+import '@/../css/login-page.css';
 import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useTranslation } from '../../lib/i18n';
@@ -35,13 +36,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                 <div className="w-full max-w-md space-y-8">
                     {/* Logo */}
                     <div className="text-center">
-                        <svg className="mx-auto h-12 w-auto text-primary" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path
-                                d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5-1.5-.5M6.75 7.364l-1.5 .545m0 0l-1.5-.5m12 5.564v4.5m1.5-4.5v4.5m-1.5-1.125V21m-12-1.125V21"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            ></path>
-                        </svg>
+                        <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" style={{ width: '59px', height: '59px' }} />
 
                         {/* Title */}
                         <div className="mt-4 flex flex-col gap-3">
@@ -69,6 +64,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     required
                                     autoFocus
                                     className="form-input h-14 p-[15px]"
+                                    style={{ borderRadius: '8px' }}
                                 />
                             </label>
 
@@ -79,7 +75,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex h-14 w-full items-center justify-center rounded-xl !bg-primary bg-primary text-base font-semibold !text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:brightness-110 focus:ring-4 focus:ring-primary/40 focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-14 w-full items-center justify-center rounded-[8px] !bg-primary bg-primary text-base font-semibold !text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:brightness-110 focus:ring-4 focus:ring-primary/40 focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {processing ? t('Sending...') : t('Send Password Reset Link')}
                         </button>

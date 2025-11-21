@@ -149,7 +149,7 @@ class PaymentWebhookController extends Controller
         $payload = $request->all();
         $result = $gateway->handleWebhook($payload);
 
-        $orderId = $result['order_id'] 
+        $orderId = $result['order_id']
             ?? $request->input('orderId')
             ?? null;
 

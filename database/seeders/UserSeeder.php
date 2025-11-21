@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
             'first_name' => 'Super',
             'last_name' => 'Admin',
             'email' => 'admin@shopnest.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('@12345Password'),
         ]);
         $admin->roles()->attach($adminRole);
 
@@ -32,7 +32,7 @@ class UserSeeder extends Seeder
             'first_name'=>'Test',
             'last_name'=>'Seller',
             'email'=>'testseller@shopnest.com',
-            'password'=>Hash::make('password'),
+            'password'=>Hash::make('@12345Password'),
         ]);
         $seller->roles()->attach($sellerRole);
 

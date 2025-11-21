@@ -12,7 +12,7 @@ use App\Http\Controllers\User\AddressController;
 use App\Http\Controllers\User\ProfileController;
 use Inertia\Inertia;
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified.optional'])
     ->prefix('/user/orders')
     ->as('user.orders.')
     ->group(function () {
@@ -53,7 +53,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('{order}/track', [OrderController::class, 'trackDelivery'])->name('track');
     });
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified.optional'])
     ->prefix('dashboard/reviews')
     ->as('user.reviews.')
     ->group(function () {
@@ -70,7 +70,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('{review}', [ReviewController::class, 'show'])->name('show');
     });
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified.optional'])
     ->prefix('user/addresses')
     ->as('user.addresses.')
     ->group(function () {
@@ -123,7 +123,7 @@ Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear')
 Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
 Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Checkout routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
@@ -161,7 +161,7 @@ Route::get('/payments/stripe/cancel', function () {
         'status' => 'canceled',
     ]);
 });
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified.optional'])
     ->prefix('/user/profile')
     ->as('user.profile.')
     ->group(function () {

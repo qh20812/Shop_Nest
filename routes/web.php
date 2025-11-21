@@ -53,7 +53,7 @@ Route::post('/language', function () {
 Route::post('/currency', CurrencyController::class)->name('currency.switch');
 
 // Protected routes that require authentication
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Chatbot API endpoint (moved from api.php to use web session auth)
     Route::post('/chatbot/message', [ChatbotController::class, 'send'])
         ->middleware('throttle:10,1')

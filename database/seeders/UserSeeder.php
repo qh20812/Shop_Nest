@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
             'first_name' => 'Test',
             'last_name' => 'Shipper',
             'email' => 'testshipper@shopnest.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('@12345Password'),
         ]);
         $shipper->roles()->attach($shipperRole);
 

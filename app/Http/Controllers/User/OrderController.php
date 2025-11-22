@@ -2,559 +2,109 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
-use App\Events\OrderCancelled;
-use App\Events\OrderReviewed;
-use App\Events\ReturnRequested;
 use App\Http\Controllers\Controller;
-use App\Models\CartItem;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderReview;
-use App\Models\ReturnRequest;
-use App\Models\User;
-use App\Models\UserAddress;
-use App\Services\ShippingService;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Inertia\Response;
+use App\Models\Order; // assuming Order model exists
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-	protected ShippingService $shippingService;
-
-	public function __construct(ShippingService $shippingService)
+	public function index(Request $request)
 	{
-		$this->middleware('auth');
-		$this->shippingService = $shippingService;
-	}
+		$user = $request->user();
+		$search = trim($request->get('search', ''));
+		$status = $request->get('status', 'all');
 
-	public function index(Request $request): Response
-	{
-		$this->authorize('viewAny', Order::class);
-
-		/** @var User $user */
-		$user = Auth::user();
-
-		$allowedStatuses = OrderStatus::values();
-		$statusAliases = [
-			'pending_confirmation' => [OrderStatus::PENDING_CONFIRMATION->value],
-			'processing' => [
-				OrderStatus::PROCESSING->value,
-				OrderStatus::PENDING_ASSIGNMENT->value,
-			],
-			'shipped' => [
-				OrderStatus::ASSIGNED_TO_SHIPPER->value,
-				OrderStatus::DELIVERING->value,
-			],
-			'delivered' => [
-				OrderStatus::DELIVERED->value,
-				OrderStatus::COMPLETED->value,
-			],
-			'cancelled' => [OrderStatus::CANCELLED->value],
-			'returned_refunded' => [OrderStatus::RETURNED->value],
+		// Map textual status/payment filters to integer codes used in DB
+		$statusMap = [
+			'pending' => 0,
+			'processing' => 1,
+			'shipped' => 2,
+			'delivered' => 3,
+			'canceled' => 4,
 		];
-		$validStatusValues = array_merge($allowedStatuses, array_keys($statusAliases));
+		$paymentStatusMap = [
+			0 => 'unpaid',
+			1 => 'paid',
+			2 => 'failed',
+		];
 
-		$request->validate([
-			'date_from' => ['nullable', 'date'],
-			'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
-			'search' => ['nullable', 'string', 'max:120'],
-			'sort' => ['nullable', Rule::in(['newest', 'oldest', 'total_asc', 'total_desc'])],
-		]);
+		$query = Order::query()->where('customer_id', $user->id);
 
-		$statusInput = $request->input('status');
-		if (is_array($statusInput)) {
-			$request->validate(['status.*' => ['string', Rule::in($validStatusValues)]]);
-			$statuses = $statusInput;
-		} elseif ($statusInput !== null && $statusInput !== '') {
-			$request->validate(['status' => ['string', Rule::in($validStatusValues)]]);
-			$statuses = [$statusInput];
-		} else {
-			$statuses = null;
-		}
-
-		$filters = $request->only(['status', 'date_from', 'date_to', 'search', 'sort']);
-
-		$ordersQuery = Order::query()
-			->where('customer_id', $user->id)
-			->with([
-				'items.variant.product.seller',
-				'items.variant.product.shop',
-				'items.variant.product.images' => fn($query) => $query->where('is_primary', true),
-			]);
-
-		if ($statuses) {
-			$normalizedStatuses = [];
-			foreach ($statuses as $statusValue) {
-				if (isset($statusAliases[$statusValue])) {
-					$normalizedStatuses = array_merge($normalizedStatuses, $statusAliases[$statusValue]);
-				} else {
-					$normalizedStatuses[] = $statusValue;
-				}
-			}
-
-			$ordersQuery->whereIn('status', array_unique($normalizedStatuses));
-		}
-
-		if ($request->filled('date_from')) {
-			$ordersQuery->whereDate('created_at', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
-		}
-
-		if ($request->filled('date_to')) {
-			$ordersQuery->whereDate('created_at', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
-		}
-
-		if ($request->filled('search')) {
-			$searchTerm = '%' . $request->input('search') . '%';
-			$ordersQuery->where(function ($query) use ($searchTerm) {
-				$query->where('order_number', 'like', $searchTerm)
-					->orWhereHas('items.variant.product', fn($q) => $q->where('name', 'like', $searchTerm))
-					->orWhereHas('items.variant.product.seller', fn($q) => $q->where('name', 'like', $searchTerm));
+		if ($search !== '') {
+			$query->where(function ($q) use ($search) {
+				$q->where('order_number', 'LIKE', "%$search%");
 			});
 		}
 
-		switch ($request->input('sort', 'newest')) {
-			case 'oldest':
-				$ordersQuery->orderBy('created_at', 'asc');
-				break;
-			case 'total_asc':
-				$ordersQuery->orderBy('total_amount', 'asc');
-				break;
-			case 'total_desc':
-				$ordersQuery->orderBy('total_amount', 'desc');
-				break;
-			default:
-				$ordersQuery->orderBy('created_at', 'desc');
+		if ($status !== 'all' && isset($statusMap[$status])) {
+			$query->where('status', $statusMap[$status]);
 		}
 
-		$orders = $ordersQuery->paginate(15)->withQueryString();
-
-		$locale = app()->getLocale();
-		$fallbackLocale = config('app.fallback_locale', 'en');
-
-		$orders->getCollection()->transform(function (Order $order) use ($locale, $fallbackLocale) {
-			$cacheKey = "order:{$order->order_id}:grouped_items";
-			$grouped = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($order, $locale, $fallbackLocale) {
-				return $order->items
-					->groupBy(function (OrderItem $item) {
-						$product = $item->variant?->product;
-						return optional($product?->shop)->id
-							?? optional($product?->seller)->id
-							?? 'unknown';
-					})
-					->map(function ($items) use ($locale, $fallbackLocale) {
-						$firstItem = $items->first();
-						$product = $firstItem?->variant?->product;
-						$seller = optional($product?->seller);
-						$shop = optional($product?->shop);
-
-						$sellerName = $shop?->name
-							?? $seller?->full_name
-							?? $seller?->username
-							?? $seller?->email
-							?? __('Người bán');
-
-						$shopLogo = $shop?->logo;
-						$sellerAvatar = null;
-						if ($shopLogo) {
-							$sellerAvatar = Str::startsWith($shopLogo, ['http://', 'https://'])
-								? $shopLogo
-								: asset('storage/' . ltrim($shopLogo, '/'));
-						}
-
-						if (!$sellerAvatar && $seller) {
-							$sellerAvatar = $seller->avatar_url
-								?? $seller->profile_photo_url
-								?? $seller->avatar
-								?? null;
-						}
-
-						return [
-							'seller' => [
-								'id' => $shop?->id ?? $seller?->id,
-								'shop_id' => $shop?->id,
-								'user_id' => $seller?->id,
-								'name' => $sellerName,
-								'avatar' => $sellerAvatar,
-							],
-							'items' => $items->map(function (OrderItem $item) {
-								return $this->transformSingleOrderItem($item);
-							})->values(),
-						];
-					})
-					->values();
-			});
-
-			// Attach grouped payload so the frontend can render shop clusters similar to Shopee.
-			$order->setAttribute('grouped_items', $grouped);
-
-			return $order;
+		$orders = $query->latest()->limit(50)->get()->map(function ($order) use ($paymentStatusMap) {
+			return [
+				'id' => $order->getKey(),
+				'code' => $order->order_number,
+				'status' => array_search($order->status, [0,1,2,3,4]) !== false ? match($order->status){0=>'pending',1=>'processing',2=>'shipped',3=>'delivered',4=>'canceled',default=>'unknown'} : 'unknown',
+				'payment_status' => $paymentStatusMap[$order->payment_status] ?? 'unknown',
+				'total' => (int) $order->total_amount,
+				'created_at' => $order->created_at?->format('d/m/Y H:i'),
+				'can_cancel' => in_array($order->status, [0,1]),
+			];
 		});
 
-		$statusCounts = DB::table('orders')
-			->select('status', DB::raw('count(*) as count'))
-			->where('customer_id', $user->id)
-			->groupBy('status')
-			->pluck('count', 'status')
-			->map(fn($count) => (int) $count)
-			->toArray();
-
-		$tabDefinitions = array_merge(['all' => $allowedStatuses], $statusAliases);
-
-		$tabCounts = [];
-		foreach ($tabDefinitions as $tabKey => $statusGroup) {
-			if ($tabKey === 'all') {
-				$tabCounts[$tabKey] = array_sum($statusCounts);
-				continue;
-			}
-
-			$tabCounts[$tabKey] = array_sum(array_map(
-				fn(string $status) => $statusCounts[$status] ?? 0,
-				$statusGroup
-			));
-		}
-
-		$totalSpent = Order::where('customer_id', $user->id)
-			->where('payment_status', PaymentStatus::PAID->value)
-			->whereNotIn('status', [
-				OrderStatus::CANCELLED->value,
-				OrderStatus::RETURNED->value,
-			])
-			->sum('total_amount');
-
-		// Frontend uses tabCounts to render Shopee-style status tabs and filters to persist user search state.
 		return Inertia::render('Customer/Orders/Index', [
 			'orders' => $orders,
-			'filters' => array_merge($filters, ['status' => $statuses ?? []]),
-			'tabCounts' => $tabCounts,
-			'totalSpent' => $totalSpent,
+			'filters' => [
+				'search' => $search,
+				'status' => $status,
+			],
 		]);
 	}
 
-	public function show(int $orderId): Response
+	public function show(Request $request, Order $order)
 	{
-		$order = Order::with([
-				'items.variant.product.images',
-				'shippingAddress',
-				'reviews.customer', // Load reviews with customer info
-			])
-			->findOrFail($orderId);
+		$this->authorizeOrder($order, $request->user());
+		$order->load(['items.variant.product']);
 
-		$this->authorize('view', $order);
+		$paymentStatusMap = [
+			0 => 'unpaid',
+			1 => 'paid',
+			2 => 'failed',
+		];
 
-		// Transform order items to match frontend expectations
-		$this->transformOrderItemsForFrontend($order);
+		$statusText = match($order->status){0=>'pending',1=>'processing',2=>'shipped',3=>'delivered',4=>'canceled',default=>'unknown'};
+		$detail = [
+			'id' => $order->getKey(),
+			'code' => $order->order_number,
+			'status' => $statusText,
+			'payment_status' => $paymentStatusMap[$order->payment_status] ?? 'unknown',
+			'subtotal' => (int) $order->sub_total,
+			'shipping_fee' => (int) $order->shipping_fee,
+			'discount_total' => (int) $order->discount_amount,
+			'total' => (int) $order->total_amount,
+			'can_cancel' => in_array($order->status, [0,1]),
+			'items' => $order->items->map(function ($item) {
+				return [
+					'id' => $item->getKey(),
+					'product_name' => $item->variant?->product?->name ?? 'Sản phẩm',
+					'product_image' => $item->variant?->product?->image_url ?? null,
+					'quantity' => (int) $item->quantity,
+					'price' => (int) $item->unit_price,
+				];
+			}),
+		];
 
 		return Inertia::render('Customer/Orders/Show', [
-			'order' => $order,
-			'trackingData' => $this->resolveTrackingData($order),
+			'order' => $detail,
 		]);
 	}
 
-	public function review(int $orderId, Request $request): RedirectResponse
+	protected function authorizeOrder(Order $order, $user)
 	{
-		$order = Order::findOrFail($orderId);
-
-		$this->authorize('view', $order);
-
-		// Only allow review for delivered or completed orders
-		if (!in_array($order->status, [OrderStatus::DELIVERED->value, OrderStatus::COMPLETED->value])) {
-			return redirect()->back()->withErrors(['review' => 'Chỉ có thể đánh giá đơn hàng đã giao hoặc hoàn thành.']);
+		if ($order->customer_id !== $user->id) {
+			abort(403);
 		}
-
-		$validated = $request->validate([
-			'rating' => ['required', 'integer', 'min:1', 'max:5'],
-			'comment' => ['nullable', 'string', 'max:1000'],
-		]);
-
-		/** @var User $user */
-		$user = Auth::user();
-
-		// Check if already reviewed
-		$existingReview = OrderReview::where('order_id', $order->order_id)
-			->where('customer_id', $user->id)
-			->first();
-
-		if ($existingReview) {
-			return redirect()->back()->withErrors(['review' => 'Bạn đã đánh giá đơn hàng này rồi.']);
-		}
-
-		$review = OrderReview::create([
-			'order_id' => $order->order_id,
-			'customer_id' => $user->id,
-			'rating' => $validated['rating'],
-			'comment' => $validated['comment'] ?? null,
-		]);
-
-		OrderReviewed::dispatch($review);
-
-		return redirect()->back()->with('success', 'Cảm ơn bạn đã đánh giá đơn hàng.');
-	}
-
-	public function cancel(int $orderId, Request $request): RedirectResponse
-	{
-		$order = Order::findOrFail($orderId);
-
-		$this->authorize('view', $order);
-
-		$this->authorize('cancel', $order);
-
-		$validated = $request->validate([
-			'reason' => ['nullable', 'string', 'max:255'],
-		]);
-
-		$oldStatus = $order->status;
-		$order->update(['status' => OrderStatus::CANCELLED->value]);
-
-		Log::info('Order cancelled by user', [
-			'order_id' => $order->order_id,
-			'user_id' => Auth::id(),
-			'old_status' => $oldStatus,
-			'new_status' => OrderStatus::CANCELLED->value,
-			'reason' => $validated['reason'] ?? null,
-		]);
-
-		OrderCancelled::dispatch($order, $validated['reason'] ?? 'User requested cancellation');
-
-		return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được hủy.');
-	}
-
-	public function reorder(int $orderId): RedirectResponse
-	{
-		$order = Order::with('items.variant')->findOrFail($orderId);
-
-		$this->authorize('reorder', $order);
-
-		foreach ($order->items as $item) {
-			if (!$item->variant) {
-				return redirect()->back()->withErrors(['reorder' => 'Một số sản phẩm không còn tồn tại.']);
-			}
-
-			$availableStock = $item->variant->stock_quantity - ($item->variant->reserved_quantity ?? 0);
-			if ($availableStock < $item->quantity) {
-				return redirect()->back()->withErrors(['reorder' => 'Một số sản phẩm không còn đủ hàng để đặt lại.']);
-			}
-
-			$cartItem = CartItem::firstOrNew([
-				'user_id' => Auth::id(),
-				'variant_id' => $item->variant_id,
-			]);
-
-			$cartItem->quantity = ($cartItem->quantity ?? 0) + $item->quantity;
-			$cartItem->save();
-		}
-
-		return redirect()->route('cart.index')->with('success', 'Sản phẩm đã được thêm vào giỏ hàng.');
-	}
-
-		public function update(int $orderId, Request $request): RedirectResponse
-		{
-			$order = Order::findOrFail($orderId);
-
-			$this->authorize('update', $order);
-
-			$rules = [
-				'address_id' => ['required', 'integer', Rule::exists('user_addresses', 'id')->where(fn($query) => $query->where('user_id', Auth::id()))],
-				'notes' => ['nullable', 'string', 'max:500'],
-			];
-
-			// Allow payment_method change if order is not yet processing
-			if (!in_array($order->status, [OrderStatus::PROCESSING->value, OrderStatus::PENDING_ASSIGNMENT->value, OrderStatus::ASSIGNED_TO_SHIPPER->value, OrderStatus::DELIVERING->value, OrderStatus::DELIVERED->value, OrderStatus::COMPLETED->value, OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value])) {
-				$rules['payment_method'] = ['nullable', Rule::in(['online'])];
-			}
-
-			$validated = $request->validate($rules);
-
-			$updateData = [
-				'shipping_address_id' => $validated['address_id'],
-				'notes' => $validated['notes'] ?? $order->notes,
-			];
-
-			if (isset($validated['payment_method'])) {
-				$updateData['payment_method'] = $validated['payment_method'];
-			}
-
-			$oldData = $order->only(array_keys($updateData));
-			$order->update($updateData);
-
-			Log::info('Order updated by user', [
-				'order_id' => $order->order_id,
-				'user_id' => Auth::id(),
-				'old_data' => $oldData,
-				'new_data' => $updateData,
-			]);
-
-			return redirect()->route('user.orders.show', $order->order_id)->with('success', 'Đơn hàng đã được cập nhật thành công.');
-		}
-
-		public function trackDelivery(int $orderId): JsonResponse
-		{
-			$order = Order::findOrFail($orderId);
-
-			$this->authorize('track', $order);
-
-			$trackingData = $this->resolveTrackingData($order);
-
-			if ($trackingData === null) {
-				return response()->json([
-					'message' => 'Không tìm thấy thông tin vận chuyển cho đơn hàng này.',
-				], 404);
-			}
-
-			return response()->json(['data' => $trackingData]);
-		}
-
-	public function downloadInvoice(int $orderId)
-	{
-		$order = Order::findOrFail($orderId);
-
-		$pdf = Pdf::loadView('pdf.invoice', ['order' => $order]);
-
-		return $pdf->download('invoice-' . $order->order_number . '.pdf');
-	}
-
-	public function requestReturn(int $orderId, Request $request): RedirectResponse
-	{
-		$order = Order::where('customer_id', Auth::id())->findOrFail($orderId);
-
-		$this->authorize('requestReturn', $order);
-
-		$validated = $request->validate([
-			'reason' => ['required', 'string', 'max:255'],
-			'description' => ['nullable', 'string', 'max:2000'],
-			'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-		]);
-
-		$proofPath = null;
-		if ($request->hasFile('proof')) {
-			$proofPath = $request->file('proof')->store('returns/proofs', ['disk' => 'public']);
-		}
-
-		$returnRequest = DB::transaction(function () use ($order, $validated, $proofPath) {
-			$returnRequest = ReturnRequest::create([
-				'order_id' => $order->order_id,
-				'customer_id' => $order->customer_id,
-				'status' => 'pending',
-				'reason' => $validated['reason'],
-				'description' => $validated['description'] ?? null,
-				'proof_attachment_path' => $proofPath,
-			]);
-
-			$order->update(['status' => OrderStatus::RETURNED->value]);
-
-			return $returnRequest;
-		});
-
-		ReturnRequested::dispatch($returnRequest);
-
-		return redirect()->back()->with('success', 'Yêu cầu trả hàng đã được gửi.');
-	}
-
-	protected function generateOrderNumber(): string
-	{
-		return 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999);
-	}
-
-	/**
-	 * Transform order items to match frontend expectations
-	 */
-	protected function transformOrderItemsForFrontend(Order $order): void
-	{
-		$order->items->transform(function (OrderItem $item) {
-			return $this->transformSingleOrderItem($item);
-		});
-	}
-
-	/**
-	 * Transform a single order item for frontend consumption
-	 */
-	protected function transformSingleOrderItem(OrderItem $item): array
-	{
-		$variant = $item->variant;
-		$product = $variant?->product;
-
-		// Handle missing variant/product gracefully
-		if (!$variant || !$product) {
-			Log::warning('Missing variant or product for order item', [
-				'order_item_id' => $item->order_item_id,
-				'variant_id' => $item->variant_id,
-			]);
-
-			return [
-				'order_item_id' => $item->order_item_id,
-				'variant_id' => $item->variant_id,
-				'quantity' => $item->quantity,
-				'unit_price' => $item->unit_price,
-				'total_price' => $item->total_price,
-				'product_snapshot' => [
-					'product_id' => null,
-					'name' => __('Sản phẩm không còn tồn tại'),
-					'slug' => null,
-					'image_url' => null,
-				],
-			];
-		}
-
-		// Cache key for product translation and image data
-		$locale = app()->getLocale();
-		$cacheKey = "product_snapshot:{$product->product_id}:{$locale}";
-
-		$productSnapshot = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($product, $locale) {
-			$fallbackLocale = config('app.fallback_locale', 'en');
-			$primaryImage = $product->images?->first();
-
-			return [
-				'product_id' => $product->product_id,
-				'name' => $product->getTranslation('name', $locale)
-					?? $product->getTranslation('name', $fallbackLocale)
-					?? $product->name
-					?? __('Tên sản phẩm'),
-				'slug' => $product->slug,
-				'image_url' => $primaryImage?->image_url,
-			];
-		});
-
-		return [
-			'order_item_id' => $item->order_item_id,
-			'variant_id' => $item->variant_id,
-			'quantity' => $item->quantity,
-			'unit_price' => $item->unit_price,
-			'total_price' => $item->total_price,
-			'product_snapshot' => $productSnapshot,
-		];
-	}
-
-	protected function resolveTrackingData(Order $order): ?array
-	{
-		if (!$order->tracking_number || !$order->shipping_provider) {
-			return null;
-		}
-
-		$cacheKey = sprintf('orders:%s:tracking:%s', $order->order_id, $order->tracking_number);
-
-		return Cache::remember($cacheKey, now()->addHour(), function () use ($order) {
-			try {
-				return $this->shippingService->getTrackingData($order->tracking_number, $order->shipping_provider);
-			} catch (\Throwable $exception) {
-				Log::warning('Không thể lấy thông tin tracking cho đơn hàng.', [
-					'order_id' => $order->order_id,
-					'error' => $exception->getMessage(),
-				]);
-
-				return null;
-			}
-		});
 	}
 }

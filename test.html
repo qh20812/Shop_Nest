@@ -4,562 +4,266 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>ShopNest - Trang chủ</title>
+    <title>ShopNest - Thông báo</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
         rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#1A56DB",
-                        "primary-dark": "#528BFF",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                        "surface-dark": "#1F2937",
-                        "text-light-primary": "#111827",
-                        "text-light-secondary": "#6B7280",
-                        "text-dark-primary": "#F9FAFB",
-                        "text-dark-secondary": "#9CA3AF",
-                        "border-light": "#E5E7EB",
-                        "border-dark": "#374151"
+                        primary: "#1976D2",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                        danger: "#D32F2F",
+                        success: "#2E7D32",
+                        warning: "#ED6C02",
                     },
                     fontFamily: {
-                        "display": ["Inter", "sans-serif"]
+                        display: "Inter"
                     },
                     borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                },
-            },
-        }
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    }
+                }
+            }
+        };
     </script>
     <style>
         .material-symbols-outlined {
-            font-variation-settings:
-                'FILL' 0,
-                'wght' 400,
-                'GRAD' 0,
-                'opsz' 24
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
         }
     </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display">
-    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-        <div class="layout-container flex h-full grow flex-col">
-            <header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
-                <div
-                    class="w-full border-b border-border-light dark:border-border-dark text-sm font-medium text-text-light-secondary dark:text-text-dark-secondary">
-                    <div class="container mx-auto flex h-10 items-center justify-between px-4">
-                        <div class="flex items-center gap-6">
-                            <a class="hover:text-primary dark:hover:text-primary-dark transition-colors flex items-center gap-1"
-                                href="#">
-                                <span>VI</span>
-                                <span class="material-symbols-outlined text-base">expand_more</span>
-                            </a>
-                            <a class="hover:text-primary dark:hover:text-primary-dark transition-colors" href="#">Trở
-                                thành người bán</a>
-                        </div>
-                        <div class="flex items-center gap-6">
-                            <a class="hover:text-primary dark:hover:text-primary-dark transition-colors flex items-center gap-1"
-                                href="#">
-                                <span class="material-symbols-outlined text-xl">person</span>
-                                <span>Tài khoản</span>
-                                <span class="material-symbols-outlined text-base">expand_more</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <nav class="w-full border-b border-border-light dark:border-border-dark">
-                    <div class="container mx-auto flex h-16 items-center justify-between gap-8 px-4">
-                        <div class="flex items-center gap-2">
-                            <div class="text-primary dark:text-primary-dark size-7">
-                                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M4 42.4379C4 42.4379 14.0962 36.0744 24 41.1692C35.0664 46.8624 44 42.2078 44 42.2078L44 7.01134C44 7.01134 35.068 11.6577 24.0031 5.96913C14.0971 0.876274 4 7.27094 4 7.27094L4 42.4379Z"
-                                        fill="currentColor"></path>
-                                </svg>
+    <div class="relative flex min-h-screen w-full flex-col group/design-root"
+        style='font-family: Inter, "Noto Sans", sans-serif;'>
+        <div class="p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <nav
+                    class="flex h-full w-full lg:max-w-[280px] flex-col rounded-xl bg-white dark:bg-zinc-900 p-4 shadow-sm border border-gray-200 dark:border-gray-700/50">
+                    <div class="flex flex-col gap-6">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12"
+                                data-alt="User avatar placeholder"
+                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfPgXLZbUXnCWuV6a2VN_8vFEnW4e2Y4_szpNFyhXePY0xWm8on_1uorLHL0S2atnhVY4ZmSuLiZpbGhFn-J4w32Ul5sWOio7IxTIfdUdE7Yr8vm99rsl78M7_tImFE9ei3hRF4OSwPTUQ9u3hSv4DFWWsNSxV3IlQUpUM5oz66J0B023WTIvKtBgWBwMjBtbmAtnhopW75jBX4l-J614atNYihZCfgNxGbXoMgTHHpY6wrTGATt8gKIHUKzCpmgbJlwffK45J_SFn");'>
                             </div>
-                            <h1 class="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold">ShopNest
-                            </h1>
+                            <div class="flex flex-col">
+                                <h1 class="text-gray-900 dark:text-gray-100 text-base font-semibold leading-normal">Tên
+                                    người dùng</h1>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                                    user.email@shopnest.com</p>
+                            </div>
                         </div>
-                        <div class="flex-1 max-w-xl">
-                            <label class="flex flex-col w-full h-10">
-                                <div
-                                    class="flex w-full flex-1 items-stretch rounded-lg h-full border border-border-light dark:border-border-dark focus-within:border-primary dark:focus-within:border-primary-dark transition-colors">
-                                    <input
-                                        class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-lg text-text-light-primary dark:text-text-dark-primary focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-text-light-secondary dark:placeholder:text-text-dark-secondary px-4 text-base font-normal leading-normal"
-                                        placeholder="Tìm kiếm sản phẩm..." value="" />
-                                    <button
-                                        class="text-white flex bg-primary dark:bg-primary-dark items-center justify-center px-4 rounded-r-lg">
-                                        <span class="material-symbols-outlined text-2xl">search</span>
-                                    </button>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <a class="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-surface-dark transition-colors text-text-light-primary dark:text-text-dark-primary"
-                                href="#">
-                                <span class="material-symbols-outlined">shopping_cart</span>
-                                <span
-                                    class="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">3</span>
-                            </a>
-                            <a class="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-surface-dark transition-colors text-text-light-primary dark:text-text-dark-primary"
-                                href="#">
-                                <span class="material-symbols-outlined">favorite</span>
-                            </a>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-1">
+                                <h2
+                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
+                                    Tài khoản của tôi</h2>
+                                <ul class="flex flex-col gap-1">
+                                    <li>
+                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                            href="#">
+                                            <span class="material-symbols-outlined">person</span>
+                                            <p class="text-sm font-medium leading-normal">Thông tin cá nhân</p>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                            href="#">
+                                            <span class="material-symbols-outlined">location_on</span>
+                                            <p class="text-sm font-medium leading-normal">Địa chỉ</p>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                            href="#">
+                                            <span class="material-symbols-outlined">lock</span>
+                                            <p class="text-sm font-medium leading-normal">Đổi mật khẩu</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <h2
+                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
+                                    Đơn hàng của tôi</h2>
+                                <ul class="flex flex-col gap-1">
+                                    <li>
+                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                                            href="#">
+                                            <span class="material-symbols-outlined">inventory_2</span>
+                                            <p class="text-sm font-medium leading-normal">Quản lý đơn hàng</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <h2
+                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
+                                    Thông báo</h2>
+                                <ul class="flex flex-col gap-1">
+                                    <li>
+                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20"
+                                            href="#">
+                                            <span class="material-symbols-outlined text-primary"
+                                                style="font-variation-settings: 'FILL' 1;">notifications</span>
+                                            <p class="text-sm font-medium leading-normal">Thông báo</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </nav>
-            </header>
-            <main class="container mx-auto px-4 py-8">
-                <div class="@container">
-                    <div class="bg-cover bg-center flex flex-col justify-end overflow-hidden rounded-xl min-h-[400px] shadow-sm"
-                        data-alt="Promotional banner showing a vibrant fashion collection"
-                        style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 35%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCa2gpLBWpqQCaIGr7VoiKGD8YmzuMotHQz_Tdp4QneQJ4Ra46ye46rJeiAB-l14km7GoapqU1Uz5U4u5ZMr1C_asoBSZ9ZJlL_qqlaqEM1Y346E0_XsxK7PZaXLpkyeKvaJuioIKbChxTRePn0xsZ8c1rlfc1PV4i3IliBtS_4BymtrnDMqgAS52a8405lcTEomgY0QmxdAch8eSWzDdCoynogPyicpsP1INDvQbMC8TSwXXL0s7_ZB77BOJTaepPSaNnBQh1SlhlM");'>
-                        <div class="flex justify-center gap-2 p-5">
-                            <div class="size-2 rounded-full bg-white"></div>
-                            <div class="size-2 rounded-full bg-white/50"></div>
-                            <div class="size-2 rounded-full bg-white/50"></div>
-                            <div class="size-2 rounded-full bg-white/50"></div>
+                <div class="flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-700/50">
+                    <div class="p-6 sm:p-8">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Thông báo</h1>
+                                <p class="mt-1 text-gray-600 dark:text-gray-400">Tất cả thông báo từ ShopNest sẽ được
+                                    hiển thị tại đây.</p>
+                            </div>
+                            <button
+                                class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-md whitespace-nowrap">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">mark_chat_read</span>
+                                <span>Đánh dấu tất cả đã đọc</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-6 sm:px-8 pb-6 sm:pb-8 flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1 flex gap-2">
+                            <button
+                                class="px-3 py-1.5 text-sm font-medium rounded-full bg-primary/10 text-primary dark:bg-primary/20">Tất
+                                cả</button>
+                            <button
+                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Chưa
+                                đọc</button>
+                            <button
+                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Khuyến
+                                mãi</button>
+                            <button
+                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Đơn
+                                hàng</button>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700/50">
+                        <div
+                            class="p-4 sm:p-6 flex gap-4 bg-blue-50/50 dark:bg-primary/10 cursor-pointer hover:bg-blue-50 dark:hover:bg-primary/20">
+                            <div
+                                class="flex items-center justify-center size-10 rounded-full bg-primary/10 dark:bg-primary/20 flex-shrink-0 mt-1">
+                                <span class="material-symbols-outlined text-primary">campaign</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Ưu đãi độc quyền chỉ
+                                            dành cho bạn!</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mã giảm giá 20% cho đơn
+                                            hàng tiếp theo của bạn đã có hiệu lực. Đừng bỏ lỡ cơ hội mua sắm tuyệt vời
+                                            này.</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">2 giờ
+                                            trước</span>
+                                        <div class="size-2.5 rounded-full bg-primary"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="p-4 sm:p-6 flex gap-4 bg-blue-50/50 dark:bg-primary/10 cursor-pointer hover:bg-blue-50 dark:hover:bg-primary/20">
+                            <div
+                                class="flex items-center justify-center size-10 rounded-full bg-success/10 dark:bg-success/20 flex-shrink-0 mt-1">
+                                <span class="material-symbols-outlined text-success">local_shipping</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10254 của
+                                            bạn đang được giao</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Đơn vị vận chuyển đã
+                                            nhận hàng. Dự kiến giao trong 1-2 ngày làm việc. Theo dõi hành trình đơn
+                                            hàng ngay.</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Hôm
+                                            qua</span>
+                                        <div class="size-2.5 rounded-full bg-primary"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                            <div
+                                class="flex items-center justify-center size-10 rounded-full bg-success/10 dark:bg-success/20 flex-shrink-0 mt-1">
+                                <span class="material-symbols-outlined text-success">task_alt</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10255 đã
+                                            được giao thành công</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cảm ơn bạn đã mua sắm
+                                            tại ShopNest. Vui lòng đánh giá sản phẩm để chúng tôi phục vụ bạn tốt hơn.
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">15/05/2024</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                            <div
+                                class="flex items-center justify-center size-10 rounded-full bg-danger/10 dark:bg-danger/20 flex-shrink-0 mt-1">
+                                <span class="material-symbols-outlined text-danger">cancel</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10252 của
+                                            bạn đã bị hủy</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Yêu cầu hủy đơn hàng
+                                            của bạn đã được chấp nhận. Tiền sẽ được hoàn lại trong vòng 3-5 ngày làm
+                                            việc.</p>
+                                    </div>
+                                    <span
+                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">05/05/2024</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                            <div
+                                class="flex items-center justify-center size-10 rounded-full bg-gray-500/10 dark:bg-gray-500/20 flex-shrink-0 mt-1">
+                                <span class="material-symbols-outlined text-gray-500">info</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Cập nhật chính sách
+                                            bảo mật</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Chúng tôi đã cập nhật
+                                            Chính sách bảo mật và Điều khoản sử dụng. Vui lòng xem lại để biết thêm chi
+                                            tiết.</p>
+                                    </div>
+                                    <span
+                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">01/05/2024</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="py-6">
-                    <div class="flex border-b border-border-light dark:border-border-dark justify-around">
-                        <a class="flex items-center justify-center border-b-[3px] border-b-primary dark:border-b-primary-dark text-primary dark:text-primary-dark gap-1.5 pb-2.5 pt-4 flex-1 transition-colors font-medium"
-                            href="#">
-                            <span class="material-symbols-outlined text-xl">sell</span>
-                            <p class="text-sm tracking-wide">Khuyến mãi</p>
-                        </a>
-                        <a class="flex items-center justify-center border-b-[3px] border-b-transparent text-text-light-secondary dark:text-text-dark-secondary hover:text-primary dark:hover:text-primary-dark gap-1.5 pb-2.5 pt-4 flex-1 transition-colors font-medium"
-                            href="#">
-                            <span class="material-symbols-outlined text-xl">new_releases</span>
-                            <p class="text-sm tracking-wide">Sản phẩm mới</p>
-                        </a>
-                        <a class="flex items-center justify-center border-b-[3px] border-b-transparent text-text-light-secondary dark:text-text-dark-secondary hover:text-primary dark:hover:text-primary-dark gap-1.5 pb-2.5 pt-4 flex-1 transition-colors font-medium"
-                            href="#">
-                            <span class="material-symbols-outlined text-xl">verified</span>
-                            <p class="text-sm tracking-wide">Thương hiệu nổi bật</p>
-                        </a>
-                    </div>
-                </div>
-                <section class="py-6">
-                    <h2
-                        class="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold leading-tight pb-4">
-                        Danh mục nổi bật</h2>
-                    <div
-                        class="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden -mx-2">
-                        <div class="flex items-stretch p-2 gap-4">
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="A man wearing modern casual clothing"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBZah9hyoV31jDm-Sv--LS1Yd80iLty6gDgn7i1wyQQG3zxjB9h1dPH60hDlqzelOtlEVVLJV0bF6s1Auhbf0s2oq8n4MUxEgeADXO5KuZoJGzyXD_MGfQGseDriOIT22bJzUmydhUpnFLcMhmiwM3XOwUREPmR9ziC0lz9L3hdlxH-_6HITMPmjZVCX5ax0_ydH-mXqoVMPf6r4cSMs4cgvxic4Z4lAf06hdxbnwNyp2kFFz4NfVtcvub_nUjxSLprIgYmx2F7oQl4");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Thời trang Nam</p>
-                            </a>
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="A woman in a stylish summer dress"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJW6gpwtXCDpE6ZIDESheOAEBwiViji4M72G_TamDTdKVOB125ljh3VHoDlawfCSPM5ki-kBtjBpv62uJZSg_gsfBOEFs_GwnlP5Z6TcD56VhGeTHw75n7ib6tf4YZ-KJDvoqG3mVU5tnYoNSZTLfOLPPiHBykOUueCA7cQAABfvsD3PXx9mu7H5dquy-rXuG_H5NNtoRVqjXrmIZNdFGVJ133G_UMOgBR0NzTALp3WCXptiQ_T-JiHIoLo6dlEN_5GpRJfThJbX3y");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Thời trang Nữ</p>
-                            </a>
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="A collection of modern electronic gadgets"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC80qxOw9mqHVWtDNFhJkidAGN0n9IpAdI9bFdON-gxJifj8NEnX8zN33DMyn7I-_GCuiFO5y_TBhD1DSElw72JjVqJp-Bc4x8trcddkxrK0BCug2lvyVsMVd15fsMla-VPAutSCyUF0EJSuP_1BcQ8CkY0QwgFMRdZ_LhWkgE-ZAuYykdSBlGCmPB0APjAX4xSe9QiCnIU1zACzozqViCdPT1Qac3U8iGJB6f-vqaTGEsVz_CBZ2zYoFGYqNFFC6s0qVWOdGekr27z");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Đồ điện tử</p>
-                            </a>
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="A cozy and modern living room interior"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCX9ivoGU42IvzCL213R_lhLFvjz-ABhnhyPXggSD3LjKX9dZCMuM7jRWeSJzj3eJ_5v17Rf1cu1lo_zS3-smVpQVJKvY0hIQAP_HmKOOEPUvKAG4dYQ9r0tfkR62Pc0g7yWkxqDJAghet3sKIJsLGv25fkxkMw75BdQX5A_b74GpvIZua02Ll9lyllaGw9Gd65QSnjpOnS0-8u81EB4EHwGVU4CIOhn1ULzteJtKuIZfxX8tpVqgErKmra5AM4rlK1F5e_fCCgfxXS");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Nhà cửa &amp; Đời sống</p>
-                            </a>
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="Various beauty and skincare products arranged neatly"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBT3m92JneG_dpSgGBdzFu6QnAvEaHwmJN9o6wZg4sQGd4ht0NE98zMmzzETnXgcX5x7EOreoGnPFOctuq_RW8PiUOzv4Wx7ZRz-HKscBfV4MWu1mCB764eKt96eQ5lerlgzxmmT4nlM4QRJ50jF4LiYc4VxcpH9bmttNvOBa42awy7YuwDfmvytwBZq43EW3ZvotQdeXsjRpkAYUAakCLtHjzoc9WRTkpjW5wGW90krE72OcP1KoLa-HU8qy9BgrVdKp-zMurdnjiP");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Sức khỏe &amp; Sắc đẹp</p>
-                            </a>
-                            <a class="flex h-full flex-col gap-3 rounded-lg min-w-40 text-center items-center hover:scale-105 transition-transform"
-                                href="#">
-                                <div class="w-40 bg-center bg-no-repeat aspect-square bg-cover rounded-full shadow-sm"
-                                    data-alt="Sports equipment including weights and a yoga mat"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBXwmNilJlmOJeFsmXV4tCzaQzrs_mGxEdJsKV-xwTYYi8UWfexQV0_t5_cEdZ8jBu9M9xNrRHVKMJcis_i_OTzLBilDpGb8zaMOneWUqqTVi21_hI1zQ0vpJs0dIF-6s8CXtRQkzcGUEn1FkxthVu_q63P1jvEOAKEtqfZv7GbA15YuVkDJRfAUMMfVTOkBJNG_gWF4MeGtx0zo3OPX6ogAwSafFsQaAa9a1QWRAtA6EcSolnRRzbafXJaq4pxBkqDeY_Rejako0HQ");'>
-                                </div>
-                                <p class="text-text-light-primary dark:text-text-dark-primary text-base font-semibold">
-                                    Thể thao</p>
-                            </a>
-                        </div>
-                    </div>
-                </section>
-                <section class="py-6">
-                    <div class="flex items-center justify-between pb-4">
-                        <div class="flex items-center gap-4">
-                            <h2 class="text-red-500 text-2xl font-bold tracking-wider">FLASH SALE</h2>
-                            <div class="flex items-center gap-1.5">
-                                <span
-                                    class="bg-text-light-primary dark:bg-text-dark-primary text-white dark:text-black rounded-md px-2 py-1 text-lg font-bold">02</span>
-                                <span class="text-text-light-primary dark:text-text-dark-primary font-bold">:</span>
-                                <span
-                                    class="bg-text-light-primary dark:bg-text-dark-primary text-white dark:text-black rounded-md px-2 py-1 text-lg font-bold">15</span>
-                                <span class="text-text-light-primary dark:text-text-dark-primary font-bold">:</span>
-                                <span
-                                    class="bg-text-light-primary dark:bg-text-dark-primary text-white dark:text-black rounded-md px-2 py-1 text-lg font-bold">48</span>
-                            </div>
-                        </div>
-                        <a class="text-primary dark:text-primary-dark font-semibold text-sm hover:underline"
-                            href="#">Xem tất cả</a>
-                    </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A modern wireless headphone set"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDzZ3xcGG_b5ZazcbSeM51k9pJB83LKNC_YmtrI0He97dr9xtYFR2OGhPGHA075WS_I3DWzVuiMgEVWrCfAysGc-nG2qEfc6dEsBDuWo-Oyk5BjCkZk7pSwfr59UwWQGCInHWOxmANlmi7qpTMdQUTcLR3XRFgIy4Xbo3X4QPO9mdklZ08s3xixWHbIypx0826LSF9S5j6kJvf79CjvLcWALTjvSd_5MSuqqf0eDxCDdFlRzmudJj11lhaL0JEVy-CSjQ8JOtnBa85R");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -50%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Tai nghe không dây</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">499.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        999.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 45%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    45</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A stylish smartwatch displaying the time"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGMcltlSGoPEsja6YO6dFwhYiwq7_dh5Y-ykSTPVfXWG9CK7i5MW3Y_K8oCvW5YsXUIScf3CLx_NEBOwO09HMEgVs_QOV80Wt4xzrKTic2XDS8ZWPKnFHLGGqXgr1PDJOJInfHuHqC-UsHUpQFNsePh8eXphhsIXF3bbyg_ojQKUMqWKqeJGRhzQ6f9gG0w4nYtd0se9rRKJOVDUp_Y1LhuUw28b4_ESpTNde9fm9p66cATPm4KmrL70msusuBkdZDNZ2PbQDomvlu");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -30%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Đồng hồ thông minh</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">1.390.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        1.990.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 78%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    78</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A pair of trendy white sneakers"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCfQx7hMM0oqNyWVtdfWkoBovmktb-GSv1fH2THYBCn4jNpRgdO_bfKQKR61alRjkaDqVz3HqYF2yrVd--sds2PfM5srLPrA1kWKOm1ooVwE7ysW9z7fVtX6XkoMfxKcttV7eSW8DCnVFiutnYMzAJOQae-8E72rZkIuw_zwpqP1N8iUnB0JqczxAEjsc37GdVNHVQkXAccFquYZ5OMDMCZ7ZKu9dEtFPLkWWSMoLvsRthNd2D0I-Jl2lbFIssxYkSzxc6V7yU7x7_S");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -25%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Giày thể thao</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">750.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        1.000.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 60%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    60</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A modern gaming mouse with RGB lighting"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBwWiy8eHkoLATKcwn4iqx-4-bDkzLXSRFWjFAk7X1TuQS_NXeE8oIWNi6_q-KNrU8cOWTkgfon6WJxWkJsAwQQD5cXZqEEcvGShWAM__UXGsIAF0prb8C0jRKbIrmN6Pqlz4_XclmJFIVzkhYCSqLPUzgaGIhrseQ8pNzpJPIPe1fQtnihZ-HXzvZbWpa8gpC3oTmzIpPIrjtTV7OtVUK7UTpJIE5ucEy3xjIWgye17xBSs5WMLyVg5tHUK1DCC2J_bFSpGg3E5yjV");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -40%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Chuột chơi game</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">590.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        990.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 91%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    91</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A sleek black coffee maker"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD5FAY15bkTnvb92qv2gW5k241kJxxQOJmr2oc0zoPElnji0wjvaTFFLcw2RKvJnrw5eDjn7wGShwBduCUFJWQF-C4QDYoRMIX14LXTBbMeablKofR9nCDndi2WWw0dK2D_yyBqW-euvURvbBZQANGsLCskkI2JA_pxslaA074UOijX7_P7OW0VE5PyTmzbzc_D-nsd3MGEipw3yz91lqyMCliRiAeqhqDZGXT7ImNeSs5PVqy0ujyGaONY6E3QNIXrcUlcc0CLmA82");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -35%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Máy pha cà phê</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">1.290.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        1.990.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 33%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    33</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="relative">
-                                <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                    data-alt="A durable and stylish travel backpack"
-                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBllprawinEbwKzfGstCex8_lJviWkJlmMNrEt2-1oKbKUhwG8ZSx4NOfyqdMFO3jrajyB1UgxID4KlAtRLBXLGU7IK6PgV1vOn0fvSd9Cm5VgpARNs_P6ON7RGVqFfOB-SPIFc-64D_WDfvIJOo5AKoH7G84MznCdLlwhWm1OfYlu2TePKzjJJAAD-ygiH3ox1eVTUEUU1R766v6yRmS1vUDD-P2Rpza4rvwg-Hwg7_2wtOer0qmPXcoEBRU_R-NL07Vb80dJQDO9l");'>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
-                                    -15%</div>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Ba lô du lịch</h3>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <p class="text-primary dark:text-primary-dark font-bold">850.000₫</p>
-                                    <p
-                                        class="text-text-light-secondary dark:text-text-dark-secondary text-xs line-through">
-                                        1.000.000₫</p>
-                                </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 mt-2">
-                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 55%"></div>
-                                </div>
-                                <p class="text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">Đã bán
-                                    55</p>
-                            </div>
-                        </a>
-                    </div>
-                </section>
-                <section class="py-6">
-                    <h2
-                        class="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold leading-tight pb-4">
-                        Gợi ý hôm nay</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A blue cotton t-shirt"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBirPwh2IAVvMZf0JHeNikD49Cf9hMJoAiqc5i-H61w0D2I-nls6PZ5fpMWalYS7n5FBF8yKX3pJQGPRpu6HoUGQSzWTM0JVea_yj8GZHnucq6cFBzo-nCAM0Vhux7U0QvFFbb6TmSj6Yxx5ZVFzo3Fxc5shHST7G6vYthjah-LyTmyJoZlv7seJCUjZlEEL4eTvx8NurbnEXGeP1W96j69eBp66g0qVAn6npk79KKU9NweeBZRdn1nAucx4yBV3mgbgY_lIiN0_OaS");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Áo thun cotton</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">250.000₫</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A leather wallet"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBCAgxOWrttAVM_RZ8ayFMSYFg83XkWNarV274vawZo7ErbWu_lkx-pvWHppK4rAmSbMlDGOC-iVp7cu77M-WiWZNiCpqAmyxQY9MrnN9r9QHpCaCuR-T7zza6bLRVbqusU5x8yxIZnK5rXwAmvP85RDBkZOZb6Jg9dWzWrTmRkDwEnUAIa8X6theKqhn8o6Kfx2ErbH6jMaVuSZoTFOUMUnhkiwCcs5-RK0_U1TfSeCO1PooUIoWC63kD7TkbztqERuhndK9FNhwuc");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Ví da nam</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">450.000₫</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A portable bluetooth speaker"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCwpQ3XCCaQzYY3TcRgPk_501rPpQBJuaKkVXsDxiV-pCT3qo5ZHC6Q_gvw2t-1UuSNMNVcIF9lEmJXK7c182EP99GyAe70dCtKiJiYWOUIILq5tKCKewwsIyyRYaOeHXW7A4ucB2LsIfbbVZLgrA4T96jxq7eO0ti658UQY29MPWzdN5-1ujzIyUT60KpSz5U0V--FMj1oM6C0eohlizZXC9P0ZeiOvqxLxFQwfa7reQcgEzFsear8XAtjtFFJMJgv71HFcvYVQ23b");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Loa Bluetooth</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">690.000₫</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A scented candle in a glass jar"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBKZCkMozESOXI-R9A0BHvjgLWWqQExjMgjpq7TmQQErCZM9cfhPbWWQtHVlpxdQ7hLulTJAt60rgH3hw7w6I2x3mGo4LspG8eoWNNn99GXBzh8vUxd0fuDjQVRk8Tf82weu5d4L4iVPkfFA978yGwTMCQIJS0ZUU6cYRrcvi0dDXuQAVdavr3o3io1mwyRv1f9EaYR589bJQgoMDdjnYGXsgKJCLgstRrgXpqr4agFc-Mo6cD3vBj5n8T4RD3boM6eVeXPprtovC4c");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Nến thơm</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">320.000₫</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A set of kitchen knives on a wooden block"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCZUDIbaAkCghjIGboued7R2I6ETDL0LGX4tr0JlVKZPKVIYL5phOGaFtmuYsFx6njF66kkIx5bLHz1d07XLfg6nV31pge36m4rmNvkN_yNHvRCeozYmCijTPWXdj8UUQH_jxVGPVUS8WoEualMRcYqK3LsxJWEVoTYkHco-jRi5ZUu9cTN9JJlxuoW1AmR-m-pHlP3gEWmVcP5Ns7OILZTVJwmaaB7Vp31f_cWIYrzho38dFZi53irrUhg4QeXxGHcUphJkP2yWDyk");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Bộ dao nhà bếp</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">990.000₫</p>
-                            </div>
-                        </a>
-                        <a class="bg-white dark:bg-surface-dark rounded-lg shadow-sm overflow-hidden group block"
-                            href="#">
-                            <div class="w-full bg-center bg-no-repeat aspect-square bg-cover"
-                                data-alt="A pair of elegant sunglasses"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDYFOYeS5J-n4kfIFGYyILMKL3pdNPNUG7U57ASqO9hXIJ3WahYgxifYEtIvuaMxP1YTm0PJ2o4eVno7ATm9HOTkBfMGma7UM_Soqub2GKhifai6ecIi0feDHuiBHKiDpQKf6Lj22QJ7wWd6MgLsED_RfdjLVUq1uGwXFO1gGifXoZP-1OTvDnygXV6iRfhBRenQYnhVNZB8x9iB9R_b6bVqox2Tvizs9qYUSHROpUu3Z4yL76HBAENV9bRNN_pBKkQRAzgBe5Bda8H");'>
-                            </div>
-                            <div class="p-3">
-                                <h3
-                                    class="text-text-light-primary dark:text-text-dark-primary font-semibold text-sm truncate group-hover:text-primary dark:group-hover:text-primary-dark">
-                                    Kính râm thời trang</h3>
-                                <p class="text-primary dark:text-primary-dark font-bold mt-1">550.000₫</p>
-                            </div>
-                        </a>
-                    </div>
-                </section>
-            </main>
-            <footer class="bg-white dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-8">
-                <div class="container mx-auto px-4 py-12">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <h4 class="font-bold text-text-light-primary dark:text-text-dark-primary mb-4">Về ShopNest
-                            </h4>
-                            <ul class="space-y-2 text-text-light-secondary dark:text-text-dark-secondary text-sm">
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Giới thiệu</a>
-                                </li>
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Tuyển dụng</a>
-                                </li>
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Điều khoản</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-text-light-primary dark:text-text-dark-primary mb-4">Hỗ trợ khách
-                                hàng</h4>
-                            <ul class="space-y-2 text-text-light-secondary dark:text-text-dark-secondary text-sm">
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Trung tâm trợ
-                                        giúp</a></li>
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Chính sách đổi
-                                        trả</a></li>
-                                <li><a class="hover:text-primary dark:hover:text-primary-dark" href="#">Hướng dẫn mua
-                                        hàng</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-text-light-primary dark:text-text-dark-primary mb-4">Theo dõi
-                                chúng tôi</h4>
-                            <div class="flex space-x-4 text-text-light-secondary dark:text-text-dark-secondary">
-                                <a class="hover:text-primary dark:hover:text-primary-dark" href="#">
-                                    <svg aria-hidden="true" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                        <path clip-rule="evenodd"
-                                            d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
-                                            fill-rule="evenodd"></path>
-                                    </svg>
-                                </a>
-                                <a class="hover:text-primary dark:hover:text-primary-dark" href="#">
-                                    <svg aria-hidden="true" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                        <path
-                                            d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84">
-                                        </path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-text-light-primary dark:text-text-dark-primary mb-4">Đăng ký nhận
-                                tin</h4>
-                            <p class="text-sm text-text-light-secondary dark:text-text-dark-secondary mb-2">Nhận thông
-                                tin mới nhất về các chương trình khuyến mãi.</p>
-                            <form class="flex">
-                                <input
-                                    class="form-input w-full rounded-l-md border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light-primary dark:text-text-dark-primary focus:border-primary dark:focus:border-primary-dark focus:ring-0 text-sm"
-                                    placeholder="Email của bạn" type="email" />
-                                <button
-                                    class="bg-primary dark:bg-primary-dark text-white px-4 rounded-r-md hover:bg-opacity-90 dark:hover:bg-opacity-90 text-sm font-semibold"
-                                    type="submit">Đăng ký</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div
-                        class="mt-12 border-t border-border-light dark:border-border-dark pt-8 text-center text-sm text-text-light-secondary dark:text-text-dark-secondary">
-                        © 2024 ShopNest. Đã đăng ký bản quyền.
-                    </div>
-                </div>
-            </footer>
+            </div>
         </div>
     </div>
 </body>

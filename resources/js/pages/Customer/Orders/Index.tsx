@@ -1,345 +1,241 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CustomerLayout from '@/layouts/app/CustomerLayout';
-import { router, usePage } from '@inertiajs/react';
-import OrdersHeader from '@/Components/customer/ui/orders/OrdersHeader';
-import OrdersTabs, { OrdersTabEntry } from '@/Components/customer/ui/orders/OrdersTabs';
-import OrdersSearchBar from '@/Components/customer/ui/orders/OrdersSearchBar';
-import OrdersList from '@/Components/customer/ui/orders/OrdersList';
-import { OrderStatusTheme, OrderSummary } from '@/Components/customer/ui/orders/types';
+import React, { useState, useEffect } from 'react'
+import { router, usePage } from '@inertiajs/react'
+import CustomerLayout from '@/layouts/app/CustomerLayout'
+import '@/../css/customer-style/customer-order.css'
 
-type PaginationLink = {
-  url: string | null;
-  label: string;
-  active: boolean;
-};
+interface OrderItem {
+  id: number
+  product_name: string
+  product_image?: string | null
+  quantity: number
+  price: number
+}
 
-type OrdersPagination = {
-  data: OrderSummary[];
-  current_page: number;
-  last_page: number;
-  next_page_url: string | null;
-  links: PaginationLink[];
-};
+interface Order {
+  id: number
+  code: string
+  status: string
+  payment_status: string
+  total: number
+  created_at: string
+  can_cancel?: boolean
+}
 
-type FiltersPayload = {
-  status?: string[] | string | null;
-  date_from?: string | null;
-  date_to?: string | null;
-  search?: string | null;
-  sort?: string | null;
-};
+interface PageProps {
+  orders: Order[]
+  filters?: { search?: string; status?: string }
+  [key: string]: unknown
+}
 
-type PageProps = {
-  orders: OrdersPagination;
-  filters?: FiltersPayload;
-  tabCounts: Record<string, number>;
-  totalSpent: number;
-};
+export default function Index() {
+  const { orders = [], filters = {} } = usePage<PageProps>().props
+  const [search, setSearch] = useState(filters.search || '')
+  const [status, setStatus] = useState(filters.status || 'all')
+  const [showModal, setShowModal] = useState(false)
+  interface DetailOrder extends Order {
+    items?: OrderItem[]
+    subtotal?: number
+    shipping_fee?: number
+    discount_total?: number
+  }
+  const [modalOrder, setModalOrder] = useState<DetailOrder | null>(null)
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false)
 
-const ORDERS_ENDPOINT = '/user/orders';
+  const statuses: { key: string; label: string }[] = [
+    { key: 'all', label: 'Tất cả' },
+    { key: 'pending', label: 'Chờ xử lý' },
+    { key: 'processing', label: 'Đang xử lý' },
+    { key: 'shipped', label: 'Đã giao cho hãng' },
+    { key: 'delivered', label: 'Đã giao' },
+    { key: 'canceled', label: 'Đã hủy' }
+  ]
 
-type QueryParameterValue = string | number | boolean | null | string[] | number[];
-type QueryParams = Record<string, QueryParameterValue>;
-
-const tabLabelMap: Record<string, string> = {
-  all: 'Tất cả',
-  pending_confirmation: 'Chờ xác nhận',
-  processing: 'Đang xử lý',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Đã hủy',
-  returned_refunded: 'Trả/Hoàn tiền',
-};
-
-const orderStatusLabelMap: Record<string, string> = {
-  pending_confirmation: 'Chờ xác nhận',
-  pending_assignment: 'Chờ phân tài xế',
-  processing: 'Đang xử lý',
-  assigned_to_shipper: 'Đã giao cho tài xế',
-  delivering: 'Đang giao',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
-  returned: 'Đã trả',
-  returned_refunded: 'Đã hoàn tiền',
-};
-
-const orderStatusThemeMap: Record<string, OrderStatusTheme> = {
-  pending_confirmation: 'pending',
-  pending_assignment: 'processing',
-  processing: 'processing',
-  assigned_to_shipper: 'processing',
-  delivering: 'processing',
-  shipped: 'processing',
-  delivered: 'completed',
-  completed: 'completed',
-  cancelled: 'cancelled',
-  returned: 'cancelled',
-  returned_refunded: 'cancelled',
-};
-
-const defaultTabOrder = ['all', 'pending_confirmation', 'processing', 'shipped', 'delivered', 'cancelled', 'returned_refunded'];
-
-const normalizeQuery = (input: Record<string, QueryParameterValue | undefined>): QueryParams => {
-  const result: Record<string, QueryParameterValue> = {};
-
-  Object.entries(input).forEach(([key, value]) => {
-    if (
-      value === undefined ||
-      value === null ||
-      (typeof value === 'string' && value.trim() === '') ||
-      (Array.isArray(value) && value.length === 0)
-    ) {
-      return;
-    }
-
-    result[key] = value;
-  });
-
-  return result;
-};
-
-const formatPrice = (amount: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-
-const formatDateTime = (timestamp: string) =>
-  new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(timestamp));
-
-const resolveStatusLabel = (status: string) =>
-  orderStatusLabelMap[status] ?? status.replace(/_/g, ' ');
-
-const resolveStatusTheme = (status: string): OrderStatusTheme =>
-  orderStatusThemeMap[status] ?? 'processing';
-
-const Index: React.FC = () => {
-  const { orders, filters: filtersFromServer, tabCounts, totalSpent } = usePage<PageProps>().props;
-
-  const normalizedStatus = useMemo(() => {
-    if (!filtersFromServer?.status) {
-      return [] as string[];
-    }
-
-    if (Array.isArray(filtersFromServer.status)) {
-      return filtersFromServer.status.filter((value): value is string => typeof value === 'string' && value.length > 0);
-    }
-
-    if (typeof filtersFromServer.status === 'string' && filtersFromServer.status.length > 0) {
-      return [filtersFromServer.status];
-    }
-
-    return [] as string[];
-  }, [filtersFromServer?.status]);
-
-  const mergedFilters = useMemo(() => ({
-    date_from: filtersFromServer?.date_from ?? null,
-    date_to: filtersFromServer?.date_to ?? null,
-    sort: filtersFromServer?.sort ?? null,
-    search: filtersFromServer?.search ?? null,
-    status: normalizedStatus,
-  }), [filtersFromServer?.date_from, filtersFromServer?.date_to, filtersFromServer?.search, filtersFromServer?.sort, normalizedStatus]);
-
-  const activeTab = normalizedStatus[0] ?? 'all';
-  const [searchValue, setSearchValue] = useState<string>(filtersFromServer?.search ?? '');
-  const [orderCollection, setOrderCollection] = useState<OrderSummary[]>(orders?.data ?? []);
-  const [hasMore, setHasMore] = useState<boolean>((orders?.current_page ?? 1) < (orders?.last_page ?? 1));
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const appendModeRef = useRef(false);
+  const applyFilters = () => {
+    router.get('/user/orders', { search, status }, { preserveState: true, preserveScroll: true })
+  }
 
   useEffect(() => {
-    setSearchValue(filtersFromServer?.search ?? '');
-  }, [filtersFromServer?.search]);
+    const h = setTimeout(() => {
+      applyFilters()
+    }, 500)
+    return () => clearTimeout(h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
-  useEffect(() => {
-    if (!orders) {
-      setOrderCollection([]);
-      setHasMore(false);
-      appendModeRef.current = false;
-      setIsLoadingMore(false);
-      return;
-    }
+  const handleStatusClick = (s: string) => {
+    setStatus(s)
+    router.get('/user/orders', { search, status: s }, { preserveState: true, preserveScroll: true })
+  }
 
-    if (appendModeRef.current) {
-      setOrderCollection((prev) => [...prev, ...orders.data]);
-    } else {
-      setOrderCollection(orders.data);
-    }
+  const formatCurrency = (v: number) => v.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
 
-    setHasMore(orders.current_page < orders.last_page);
-    appendModeRef.current = false;
-    setIsLoadingMore(false);
-  }, [orders]);
+  const openOrder = (orderId: number) => {
+    setShowModal(true)
+    setIsLoadingDetail(true)
+    setModalOrder(null)
+    fetch(`/user/orders/${orderId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+      .then(res => res.json())
+      .then(data => {
+        const page = (data.props || data)
+        setModalOrder(page.order)
+      })
+      .catch(() => setModalOrder(null))
+      .finally(() => setIsLoadingDetail(false))
+  }
 
-  const sanitizedSearch = useMemo(() => searchValue.trim(), [searchValue]);
+  const closeModal = () => {
+    setShowModal(false)
+    setModalOrder(null)
+  }
 
-  const createQueryParams = useCallback((overrides: Record<string, QueryParameterValue | undefined> = {}): QueryParams => {
-    const baseQuery: Record<string, QueryParameterValue | undefined> = {
-      date_from: mergedFilters.date_from,
-      date_to: mergedFilters.date_to,
-      sort: mergedFilters.sort,
-      status: mergedFilters.status,
-      search: sanitizedSearch,
-    };
-
-    Object.entries(overrides).forEach(([key, value]) => {
-      baseQuery[key] = value;
-    });
-
-    return normalizeQuery(baseQuery);
-  }, [mergedFilters.date_from, mergedFilters.date_to, mergedFilters.sort, mergedFilters.status, sanitizedSearch]);
-
-  const handleTabClick = useCallback(
-    (tabKey: string) => {
-      if (tabKey === activeTab) {
-        return;
-      }
-
-      appendModeRef.current = false;
-
-      const query = createQueryParams({
-        status: tabKey === 'all' ? [] : [tabKey],
-        page: 1,
-      });
-
-      router.visit(ORDERS_ENDPOINT, {
-        method: 'get',
-        data: query,
-        preserveScroll: true,
-        preserveState: true,
-        replace: true,
-      });
-    },
-    [activeTab, createQueryParams],
-  );
-
-  const handleSearchSubmit = useCallback(
-    (event?: React.FormEvent<HTMLFormElement>) => {
-      event?.preventDefault();
-      appendModeRef.current = false;
-      setIsSearching(true);
-
-      const query = createQueryParams({ page: 1 });
-
-      router.visit(ORDERS_ENDPOINT, {
-        method: 'get',
-        data: query,
-        preserveScroll: true,
-        preserveState: true,
-        replace: true,
-        onFinish: () => setIsSearching(false),
-      });
-    },
-    [createQueryParams],
-  );
-
-  const handleLoadMore = useCallback(() => {
-    if (!orders || isLoadingMore || !hasMore) {
-      return;
-    }
-
-    const nextPage = orders.current_page + 1;
-    if (nextPage > orders.last_page) {
-      setHasMore(false);
-      return;
-    }
-
-    appendModeRef.current = true;
-    setIsLoadingMore(true);
-
-    const query = createQueryParams({ page: nextPage });
-
-    router.visit(ORDERS_ENDPOINT, {
-      method: 'get',
-      data: query,
-      preserveScroll: true,
-      preserveState: true,
-      only: ['orders'],
-      onError: () => {
-        appendModeRef.current = false;
-        setIsLoadingMore(false);
-      },
-    });
-  }, [createQueryParams, hasMore, isLoadingMore, orders]);
-
-  const handleCancelOrder = useCallback((orderId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-      return;
-    }
-
-    router.post(`${ORDERS_ENDPOINT}/${orderId}/cancel`, {}, {
-      preserveScroll: true,
-    });
-  }, []);
-
-  const handleReorder = useCallback((orderId: number) => {
-    router.post(`${ORDERS_ENDPOINT}/${orderId}/reorder`, {}, {
-      preserveScroll: true,
-    });
-  }, []);
-
-  const handleInvoiceDownload = useCallback((orderId: number) => {
-    window.open(`${ORDERS_ENDPOINT}/${orderId}/invoice`, '_blank', 'noopener');
-  }, []);
-
-  const tabEntries = useMemo<OrdersTabEntry[]>(() => {
-    const existingKeys = Object.keys(tabCounts);
-    const primaryOrder = defaultTabOrder.filter((key) => existingKeys.includes(key));
-    const remainingKeys = existingKeys.filter((key) => !primaryOrder.includes(key));
-
-    return [...primaryOrder, ...remainingKeys].map((key) => ({
-      key,
-      label: tabLabelMap[key] ?? key.replace(/_/g, ' '),
-      count: tabCounts[key] ?? 0,
-    }));
-  }, [tabCounts]);
+  const statusBadgeClass = (s: string) => `order-status-badge status-${s}`
 
   return (
     <CustomerLayout>
-      <div className="orders-page" aria-labelledby="orders-page-title">
-        <OrdersHeader totalSpentLabel={formatPrice(totalSpent ?? 0)} />
+      <div className="orders-content-card">
+        <div className="orders-header">
+          <div className="orders-header-content">
+            <h1 className="orders-title">Đơn hàng của tôi</h1>
+            <p className="orders-subtitle">Xem và theo dõi tất cả các đơn hàng bạn đã đặt.</p>
+          </div>
+        </div>
+        <hr className="orders-divider" />
 
-        <OrdersTabs tabs={tabEntries} activeTab={activeTab} onTabClick={handleTabClick} />
-
-        <OrdersSearchBar 
-          value={searchValue} 
-          onValueChange={setSearchValue} 
-          onSubmit={handleSearchSubmit}
-          isLoading={isSearching}
-          minLength={2}
-        />
-
-        <section className="orders-list" aria-label="Danh sách đơn hàng">
-          {orderCollection.length === 0 ? (
-            <p className="orders-empty" role="status">
-              Hiện chưa có đơn hàng phù hợp với điều kiện tìm kiếm.
-            </p>
-          ) : (
-            <OrdersList
-              orders={orderCollection}
-              ordersEndpoint={ORDERS_ENDPOINT}
-              hasMore={hasMore}
-              onLoadMore={handleLoadMore}
-              formatPrice={formatPrice}
-              formatDateTime={formatDateTime}
-              resolveStatusLabel={resolveStatusLabel}
-              resolveStatusTheme={resolveStatusTheme}
-              onCancel={handleCancelOrder}
-              onReorder={handleReorder}
-              onDownloadInvoice={handleInvoiceDownload}
+        <div className="orders-filters">
+          <div className="orders-status-tabs">
+            {statuses.map(s => (
+              <button
+                key={s.key}
+                type="button"
+                className={`orders-status-tab${status === s.key ? ' active' : ''}`}
+                onClick={() => handleStatusClick(s.key)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <div className="orders-search-wrapper">
+            <input
+              type="text"
+              className="orders-search-input"
+              placeholder="Tìm kiếm mã đơn hàng..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
             />
-          )}
-        </section>
-      </div>
-    </CustomerLayout>
-  );
-};
+          </div>
+        </div>
 
-export default Index;
+        <div className="orders-table-wrapper">
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Ngày tạo</th>
+                <th>Trạng thái</th>
+                <th>Thanh toán</th>
+                <th>Tổng tiền</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="orders-empty">Không có đơn hàng.</td>
+                </tr>
+              )}
+              {orders.map(o => (
+                <tr key={o.id} className="orders-row">
+                  <td>{o.code}</td>
+                  <td>{o.created_at}</td>
+                  <td><span className={statusBadgeClass(o.status)}>{o.status}</span></td>
+                  <td>{o.payment_status}</td>
+                  <td>{formatCurrency(o.total)}</td>
+                  <td>
+                    <button className="orders-action-btn" onClick={() => openOrder(o.id)}>Xem</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="order-modal-overlay" role="dialog" aria-modal="true">
+          <div className="order-modal-container">
+            <div className="order-modal-header">
+              <h2 className="order-modal-title">Chi tiết Đơn hàng</h2>
+              <button type="button" className="order-modal-close" onClick={closeModal}>×</button>
+            </div>
+            <div className="order-modal-body">
+              {isLoadingDetail && <p className="order-loading">Đang tải...</p>}
+              {!isLoadingDetail && modalOrder && (
+                <div className="order-detail-wrapper">
+                  <div className="order-detail-grid">
+                    <div>
+                      <p className="order-detail-label">Mã đơn:</p>
+                      <p className="order-detail-value">{modalOrder.code}</p>
+                    </div>
+                    <div>
+                      <p className="order-detail-label">Trạng thái:</p>
+                      <p className="order-detail-value"><span className={statusBadgeClass(modalOrder.status)}>{modalOrder.status}</span></p>
+                    </div>
+                    <div>
+                      <p className="order-detail-label">Thanh toán:</p>
+                      <p className="order-detail-value">{modalOrder.payment_status}</p>
+                    </div>
+                  </div>
+                  <div className="order-items-section">
+                    <h3 className="order-section-title">Sản phẩm</h3>
+                    <ul className="order-items-list">
+                      {modalOrder.items?.map((it: OrderItem) => (
+                        <li key={it.id} className="order-item-row">
+                          {it.product_image && (
+                            <img src={it.product_image} alt={it.product_name} className="order-item-image" />
+                          )}
+                          <div className="order-item-info">
+                            <p className="order-item-name">{it.product_name}</p>
+                            <p className="order-item-meta">Số lượng: {it.quantity} × {formatCurrency(it.price)}</p>
+                          </div>
+                        </li>
+                      ))}
+                      {(!modalOrder.items || modalOrder.items.length === 0) && <li>Không có sản phẩm.</li>}
+                    </ul>
+                  </div>
+                  <div className="order-totals">
+                    <div className="order-total-row">
+                      <span>Tổng tiền hàng</span>
+                      <span>{formatCurrency(modalOrder.subtotal || modalOrder.total)}</span>
+                    </div>
+                    {modalOrder.shipping_fee != null && (
+                      <div className="order-total-row">
+                        <span>Phí vận chuyển</span>
+                        <span>{formatCurrency(modalOrder.shipping_fee)}</span>
+                      </div>
+                    )}
+                    {modalOrder.discount_total != null && modalOrder.discount_total > 0 && (
+                      <div className="order-total-row">
+                        <span>Giảm giá</span>
+                        <span>-{formatCurrency(modalOrder.discount_total)}</span>
+                      </div>
+                    )}
+                    <div className="order-total-row order-grand">
+                      <span>Thành tiền</span>
+                      <span>{formatCurrency(modalOrder.total)}</span>
+                    </div>
+                  </div>
+                  <div className="order-modal-actions">
+                    {modalOrder.can_cancel && (
+                      <button type="button" className="order-btn-danger">Hủy đơn hàng</button>
+                    )}
+                    <button type="button" className="order-btn-primary">Liên hệ người bán</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </CustomerLayout>
+  )
+}

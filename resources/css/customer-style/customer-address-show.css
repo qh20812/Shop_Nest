@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #1976D2;
+    --primary-rgb: 25, 118, 210;
+    --danger: #D32F2F;
+    --background-dark: #111921;
+}
+
+/* Modal Overlay */
+.address-show-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px;
+    z-index: 50;
+}
+
+.dark .address-show-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+@media (min-width: 640px) {
+    .address-show-overlay {
+        padding: 24px;
+    }
+}
+
+@media (min-width: 768px) {
+    .address-show-overlay {
+        padding: 32px;
+    }
+}
+
+/* Modal Container */
+.address-show-container {
+    width: 100%;
+    max-width: 672px;
+    margin: 0 auto;
+}
+
+/* Modal Content */
+.address-show-content {
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5e7eb;
+}
+
+.dark .address-show-content {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Modal Header */
+.address-show-header {
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+@media (min-width: 640px) {
+    .address-show-header {
+        padding: 32px;
+    }
+}
+
+.address-show-header-content {
+    flex: 1;
+}
+
+.address-show-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.dark .address-show-title {
+    color: #f3f4f6;
+}
+
+.address-show-subtitle {
+    margin-top: 4px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark .address-show-subtitle {
+    color: #9ca3af;
+}
+
+/* Close Button */
+.address-show-close {
+    color: #9ca3af;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.address-show-close:hover {
+    color: #4b5563;
+}
+
+.dark .address-show-close:hover {
+    color: #e5e7eb;
+}
+
+/* Modal Divider */
+.address-show-divider {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark .address-show-divider {
+    border-top-color: #374151;
+}
+
+/* Modal Body */
+.address-show-body {
+    padding: 24px;
+}
+
+@media (min-width: 640px) {
+    .address-show-body {
+        padding: 32px;
+    }
+}
+
+/* Details List */
+.address-show-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Detail Row */
+.address-show-row {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 640px) {
+    .address-show-row {
+        flex-direction: row;
+    }
+}
+
+.address-show-label {
+    width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+@media (min-width: 640px) {
+    .address-show-label {
+        width: 33.333333%;
+    }
+}
+
+.dark .address-show-label {
+    color: #9ca3af;
+}
+
+.address-show-value {
+    width: 100%;
+    margin-top: 4px;
+    color: #111827;
+    font-weight: 600;
+}
+
+@media (min-width: 640px) {
+    .address-show-value {
+        width: 66.666667%;
+        margin-top: 0;
+    }
+}
+
+.dark .address-show-value {
+    color: #f3f4f6;
+}
+
+/* Default Badge */
+.address-show-badge-wrapper {
+    display: flex;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.address-show-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+}
+
+.dark .address-show-badge {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: #93c5fd;
+}
+
+.address-show-badge-icon {
+    font-size: 18px;
+    margin-right: 6px;
+    margin-left: -4px;
+}
+
+/* Actions */
+.address-show-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 32px;
+}
+
+/* Buttons */
+.address-show-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.address-show-btn-delete {
+    background: var(--danger);
+}
+
+.address-show-btn-delete:hover {
+    background: rgba(211, 47, 47, 0.9);
+}
+
+.address-show-btn-edit {
+    background: var(--primary);
+}
+
+.address-show-btn-edit:hover {
+    background: rgba(var(--primary-rgb), 0.9);
+}
+
+.address-show-btn-icon {
+    font-size: 20px;
+}

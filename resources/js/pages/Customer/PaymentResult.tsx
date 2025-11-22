@@ -86,9 +86,7 @@ const formatCurrency = (value?: number | null, currency = 'VND') => {
 };
 
 const PaymentResult: React.FC<PaymentResultProps> = ({
-  provider,
   status,
-  message,
   order,
   actions,
 }) => {

@@ -10,6 +10,8 @@ use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AddressController;
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\ChangePasswordController;
+use App\Http\Controllers\User\NotificationController;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified.optional'])
@@ -83,11 +85,10 @@ Route::middleware(['auth', 'verified.optional'])
         // Lưu địa chỉ mới
         Route::post('/', [AddressController::class, 'store'])->name('store');
 
-        // API divisions
+        // API divisions (updated: bỏ cấp quận/huyện)
         Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
         Route::get('/provinces/{countryId}', [AddressController::class, 'provinces'])->name('provinces');
-        Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
-        Route::get('/wards/{districtId}', [AddressController::class, 'wards'])->name('wards');
+        Route::get('/wards/{provinceId}', [AddressController::class, 'wards'])->name('wards');
 
         // Xem chi tiết địa chỉ
         Route::get('/{address}', [AddressController::class, 'show'])
@@ -124,6 +125,10 @@ Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])-
 Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
 
 Route::middleware(['auth', 'verified.optional'])->group(function () {
+    // Change password routes for customer
+    Route::get('/user/change-password', [ChangePasswordController::class, 'index'])->name('user.change-password.index');
+    Route::post('/user/change-password', [ChangePasswordController::class, 'update'])->name('user.change-password.update');
+
     // Checkout routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
@@ -131,6 +136,16 @@ Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Checkout API routes
     Route::get('/checkout/available-promotions', [CheckoutController::class, 'getAvailablePromotions'])->name('checkout.available-promotions');
 });
+
+// Customer notifications
+Route::middleware(['auth', 'verified.optional'])
+    ->prefix('/user/notifications')
+    ->as('user.notifications.')
+    ->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
+        Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('mark-read');
+    });
 
     // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
     Route::middleware(['web'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {

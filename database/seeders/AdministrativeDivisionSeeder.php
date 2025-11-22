@@ -65,7 +65,7 @@ class AdministrativeDivisionSeeder extends Seeder
 
                 $this->command?->info("Đã seed tỉnh/thành: {$province['name']} ({$provinceCode})");
 
-                // Seed wards as districts (since JSON doesn't have district level)
+                // Seed wards as wards (since JSON doesn't have district level)
                 foreach ($province['wards'] ?? [] as $ward) {
                     $wardName = $ward['name'] ?? null;
 
@@ -76,12 +76,12 @@ class AdministrativeDivisionSeeder extends Seeder
                     $wardCode = (string) ($ward['code'] ?? $wardName);
 
                     AdministrativeDivision::updateOrCreate(
-                        ['code' => $wardCode, 'level' => AdministrativeDivisionLevel::DISTRICT],
+                        ['code' => $wardCode, 'level' => AdministrativeDivisionLevel::WARD],
                         [
                             'country_id' => $countryId,
                             'parent_id' => $provinceModel->id,
                             'name' => ['vi' => $wardName],
-                            'level' => AdministrativeDivisionLevel::DISTRICT,
+                            'level' => AdministrativeDivisionLevel::WARD,
                             'code' => $wardCode,
                         ]
                     );

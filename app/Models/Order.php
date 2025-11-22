@@ -42,8 +42,8 @@ class Order extends Model
      * The attributes that should be cast to native types.
      */
     protected $casts = [
-        'status' => OrderStatus::class,
-        'payment_status' => PaymentStatus::class,
+        'status' => 'integer',
+        'payment_status' => 'integer',
         'sub_total' => 'decimal:2',
         'shipping_fee' => 'decimal:2',
         'discount_amount' => 'decimal:2',

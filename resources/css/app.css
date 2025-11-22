@@ -22,6 +22,8 @@
     --color-light-warning: #FFF2C6;
     --color-success: #388E3C;
     --color-light-success: #BBF7D0;
+    --color-background-light: #f6f7f8;
+    --color-background-dark: #111921;
 
     --font-family-display: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
     --font-family-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';

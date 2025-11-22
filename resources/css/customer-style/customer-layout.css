@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --background-light: #f6f7f8;
+    --background-dark: #111921;
+    --primary: #1976D2;
+}
+
+/* Customer Layout Wrapper */
+.customer-layout-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Customer Layout Root */
+.customer-layout-root {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    font-family: Inter, 'Noto Sans', sans-serif;
+    background: var(--background-light);
+}
+
+.dark .customer-layout-root {
+    background: var(--background-dark);
+}
+
+/* Layout Container */
+.customer-layout-container {
+    padding: 16px;
+}
+
+@media (min-width: 640px) {
+    .customer-layout-container {
+        padding: 24px;
+    }
+}
+
+@media (min-width: 768px) {
+    .customer-layout-container {
+        padding: 32px;
+    }
+}
+
+/* Layout Grid */
+.customer-layout-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .customer-layout-grid {
+        flex-direction: row;
+    }
+}

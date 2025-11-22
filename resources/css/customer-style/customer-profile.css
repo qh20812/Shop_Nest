@@ -1,0 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary: #1976D2;
+    --primary-rgb: 25, 118, 210;
+    --background-light: #f6f7f8;
+    --background-dark: #111921;
+    --danger: #D32F2F;
+}
+
+/* Profile Content Card */
+.profile-content-card {
+    flex: 1;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .profile-content-card {
+    background: var(--background-dark);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Profile Header */
+.profile-content-header {
+    padding: 24px;
+}
+
+@media (min-width: 640px) {
+    .profile-content-header {
+        padding: 32px;
+    }
+}
+
+.profile-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.dark .profile-page-title {
+    color: #f3f4f6;
+}
+
+.profile-page-subtitle {
+    margin-top: 4px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark .profile-page-subtitle {
+    color: #9ca3af;
+}
+
+/* Divider */
+.profile-content-divider {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark .profile-content-divider {
+    border-top-color: #374151;
+}
+
+/* Form Container */
+.profile-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 24px;
+}
+
+@media (min-width: 640px) {
+    .profile-form-container {
+        padding: 32px;
+    }
+}
+
+@media (min-width: 768px) {
+    .profile-form-container {
+        flex-direction: row;
+    }
+}
+
+/* Avatar Section */
+.profile-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .profile-avatar-section {
+        width: 33.333%;
+    }
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+}
+
+.profile-avatar-image {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.profile-avatar-edit-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #ffffff;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.dark .profile-avatar-edit-btn {
+    background: #1f2937;
+    border-color: #4b5563;
+}
+
+.profile-avatar-edit-btn:hover {
+    background: #f3f4f6;
+}
+
+.dark .profile-avatar-edit-btn:hover {
+    background: #374151;
+}
+
+.profile-avatar-edit-icon {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.dark .profile-avatar-edit-icon {
+    color: #d1d5db;
+}
+
+.profile-avatar-hint {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dark .profile-avatar-hint {
+    color: #9ca3af;
+}
+
+/* Fields Section */
+.profile-fields-section {
+    flex-grow: 1;
+}
+
+.profile-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+@media (min-width: 640px) {
+    .profile-fields-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.profile-field-col-span {
+    grid-column: span 1;
+}
+
+@media (min-width: 640px) {
+    .profile-field-col-span {
+        grid-column: span 2;
+    }
+}
+
+/* Form Fields */
+.profile-field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+.dark .profile-field-label {
+    color: #d1d5db;
+}
+
+.profile-field-input,
+.profile-field-select {
+    margin-top: 4px;
+    display: block;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    padding: 8px 12px;
+    font-size: 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dark .profile-field-input,
+.dark .profile-field-select {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+
+.profile-field-input:focus,
+.profile-field-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.profile-field-input.has-error {
+    border-color: var(--danger);
+}
+
+.dark .profile-field-input.has-error {
+    border-color: var(--danger);
+}
+
+.profile-field-input:read-only {
+    background: #f3f4f6;
+}
+
+.dark .profile-field-input:read-only {
+    background: #1f2937;
+    color: #9ca3af;
+}
+
+.profile-field-error {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--danger);
+}
+
+/* Change Password Link */
+.profile-change-password-link {
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.profile-change-password-link:hover {
+    text-decoration: underline;
+}
+
+@media (min-width: 640px) {
+    .profile-change-password-link {
+        width: auto;
+    }
+}
+
+/* Form Actions */
+.profile-form-actions {
+    margin-top: 32px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.profile-action-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.profile-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.profile-btn-cancel {
+    color: #374151;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+}
+
+.dark .profile-btn-cancel {
+    background: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+.profile-btn-cancel:hover:not(:disabled) {
+    background: #f9fafb;
+}
+
+.dark .profile-btn-cancel:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.profile-btn-save {
+    color: #ffffff;
+    background: var(--primary);
+    border: 1px solid transparent;
+}
+
+.profile-btn-save:hover:not(:disabled) {
+    background: rgba(var(--primary-rgb), 0.9);
+}
+
+.profile-btn-save:disabled {
+    background: #d1d5db;
+}
+
+.dark .profile-btn-save:disabled {
+    background: #4b5563;
+}

@@ -11,6 +11,7 @@ interface DailyDiscoverCardProps {
     isNew?: boolean;
     href?: string;
     onFavorite?: () => void;
+    favorited?: boolean;
 }
 
 export default function DailyDiscoverCard({
@@ -22,7 +23,8 @@ export default function DailyDiscoverCard({
     isSale = false,
     isNew = false,
     href,
-    onFavorite
+    onFavorite,
+    favorited = false
 }: DailyDiscoverCardProps) {
 
     const formatPrice = (price: number) => {
@@ -66,12 +68,22 @@ export default function DailyDiscoverCard({
     return (
         <div className="product-card">
             {/* Favorite button remains clickable and will not trigger navigation when clicked */}
-            <button 
-                className="product-favorite-btn"
+            <button
+                className={`product-favorite-btn ${favorited ? 'favorited' : ''}`}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFavorite?.(); }}
-                aria-label="Add to favorites"
+                aria-label={favorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                aria-pressed={favorited}
             >
-                <i className="bi bi-heart product-favorite-icon"></i>
+                {/* Inline SVGs so the filled/outline states are always available regardless of icon font */}
+                {favorited ? (
+                    <svg className="product-favorite-icon" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                        <path fill="currentColor" d="M12 21s-7-4.35-8.5-7A4.5 4.5 0 0 1 8 4.5 4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 4-2.5A4.5 4.5 0 0 1 20.5 14C19 16.65 12 21 12 21z"/>
+                    </svg>
+                ) : (
+                    <svg className="product-favorite-icon" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                        <path fill="none" stroke="currentColor" strokeWidth="1.5" d="M12 21s-7-4.35-8.5-7A4.5 4.5 0 0 1 8 4.5a4.5 4.5 0 0 1 4 2.4 4.5 4.5 0 0 1 4-2.4A4.5 4.5 0 0 1 20.5 14C19 16.65 12 21 12 21z"/>
+                    </svg>
+                )}
             </button>
 
             {href ? (

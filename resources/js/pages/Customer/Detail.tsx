@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import '@/../css/ProductDetail.css';
 import { router } from '@inertiajs/react';
+import PopupAddToCart from '@/Components/home/ui/PopupAddToCart';
+import { useToast } from '@/Contexts/ToastContext';
 
 interface AttributeValue {
   attribute_value_id: number;
@@ -121,6 +123,25 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const toast = useToast();
+  const [favorited, setFavorited] = useState<boolean>(false);
+  // load initial favorited state from server
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/user/wishlist/items');
+        if (res.status === 401) return; // not logged in
+        const data = await res.json();
+        if (data.items && Array.isArray(data.items)) {
+          setFavorited(data.items.includes(product.id));
+        }
+      } catch (err) {
+        console.error('Failed to load wishlist status', err);
+      }
+    })();
+  }, [product.id]);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [popupProduct, setPopupProduct] = useState<{ id: number; name: string; image: string; quantity: number } | null>(null);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -130,6 +151,54 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
       return `${(count / 1000).toFixed(1)}k`;
     }
     return count.toString();
+  };
+
+  const resolveColor = (raw?: string): string | undefined => {
+    if (!raw) return undefined;
+    const value = String(raw).trim();
+    if (!value) return undefined;
+    const lower = value.toLowerCase();
+
+    // Hex short/long with or without #
+    const hexMatch = lower.match(/^#?[0-9a-f]{3}([0-9a-f]{3})?$/);
+    if (hexMatch) return lower.startsWith('#') ? lower : `#${lower}`;
+
+    // rgb/rgba/hsl/hsla
+    if (/^(rgba?|hsla?)\(/.test(lower)) return lower;
+
+    // Common localized color map
+    const basicMap: Record<string, string> = {
+      'đỏ': '#ff3b30', 'do': '#ff3b30', 'red': 'red',
+      'hồng': '#ff8ba7', 'hong': '#ff8ba7', 'pink': 'pink',
+      'xanh lá': '#28a745', 'xanh-la': '#28a745', 'xanh lá cây': '#28a745',
+      'xanh': '#007bff', 'xanh biển': '#007bff', 'blue': 'blue',
+      'đen': '#000000', 'black': 'black',
+      'trắng': '#ffffff', 'trang': '#ffffff', 'white': 'white',
+      'vàng': '#ffc107', 'vang': '#ffc107', 'yellow': 'yellow',
+      'cam': '#ff6a00', 'orange': 'orange',
+      'tím': '#8a2be2', 'tim': '#8a2be2', 'purple': 'purple',
+      'nâu': '#8b4513', 'brown': 'brown',
+      'xám': '#6b7280', 'gray': 'gray', 'grey': 'gray',
+      'be': '#f5f5dc'
+    };
+
+    // Split on common separators in case of multi-name values
+    const parts = lower.split(/\s*(?:,|\/|-|\|)\s*/).map(p => p.trim()).filter(Boolean);
+    for (const p of parts) {
+      if (basicMap[p]) return basicMap[p];
+      // if looks like a CSS color name, allow it
+      if (/^[a-z\s]+$/.test(p) && p.length <= 20) return p;
+      // hex without #
+      const phex = p.replace(/^#/, '');
+      if (/^[0-9a-f]{3}([0-9a-f]{3})?$/.test(phex)) return `#${phex}`;
+    }
+
+    // Look for hex inside the string
+    const hexInside = lower.match(/#([0-9a-f]{6}|[0-9a-f]{3})/i);
+    if (hexInside) return `#${hexInside[1]}`;
+
+    // As a last attempt, return the value and let the browser try to interpret it
+    return lower;
   };
 
   const renderStars = (ratingValue: number) => {
@@ -160,7 +229,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
 
   const handleQuantityChange = (delta: number) => {
     if (!selectedVariant) return;
-    
+
     const maxQty = Math.min(selectedVariant.available_quantity, 99);
     const newQty = Math.max(1, Math.min(maxQty, quantity + delta));
     setQuantity(newQty);
@@ -168,17 +237,17 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
 
   const handleQuantityInput = (value: string) => {
     if (!selectedVariant) return;
-    
+
     // Allow empty string for user to clear and type
     if (value === '') {
       setQuantity(1);
       return;
     }
-    
+
     // Only allow numeric input
     const numValue = parseInt(value, 10);
     if (isNaN(numValue)) return;
-    
+
     // Clamp between 1 and available quantity
     const maxQty = Math.min(selectedVariant.available_quantity, 99);
     const clampedValue = Math.max(1, Math.min(maxQty, numValue));
@@ -208,9 +277,17 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
       const data = await response.json();
 
       if (data.success) {
-        alert(data.message || 'Đã thêm vào giỏ hàng');
-        // Optionally reload to update cart count
-        router.reload({ only: ['cartItems'] });
+        toast.success(data.message || 'Đã thêm vào giỏ hàng');
+        // Open popup with product details
+        setPopupProduct({ id: product.id, name: product.name, image: currentImage?.url || '', quantity });
+        setIsPopupOpen(true);
+        // Refresh cart items in header (re-fetch only cartItems prop)
+        try {
+          router.reload({ only: ['cartItems'] });
+        } catch (err) {
+          // Fallback to no reload
+          console.warn('Failed to reload cart items', err);
+        }
       } else {
         if (data.action === 'login_required' && data.redirect) {
           window.location.href = data.redirect;
@@ -281,8 +358,49 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
               aria-label={product.name}
               style={{ backgroundImage: `url(${currentImage?.url || ''})` }}
             >
-              <button className="pd-fav-btn" aria-label="Add to wishlist">
-                <span className="material-symbols-outlined">favorite</span>
+              <button
+                className={`pd-fav-btn ${favorited ? 'favorited' : ''}`}
+                aria-label={favorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                aria-pressed={favorited}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const next = !favorited;
+                  setFavorited(next);
+                  if (next) {
+                    toast.success('Đã thêm vào yêu thích', `Sản phẩm "${product.name}" đã được thêm vào danh sách yêu thích.`);
+                    (async () => {
+                      try {
+                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const res = await fetch(`/user/wishlist/items/${product.id}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } });
+                        if (res.status === 401) {
+                          const data = await res.json(); if (data.redirect) window.location.href = data.redirect;
+                        }
+                      } catch (err) { console.error('Failed to add to wishlist', err); }
+                    })();
+                  } else {
+                    toast.info('Đã xóa khỏi yêu thích', `Sản phẩm "${product.name}" đã được xóa khỏi danh sách yêu thích.`);
+                    (async () => {
+                      try {
+                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const res = await fetch(`/user/wishlist/items/${product.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } });
+                        if (res.status === 401) {
+                          const data = await res.json(); if (data.redirect) window.location.href = data.redirect;
+                        }
+                      } catch (err) { console.error('Failed to remove from wishlist', err); }
+                    })();
+                  }
+                }}
+              >
+                {favorited ? (
+                  <svg viewBox="0 0 24 24" width="20" height="20" role="img" aria-hidden="true">
+                    <path fill="currentColor" d="M12 21s-7-4.35-8.5-7A4.5 4.5 0 0 1 8 4.5 4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 4-2.5A4.5 4.5 0 0 1 20.5 14C19 16.65 12 21 12 21z" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="20" height="20" role="img" aria-hidden="true">
+                    <path fill="none" stroke="currentColor" strokeWidth="1.5" d="M12 21s-7-4.35-8.5-7A4.5 4.5 0 0 1 8 4.5a4.5 4.5 0 0 1 4 2.4 4.5 4.5 0 0 1 4-2.4A4.5 4.5 0 0 1 20.5 14C19 16.65 12 21 12 21z" />
+                  </svg>
+                )}
               </button>
             </div>
 
@@ -336,7 +454,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
             <div className="pd-variants">
               {product.attributes.map(attribute => {
                 const isColorAttribute = attribute.name.toLowerCase().includes('color') || attribute.name.toLowerCase().includes('màu');
-                
+
                 return (
                   <div key={attribute.attribute_id} className="pd-variant-group">
                     <p className="pd-variant-label">
@@ -347,7 +465,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                         </span>
                       )}
                     </p>
-                    
+
                     {isColorAttribute ? (
                       <div className="pd-color-options">
                         {attribute.values.map(value => (
@@ -355,7 +473,8 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                             key={value.attribute_value_id}
                             className={`pd-color ${selectedAttributes[attribute.attribute_id] === value.attribute_value_id ? 'active' : ''}`}
                             title={value.value}
-                            style={{ backgroundColor: value.value.toLowerCase() }}
+                            style={{ backgroundColor: resolveColor(value.value) || undefined }}
+                            aria-label={`Color ${value.value}`}
                             onClick={() => handleAttributeSelect(attribute.attribute_id, value.attribute_value_id)}
                           />
                         ))}
@@ -380,18 +499,18 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
               <div className="pd-variant-group">
                 <p className="pd-variant-label">Quantity</p>
                 <div className="pd-qty">
-                  <button 
-                    className="pd-qty-btn" 
-                    aria-label="Decrease" 
+                  <button
+                    className="pd-qty-btn"
+                    aria-label="Decrease"
                     onClick={() => handleQuantityChange(-1)}
                     disabled={quantity <= 1}
                   >
                     -
                   </button>
-                  <input 
-                    className="pd-qty-input" 
-                    type="text" 
-                    value={quantity} 
+                  <input
+                    className="pd-qty-input"
+                    type="text"
+                    value={quantity}
                     onChange={(e) => handleQuantityInput(e.target.value)}
                     onBlur={(e) => {
                       // If empty on blur, set to 1
@@ -400,9 +519,9 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                       }
                     }}
                   />
-                  <button 
-                    className="pd-qty-btn" 
-                    aria-label="Increase" 
+                  <button
+                    className="pd-qty-btn"
+                    aria-label="Increase"
                     onClick={() => handleQuantityChange(1)}
                     disabled={!selectedVariant || quantity >= selectedVariant.available_quantity || quantity >= 99}
                   >
@@ -416,15 +535,15 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
             </div>
 
             <div className="pd-actions">
-              <button 
-                className="pd-btn pd-btn-outline" 
+              <button
+                className="pd-btn pd-btn-outline"
                 onClick={handleAddToCart}
                 disabled={isAddingToCart || !selectedVariant}
               >
                 <span className="material-symbols-outlined">add_shopping_cart</span>
                 <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
               </button>
-              <button 
+              <button
                 className="pd-btn pd-btn-primary"
                 onClick={handleBuyNow}
                 disabled={isBuyingNow || !selectedVariant}
@@ -463,7 +582,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 {activeTab === 'description' ? (
                   <div className="pd-prose">
                     <div dangerouslySetInnerHTML={{ __html: product.description }} />
-                    
+
                     {product.attributes && product.attributes.length > 0 && (
                       <>
                         <h3>Specifications:</h3>
@@ -590,6 +709,12 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
           </div>
         </div>
       </div>
+      {/* Popup Add to Cart */}
+      <PopupAddToCart
+        isOpen={isPopupOpen}
+        product={popupProduct}
+        onClose={() => { setIsPopupOpen(false); setPopupProduct(null); }}
+      />
     </HomeLayout>
   );
 }

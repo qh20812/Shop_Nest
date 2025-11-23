@@ -4,7 +4,7 @@ import Navbar from '@/Components/ui/Navbar';
 import { useTranslation } from '../../lib/i18n';
 import { usePage } from '@inertiajs/react';
 import Chatbot from '@/Components/Chatbot';
-import { ToastProvider } from '@/Contexts/ToastContext';
+// ToastProvider is provided globally in `app.tsx`
 
 
 type RoleKey = 'admin' | 'seller' | 'shipper';
@@ -200,7 +200,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }, []);
 
   return (
-    <ToastProvider>
+    <>
       <Sidebar
         items={sidebarItems}
         isClosed={isSidebarClosed}
@@ -214,6 +214,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </main>
         <Chatbot user={user} />
       </div>
-    </ToastProvider>
+    </>
   );
 }

@@ -12,6 +12,7 @@ interface ProductCardProps {
     onAddToCart?: () => void;
     onViewDetails?: () => void;
     onFavorite?: () => void;
+    favorited?: boolean;
 }
 
 export default function ProductCard({
@@ -24,7 +25,8 @@ export default function ProductCard({
     isNew = false,
     onAddToCart,
     onViewDetails,
-    onFavorite
+    onFavorite,
+    favorited = false
 }: ProductCardProps) {
 
     const formatPrice = (price: number) => {
@@ -87,7 +89,7 @@ export default function ProductCard({
                 )}
 
                 <button 
-                    className="product-favorite-btn"
+                    className={`product-favorite-btn ${favorited ? 'favorited' : ''}`}
                     onClick={onFavorite}
                     aria-label="Add to favorites"
                 >

@@ -3,7 +3,7 @@ import Navbar from '../../Components/home/ui/Navbar';
 import Header from '../../Components/home/ui/Header';
 import Footer from '../../Components/home/ui/Footer';
 import ChatPopup from '@/Components/Chat/ChatPopup';
-import { ToastProvider } from '@/Contexts/ToastContext';
+// ToastProvider is provided globally in `app.tsx`
 import '@/../css/Home.css';
 import '@/../css/Chat.css';
 
@@ -15,7 +15,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
     const isHomePage = window.location.pathname === '/';
 
     return (
-        <ToastProvider>
             <div className="home-layout">
                 {/* Navbar */}
                 <Navbar />
@@ -34,6 +33,5 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                 {/* Chat Popup */}
                 <ChatPopup />
             </div>
-        </ToastProvider>
     );
 }

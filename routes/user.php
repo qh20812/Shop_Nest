@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\OrderController;
+use App\Http\Controllers\User\WishlistController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AddressController;
 use App\Http\Controllers\User\ProfileController;
@@ -136,6 +137,15 @@ Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Checkout API routes
     Route::get('/checkout/available-promotions', [CheckoutController::class, 'getAvailablePromotions'])->name('checkout.available-promotions');
 });
+
+Route::middleware(['auth', 'verified.optional'])
+    ->prefix('user/wishlist')
+    ->as('user.wishlist.')
+    ->group(function () {
+        Route::get('items', [WishlistController::class, 'index'])->name('items.index');
+        Route::post('items/{productId}', [WishlistController::class, 'store'])->name('items.store');
+        Route::delete('items/{productId}', [WishlistController::class, 'destroy'])->name('items.destroy');
+    });
 
 // Customer notifications
 Route::middleware(['auth', 'verified.optional'])

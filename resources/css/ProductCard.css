@@ -133,11 +133,17 @@
     transition: all 0.2s ease;
     border: none;
     cursor: pointer;
+    z-index: 30; /* Ensure the favorite button is visually above the product link */
 }
 
 .product-favorite-btn:hover {
     background-color: #ffffff;
     color: var(--danger);
+}
+
+.product-favorite-btn:focus {
+    outline: var(--focus-outline);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06);
 }
 
 .dark .product-favorite-btn {
@@ -151,7 +157,23 @@
 }
 
 .product-favorite-icon {
-    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+}
+
+/* Styled state for favorited item */
+.product-favorite-btn.favorited {
+    background-color: var(--primary);
+    color: var(--light);
+}
+
+.product-favorite-btn.favorited:hover {
+    background-color: var(--info); /* slightly darker red */
+}
+
+.product-favorite-btn.favorited .product-favorite-icon {
+    color: var(--light);
 }
 
 /* Product Content Section */
@@ -164,7 +186,7 @@
 
 .product-card-title {
     font-size: 1.125rem;
-    font-weight: 700;
+    font-weight: normal;
     color: #27272a;
     line-height: 1.75rem;
 }

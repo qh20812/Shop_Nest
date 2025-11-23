@@ -1,10 +1,11 @@
 import React from 'react'
+import HomeLayout from '@/layouts/app/HomeLayout';
 
 function SearchPage() {
   return (
-    <div>
-      
-    </div>
+    <HomeLayout>
+      <h1>Kết quả tìm kiếm cho "Giày thể thao"</h1>
+    </HomeLayout>
   )
 }
 

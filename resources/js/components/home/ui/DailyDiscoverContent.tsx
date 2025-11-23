@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DailyDiscoverCard from './DailyDiscoverCard';
 import { useToast } from '@/Contexts/ToastContext';
 
@@ -18,16 +18,75 @@ interface DailyDiscoverContentProps {
 
 export default function DailyDiscoverContent({ products }: DailyDiscoverContentProps) {
     const toast = useToast();
+    const [favorites, setFavorites] = useState<Set<number>>(new Set());
+    // Try to fetch user's current wishlist items on mount
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await fetch('/user/wishlist/items');
+                if (res.status === 401) {
+                    // Not logged in
+                    return;
+                }
+                const data = await res.json();
+                if (data.items && Array.isArray(data.items)) {
+                    setFavorites(new Set(data.items));
+                }
+            } catch (err) {
+                console.error('Failed to load wishlist', err);
+            }
+        };
+        load();
+    }, []);
 
     const handleFavorite = (product: Product) => {
-        // Show toast notification
-        toast.info(
-            'Đã thêm vào yêu thích!',
-            `Sản phẩm "${product.name}" đã được thêm vào danh sách yêu thích.`
-        );
+        // Optimistically update favorite state and persist to server
+        setFavorites((prev) => {
+            const next = new Set(prev);
+            if (next.has(product.id)) {
+                next.delete(product.id);
+                toast.info('Đã xóa khỏi yêu thích', `Sản phẩm "${product.name}" đã được xóa khỏi danh sách ưu thích.`);
+                // remove from server
+                (async () => {
+                    try {
+                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const res = await fetch(`/user/wishlist/items/${product.id}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': csrf }
+                        });
+                        if (res.status === 401) {
+                            const data = await res.json();
+                            if (data.redirect) window.location.href = data.redirect;
+                        }
+                    } catch (err) {
+                        console.error('Failed to remove from wishlist', err);
+                    }
+                })();
+            } else {
+                next.add(product.id);
+                toast.success('Đã thêm vào yêu thích', `Sản phẩm "${product.name}" đã được thêm vào danh sách ưu thích.`);
+                // persist to server
+                (async () => {
+                    try {
+                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const res = await fetch(`/user/wishlist/items/${product.id}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf }
+                        });
+                        if (res.status === 401) {
+                            const data = await res.json();
+                            if (data.redirect) window.location.href = data.redirect;
+                        }
+                    } catch (err) {
+                        console.error('Failed to add to wishlist', err);
+                    }
+                })();
+            }
+            return next;
+        });
         
-        // TODO: Implement favorite logic
-        console.log('Add to favorite:', product);
+        // TODO: Persist to server via API
+        console.log('Toggled favorite:', product.id);
     };
 
     
@@ -53,6 +112,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                                 isNew={false}
                                 href={`/product/${product.id}`}
                                 onFavorite={() => handleFavorite(product)}
+                                favorited={favorites.has(product.id)}
                             />
                         );
                     })}

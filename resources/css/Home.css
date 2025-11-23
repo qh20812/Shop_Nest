@@ -2546,10 +2546,21 @@
 
 .daily-discover-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    /* Allow auto-fill with a slightly smaller minimum so layout can fit more cards
+       on wider screens while staying responsive on smaller screens. */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 16px;
-    max-width: 1200px;
+    /* Allow the grid to stretch so 6 columns can fit when viewport is wide */
+    max-width: 1320px; /* 6 * 220px = 1320px as an approximate reference */
     margin: 0 auto;
+}
+
+/* Desktop breakpoint: force a 6-column layout on large screens */
+@media (min-width: 1280px) {
+    .daily-discover-grid {
+        grid-template-columns: repeat(6, 1fr);
+        max-width: 1320px;
+    }
 }
 
 /* Daily Discover Card */

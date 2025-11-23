@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
+import React from 'react';
 import DailyDiscoverCard from './DailyDiscoverCard';
-import PopupAddToCart from './PopupAddToCart';
 import { useToast } from '@/Contexts/ToastContext';
 
 interface Product {
@@ -19,40 +17,7 @@ interface DailyDiscoverContentProps {
 }
 
 export default function DailyDiscoverContent({ products }: DailyDiscoverContentProps) {
-    const [isPopupOpen, setIsPopupOpen] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<{
-        id: number;
-        name: string;
-        image: string;
-        quantity: number;
-    } | null>(null);
     const toast = useToast();
-
-    const handleProductClick = (productId: number) => {
-        router.get(`/product/${productId}`);
-    };
-
-    const handleAddToCart = (product: Product) => {
-        // Set selected product for popup
-        setSelectedProduct({
-            id: product.id,
-            name: product.name,
-            image: product.image,
-            quantity: 1
-        });
-        
-        // Show popup
-        setIsPopupOpen(true);
-        
-        // Show toast notification
-        toast.success(
-            'Thêm vào giỏ hàng thành công!',
-            'Sản phẩm đã được thêm vào giỏ hàng của bạn.'
-        );
-        
-        // TODO: Implement actual add to cart API call
-        console.log('Add to cart:', product);
-    };
 
     const handleFavorite = (product: Product) => {
         // Show toast notification
@@ -65,10 +30,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
         console.log('Add to favorite:', product);
     };
 
-    const handleClosePopup = () => {
-        setIsPopupOpen(false);
-        setSelectedProduct(null);
-    };
+    
 
     return (
         <>
@@ -89,8 +51,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                                 originalPrice={originalPrice}
                                 isSale={!!hasDiscount}
                                 isNew={false}
-                                onAddToCart={() => handleAddToCart(product)}
-                                onViewDetails={() => handleProductClick(product.id)}
+                                href={`/product/${product.id}`}
                                 onFavorite={() => handleFavorite(product)}
                             />
                         );
@@ -98,12 +59,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                 </div>
             </div>
 
-            {/* Popup Add to Cart */}
-            <PopupAddToCart
-                isOpen={isPopupOpen}
-                product={selectedProduct}
-                onClose={handleClosePopup}
-            />
+            {/* Popup Add to Cart has been removed from Daily Discover - add-to-cart is handled on the product detail page */}
         </>
     );
 }

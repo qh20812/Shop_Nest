@@ -97,7 +97,7 @@ export default function DailyDiscoverCard({
                         />
                         {(isSale || isNew) && (
                             <div className="product-card-badges">
-                                {isSale && originalPrice && originalPrice > currentPrice && (
+                                {isSale && typeof originalPrice === 'number' && originalPrice > currentPrice && (
                                     <span className="product-badge product-badge-sale">
                                         {Math.round(((originalPrice - currentPrice) / originalPrice) * 100)}%
                                     </span>
@@ -122,7 +122,7 @@ export default function DailyDiscoverCard({
                         <div className="product-card-price">
                             <div className="product-price-group">
                                 <p className="product-current-price">{formatPrice(currentPrice)}</p>
-                                {originalPrice && originalPrice > currentPrice && (
+                                {typeof originalPrice === 'number' && originalPrice > currentPrice && (
                                     <p className="product-original-price">{formatPrice(originalPrice)}</p>
                                 )}
                             </div>
@@ -140,7 +140,7 @@ export default function DailyDiscoverCard({
                         />
                         {(isSale || isNew) && (
                             <div className="product-card-badges">
-                                {isSale && originalPrice && originalPrice > currentPrice && (
+                                {isSale && typeof originalPrice === 'number' && originalPrice > currentPrice && (
                                     <span className="product-badge product-badge-sale">
                                         {Math.round(((originalPrice - currentPrice) / originalPrice) * 100)}%
                                     </span>
@@ -165,7 +165,7 @@ export default function DailyDiscoverCard({
                         <div className="product-card-price">
                             <div className="product-price-group">
                                 <p className="product-current-price">{formatPrice(currentPrice)}</p>
-                                {originalPrice && originalPrice > currentPrice && (
+                                {typeof originalPrice === 'number' && originalPrice > currentPrice && (
                                     <p className="product-original-price">{formatPrice(originalPrice)}</p>
                                 )}
                             </div>

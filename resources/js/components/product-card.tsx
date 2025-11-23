@@ -110,7 +110,7 @@ export default function ProductCard({
                 <div className="product-card-price">
                     <div className="product-price-group">
                         <p className="product-current-price">{formatPrice(currentPrice)}</p>
-                        {originalPrice && originalPrice > currentPrice && (
+                        {typeof originalPrice === 'number' && originalPrice > currentPrice && (
                             <p className="product-original-price">{formatPrice(originalPrice)}</p>
                         )}
                     </div>

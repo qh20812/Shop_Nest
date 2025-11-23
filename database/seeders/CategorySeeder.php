@@ -69,7 +69,7 @@ class CategorySeeder extends Seeder
                     'en' => "Products in {$parentName['en']} category",
                     'vi' => "Các sản phẩm thuộc danh mục {$parentName['vi']}"
                 ],
-                'image_url' => 'https://via.placeholder.com/600x400.png/00aa88?text=Category',
+                'image_url' => 'https://dummyimage.com/300x300/666266/ffffff&text=Category',
                 'is_active' => true,
             ]);
 
@@ -81,7 +81,7 @@ class CategorySeeder extends Seeder
                         'vi' => "Các sản phẩm thuộc danh mục {$childName['vi']}"
                     ],
                     'parent_category_id' => $parent->category_id,
-                    'image_url' => 'https://via.placeholder.com/600x400.png/00aa88?text=Category',
+                    'image_url' => 'https://dummyimage.com/300x300/666266/ffffff&text=Category',
                     'is_active' => true,
                 ]);
             }

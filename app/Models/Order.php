@@ -42,8 +42,9 @@ class Order extends Model
      * The attributes that should be cast to native types.
      */
     protected $casts = [
-        'status' => 'integer',
-        'payment_status' => 'integer',
+        // Cast status/payment_status to native PHP backed enum instances
+        'status' => OrderStatus::class,
+        'payment_status' => PaymentStatus::class,
         'sub_total' => 'decimal:2',
         'shipping_fee' => 'decimal:2',
         'discount_amount' => 'decimal:2',

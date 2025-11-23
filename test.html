@@ -1,269 +1,87 @@
 <!DOCTYPE html>
-<html class="light" lang="vi">
+
+<html class="light" lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>ShopNest - Thông báo</title>
+    <title>ShopNest - Modern E-commerce</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap"
         rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#1976D2",
+                        "primary": "#1975d2",
                         "background-light": "#f6f7f8",
                         "background-dark": "#111921",
-                        danger: "#D32F2F",
-                        success: "#2E7D32",
-                        warning: "#ED6C02",
                     },
                     fontFamily: {
-                        display: "Inter"
+                        "display": ["Inter", "sans-serif"]
                     },
-                    borderRadius: {
-                        DEFAULT: "0.25rem",
-                        lg: "0.5rem",
-                        xl: "0.75rem",
-                        full: "9999px"
-                    }
-                }
-            }
-        };
-    </script>
-    <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            font-size: 24px;
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
         }
-    </style>
+    </script>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark font-display">
-    <div class="relative flex min-h-screen w-full flex-col group/design-root"
-        style='font-family: Inter, "Noto Sans", sans-serif;'>
-        <div class="p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col lg:flex-row gap-4">
-                <nav
-                    class="flex h-full w-full lg:max-w-[280px] flex-col rounded-xl bg-white dark:bg-zinc-900 p-4 shadow-sm border border-gray-200 dark:border-gray-700/50">
-                    <div class="flex flex-col gap-6">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12"
-                                data-alt="User avatar placeholder"
-                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfPgXLZbUXnCWuV6a2VN_8vFEnW4e2Y4_szpNFyhXePY0xWm8on_1uorLHL0S2atnhVY4ZmSuLiZpbGhFn-J4w32Ul5sWOio7IxTIfdUdE7Yr8vm99rsl78M7_tImFE9ei3hRF4OSwPTUQ9u3hSv4DFWWsNSxV3IlQUpUM5oz66J0B023WTIvKtBgWBwMjBtbmAtnhopW75jBX4l-J614atNYihZCfgNxGbXoMgTHHpY6wrTGATt8gKIHUKzCpmgbJlwffK45J_SFn");'>
-                            </div>
-                            <div class="flex flex-col">
-                                <h1 class="text-gray-900 dark:text-gray-100 text-base font-semibold leading-normal">Tên
-                                    người dùng</h1>
-                                <p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
-                                    user.email@shopnest.com</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-4">
-                            <div class="flex flex-col gap-1">
-                                <h2
-                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
-                                    Tài khoản của tôi</h2>
-                                <ul class="flex flex-col gap-1">
-                                    <li>
-                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
-                                            href="#">
-                                            <span class="material-symbols-outlined">person</span>
-                                            <p class="text-sm font-medium leading-normal">Thông tin cá nhân</p>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
-                                            href="#">
-                                            <span class="material-symbols-outlined">location_on</span>
-                                            <p class="text-sm font-medium leading-normal">Địa chỉ</p>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
-                                            href="#">
-                                            <span class="material-symbols-outlined">lock</span>
-                                            <p class="text-sm font-medium leading-normal">Đổi mật khẩu</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <h2
-                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
-                                    Đơn hàng của tôi</h2>
-                                <ul class="flex flex-col gap-1">
-                                    <li>
-                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
-                                            href="#">
-                                            <span class="material-symbols-outlined">inventory_2</span>
-                                            <p class="text-sm font-medium leading-normal">Quản lý đơn hàng</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <h2
-                                    class="px-3 py-1 text-xs font-semibold uppercase text-gray-400 dark:text-gray-500 tracking-wider">
-                                    Thông báo</h2>
-                                <ul class="flex flex-col gap-1">
-                                    <li>
-                                        <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20"
-                                            href="#">
-                                            <span class="material-symbols-outlined text-primary"
-                                                style="font-variation-settings: 'FILL' 1;">notifications</span>
-                                            <p class="text-sm font-medium leading-normal">Thông báo</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-                <div class="flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-700/50">
-                    <div class="p-6 sm:p-8">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Thông báo</h1>
-                                <p class="mt-1 text-gray-600 dark:text-gray-400">Tất cả thông báo từ ShopNest sẽ được
-                                    hiển thị tại đây.</p>
-                            </div>
+<body class="font-display bg-background-light dark:bg-background-dark">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="layout-container flex h-full grow flex-col">
+            
+            <!-- Main Content Area -->
+            <main class="flex-1">
+                <!-- Carousel Section -->
+                <section class="relative w-full h-[60vh] md:h-[75vh] max-h-[800px] group overflow-hidden">
+                    <!-- Slide 1 -->
+                    <div class="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-700 ease-in-out"
+                        data-alt="Models wearing stylish winter jackets and sweaters in a snowy, urban setting."
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCvSdTvWdM9WqLTDgSJ7oEAZE7s1OofK4lerdk9uxJ3_vhvVLMhTtpaVkPF8N-WkkPfZL2piCzxu-CyLoKm7e6Q6cj8ctvU6j8hDeWklMghBS2EqmEmx88DilG3WuYU9BYYa074WwFZdXvoJkScD1DBhT_yistd2XjjolFn6eIKeJS59HYBu2U6x9LPO8qpgckWzBhEgHIAb4Bbpa9_OrUVmr9ChIC08RNPR9G2h3BltoyW1PnHnqvWe-LUntS6BdIw4sHoFU2fmgpZ');">
+                        <div class="absolute inset-0 bg-black/40"></div>
+                        <div
+                            class="relative h-full flex flex-col items-center justify-center text-center text-white px-4">
+                            <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight">Winter Collection Arrived
+                            </h1>
+                            <p class="max-w-xl text-lg md:text-xl mb-8 text-white/90">Stay warm and stylish with our
+                                latest arrivals. Unmatched quality and design.</p>
                             <button
-                                class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-md whitespace-nowrap">
-                                <span class="material-symbols-outlined" style="font-size: 20px;">mark_chat_read</span>
-                                <span>Đánh dấu tất cả đã đọc</span>
+                                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold tracking-wide hover:bg-primary/90 transition-colors">
+                                <span>Discover Now</span>
                             </button>
                         </div>
                     </div>
-                    <div class="px-6 sm:px-8 pb-6 sm:pb-8 flex flex-col sm:flex-row gap-4">
-                        <div class="flex-1 flex gap-2">
-                            <button
-                                class="px-3 py-1.5 text-sm font-medium rounded-full bg-primary/10 text-primary dark:bg-primary/20">Tất
-                                cả</button>
-                            <button
-                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Chưa
-                                đọc</button>
-                            <button
-                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Khuyến
-                                mãi</button>
-                            <button
-                                class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10">Đơn
-                                hàng</button>
-                        </div>
+                    <!-- Navigation Arrows -->
+                    <button
+                        class="absolute top-1/2 left-4 -translate-y-1/2 z-10 flex items-center justify-center w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 group-hover:left-6">
+                        <span class="material-symbols-outlined text-3xl">arrow_back_ios_new</span>
+                    </button>
+                    <button
+                        class="absolute top-1/2 right-4 -translate-y-1/2 z-10 flex items-center justify-center w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 group-hover:right-6">
+                        <span class="material-symbols-outlined text-3xl">arrow_forward_ios</span>
+                    </button>
+                    <!-- Pagination Dots -->
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex space-x-2">
+                        <button class="w-2.5 h-2.5 rounded-full bg-white"></button>
+                        <button class="w-2.5 h-2.5 rounded-full bg-white/50 hover:bg-white/75"></button>
+                        <button class="w-2.5 h-2.5 rounded-full bg-white/50 hover:bg-white/75"></button>
+                        <button class="w-2.5 h-2.5 rounded-full bg-white/50 hover:bg-white/75"></button>
                     </div>
-                    <div class="divide-y divide-gray-200 dark:divide-gray-700/50">
-                        <div
-                            class="p-4 sm:p-6 flex gap-4 bg-blue-50/50 dark:bg-primary/10 cursor-pointer hover:bg-blue-50 dark:hover:bg-primary/20">
-                            <div
-                                class="flex items-center justify-center size-10 rounded-full bg-primary/10 dark:bg-primary/20 flex-shrink-0 mt-1">
-                                <span class="material-symbols-outlined text-primary">campaign</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Ưu đãi độc quyền chỉ
-                                            dành cho bạn!</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mã giảm giá 20% cho đơn
-                                            hàng tiếp theo của bạn đã có hiệu lực. Đừng bỏ lỡ cơ hội mua sắm tuyệt vời
-                                            này.</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">2 giờ
-                                            trước</span>
-                                        <div class="size-2.5 rounded-full bg-primary"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="p-4 sm:p-6 flex gap-4 bg-blue-50/50 dark:bg-primary/10 cursor-pointer hover:bg-blue-50 dark:hover:bg-primary/20">
-                            <div
-                                class="flex items-center justify-center size-10 rounded-full bg-success/10 dark:bg-success/20 flex-shrink-0 mt-1">
-                                <span class="material-symbols-outlined text-success">local_shipping</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10254 của
-                                            bạn đang được giao</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Đơn vị vận chuyển đã
-                                            nhận hàng. Dự kiến giao trong 1-2 ngày làm việc. Theo dõi hành trình đơn
-                                            hàng ngay.</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Hôm
-                                            qua</span>
-                                        <div class="size-2.5 rounded-full bg-primary"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                            <div
-                                class="flex items-center justify-center size-10 rounded-full bg-success/10 dark:bg-success/20 flex-shrink-0 mt-1">
-                                <span class="material-symbols-outlined text-success">task_alt</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10255 đã
-                                            được giao thành công</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cảm ơn bạn đã mua sắm
-                                            tại ShopNest. Vui lòng đánh giá sản phẩm để chúng tôi phục vụ bạn tốt hơn.
-                                        </p>
-                                    </div>
-                                    <span
-                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">15/05/2024</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                            <div
-                                class="flex items-center justify-center size-10 rounded-full bg-danger/10 dark:bg-danger/20 flex-shrink-0 mt-1">
-                                <span class="material-symbols-outlined text-danger">cancel</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Đơn hàng #SN10252 của
-                                            bạn đã bị hủy</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Yêu cầu hủy đơn hàng
-                                            của bạn đã được chấp nhận. Tiền sẽ được hoàn lại trong vòng 3-5 ngày làm
-                                            việc.</p>
-                                    </div>
-                                    <span
-                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">05/05/2024</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-4 sm:p-6 flex gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                            <div
-                                class="flex items-center justify-center size-10 rounded-full bg-gray-500/10 dark:bg-gray-500/20 flex-shrink-0 mt-1">
-                                <span class="material-symbols-outlined text-gray-500">info</span>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Cập nhật chính sách
-                                            bảo mật</h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Chúng tôi đã cập nhật
-                                            Chính sách bảo mật và Điều khoản sử dụng. Vui lòng xem lại để biết thêm chi
-                                            tiết.</p>
-                                    </div>
-                                    <span
-                                        class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">01/05/2024</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                </section>
+            </main>
         </div>
     </div>
 </body>

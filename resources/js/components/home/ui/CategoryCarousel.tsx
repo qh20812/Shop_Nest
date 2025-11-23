@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 interface Category {
-    id: number;
-    img: string;
+    id: number | string;
+    img?: string | null;
     name: string;
-    slug?: string;
+    slug?: string | null;
 }
 
 interface CategoryCarouselProps {
@@ -51,7 +51,8 @@ const CategorySkeleton = () => (
 export default function CategoryCarousel({ categories, isLoading = false }: CategoryCarouselProps) {
     const [currentPage, setCurrentPage] = useState(0);
     const [itemsPerPage, setItemsPerPage] = useState(14);
-    const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+    // Use string keys for errors to handle both numeric and string IDs seamlessly
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     // Handle responsive items per page with debounced resize
     const updateItemsPerPage = useCallback(() => {
@@ -104,8 +105,9 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
     };
 
     // Handle image error
-    const handleImageError = useCallback((categoryId: number) => {
-        setImageErrors(prev => ({ ...prev, [categoryId]: true }));
+    const handleImageError = useCallback((categoryId: number | string) => {
+        const key = String(categoryId);
+        setImageErrors(prev => ({ ...prev, [key]: true }));
     }, []);
 
     // Touch/swipe handlers
@@ -144,13 +146,13 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
                         <ul>
                             {currentCategories.map((category) => (
                                 <li key={`category-${category.id}`}>
-                                    {!imageErrors[category.id] ? (
-                                        <img
-                                            src={category.img}
-                                            alt={category.name}
-                                            loading="lazy"
-                                            onError={() => handleImageError(category.id)}
-                                        />
+                                    {!imageErrors[String(category.id)] ? (
+                                                <img
+                                                    src={category.img ?? '/images/placeholder.jpg'}
+                                                    alt={category.name}
+                                                    loading="lazy"
+                                                    onError={() => handleImageError(category.id)}
+                                                />
                                     ) : (
                                         <div className="image-placeholder">
                                             <span>📁</span>

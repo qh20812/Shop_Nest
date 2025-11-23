@@ -42,7 +42,7 @@ export default function ProductInfo({
     : formatCurrency(minPrice);
 
   const activePrice = selectedPrice ?? minPrice;
-  const originalPrice = selectedOriginalPrice && selectedOriginalPrice > activePrice ? selectedOriginalPrice : null;
+  const originalPrice = typeof selectedOriginalPrice === 'number' && selectedOriginalPrice > activePrice ? selectedOriginalPrice : null;
 
   return (
     <div className="product-info-panel">
@@ -71,7 +71,7 @@ export default function ProductInfo({
 
       <div className="product-price-box">
         <div className="product-price-current">{formatCurrency(activePrice)}</div>
-        {originalPrice && (
+        {typeof originalPrice === 'number' && (
           <div className="product-price-original">{formatCurrency(originalPrice)}</div>
         )}
         {selectedPrice == null && (

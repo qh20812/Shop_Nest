@@ -19,6 +19,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -76,12 +78,14 @@ class ShopController extends Controller
         ]);
     }
 
+    /**
+     * Display shop overview, including recent orders, audit logs and open violations.
+     */
     public function show(User $shop): InertiaResponse
     {
-        $this->ensureSeller($shop);
+        $shop = $this->prepareShopForShow($shop);
 
         $shop->load([
-            'roles:id,name',
             'products' => fn ($query) => $query->select('product_id', 'seller_id', 'name', 'status', 'created_at')
                 ->latest()
                 ->take(8),
@@ -109,6 +113,17 @@ class ShopController extends Controller
             'recentViolations' => $openViolations,
             'auditLogs' => $auditLogs,
         ]);
+    }
+
+    /**
+     * Prepare a `User` model to be shown as a shop in admin UI.
+     * Ensures user is a seller and load commonly needed relationships.
+     */
+    private function prepareShopForShow(User $shop): User
+    {
+        $this->ensureSeller($shop);
+        $shop->load(['roles:id,name']);
+        return $shop;
     }
 
     public function statistics(Request $request, User $shop): InertiaResponse
@@ -167,14 +182,15 @@ class ShopController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $shop->shopViolations()->create([
+        try {
+            $shop->shopViolations()->create([
             'reported_by' => Auth::id(),
             'violation_type' => $validated['violation_type'],
             'severity' => $validated['severity'],
             'description' => $validated['description'],
         ]);
 
-        $this->audit->logAction(
+            $this->audit->logAction(
             $shop,
             'shop.violation.recorded',
             $this->snapshot($shop),
@@ -183,22 +199,29 @@ class ShopController extends Controller
             $request->ip()
         );
 
-        if ($validated['severity'] === 'critical' && $shop->shop_status !== 'suspended') {
+            if ($validated['severity'] === 'critical' && $shop->shop_status !== 'suspended') {
             $autoUntil = now()->addDays(7);
             $this->management->suspend($shop, 'Automatic suspension due to critical violation', $autoUntil, $request->ip(), false);
         }
 
-        return back()->with('success', 'Violation recorded successfully.');
+            return back()->with('success', 'Violation recorded successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to record violation', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to record violation: ' . $e->getMessage()]);
+        }
     }
 
     public function approve(Request $request, User $shop): RedirectResponse
     {
         $this->ensureSeller($shop);
-        $notes = $request->string('notes')->nullable();
-
-        $this->management->approve($shop, $request->ip(), $notes);
-
-        return back()->with('success', 'Shop approved successfully.');
+        $notes = $request->input('notes');
+        try {
+            $this->management->approve($shop, $request->ip(), $notes);
+            return back()->with('success', 'Shop approved successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to approve shop', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Unable to approve shop: ' . $e->getMessage()]);
+        }
     }
 
     public function reject(Request $request, User $shop): RedirectResponse
@@ -210,9 +233,13 @@ class ShopController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $this->management->reject($shop, $validated['reason'], $request->ip(), $validated['notes'] ?? null);
-
-        return back()->with('success', 'Shop rejected successfully.');
+        try {
+            $this->management->reject($shop, $validated['reason'], $request->ip(), $validated['notes'] ?? null);
+            return back()->with('success', 'Shop rejected successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to reject shop', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Unable to reject shop: ' . $e->getMessage()]);
+        }
     }
 
     public function suspend(Request $request, User $shop): RedirectResponse
@@ -226,7 +253,12 @@ class ShopController extends Controller
         ]);
 
         $until = now()->addDays($validated['duration_days']);
-        $this->management->suspend($shop, $validated['reason'], $until, $request->ip(), true, $validated['notes'] ?? null);
+        try {
+            $this->management->suspend($shop, $validated['reason'], $until, $request->ip(), true, $validated['notes'] ?? null);
+        } catch (\Throwable $e) {
+            Log::error('Failed to suspend shop', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Unable to suspend shop: ' . $e->getMessage()]);
+        }
 
         $actor = $request->user()?->username ?? 'System';
         $message = sprintf(
@@ -252,11 +284,14 @@ class ShopController extends Controller
     public function reactivate(Request $request, User $shop): RedirectResponse
     {
         $this->ensureSeller($shop);
-        $notes = $request->string('notes')->nullable();
-
-        $this->management->reactivate($shop, $request->ip(), $notes);
-
-        return back()->with('success', 'Shop reactivated successfully.');
+        $notes = $request->input('notes');
+        try {
+            $this->management->reactivate($shop, $request->ip(), $notes);
+            return back()->with('success', 'Shop reactivated successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to reactivate shop', ['shop_id' => $shop->id, 'error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Unable to reactivate shop: ' . $e->getMessage()]);
+        }
     }
 
     public function bulkApprove(Request $request): RedirectResponse
@@ -268,11 +303,16 @@ class ShopController extends Controller
 
         $shops = User::sellers()->whereIn('id', $validated['shop_ids'])->get();
 
-        DB::transaction(function () use ($shops, $request) {
-            foreach ($shops as $shop) {
-                $this->management->approve($shop, $request->ip());
-            }
-        });
+        try {
+            DB::transaction(function () use ($shops, $request) {
+                foreach ($shops as $shop) {
+                    $this->management->approve($shop, $request->ip());
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Bulk approve failed', ['error' => $e->getMessage(), 'shop_ids' => $validated['shop_ids'] ?? []]);
+            return back()->withErrors(['error' => 'Bulk approve failed: ' . $e->getMessage()]);
+        }
 
         return back()->with('success', 'Selected shops have been approved.');
     }
@@ -287,11 +327,16 @@ class ShopController extends Controller
 
         $shops = User::sellers()->whereIn('id', $validated['shop_ids'])->get();
 
-        DB::transaction(function () use ($shops, $validated, $request) {
-            foreach ($shops as $shop) {
-                $this->management->reject($shop, $validated['reason'], $request->ip());
-            }
-        });
+        try {
+            DB::transaction(function () use ($shops, $validated, $request) {
+                foreach ($shops as $shop) {
+                    $this->management->reject($shop, $validated['reason'], $request->ip());
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Bulk reject failed', ['error' => $e->getMessage(), 'shop_ids' => $validated['shop_ids'] ?? []]);
+            return back()->withErrors(['error' => 'Bulk reject failed: ' . $e->getMessage()]);
+        }
 
         return back()->with('success', 'Selected shops have been rejected.');
     }
@@ -304,7 +349,14 @@ class ShopController extends Controller
         return $this->export->export($query, $filename);
     }
 
-    private function recentOrdersForShop(User $shop, int $limit = 10): \Illuminate\Support\Collection
+    /**
+     * Get recent orders that include products from the given shop
+     *
+     * @param User $shop
+     * @param int $limit
+     * @return Collection
+     */
+    private function recentOrdersForShop(User $shop, int $limit = 10): Collection
     {
         return Order::query()
             ->select('orders.order_id', 'orders.order_number', 'orders.total_amount', 'orders.created_at')
@@ -318,6 +370,12 @@ class ShopController extends Controller
             ->get();
     }
 
+    /**
+     * Return a snapshot of the shop's relevant fields for audit logging.
+     *
+     * @param User $shop
+     * @return array<string, mixed>
+     */
     private function snapshot(User $shop): array
     {
         $snapshot = $shop->only([

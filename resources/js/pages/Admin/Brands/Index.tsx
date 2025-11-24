@@ -171,7 +171,7 @@ export default function Index() {
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         {brand.logo_url ? (
                             <img
-                                src={`/storage/${brand.logo_url}`}
+                                src={brand.logo_url}
                                 alt={brandName}
                                 style={{
                                     width: "40px",

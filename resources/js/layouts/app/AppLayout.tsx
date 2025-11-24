@@ -54,7 +54,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     admin: [
       { icon: 'bx bxs-dashboard', label: t('Dashboard'), href: '/admin/dashboard' },
       { icon: 'bx bx-user', label: t('Users'), href: '/admin/users' },
-      { icon: 'bi bi-truck', label: t('Shippers'), href: '/admin/shippers' },
+      // { icon: 'bi bi-truck', label: t('Shippers'), href: '/admin/shippers' },
       { icon: 'bx bx-package', label: t('Products'), href: '/admin/products' },
       { icon: 'bx bx-tag', label: t('Inventories'), href: '/admin/inventory' },
       { icon: 'bx bx-gift', label: t('Promotions'), href: '/admin/promotions' },

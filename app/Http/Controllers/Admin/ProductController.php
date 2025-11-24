@@ -11,6 +11,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 
@@ -72,8 +73,15 @@ class ProductController extends Controller
                 ] : null,
                 'status' => $product->status,
                 'images' => $product->images ? $product->images->map(function($image) {
+                    // Normalize image URL: if it's already an absolute URL (http/https), keep it,
+                    // otherwise convert it using Storage::url (public disk)
+                    $rawUrl = $image->image_url;
+                    $imageUrl = $rawUrl;
+                    if (!preg_match('/^https?:\/\//i', (string)$rawUrl) && !str_starts_with((string)$rawUrl, '/')) {
+                        $imageUrl = Storage::url($rawUrl);
+                    }
                     return [
-                        'image_url' => $image->image_url,
+                        'image_url' => $imageUrl,
                         'is_primary' => $image->is_primary
                     ];
                 }) : null,
@@ -156,6 +164,17 @@ class ProductController extends Controller
             },
             'reviews.user'
         ]);
+
+        // Normalize image urls for client (convert storage paths to public URLs)
+        if ($product->images) {
+            $product->images = $product->images->map(function ($image) {
+                $rawUrl = $image->image_url;
+                if (!preg_match('/^https?:\/\//i', (string)$rawUrl) && !str_starts_with((string)$rawUrl, '/')) {
+                    $image->image_url = Storage::url($rawUrl);
+                }
+                return $image;
+            });
+        }
 
         return Inertia::render('Admin/Products/Show', [
             'product' => $product,

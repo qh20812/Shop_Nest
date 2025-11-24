@@ -43,7 +43,7 @@ class BrandController extends Controller
                 'brand_id' => $brand->brand_id,
                 'name' => $brand->getTranslation('name', app()->getLocale()),
                 'description' => $brand->description,
-                'logo_url' => $brand->logo_url,
+                'logo_url' => $brand->logo_url ? (preg_match('/^https?:\/\//i', $brand->logo_url) ? $brand->logo_url : Storage::url($brand->logo_url)) : null,
                 'is_active' => $brand->is_active,
                 'deleted_at' => $brand->deleted_at,
                 'products_count' => $brand->products_count,

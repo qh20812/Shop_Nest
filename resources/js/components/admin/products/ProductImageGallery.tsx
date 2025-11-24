@@ -13,12 +13,20 @@ interface ProductImageGalleryProps {
 
 export default function ProductImageGallery({ images }: ProductImageGalleryProps) {
     const { t } = useTranslation();
+    const resolveSrc = (url?: string) => {
+        if (!url) return '/image/ShopnestLogo.png';
+        if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
+            return url;
+        }
+        return `/storage/${url}`;
+    };
     
     // Set the primary image as default, or the first image if no primary exists
     const primaryImage = images.find(img => img.is_primary) || images[0];
     const [selectedImage, setSelectedImage] = useState<ProductImage | null>(primaryImage || null);
 
     if (!images || images.length === 0) {
+
         return (
             <div className="product-gallery">
                 <div className="product-gallery__main-image">
@@ -37,7 +45,7 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
             <div className="product-gallery__main-image">
                 {selectedImage && (
                     <img
-                        src={`/storage/${selectedImage.image_url}`}
+                        src={resolveSrc(selectedImage.image_url)}
                         alt={t('Product Image')}
                         className="product-gallery__main-img"
                     />
@@ -58,8 +66,8 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
                             }`}
                             onClick={() => setSelectedImage(image)}
                         >
-                            <img
-                                src={`/storage/${image.image_url}`}
+                                <img
+                                    src={resolveSrc(image.image_url)}
                                 alt={`${t('Product Image')} ${image.image_id}`}
                                 className="product-gallery__thumbnail-img"
                             />

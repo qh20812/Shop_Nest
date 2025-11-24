@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "@inertiajs/react";
 import { useTranslation } from "@/lib/i18n";
 import Header from "./Header";
+import '@/../css/Page.css';
 
 interface Breadcrumb {
   label: string;

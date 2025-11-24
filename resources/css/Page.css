@@ -309,6 +309,8 @@ body{
     display: flex;
     align-items: center;
     height: 36px;
+    border: none;
+    background: transparent;
 }
 
 .content nav form .form-input input{

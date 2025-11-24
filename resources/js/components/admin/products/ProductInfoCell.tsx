@@ -35,11 +35,21 @@ export default function ProductInfoCell({ product }: ProductInfoCellProps) {
     };    // Get primary image or first image
     const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
 
+    const resolveSrc = (url?: string) => {
+        if (!url) return null;
+        // If image is already a full URL or absolute path, keep it
+        if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
+            return url;
+        }
+        // Otherwise assume it's a storage path
+        return `/storage/${url}`;
+    };
+
     return (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {primaryImage ? (
                 <img
-                    src={`/storage/${primaryImage.image_url}`}
+                    src={resolveSrc(primaryImage.image_url) || '/image/ShopnestLogo.png'}
                     alt={getProductName()}
                     style={{
                         width: "50px",

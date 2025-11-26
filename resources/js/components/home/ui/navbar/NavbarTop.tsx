@@ -3,7 +3,6 @@ import { Link } from '@inertiajs/react'
 import { useTranslation } from '@/lib/i18n'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
-import { useDarkMode } from '@/hooks/useDarkMode'
 
 interface User {
     id: number;
@@ -22,7 +21,6 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
     const { t } = useTranslation();
     const [showLangDropdown, setShowLangDropdown] = useState(false);
     const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-    const { isDark, toggle: toggleDarkMode } = useDarkMode();
     
     // Performance monitoring
     usePerformanceMonitor('NavbarTop');
@@ -44,14 +42,8 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                     </Link>
                 </div>
                 <div className="navbar-top-right">
-                    {/* Dark Mode Toggle */}
-                    <button
-                        className="navbar-link-hover navbar-flex-center"
-                        onClick={toggleDarkMode}
-                        aria-label="Toggle dark mode"
-                    >
-                        <i className={`bi ${isDark ? 'bi-sun' : 'bi-moon'} navbar-icon-md`}></i>
-                    </button>
+                    
+                    
 
                     {/* Language Dropdown */}
                     <div className="navbar-dropdown-wrapper" ref={langDropdownRef}>

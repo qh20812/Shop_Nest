@@ -421,6 +421,21 @@
     text-decoration: underline;
 }
 
+/* Status / Toast messages for auth pages */
+.login-status {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    border-radius: 8px;
+    border: 1px solid rgba(72, 187, 120, 0.5);
+    background: rgba(237, 250, 240, 1);
+    padding: 8px 12px;
+    color: #087f45;
+    box-shadow: var(--shadow-medium);
+}
+
 /* Error Messages */
 .login-error {
     color: var(--danger);

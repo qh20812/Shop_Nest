@@ -126,11 +126,13 @@ export default function RegisterPage() {
                 <div className="register-card">
                     <div className="register-header">
                         {/* Use external SVG asset from public/image to allow consistent logo updates */}
-                        <img
-                            src="/image/ShopnestLogoSVG.svg"
-                            alt="ShopNest logo"
-                            className="register-logo"
-                        />
+                        <Link href="/">
+                            <img
+                                src="/image/ShopnestLogoSVG.svg"
+                                alt="ShopNest logo"
+                                className="register-logo"
+                            />
+                        </Link>
 
                         <div className="register-title-wrapper">
                             <p className="register-title">Tạo tài khoản mới</p>

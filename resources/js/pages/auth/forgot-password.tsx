@@ -1,5 +1,5 @@
 import '@/../css/login-page.css';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import React from 'react';
 import { useTranslation } from '../../lib/i18n';
 
@@ -22,38 +22,35 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
     };
 
     return (
-        <div className="font-display bg-background-light dark:bg-background-dark relative min-h-screen">
+        <div className="login-page-container">
             <Head title={t('Forgot Password')} />
 
             {/* Status Message */}
             {status && (
-                <div className="absolute top-6 left-1/2 z-50 -translate-x-1/2 rounded border border-green-300 bg-green-100 px-4 py-2 text-green-700 shadow">
+                <div className="login-status">
                     {status}
                 </div>
             )}
 
-            <div className="flex min-h-screen w-full flex-col items-center justify-center px-4">
-                <div className="w-full max-w-md space-y-8">
-                    {/* Logo */}
-                    <div className="text-center">
-                        <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" style={{ width: '59px', height: '59px' }} />
+            <div className="login-content-wrapper">
+                <div className="login-card">
+                    <div className="login-header">
+                        <Link href="/">
+                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" />
+                        </Link>
 
-                        {/* Title */}
-                        <div className="mt-4 flex flex-col gap-3">
-                            <p className="text-text-light dark:text-text-dark text-4xl font-black">{t('Forgot Password?')}</p>
-
-                            <p className="text-subtext-light dark:text-subtext-dark text-base">
-                                {t('Enter your email to receive a password reset link')}
-                            </p>
+                        <div className="login-title-wrapper">
+                            <p className="login-title">{t('Forgot Password?')}</p>
+                            <p className="login-subtitle">{t('Enter your email to receive a password reset link')}</p>
                         </div>
                     </div>
 
                     {/* FORM */}
-                    <form onSubmit={onSubmit} className="flex flex-col gap-6">
+                    <form onSubmit={onSubmit} className="login-form">
                         {/* Email */}
-                        <div className="flex flex-col gap-1">
-                            <label className="flex flex-col">
-                                <p className="text-text-light dark:text-text-dark pb-2 text-base font-medium">{t('Email Address')}</p>
+                        <div className="login-form-group">
+                            <label className="login-form-label">
+                                <p className="login-label-text">{t('Email Address')}</p>
 
                                 <input
                                     id="email"
@@ -63,8 +60,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                                     onChange={(e) => setData('email', e.target.value)}
                                     required
                                     autoFocus
-                                    className="form-input h-14 p-[15px]"
-                                    style={{ borderRadius: '8px' }}
+                                    className="login-input"
                                 />
                             </label>
 
@@ -75,16 +71,16 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="flex h-14 w-full items-center justify-center rounded-[8px] !bg-primary bg-primary text-base font-semibold text-white! shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:brightness-110 focus:ring-4 focus:ring-primary/40 focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="login-submit-btn"
                         >
                             {processing ? t('Sending...') : t('Send Password Reset Link')}
                         </button>
 
                         {/* Back to login */}
-                        <p className="text-subtext-light dark:text-subtext-dark text-center text-sm">
-                            <a href="/login" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">
-                                <span className="material-symbols-outlined text-base">arrow_back</span>
-                                <span>{t('Back to Login')}</span>
+                        <p className="login-footer">
+                            <a href="/login" className="login-footer-link">
+                                <span className="material-symbols-outlined">arrow_back</span>
+                                <span style={{ marginLeft: 8 }}>{t('Back to Login')}</span>
                             </a>
                         </p>
                     </form>

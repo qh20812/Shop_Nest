@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Shop;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
@@ -41,6 +42,7 @@ class SellerRegistrationController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone_number' => 'required|string|max:20|unique:users',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'shop_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
@@ -58,6 +60,25 @@ class SellerRegistrationController extends Controller
             ]);
 
             $user->roles()->attach($sellerRole->id);
+
+            // Create a Shop record if the registrant supplied a shop name during registration.
+            // This keeps the user->shop storefront in sync with the seller profile.
+            if ($request->filled('shop_name')) {
+                $shopName = $request->input('shop_name');
+                $slugBase = \Illuminate\Support\Str::slug($shopName);
+                // make slug unique by appending user id if necessary
+                $slug = $slugBase;
+                if (Shop::where('slug', $slug)->exists()) {
+                    $slug = sprintf('%s-%s', $slugBase, $user->id);
+                }
+
+                Shop::create([
+                    'owner_id' => $user->id,
+                    'name' => $shopName,
+                    'slug' => $slug,
+                    'status' => 'pending',
+                ]);
+            }
 
             DB::commit();
 

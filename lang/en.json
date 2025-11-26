@@ -676,5 +676,9 @@
     },
     "middleware": {
         "seller_access_denied": "You do not have permission to access this page"
+    },
+    "login.title": "Login to Your Account",
+    "home": {
+        "become_seller": "Become a Seller"
     }
 }

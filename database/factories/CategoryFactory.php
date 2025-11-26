@@ -23,7 +23,7 @@ class CategoryFactory extends Factory
                 'en' => $englishDescription,
                 'vi' => $vietnameseDescription
             ]),
-            'image_url' => 'https://dummyimage.com/300x300/666266/ffffff&text=Category',
+            'image_url' => 'https://dummyimage.com/300x300/666266/ffffff',
             'is_active' => true,
         ];
     }

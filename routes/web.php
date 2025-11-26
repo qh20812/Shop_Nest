@@ -7,12 +7,16 @@ use App\Http\Controllers\DetailController;
 use App\Http\Controllers\Debug\InventoryDebugController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SearchProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/test', function(){
-    return Inertia::render('Home/search-page');
-});
+// Route::get('/test', function(){
+//     return Inertia::render('Home/search-page');
+// });
+
+// Search route
+Route::get('/search', [SearchProductController::class, 'index'])->name('search.index');
 
 // Public routes (accessible without login)
 Route::get('/', [HomeController::class, 'index'])->name('home');

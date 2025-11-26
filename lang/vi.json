@@ -636,5 +636,9 @@
     },
     "middleware": {
         "seller_access_denied": "Bạn không có quyền truy cập trang này"
+    },
+    "login.title": "Đăng nhập tài khoản",
+    "home":{
+        "become_seller": "Trở thành người bán hàng"
     }
 }

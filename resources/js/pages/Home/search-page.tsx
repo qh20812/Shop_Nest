@@ -1,115 +1,69 @@
 import React, { useEffect, useState } from 'react';
+import { usePage, router } from '@inertiajs/react';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import ProductCard from '@/Components/home/ui/ProductCard';
 import '@/../css/home-style/search-page.css';
 
-interface MockProduct {
+interface ProductCardData {
   id: number;
-  image: string;
+  image: string | null;
   name: string;
-  rating: number;
-  currentPrice: number;
-  originalPrice?: number;
+  rating: number | null;
+  currentPrice: number | null;
+  originalPrice?: number | null;
   isSale?: boolean;
   isNew?: boolean;
   favorited?: boolean;
 }
 
-const mockProducts: MockProduct[] = [
-  {
-    id: 1,
-    image: 'https://via.placeholder.com/480x360?text=Sneaker+1',
-    name: 'Modern Athletic Sneaker',
-    rating: 4.5,
-    currentPrice: 890000,
-    originalPrice: 1290000,
-    isSale: true,
-    isNew: false,
-    favorited: false,
-  },
-  {
-    id: 2,
-    image: 'https://via.placeholder.com/480x360?text=High+Top',
-    name: 'Retro High-Tops',
-    rating: 4.2,
-    currentPrice: 990000,
-    originalPrice: 1190000,
-    isSale: true,
-    isNew: true,
-    favorited: true,
-  },
-  {
-    id: 3,
-    image: 'https://via.placeholder.com/480x360?text=Canvas',
-    name: 'Minimalist Canvas Shoe',
-    rating: 4.0,
-    currentPrice: 550000,
-    originalPrice: 0,
-    isSale: false,
-    isNew: true,
-    favorited: false,
-  },
-  {
-    id: 4,
-    image: 'https://via.placeholder.com/480x360?text=Trail',
-    name: 'Trail Runner Pro',
-    rating: 4.7,
-    currentPrice: 1590000,
-    originalPrice: 1890000,
-    isSale: true,
-    isNew: false,
-    favorited: false,
-  },
-  {
-    id: 5,
-    image: 'https://via.placeholder.com/480x360?text=Leather',
-    name: 'Classic Leather Loafers',
-    rating: 4.3,
-    currentPrice: 1250000,
-    originalPrice: 0,
-    isSale: false,
-    isNew: false,
-    favorited: false,
-  },
-  {
-    id: 6,
-    image: 'https://via.placeholder.com/480x360?text=Boots',
-    name: 'Urban Explorer Boots',
-    rating: 4.6,
-    currentPrice: 1850000,
-    originalPrice: 2150000,
-    isSale: true,
-    isNew: false,
-    favorited: true,
-  },
-  {
-    id: 7,
-    image: 'https://via.placeholder.com/480x360?text=Runner',
-    name: 'Lightweight Runner',
-    rating: 4.1,
-    currentPrice: 790000,
-    originalPrice: 990000,
-    isSale: true,
-    isNew: true,
-    favorited: false,
-  },
-  {
-    id: 8,
-    image: 'https://via.placeholder.com/480x360?text=Comfort',
-    name: 'Comfort Everyday Shoe',
-    rating: 4.8,
-    currentPrice: 1390000,
-    originalPrice: 0,
-    isSale: false,
-    isNew: true,
-    favorited: false,
-  }
-];
+interface ActiveFilters {
+  search?: string;
+  category_ids?: number[];
+  brand_ids?: number[];
+  price_min?: number | null;
+  price_max?: number | null;
+  rating_min?: number | null;
+  states?: string[];
+  sort?: string;
+}
+
+interface SearchPageProps {
+  query: string;
+  total: number;
+  products: {
+    data: ProductCardData[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+  filters: {
+    categories: { id: number; name: string }[];
+    brands: { id: number; name: string }[];
+    ratingOptions: number[];
+    states: string[];
+    sortOptions: { value: string; label: string }[];
+  };
+  activeFilters: ActiveFilters;
+}
 
 export default function SearchPage() {
-  // Static query & count placeholders (simulate search result)
-  const query = 'Giày thể thao';
-  const total = mockProducts.length;
+  const { props } = usePage();
+  const { query, total, products, filters, activeFilters } = props as unknown as SearchPageProps;
+  type FilterValue = string | number | boolean | null | (string | number | boolean | null)[];
+  const updateFilters = (partial: Partial<ActiveFilters>) => {
+    const merged = { ...activeFilters, ...partial, search: query };
+    const next: Record<string, FilterValue> = {};
+    Object.entries(merged).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        next[k] = v as (string | number | boolean | null)[];
+      } else if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' || v === null) {
+        next[k] = v as FilterValue;
+      }
+    });
+    router.get('/search', next, { preserveScroll: true });
+  };
+  const productList = products?.data || [];
 
   const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [columns, setColumns] = useState<number>(() => {
@@ -137,7 +91,7 @@ export default function SearchPage() {
 
   // items per page = 5 rows * columns per row
   const itemsPerPage = 5 * columns;
-  const totalPages = Math.max(1, Math.ceil(mockProducts.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(productList.length / itemsPerPage));
 
   useEffect(() => {
     // reset page to 1 if columns change and current page would be out of range
@@ -146,7 +100,7 @@ export default function SearchPage() {
 
   const start = (page - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  const visibleProducts = mockProducts.slice(start, end);
+  const visibleProducts = productList.slice(start, end);
 
   const showPagination = totalPages > 1;
 
@@ -164,11 +118,15 @@ export default function SearchPage() {
           </div>
           <div className="search-sort">
             <label htmlFor="sort" className="search-sort-label">Sắp xếp theo:</label>
-            <select id="sort" className="search-sort-select" defaultValue="popular">
-              <option value="popular">Phổ biến nhất</option>
-              <option value="price-asc">Giá: Thấp đến cao</option>
-              <option value="price-desc">Giá: Cao đến thấp</option>
-              <option value="newest">Mới nhất</option>
+            <select
+              id="sort"
+              className="search-sort-select"
+              defaultValue={activeFilters?.sort || 'popular'}
+              onChange={(e) => updateFilters({ sort: e.target.value })}
+            >
+              {filters?.sortOptions?.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
         </header>
@@ -195,10 +153,18 @@ export default function SearchPage() {
               <div className="filter-card">
                 <h2 className="filter-title">Danh mục</h2>
                 <div className="filter-options scrollable">
-                  {['Sneaker', 'Boot', 'Sandal', 'Loafer', 'Canvas', 'Trail'].map(cat => (
-                    <label key={cat} className="filter-option">
-                      <input type="checkbox" />
-                      <span>{cat}</span>
+                  {filters?.categories?.map(cat => (
+                    <label key={cat.id} className="filter-option">
+                      <input
+                        type="checkbox"
+                        defaultChecked={activeFilters?.category_ids?.includes(cat.id)}
+                        onChange={(e) => {
+                          const current = new Set(activeFilters?.category_ids || []);
+                          if (e.target.checked) current.add(cat.id); else current.delete(cat.id);
+                          updateFilters({ category_ids: Array.from(current) as number[] });
+                        }}
+                      />
+                      <span>{cat.name}</span>
                     </label>
                   ))}
                 </div>
@@ -207,10 +173,18 @@ export default function SearchPage() {
               <div className="filter-card">
                 <h2 className="filter-title">Thương hiệu</h2>
                 <div className="filter-options scrollable">
-                  {['Nike', 'Adidas', 'Puma', 'New Balance', 'Asics', 'Reebok'].map(brand => (
-                    <label key={brand} className="filter-option">
-                      <input type="checkbox" />
-                      <span>{brand}</span>
+                  {filters?.brands?.map(brand => (
+                    <label key={brand.id} className="filter-option">
+                      <input
+                        type="checkbox"
+                        defaultChecked={activeFilters?.brand_ids?.includes(brand.id)}
+                        onChange={(e) => {
+                          const current = new Set(activeFilters?.brand_ids || []);
+                          if (e.target.checked) current.add(brand.id); else current.delete(brand.id);
+                          updateFilters({ brand_ids: Array.from(current) as number[] });
+                        }}
+                      />
+                      <span>{brand.name}</span>
                     </label>
                   ))}
                 </div>
@@ -219,9 +193,13 @@ export default function SearchPage() {
               <div className="filter-card">
                 <h2 className="filter-title">Đánh giá</h2>
                 <div className="filter-options">
-                  {[5,4,3].map(r => (
+                  {filters?.ratingOptions?.map(r => (
                     <label key={r} className="filter-option rating-option">
-                      <input type="checkbox" />
+                      <input
+                        type="checkbox"
+                        defaultChecked={activeFilters?.rating_min === r}
+                        onChange={(e) => updateFilters({ rating_min: e.target.checked ? r : null })}
+                      />
                       <span>{r} sao trở lên</span>
                     </label>
                   ))}
@@ -231,17 +209,28 @@ export default function SearchPage() {
               <div className="filter-card">
                 <h2 className="filter-title">Tình trạng</h2>
                 <div className="filter-options">
-                  {['Mới', 'Giảm giá'].map(state => (
+                  {filters?.states?.map(state => (
                     <label key={state} className="filter-option">
-                      <input type="checkbox" />
-                      <span>{state}</span>
+                      <input
+                        type="checkbox"
+                        defaultChecked={activeFilters?.states?.includes(state)}
+                        onChange={(e) => {
+                          const current = new Set(activeFilters?.states || []);
+                          if (e.target.checked) current.add(state); else current.delete(state);
+                          updateFilters({ states: Array.from(current) as string[] });
+                        }}
+                      />
+                      <span>{state === 'new' ? 'Mới' : state === 'sale' ? 'Giảm giá' : state}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <button className="filter-apply-btn" type="button">Áp dụng</button>
-              <button className="filter-reset-btn" type="button">Xóa tất cả</button>
+              <button
+                className="filter-reset-btn"
+                type="button"
+                onClick={() => router.get('/search', { search: query })}
+              >Xóa tất cả</button>
             </div>
           </aside>
 
@@ -250,15 +239,15 @@ export default function SearchPage() {
               {visibleProducts.map(p => (
                 <ProductCard
                   key={p.id}
-                  image={p.image}
+                  image={p.image || ''}
                   name={p.name}
-                  rating={p.rating}
-                  currentPrice={p.currentPrice}
-                  originalPrice={p.originalPrice}
+                  rating={p.rating ?? 0}
+                  currentPrice={p.currentPrice || 0}
+                  originalPrice={p.originalPrice || undefined}
                   isSale={p.isSale}
                   isNew={p.isNew}
                   favorited={p.favorited}
-                  href={`#product-${p.id}`}
+                  href={`/product/${p.id}`}
                 />
               ))}
             </div>

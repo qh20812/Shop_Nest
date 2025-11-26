@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';
 import BulkActions from '@/Components/admin/Shops/BulkActions';
-import Insights from '@/Components/ui/Insights';
 import Pagination from '@/Components/ui/Pagination';
 import DataTable from '@/Components/ui/DataTable';
+import ActionDropdown from '@/Components/ui/ActionDropdown';
 import { useTranslation } from '@/lib/i18n';
 import FilterPanel from '@/Components/ui/FilterPanel';
 import type { Shop, ShopCollection, ShopFilters as FilterParams, ShopMetrics } from './types';
@@ -87,7 +87,7 @@ const formatRelative = (input?: string | null, fallback = '—') => {
 
 export default function Index() {
   const { t } = useTranslation();
-  const { shops, filters, metrics } = usePage<PageProps>().props;
+  const { shops, filters } = usePage<PageProps>().props;
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isGridLoading, setIsGridLoading] = useState(false);
@@ -111,40 +111,6 @@ export default function Index() {
   }, [filters]);
 
   const allSelectedOnPage = shops.data.length > 0 && shops.data.every((shop) => selectedIds.includes(shop.id));
-
-  const metricsItems = useMemo(() => {
-    if (!metrics) {
-      return [];
-    }
-
-    return [
-      {
-        icon: 'bx-store',
-        value: numberFormatter.format(metrics.total ?? 0),
-        label: t('Total shops'),
-      },
-      {
-        icon: 'bx-check-circle',
-        value: numberFormatter.format(metrics.active ?? 0),
-        label: t('Active'),
-      },
-      {
-        icon: 'bx-timer',
-        value: numberFormatter.format(metrics.pending ?? 0),
-        label: t('Pending'),
-      },
-      {
-        icon: 'bx-shield-quarter',
-        value: numberFormatter.format(metrics.suspended ?? 0),
-        label: t('Suspended'),
-      },
-      {
-        icon: 'bx-x-circle',
-        value: numberFormatter.format(metrics.rejected ?? 0),
-        label: t('Rejected'),
-      },
-    ];
-  }, [metrics, t]);
 
   const toggleShopSelection = useCallback((shopId: number, isSelected: boolean) => {
     setSelectedIds((prev) => {
@@ -283,7 +249,8 @@ export default function Index() {
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    router.get('/admin/shops', localFilters, {
+    const payload = Object.fromEntries(Object.entries(localFilters || {}).filter(([, value]) => value !== undefined && value !== null && value !== '')) as Record<string, string | number | boolean>;
+    router.get('/admin/shops', payload, {
       preserveState: true,
       onStart: () => setIsGridLoading(true),
       onFinish: () => setIsGridLoading(false),
@@ -349,20 +316,35 @@ export default function Index() {
         ),
       },
       {
-        header: 'Shop',
+        header: 'Shop Name',
+        accessorKey: 'name' as keyof Shop,
+        cell: (shop: Shop) => (
+          <div style={{ fontWeight: 600, color: 'var(--dark)' }}>
+            {shop.name?.trim() || '—'}
+          </div>
+        ),
+      },
+      {
+        header: 'Owner',
         cell: (shop: Shop) => {
-          const primaryName = shop.name?.trim() ? shop.name : undefined;
           const fallbackName = `${shop.first_name ?? ''} ${shop.last_name ?? ''}`.trim();
-          const displayName = primaryName || (shop.username?.trim() ? shop.username : undefined) || (fallbackName.length ? fallbackName : `${t('Shop')} #${shop.id}`);
-
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--dark)' }}>{displayName}</span>
-              {shop.email && <span style={{ fontSize: '13px', color: 'var(--dark-grey)' }}>{shop.email}</span>}
-              <span style={{ fontSize: '12px', color: 'var(--grey-dark)' }}>{`${t('Joined on')} ${formatDate(shop.created_at)}`}</span>
-            </div>
-          );
+          const ownerName = (fallbackName.length ? fallbackName : undefined) || (shop.username?.trim() ? shop.username : undefined) || `${t('Shop')} #${shop.id}`;
+          return (<div style={{ color: 'var(--dark)' }}>{ownerName}</div>);
         },
+      },
+      {
+        header: 'Email',
+        accessorKey: 'email' as keyof Shop,
+        cell: (shop: Shop) => (
+          <div style={{ color: 'var(--dark-grey)' }}>{shop.email || '—'}</div>
+        ),
+      },
+      {
+        header: 'Joined',
+        accessorKey: 'created_at' as keyof Shop,
+        cell: (shop: Shop) => (
+          <div style={{ color: 'var(--grey-dark)' }}>{formatDate(shop.created_at)}</div>
+        ),
       },
       {
         header: 'Status',
@@ -372,11 +354,15 @@ export default function Index() {
       },
       {
         header: 'Products',
-        accessorKey: 'products_count' as keyof Shop,
+        cell: (shop: Shop) => (
+          <div style={{ color: 'var(--dark)' }}>{numberFormatter.format(shop.products_count ?? 0)}</div>
+        ),
       },
       {
         header: 'Orders',
-        accessorKey: 'orders_count' as keyof Shop,
+        cell: (shop: Shop) => (
+          <div style={{ color: 'var(--dark)' }}>{numberFormatter.format(shop.orders_count ?? 0)}</div>
+        ),
       },
       {
         header: 'Revenue',
@@ -392,58 +378,64 @@ export default function Index() {
       },
       {
         header: 'Actions',
-        cell: (shop: Shop) => (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <Link href={`/admin/shops/${shop.id}`} className="btn btn-primary">
-              <i className="bx bx-show"></i>
-              {t('View')}
-            </Link>
-            {shop.shop_status === 'pending' && (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={() => handleShopAction(shop, 'approve')}
-                  disabled={actingShopId === shop.id}
-                >
-                  <i className="bx bx-check"></i>
-                  {t('Approve')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => handleShopAction(shop, 'reject')}
-                  disabled={actingShopId === shop.id}
-                >
-                  <i className="bx bx-x"></i>
-                  {t('Reject')}
-                </button>
-              </>
-            )}
-            {shop.shop_status === 'active' && (
-              <button
-                type="button"
-                className="btn btn-warning"
-                onClick={() => handleShopAction(shop, 'suspend')}
-                disabled={actingShopId === shop.id}
-              >
-                <i className="bx bx-pause-circle"></i>
-                {t('Suspend')}
-              </button>
-            )}
-            {shop.shop_status === 'suspended' && (
-              <button
-                type="button"
-                className="btn btn-success"
-                onClick={() => handleShopAction(shop, 'reactivate')}
-                disabled={actingShopId === shop.id}
-              >
-                <i className="bx bx-reset"></i>
-                {t('Reactivate')}
-              </button>
-            )}
-          </div>
-        ),
+            cell: (shop: Shop) => {
+              type DropdownAction = {
+                label: string;
+                icon: string;
+                onClick: () => void;
+                color?: 'primary' | 'success' | 'warning' | 'danger';
+                disabled?: boolean;
+              };
+              const actions: DropdownAction[] = [
+                {
+                  label: 'View',
+                  icon: 'bx-show',
+                  onClick: () => router.get(`/admin/shops/${shop.id}`),
+                  color: 'primary' as const
+                },
+              ];
+
+              if (shop.shop_status === 'pending') {
+                actions.push(
+                  {
+                    label: 'Approve',
+                    icon: 'bx-check',
+                    onClick: () => handleShopAction(shop, 'approve'),
+                    color: 'success' as const,
+                    disabled: actingShopId === shop.id,
+                  },
+                  {
+                    label: 'Reject',
+                    icon: 'bx-x',
+                    onClick: () => handleShopAction(shop, 'reject'),
+                    color: 'danger' as const,
+                    disabled: actingShopId === shop.id,
+                  }
+                );
+              }
+
+              if (shop.shop_status === 'active') {
+                actions.push({
+                  label: 'Suspend',
+                  icon: 'bx-pause-circle',
+                  onClick: () => handleShopAction(shop, 'suspend'),
+                  color: 'warning' as const,
+                  disabled: actingShopId === shop.id,
+                });
+              }
+
+              if (shop.shop_status === 'suspended') {
+                actions.push({
+                  label: 'Reactivate',
+                  icon: 'bx-reset',
+                  onClick: () => handleShopAction(shop, 'reactivate'),
+                  color: 'success' as const,
+                  disabled: actingShopId === shop.id,
+                });
+              }
+
+              return <ActionDropdown actions={actions} />;
+            },
       },
     ];
   }, [selectedIds, toggleShopSelection, t, statusLabelMap, handleShopAction, actingShopId]);
@@ -452,11 +444,7 @@ export default function Index() {
     <AppLayout>
       <Head title={t('Shop Management')} />
 
-      {metricsItems.length > 0 && (
-        <section style={{ marginBottom: '24px' }} aria-label={t('Shop metrics')}>
-          <Insights items={metricsItems} />
-        </section>
-      )}
+      
 
       <FilterPanel
         title={title}

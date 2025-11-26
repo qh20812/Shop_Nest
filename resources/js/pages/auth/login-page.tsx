@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router, Link } from '@inertiajs/react';
 import '@/../css/login-page.css';
+import { useTranslation} from '@/lib/i18n';
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({
@@ -8,6 +9,7 @@ export default function LoginPage() {
         password: '',
         remember: false,
     });
+    const { t } = useTranslation();
 
     const [errors, setErrors] = useState({
         identifier: '',
@@ -81,14 +83,16 @@ export default function LoginPage() {
             <div className="login-content-wrapper">
                 <div className="login-card">
                     <div className="login-header">
-                        <img
-                            src="/image/ShopnestLogoSVG.svg"
-                            alt="ShopNest logo"
-                            className="login-logo" 
-                        />
+                        <Link href="/">
+                            <img
+                                src="/image/ShopnestLogoSVG.svg"
+                                alt="ShopNest logo"
+                                className="login-logo" 
+                            />
+                        </Link>
 
                         <div className="login-title-wrapper">
-                            <p className="login-title">Đăng nhập vào ShopNest</p>
+                            <p className="login-title">{t('login.title')}</p>
                             <p className="login-subtitle">
                                 Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
                             </p>

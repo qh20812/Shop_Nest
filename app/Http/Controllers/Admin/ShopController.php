@@ -6,6 +6,7 @@ use App\Enums\NotificationType;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\ShopViolation;
+use App\Models\Shop as ShopModel;
 use App\Models\User;
 use App\Services\Admin\ShopAuditService;
 use App\Services\Admin\ShopExportService;
@@ -106,8 +107,11 @@ class ShopController extends Controller
             ->take(5)
             ->get();
 
+        $shopRecord = ShopModel::where('owner_id', $shop->id)->first();
+
         return Inertia::render('Admin/Shops/Show', [
             'shop' => $shop,
+            'shop_record' => $shopRecord,
             'statistics' => $statistics,
             'recentOrders' => $recentOrders,
             'recentViolations' => $openViolations,

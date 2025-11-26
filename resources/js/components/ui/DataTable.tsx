@@ -55,7 +55,8 @@ export default function DataTable<T>({
                             if (typeof value === 'object' && value !== null) {
                               return '[Object]'; // Safe fallback for objects
                             }
-                            return String(value || '');
+                            // Use nullish coalescing to preserve explicit 0 values
+                            return String(value ?? '');
                           })()
                         : ''
                       }

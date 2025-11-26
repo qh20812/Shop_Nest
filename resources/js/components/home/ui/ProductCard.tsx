@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import '@/../css/home-style/search-product-card.css';
 
 interface ProductCardProps {
@@ -82,7 +83,7 @@ export default function ProductCard({
       </button>
 
       {href ? (
-        <a href={href} className="search-product-card-link" aria-label={name}>
+        <Link href={href} className="search-product-card-link" aria-label={name}>
           <div className="search-product-card-image">
             <div
               className="search-product-card-image-wrapper"
@@ -123,7 +124,7 @@ export default function ProductCard({
               </div>
             </div>
           </div>
-        </a>
+          </Link>
       ) : (
         <>
           <div className="search-product-card-image">

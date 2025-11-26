@@ -75,7 +75,11 @@ class ShopQueryService
     private function shopQuery(array $filters)
     {
         $query = User::sellers()
-            ->select('users.*')
+            // Join with shops table (if a storefront has been created for this seller) so we can
+            // return storefront-specific attributes such as name and last_active_at to the UI.
+            ->leftJoin('shops', 'users.id', '=', 'shops.owner_id')
+            // Select core user attributes and prefer to expose the shop name when available.
+            ->select('users.*', 'shops.name as name', 'shops.last_active_at as last_activity')
             ->withCount('products')
             ->withCount([
                 'shopViolations as open_violations_count' => fn ($q) => $q->where('status', 'open'),
@@ -90,7 +94,9 @@ class ShopQueryService
                 $sub->where('username', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    // Include shop storefront name in search when available
+                    ->orWhere('shops.name', 'like', "%{$search}%");
             });
         }
 

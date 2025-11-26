@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/lib/i18n';
 import '@/../css/ProductCard.css';
 
 interface DailyDiscoverCardProps {
@@ -65,13 +66,15 @@ export default function DailyDiscoverCard({
         return stars;
     };
 
+    const { t } = useTranslation();
+
     return (
         <div className="product-card">
             {/* Favorite button remains clickable and will not trigger navigation when clicked */}
             <button
                 className={`product-favorite-btn ${favorited ? 'favorited' : ''}`}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFavorite?.(); }}
-                aria-label={favorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                  aria-label={favorited ? t('wishlist.remove') : t('wishlist.add')}
                 aria-pressed={favorited}
             >
                 {/* Inline SVGs so the filled/outline states are always available regardless of icon font */}

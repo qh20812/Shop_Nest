@@ -381,8 +381,17 @@
     "navbar.notifications": "Notifications",
     "navbar.support": "Support",
     "navbar.account": "Account",
+    "navbar.profile": "Profile",
+    "navbar.my_orders": "My Orders",
+    "navbar.become_seller": "Become a Seller",
+    "navbar.settings": "Settings",
+    "navbar.quick_links": "Quick Links",
     "navbar.searchPlaceholder": "Search products...",
     "navbar.cart": "Cart",
+    "navbar.wishlist": "Wishlist",
+    "dropdown.error": "Something went wrong with this dropdown",
+    "wishlist.add": "Add to wishlist",
+    "wishlist.remove": "Remove from wishlist",
     "navbar.language": "English",
     "navbar.vietnamese": "Vietnamese",
     "navbar.english": "English",
@@ -672,13 +681,15 @@
     "No low stock alerts at this time": "No low stock alerts at this time",
     "auth": {
         "unauthenticated": "Unauthenticated.",
-        "login_required": "You need to log in to access this page"
+        "login_required": "You need to log in to access this page",
+        "login": "Login",
+        "logout": "Logout"
     },
     "middleware": {
         "seller_access_denied": "You do not have permission to access this page"
     },
     "login.title": "Login to Your Account",
-    "home": {
+    "homeNavbar": {
         "become_seller": "Become a Seller"
     }
 }

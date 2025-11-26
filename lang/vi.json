@@ -381,8 +381,17 @@
     "navbar.notifications": "Thông báo",
     "navbar.support": "Hỗ trợ",
     "navbar.account": "Tài khoản",
+    "navbar.profile": "Hồ sơ",
+    "navbar.my_orders": "Đơn hàng của tôi",
+    "navbar.become_seller": "Trở thành người bán hàng",
+    "navbar.settings": "Cài đặt",
+    "navbar.quick_links": "Liên kết nhanh",
     "navbar.searchPlaceholder": "Tìm kiếm sản phẩm...",
     "navbar.cart": "Giỏ hàng",
+    "navbar.wishlist": "Yêu thích",
+    "dropdown.error": "Đã xảy ra lỗi với dropdown này",
+    "wishlist.add": "Thêm vào yêu thích",
+    "wishlist.remove": "Xóa khỏi yêu thích",
     "navbar.language": "Tiếng Việt",
     "navbar.vietnamese": "Tiếng Việt",
     "navbar.english": "English",
@@ -632,13 +641,15 @@
     "No low stock alerts at this time": "Không có cảnh báo tồn kho thấp vào lúc này",
     "auth": {
         "unauthenticated": "Chưa xác thực.",
-        "login_required": "Bạn cần đăng nhập để truy cập trang này"
+        "login_required": "Bạn cần đăng nhập để truy cập trang này",
+        "login": "Đăng nhập",
+        "logout": "Đăng xuất"
     },
     "middleware": {
         "seller_access_denied": "Bạn không có quyền truy cập trang này"
     },
     "login.title": "Đăng nhập tài khoản",
-    "home":{
+    "homeNavbar":{
         "become_seller": "Trở thành người bán hàng"
     }
 }

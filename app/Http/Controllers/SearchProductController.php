@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class SearchProductController extends Controller
@@ -72,9 +73,36 @@ class SearchProductController extends Controller
             });
         }
 
-        // Placeholder rating filter (requires review aggregation). Currently ignored if no mechanism.
+        // Add rating aggregation subqueries: avg rating and rating count (via order_reviews -> orders -> order_items)
+        $avgRatingSub = DB::table('order_reviews')
+            ->join('orders', 'order_reviews.order_id', '=', 'orders.order_id')
+            ->join('order_items', 'orders.order_id', '=', 'order_items.order_id')
+            ->join('product_variants', 'order_items.variant_id', '=', 'product_variants.variant_id')
+            ->whereColumn('product_variants.product_id', 'products.product_id')
+            ->selectRaw('AVG(order_reviews.rating)');
+
+        $ratingCountSub = DB::table('order_reviews')
+            ->join('orders', 'order_reviews.order_id', '=', 'orders.order_id')
+            ->join('order_items', 'orders.order_id', '=', 'order_items.order_id')
+            ->join('product_variants', 'order_items.variant_id', '=', 'product_variants.variant_id')
+            ->whereColumn('product_variants.product_id', 'products.product_id')
+            ->selectRaw('COUNT(order_reviews.id)');
+
+        $query->addSelect([
+            'avg_rating' => $avgRatingSub,
+            'rating_count' => $ratingCountSub,
+        ]);
+
+        // Apply rating filter if requested
         if ($ratingMin !== null) {
-            // Future implementation: $query->whereRaw('(SELECT AVG(rating) FROM order_reviews WHERE order_reviews.product_id = products.product_id) >= ?', [$ratingMin]);
+            $query->whereRaw('(
+                SELECT AVG(order_reviews.rating)
+                FROM order_reviews
+                JOIN orders ON order_reviews.order_id = orders.order_id
+                JOIN order_items ON orders.order_id = order_items.order_id
+                JOIN product_variants ON order_items.variant_id = product_variants.variant_id
+                WHERE product_variants.product_id = products.product_id
+            ) >= ?', [$ratingMin]);
         }
 
         // State filters
@@ -122,7 +150,17 @@ class SearchProductController extends Controller
         $productsPaginator = $query->paginate($perPage)->appends($request->query());
 
         // Transform products to card shape
-        $productsData = $productsPaginator->getCollection()->map(function (Product $product) use ($locale) {
+        // Prepare wishlist favorited ids for logged-in user
+        $favoritedProductIds = [];
+        $user = Auth::user();
+        if ($user && method_exists($user, 'defaultWishlist')) {
+            $wishlist = $user->defaultWishlist();
+            if ($wishlist) {
+                $favoritedProductIds = $wishlist->wishlistItems()->pluck('product_id')->toArray();
+            }
+        }
+
+        $productsData = $productsPaginator->getCollection()->map(function (Product $product) use ($locale, $favoritedProductIds) {
             $primaryImage = $product->images->first();
             $imageUrl = $primaryImage?->image_url;
             if ($imageUrl && !str_starts_with($imageUrl, 'http')) {
@@ -144,7 +182,8 @@ class SearchProductController extends Controller
             $currentPrice = $isSale ? $minDiscount : $minPrice;
             $originalPrice = $isSale ? $minPrice : null;
 
-            $rating = null; // Placeholder until review aggregation available
+            $rating = $product->avg_rating !== null ? round((float)$product->avg_rating, 1) : null;
+            $ratingCount = $product->rating_count !== null ? (int)$product->rating_count : 0;
             $isNew = $product->created_at && $product->created_at->gt(now()->subDays(14));
 
             return [
@@ -152,11 +191,12 @@ class SearchProductController extends Controller
                 'image'         => $imageUrl ?? null,
                 'name'          => $product->getTranslation('name', $locale) ?? '',
                 'rating'        => $rating, // may be null
+                'ratingCount'   => $ratingCount,
                 'currentPrice'  => $currentPrice,
                 'originalPrice' => $originalPrice,
                 'isSale'        => $isSale,
                 'isNew'         => $isNew,
-                'favorited'     => false, // wishlist integration pending
+                'favorited'     => in_array($product->product_id, $favoritedProductIds), // user's wishlist
             ];
         })->values();
 

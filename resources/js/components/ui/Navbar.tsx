@@ -191,7 +191,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               }}
             >
               <i className='bx bx-user' style={{ fontSize: '18px' }}></i>
-              {t('Profile')}
+              {t('navbar.profile')}
             </Link>
             <Link
               href="/settings/password"
@@ -233,7 +233,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 e.currentTarget.style.background = 'transparent';
               }}>
               <i className='bx bx-cog' style={{ fontSize: '18px' }}></i>
-              {t('Settings')}
+              {t('navbar.settings')}
             </Link>
             <div
               style={{
@@ -266,7 +266,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               }}
             >
               <i className='bx bx-log-out' style={{ fontSize: '18px' }}></i>
-              {t('Logout')}
+              {t('auth.logout')}
             </button>
           </div>
         )}

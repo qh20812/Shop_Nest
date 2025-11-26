@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import '@/../css/home-style/search-product-card.css';
 
@@ -63,12 +64,14 @@ export default function ProductCard({
     return stars;
   };
 
+  const { t } = useTranslation();
+
   return (
     <div className="search-product-card">
       <button
         className={`search-product-favorite-btn ${favorited ? 'favorited' : ''}`}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFavorite?.(); }}
-        aria-label={favorited ? 'Remove from wishlist' : 'Add to wishlist'}
+        aria-label={favorited ? t('wishlist.remove') : t('wishlist.add')}
         aria-pressed={favorited}
       >
         {favorited ? (

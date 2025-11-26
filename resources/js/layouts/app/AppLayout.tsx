@@ -73,7 +73,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       { icon: 'bx bx-store-alt', label: t('Shop Profile'), href: '/seller/shop' },
       // { icon: 'bx bx-star', label: t('Customer Reviews'), href: '/seller/reviews' },
       { icon: 'bx bx-gift', label: t('Promotions'), href: '/seller/promotions' },
-      { icon: 'bx bx-cog', label: t('Settings'), href: '/settings' }
+      { icon: 'bx bx-cog', label: t('navbar.settings'), href: '/settings' }
     ],
     shipper: [
       { icon: 'bx bxs-dashboard', label: t('Shipper Dashboard'), href: '/shipper/dashboard' },
@@ -83,7 +83,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       { icon: 'bx bx-dollar', label: t('Earnings'), href: '/shipper/earnings' },
       { icon: 'bx bx-car', label: t('Vehicle Info'), href: '/shipper/vehicle' },
       { icon: 'bx bx-file', label: t('Delivery Reports'), href: '/shipper/reports' },
-      { icon: 'bx bx-cog', label: t('Settings'), href: '/settings' }
+      { icon: 'bx bx-cog', label: t('navbar.settings'), href: '/settings' }
     ]
   }), [t]);
 

@@ -1,5 +1,6 @@
 import React from 'react'
-import { Link } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
+import { useTranslation } from '@/lib/i18n'
 
 interface CartItem {
   cart_item_id: number;
@@ -30,6 +31,10 @@ interface NavbarMainProps {
 
 export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const { t } = useTranslation();
+  const { props } = usePage();
+  const pageProps = props as { name?: string };
+  const brandName = pageProps.name ?? 'ShopNest';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +53,7 @@ export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/image/ShopnestLogoColor.png'; }}
             />
           </div>
-          <h1 className="navbar-logo-text">ShopNest</h1>
+          <h1 className="navbar-logo-text">{brandName}</h1>
         </Link>
 
         {/* Search Bar */}
@@ -58,7 +63,7 @@ export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
               <input
                 type="text"
                 className="navbar-search-input"
-                placeholder="Search products..."
+                placeholder={t('navbar.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -71,7 +76,7 @@ export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
 
         {/* Action Icons */}
         <div className="navbar-actions">
-          <Link href={isLoggedIn ? '/cart' : '/login'} className="navbar-icon-button" title={!isLoggedIn ? 'Login to use cart' : undefined}>
+          <Link href={isLoggedIn ? '/cart' : '/login'} className="navbar-icon-button" title={!isLoggedIn ? t('auth.login_required') : undefined} aria-label={t('navbar.cart')}>
             <i className="bi bi-cart3"></i>
             {isLoggedIn && cartItems.length > 0 && (
               <span className="navbar-badge">{cartItems.length}</span>
@@ -79,7 +84,7 @@ export default function NavbarMain({ cartItems, isLoggedIn }: NavbarMainProps) {
           </Link>
           {isLoggedIn && (
             
-            <Link href="/wishlist" className="navbar-icon-button">
+            <Link href="/wishlist" className="navbar-icon-button" aria-label={t('navbar.wishlist') ?? 'Wishlist'}>
               <i className="bi bi-heart"></i>
             </Link>
           )}

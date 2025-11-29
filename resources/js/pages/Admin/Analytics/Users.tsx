@@ -188,9 +188,9 @@ const Users: React.FC = () => {
 
   const activeUsersSeries: ChartDataPoint[] = useMemo(
     () => [
-      { label: t('Last 24 Hours'), value: activeUsers.last24h ?? 0 },
-      { label: t('Last 7 Days'), value: activeUsers.last7d ?? 0 },
-      { label: t('Orders Last 30 Days'), value: activeUsers.ordersLast30d ?? 0 },
+      { label: t('Last 24 hours'), value: activeUsers.last24h ?? 0 },
+      { label: t('Last 7 days'), value: activeUsers.last7d ?? 0 },
+      { label: t('Orders Last 30 days'), value: activeUsers.ordersLast30d ?? 0 },
     ],
     [activeUsers.last24h, activeUsers.last7d, activeUsers.ordersLast30d, t]
   );
@@ -208,9 +208,9 @@ const Users: React.FC = () => {
   const quickRangeOptions: QuickFilterOption[] = useMemo(() => {
     const available = Array.isArray(props.availableRanges) ? props.availableRanges : [];
     const labels: Record<string, string> = {
-      '4weeks': t('Last 4 Weeks'),
-      '6months': t('Last 6 Months'),
-      '12months': t('Last 12 Months'),
+      '4weeks': t('Last 4 weeks'),
+      '6months': t('Last 6 months'),
+      '12months': t('Last 12 months'),
     };
 
     return available.map((value) => ({ label: labels[value] ?? value, value }));

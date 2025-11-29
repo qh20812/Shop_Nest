@@ -3,6 +3,7 @@ import DataTable from '@/Components/ui/DataTable';
 import FilterPanel from '@/Components/ui/FilterPanel';
 import Pagination from '@/Components/ui/Pagination';
 import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -35,7 +36,6 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-
 const STATUS_OPTIONS = [
     { value: '', label: 'All' },
     { value: '0', label: 'Pending' },
@@ -44,7 +44,6 @@ const STATUS_OPTIONS = [
     { value: '3', label: 'Delivered' },
     { value: '4', label: 'Cancelled' },
 ];
-
 
 const getStatusInfo = (status: number) => {
     switch (Number(status)) {
@@ -64,6 +63,7 @@ const getStatusInfo = (status: number) => {
 };
 
 export default function Index() {
+    const { t, locale } = useTranslation();
     const { orders, filters = {}, stats, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
@@ -89,7 +89,7 @@ export default function Index() {
 
     const orderColumns = [
         {
-            header: 'Order Code',
+            header: t('Order Code'),
             cell: (order: Order) => `#${order.order_number}`,
         },
         {
@@ -97,7 +97,7 @@ export default function Index() {
             cell: (order: Order) => `${order.customer.first_name} ${order.customer.last_name}`,
         },
         {
-            header: 'Created At',
+            header: t('Created At'),
             cell: (order: Order) => new Date(order.created_at).toLocaleString('en-US'),
         },
         {
@@ -108,20 +108,13 @@ export default function Index() {
             header: 'Status',
             cell: (order: Order) => {
                 const s = getStatusInfo(order.status);
-                return (
-                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.className}`}>
-                        {s.text}
-                    </span>
-                );
+                return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.className}`}>{s.text}</span>;
             },
         },
         {
             header: 'Action',
             cell: (order: Order) => (
-                <Link
-                    href={`/seller/orders/${order.order_id}`}
-                    className="text-blue-500 hover:underline"
-                >
+                <Link href={`/seller/orders/${order.order_id}`} className="text-blue-500 hover:underline">
                     View Details
                 </Link>
             ),
@@ -145,13 +138,7 @@ export default function Index() {
             )}
 
             {/* Toast message */}
-            {toast && (
-                <Toast
-                    type={toast.type}
-                    message={toast.message}
-                    onClose={() => setToast(null)}
-                />
-            )}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
             {/* Filter panel */}
             <FilterPanel
@@ -163,13 +150,13 @@ export default function Index() {
                 searchConfig={{
                     value: search,
                     onChange: setSearch,
-                    placeholder: 'Search by order code or customer name...',
+                    placeholder: t('Search by order code or customer name...'),
                 }}
                 filterConfigs={[
                     {
                         value: status,
                         onChange: setStatus,
-                        label: '-- Status --',
+                        label: t('-- Status --'),
                         options: STATUS_OPTIONS.map((o) => ({
                             value: o.value,
                             label: o.label,
@@ -189,10 +176,7 @@ export default function Index() {
             />
 
             {/* Pagination */}
-            <Pagination
-                links={orders?.links || []}
-                filters={{ search, status }}
-            />
+            <Pagination links={orders?.links || []} filters={{ search, status }} />
         </AppLayout>
     );
 }

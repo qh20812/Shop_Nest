@@ -269,7 +269,7 @@ export default function History() {
           <div className="inventory-history-actions">
             <Link href={`/admin/inventory/${product.product_id}`} className="inventory-link-button secondary">
               <i className="bx bx-arrow-back"></i>
-              {t('Back to Product')}
+              {t('Back to Product Overview')}
             </Link>
             <Link href="/admin/inventory" className="inventory-link-button">
               <i className="bx bx-package"></i>

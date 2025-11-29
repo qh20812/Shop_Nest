@@ -208,11 +208,11 @@ const Revenue: React.FC = () => {
   const quickRanges = useMemo(() => {
     const ranges = props.availablePeriods ?? [];
     const labels: Record<string, string> = {
-      '7days': t('Last 7 Days'),
-      '14days': t('Last 14 Days'),
-      '30days': t('Last 30 Days'),
-      '90days': t('Last 90 Days'),
-      '12months': t('Last 12 Months'),
+      '7days': t('Last 7 days'),
+      '14days': t('Last 14 days'),
+      '30days': t('Last 30 days'),
+      '90days': t('Last 90 days'),
+      '12months': t('Last 12 months'),
     };
     return ranges.map((value) => ({ label: labels[value] ?? value, value }));
   }, [props.availablePeriods, t]);

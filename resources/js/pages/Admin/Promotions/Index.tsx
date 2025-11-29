@@ -162,7 +162,7 @@ export default function Index() {
       {
         header: 'Type',
         cell: (promotion) => (
-          <div className="promotion-meta">{typeOptions[promotion.type] ?? promotion.type}</div>
+          <div className="promotion-meta">{t(typeOptions[promotion.type]) ?? t(promotion.type)}</div>
         ),
       },
       {

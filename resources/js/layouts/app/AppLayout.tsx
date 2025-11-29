@@ -62,7 +62,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       { icon: 'bx bx-store', label: t('Brands'), href: '/admin/brands' },
       { icon: 'bx bx-receipt', label: t('Orders'), href: '/admin/orders' },
       { icon: 'bx bx-analyse', label: t('Analytics'), href: '/admin/analytics' },
-      { icon: 'bx bx-message-square-dots', label: t('Shops'), href: '/admin/shops' }
+      { icon: 'bx bx-message-square-dots', label: t('Shop'), href: '/admin/shops' }
     ],
     seller: [
       { icon: 'bx bxs-dashboard', label: t('Seller Dashboard'), href: '/seller/dashboard' },

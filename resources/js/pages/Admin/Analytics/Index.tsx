@@ -85,9 +85,9 @@ const Index: React.FC = () => {
 
     const quickFilterOptions: QuickFilterOption[] = useMemo(
         () => [
-            { label: 'Last 7 Days', value: '7days' },
-            { label: 'Last 30 Days', value: '30days' },
-            { label: 'Last 12 Months', value: '12months' },
+            { label: t('Last 7 days'), value: '7days' },
+            { label: t('Last 30 days'), value: '30days' },
+            { label: t('Last 12 months'), value: '12months' },
         ],
         []
     );

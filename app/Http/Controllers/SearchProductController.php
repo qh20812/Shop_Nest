@@ -250,4 +250,4 @@ class SearchProductController extends Controller
             'activeFilters' => $activeFilters,
         ]);
     }
-}
+} 

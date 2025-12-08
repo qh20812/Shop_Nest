@@ -68,8 +68,6 @@ export default function Contact() {
                                 </button>
                             </form>
                         </div>
-                        
-                        {/* Contact Info */}
                         <div>
                             <h2 className="text-xl font-semibold text-gray-800 mb-4">Thông tin liên hệ</h2>
                             <div className="space-y-4">

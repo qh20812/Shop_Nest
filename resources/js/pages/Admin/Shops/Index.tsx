@@ -304,17 +304,17 @@ export default function Index() {
     const currencyLabel = t('VND');
 
     return [
-      {
-        header: 'Select',
-        cell: (shop: Shop) => (
-          <input
-            type="checkbox"
-            checked={selectedIds.includes(shop.id)}
-            onChange={(event) => toggleShopSelection(shop.id, event.target.checked)}
-            aria-label={`${t('Select shop')} ${shop.name ?? shop.username ?? shop.id}`}
-          />
-        ),
-      },
+      // {
+      //   header: 'Select',
+      //   cell: (shop: Shop) => (
+      //     <input
+      //       type="checkbox"
+      //       checked={selectedIds.includes(shop.id)}
+      //       onChange={(event) => toggleShopSelection(shop.id, event.target.checked)}
+      //       aria-label={`${t('Select shop')} ${shop.name ?? shop.username ?? shop.id}`}
+      //     />
+      //   ),
+      // },
       {
         header: 'Shop Name',
         accessorKey: 'name' as keyof Shop,
@@ -454,7 +454,7 @@ export default function Index() {
         filterConfigs={filterConfigs}
       />
 
-      <BulkActions
+      {/* <BulkActions
         totalOnPage={shops.data.length}
         selectedCount={selectedIds.length}
         allSelected={allSelectedOnPage}
@@ -463,7 +463,7 @@ export default function Index() {
         onBulkApprove={handleBulkApprove}
         onBulkReject={handleBulkReject}
         isProcessing={isProcessing}
-      />
+      /> */}
 
       <div style={{ opacity: isGridLoading ? 0.6 : 1 }} aria-busy={isGridLoading}>
         <DataTable

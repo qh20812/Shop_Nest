@@ -1,135 +1,171 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import 'tailwindcss';
-@import './chatbot-animations.css';
-
-@theme {
-    --color-light: #f6f6f9;
-    --color-primary: #1976D2;
-    --color-light-primary: #CFE8FF;
-    --color-secondary: #9C27B0;
-    --color-light-secondary: #E1BEE7;
-    --color-info: #2196F3;
-    --color-light-info: #E3F2FD;
-    --color-neutral: #F5F5F5;
-    --color-tertiary: #FF9800;
-    --color-light-tertiary: #FFE0B2;
-    --color-grey: #eee;
-    --color-dark-grey: #AAAAAA;
-    --color-dark: #363949;
-    --color-danger: #D32F2F;
-    --color-light-danger: #FECDD3;
-    --color-warning: #FBC02D;
-    --color-light-warning: #FFF2C6;
-    --color-success: #388E3C;
-    --color-light-success: #BBF7D0;
-    --color-background-light: #f6f7f8;
-    --color-background-dark: #111921;
-
-    --font-family-display: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
-    --font-family-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-    --border-radius: var(--common-border-radius);
-
-    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
-    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
-    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
-}
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
+@custom-variant dark (&:is(.dark *));
 
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
 
 :root {
     --light: #f6f6f9;
-    --primary: #1976D2;
-    --light-primary: #CFE8FF;
-    --secondary: #9C27B0;
-    --light-secondary: #E1BEE7;
-    --info: #2196F3;
-    --light-info: #E3F2FD;
-    --neutral: #F5F5F5;
-    --tertiary: #FF9800;
-    --light-tertiary: #FFE0B2;
-    --focus-outline: 2px solid var(--primary);
-    --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
-    --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
-    --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
-    --grey: #eee;
-    --dark-grey: #AAAAAA;
-    --dark: #363949;
-    --danger: #D32F2F;
-    --light-danger: #FECDD3;
-    --warning: #FBC02D;
-    --light-warning: #FFF2C6;
-    --success: #388E3C;
-    --light-success: #BBF7D0;
-    --common-border-radius: 20px;
+    --background: #ffffff;
+    --foreground: #111827; /* neutral dark text */
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+    --primary: #2563EB;
+    --light-primary: #E6F4F1; /* provided */
+    --primary-foreground: #ffffff;
+    --secondary: #8D8DB9;
+    --light-secondary: #AAA9BC;
+    --secondary-foreground: #ffffff;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+    --accent: #CF52D0;
+    --accent-foreground: #ffffff;
+    --destructive: #DC003E;
+    --destructive-foreground: #ffffff;
+    --border: #e6e7ea;
+    --input: #ffffff;
+    --ring: #93C5FD;
+    --chart-1: #FF599F; /* pink */
+    --chart-2: #FFC358; /* light orange */
+    --chart-3: #FF8970; /* coral */
+    --chart-4: #F9F871; /* bright yellow */
+    --chart-5: #008BB4; /* teal */
+    --radius: 0.625rem;
+    --sidebar: #f8fafc;
+    --sidebar-foreground: #111827;
+    --sidebar-primary: #2563EB;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #AE5500;
+    --sidebar-accent-foreground: #111827;
+    --sidebar-border: #e6e7ea;
+    --sidebar-ring: #93C5FD;
+
+    /* brand helpers */
+    --neutral: #FFEFCA; /* cream */
+    --grey: #AAA9BC; /* soft grey */
+    --dark-grey: #847655; /* olive, provided */
+    --dark: #464555; /* provided */
+    --tertiary: #C49C00; /* gold */
+    --light-tertiary: #FFC358;
+    --info: #008BB4; /* teal */
+    --light-info: #E6F4F1; /* mint */
+    --danger: #DC003E; /* provided */
+    --light-danger: #FFEFCA; /* cream as soft danger bg */
+    --warning: #FFC358; /* provided */
+    --light-warning: #F9F871; /* bright yellow */
+    --success: #008BB4; /* teal as success */
+    --light-success: #E6F4F1;
 }
 
 .dark {
-    --light: #181a1e;
-    --grey: #25252c;
-    --dark: #fbfbfb;
+    --background: #0f172a;
+    --foreground: #e6eef8;
+    --card: #0b1220;
+    --card-foreground: #e6eef8;
+    --popover: #0b1220;
+    --popover-foreground: #e6eef8;
+    --primary: #2563EB; /* keep primary visible in dark */
+    --primary-foreground: #0b1220;
+    --secondary: #8D8DB9;
+    --secondary-foreground: #0b1220;
+    --muted: #0b1220;
+    --muted-foreground: #94a3b8;
+    --accent: #CF52D0;
+    --accent-foreground: #0b1220;
+    --destructive: #DC003E;
+    --destructive-foreground: #0b1220;
+    /* Make borders slightly lighter than the dark background so they don't visually blend in */
+    --border: #273244; /* improved contrast vs background #0f172a */
+    --input: #0b1220;
+    --ring: #60A5FA;
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: #0f172a;
+    --sidebar-foreground: #e6eef8;
+    --sidebar-primary: #2563EB;
+    --sidebar-primary-foreground: #0b1220;
+    --sidebar-accent: #AE5500;
+    --sidebar-accent-foreground: #0b1220;
+    --sidebar-border: #273244;
+    --sidebar-ring: #60A5FA;
 }
 
 @layer base {
     * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    html {
-        overflow-x: hidden; /* Only hide horizontal overflow */
-        overflow-y: auto;   /* Allow vertical scrolling */
-    }
-
-    li {
-        list-style: none;
-    }
-
-    a {
-        text-decoration: none;
-    }
-
-    .bx {
-        font-size: 1..7rem;
-    }
-
-    .bi {
-        font-size: 1.7rem;
+        @apply border-border;
     }
 
     body {
-        background: var(--grey);
-        overflow-x: hidden;
+        @apply bg-background text-foreground;
     }
 
-    .content {
-        position: relative;
-        width: calc(100% - 230px);
-        left: 230px;
-        transition: all 0.3s ease;
+    /* Scrollbar Hide Utility */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
-    /* Chatbot Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .animate-fadeIn {
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    .animate-slideUp {
-        animation: slideUp 0.3s ease-out;
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
 }

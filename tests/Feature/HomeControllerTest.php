@@ -6,8 +6,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\FlashSaleEvent;
+use App\Models\FlashSaleProduct;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -19,7 +21,6 @@ use App\Models\UserPreference;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Mockery;
 
 class HomeControllerTest extends TestCase
 {
@@ -37,7 +38,6 @@ class HomeControllerTest extends TestCase
     protected function tearDown(): void
     {
         Cache::flush();
-        Mockery::close();
 
         parent::tearDown();
     }
@@ -51,7 +51,7 @@ class HomeControllerTest extends TestCase
     public function test_home_page_returns_categories()
     {
         Category::factory()->create([
-            'name' => ['vi' => 'Test Category', 'en' => 'Test Category'],
+            'name' => ['vi' => 'Electronics', 'en' => 'Electronics'],
             'image_url' => 'test-image.jpg',
             'is_active' => true,
         ]);
@@ -61,18 +61,49 @@ class HomeControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
             $page->has('categories')
-                ->where('categories.0.name', 'Test Category')
+                ->where('categories.0.name', 'Electronics')
+                ->where('categories.0.icon', '📱')
+                ->where('categories.0.image_url', 'test-image.jpg')
         );
     }
 
     public function test_home_page_returns_flash_sale_data()
     {
-        FlashSaleEvent::create([
+        $event = FlashSaleEvent::create([
             'name' => 'Flash Sale',
             'status' => 'active',
             'start_time' => now()->subHour(),
             'end_time' => now()->addHour(),
             'banner_image' => 'banner.jpg',
+        ]);
+
+        $category = Category::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'category_id' => $category->category_id,
+            'is_active' => true,
+            'status' => 'published',
+        ]);
+
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->product_id,
+            'price' => 100000,
+        ]);
+
+        ProductImage::create([
+            'product_id' => $product->product_id,
+            'image_url' => 'test-product.jpg',
+            'is_primary' => true,
+            'display_order' => 1,
+        ]);
+
+        FlashSaleProduct::create([
+            'flash_sale_event_id' => $event->id,
+            'product_variant_id' => $variant->variant_id,
+            'flash_sale_price' => 80000,
+            'discount_percentage' => 20,
+            'quantity_limit' => 100,
+            'sold_count' => 0,
+            'max_quantity_per_user' => 5,
         ]);
 
         $response = $this->get('/');
@@ -81,48 +112,81 @@ class HomeControllerTest extends TestCase
         $response->assertInertia(fn ($page) =>
             $page->has('flashSale')
                 ->where('flashSale.event.name', 'Flash Sale')
+                ->has('flashSale.products')
+                ->has('flashSale.products.0.price')
+                ->has('flashSale.products.0.oldPrice')
         );
     }
 
-    public function test_home_page_returns_daily_discover_for_guest()
+    public function test_home_page_returns_suggested_products_for_guest()
     {
-        Product::factory()->count(5)->create([
+        $category = Category::factory()->create(['is_active' => true]);
+        $products = Product::factory()->count(5)->create([
+            'category_id' => $category->category_id,
             'is_active' => true,
             'status' => 'published',
         ]);
+
+        foreach ($products as $product) {
+            ProductVariant::factory()->create([
+                'product_id' => $product->product_id,
+                'price' => 50000,
+            ]);
+
+            ProductImage::create([
+                'product_id' => $product->product_id,
+                'image_url' => 'test-image.jpg',
+                'is_primary' => true,
+                'display_order' => 1,
+            ]);
+        }
 
         $response = $this->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->has('dailyDiscover')
+            $page->has('suggestedProducts')
+                ->has('bestSellers')
         );
     }
 
-    public function test_home_page_returns_personalized_daily_discover_for_user()
+    public function test_home_page_returns_personalized_suggested_products_for_user()
     {
-    /** @var User $user */
-    $user = User::factory()->createOne();
-        $category = Category::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
+        $category = Category::factory()->create(['is_active' => true]);
 
         UserPreference::create([
             'user_id' => $user->id,
             'preferred_category_id' => $category->category_id,
         ]);
 
-        Product::factory()->count(3)->create([
+        $products = Product::factory()->count(3)->create([
             'category_id' => $category->category_id,
             'is_active' => true,
             'status' => 'published',
         ]);
 
+        foreach ($products as $product) {
+            ProductVariant::factory()->create([
+                'product_id' => $product->product_id,
+                'price' => 75000,
+            ]);
+
+            ProductImage::create([
+                'product_id' => $product->product_id,
+                'image_url' => 'test-image.jpg',
+                'is_primary' => true,
+                'display_order' => 1,
+            ]);
+        }
+
         $response = $this->actingAs($user)->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->has('dailyDiscover')
-                ->has('user')
-                ->where('user.id', $user->id)
+            $page->has('suggestedProducts')
+                ->has('bestSellers')
         );
     }
 
@@ -161,6 +225,35 @@ class HomeControllerTest extends TestCase
             'banner_image' => 'initial-banner.jpg',
         ]);
 
+        $category = Category::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'category_id' => $category->category_id,
+            'is_active' => true,
+            'status' => 'published',
+        ]);
+
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->product_id,
+            'price' => 100000,
+        ]);
+
+        ProductImage::create([
+            'product_id' => $product->product_id,
+            'image_url' => 'test-product.jpg',
+            'is_primary' => true,
+            'display_order' => 1,
+        ]);
+
+        FlashSaleProduct::create([
+            'flash_sale_event_id' => $event->id,
+            'product_variant_id' => $variant->variant_id,
+            'flash_sale_price' => 80000,
+            'discount_percentage' => 20,
+            'quantity_limit' => 100,
+            'sold_count' => 0,
+            'max_quantity_per_user' => 5,
+        ]);
+
         $this->get('/');
 
         $event->update(['name' => 'Updated Event']);
@@ -172,11 +265,11 @@ class HomeControllerTest extends TestCase
         );
     }
 
-    public function test_daily_discover_returns_computed_metrics_for_user()
+    public function test_suggested_products_returns_computed_metrics()
     {
-    /** @var User $user */
-    $user = User::factory()->createOne();
-        $category = Category::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
+        $category = Category::factory()->create(['is_active' => true]);
 
         $product = Product::factory()->create([
             'category_id' => $category->category_id,
@@ -201,32 +294,13 @@ class HomeControllerTest extends TestCase
         Review::factory()->create([
             'product_id' => $product->product_id,
             'rating' => 5,
+            'is_approved' => true,
         ]);
 
         Review::factory()->create([
             'product_id' => $product->product_id,
             'rating' => 4,
-        ]);
-
-        $order = Order::create([
-            'customer_id' => $user->id,
-            'order_number' => 'ORD-' . Str::upper(Str::random(8)),
-            'sub_total' => 200000,
-            'shipping_fee' => 10000,
-            'discount_amount' => 0,
-            'total_amount' => 210000,
-            'status' => OrderStatus::PROCESSING->value,
-            'payment_method' => 1,
-            'payment_status' => PaymentStatus::PAID->value,
-            'notes' => null,
-        ]);
-
-        OrderItem::create([
-            'order_id' => $order->order_id,
-            'variant_id' => $variant->variant_id,
-            'quantity' => 3,
-            'unit_price' => 70000,
-            'total_price' => 210000,
+            'is_approved' => true,
         ]);
 
         UserPreference::create([
@@ -238,82 +312,81 @@ class HomeControllerTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->where('dailyDiscover.0.rating', 4.5)
-                ->where('dailyDiscover.0.sold_count', 3)
+            $page->where('suggestedProducts.0.rating', 4.5)
+                ->where('suggestedProducts.0.reviews', 2)
+                ->has('suggestedProducts.0.price')
+                ->has('suggestedProducts.0.oldPrice')
         );
     }
 
-    public function test_home_page_handles_flash_sale_query_exception_gracefully()
+    public function test_home_page_returns_empty_flash_sale_when_no_active_event()
     {
-        Cache::flush();
-        Log::spy();
-
-        $mock = Mockery::mock('alias:' . FlashSaleEvent::class);
-        $mock->shouldReceive('where')->andThrow(new \Exception('DB error'));
-
         $response = $this->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
             $page->where('flashSale', null)
         );
-
-        Log::shouldHaveReceived('error')
-            ->once()
-            ->withArgs(function ($message, $context) {
-                return str_contains($message, 'Error in getFlashSaleData')
-                    && array_key_exists('exception', $context);
-            });
     }
 
-    public function test_daily_discover_handles_exception_gracefully()
+    public function test_home_page_returns_best_sellers()
     {
-        Cache::flush();
-        Log::spy();
-
-        $mock = Mockery::mock('alias:' . Product::class);
-        $mock->shouldReceive('with')->andThrow(new \Exception('DB error'));
-
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertInertia(fn ($page) =>
-            $page->where('dailyDiscover', [])
-        );
-
-        Log::shouldHaveReceived('error')
-            ->once()
-            ->withArgs(function ($message, $context) {
-                return str_contains($message, 'Error in getDailyDiscoverProducts')
-                    && array_key_exists('exception', $context);
-            });
-    }
-
-    public function test_home_page_returns_null_user_for_guest()
-    {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertInertia(fn ($page) =>
-            $page->where('user', null)
-        );
-    }
-
-    public function test_home_page_returns_user_data_for_authenticated_user()
-    {
-    /** @var User $user */
-    $user = User::factory()->createOne([
-            'username' => 'testuser',
-            'email' => 'test@example.com',
+        $category = Category::factory()->create(['is_active' => true]);
+        $user = User::factory()->create();
+        
+        $product = Product::factory()->create([
+            'category_id' => $category->category_id,
+            'is_active' => true,
+            'status' => 'published',
         ]);
 
-        $response = $this->actingAs($user)->get('/');
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->product_id,
+            'price' => 50000,
+        ]);
+
+        ProductImage::create([
+            'product_id' => $product->product_id,
+            'image_url' => 'test-image.jpg',
+            'is_primary' => true,
+            'display_order' => 1,
+        ]);
+
+        $order = Order::create([
+            'customer_id' => $user->id,
+            'order_number' => 'ORD-' . Str::upper(Str::random(8)),
+            'sub_total' => 50000,
+            'shipping_fee' => 0,
+            'discount_amount' => 0,
+            'total_amount' => 50000,
+            'status' => OrderStatus::COMPLETED->value,
+            'payment_method' => 1,
+            'payment_status' => PaymentStatus::PAID->value,
+        ]);
+
+        OrderItem::create([
+            'order_id' => $order->order_id,
+            'variant_id' => $variant->variant_id,
+            'quantity' => 5,
+            'unit_price' => 50000,
+            'total_price' => 250000,
+        ]);
+
+        $response = $this->get('/');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) =>
-            $page->has('user')
-                ->where('user.username', 'testuser')
-                ->where('user.email', 'test@example.com')
+            $page->has('bestSellers')
+        );
+    }
+
+    public function test_home_page_returns_banners()
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) =>
+            $page->has('banners')
         );
     }
 }

@@ -11,9 +11,9 @@ class ChatSeeder extends Seeder
 {
     public function run(): void
     {
-        // Query users với role 'User' qua role_user (giả sử name json: ['en' => 'User'])
+        // Query customers với role 'Customer'
         $users = User::whereHas('roles', function ($query) {
-            $query->where('name->en', 'User'); // Điều chỉnh key json nếu khác
+            $query->where('name->en', 'Customer');
         })->take(5)->get();
 
         // Query sellers với role 'Seller'
@@ -22,7 +22,7 @@ class ChatSeeder extends Seeder
         })->take(3)->get();
 
         if ($users->isEmpty() || $sellers->isEmpty()) {
-            $this->command->info('Không đủ users hoặc sellers để seed chat data. Hãy seed roles và assign trước.');
+            $this->command->info('Không đủ users (customers) hoặc sellers để seed chat data. Users found: ' . $users->count() . ', Sellers found: ' . $sellers->count());
             return;
         }
 

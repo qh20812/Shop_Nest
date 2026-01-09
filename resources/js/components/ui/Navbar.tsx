@@ -106,7 +106,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           </button>
         </div>
       </form>
-      <CurrencyDropdown />
+      
       <LanguageSwitcher />
       <Link href={route('notifications.index')} className="notif" title={t('Notifications')}>
         <i className='bx bx-bell'></i>

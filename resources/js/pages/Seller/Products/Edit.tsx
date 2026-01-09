@@ -131,7 +131,7 @@ const normalizeStatus = (status: Product['status']): string => {
 
 function EditContent() {
   const { t } = useTranslation();
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError, info: showInfo, warning: showWarning } = useToast();
 
   const { product, categories = [], brands = [] } = usePage<SellerProductEditPageProps>().props;
 
@@ -258,8 +258,8 @@ function EditContent() {
 
     setMediaPreviews((prev) => [...prev, ...previews]);
     form.setData('images', [...form.data.images, ...files]);
-    showToast('primary', t('Sample previews added. Files are not uploaded yet.'));
-  }, [form, showToast, t]);
+    showInfo(t('Sample previews added. Files are not uploaded yet.'));
+  }, [form, showInfo, t]);
 
   const handleRemoveMedia = useCallback((id: string) => {
     setMediaPreviews((prev) => {
@@ -272,8 +272,8 @@ function EditContent() {
       }
       return prev.filter((media) => media.id !== id);
     });
-    showToast('warning', t('Removed selected media preview.'));
-  }, [form, showToast, t]);
+    showWarning(t('Removed selected media preview.'));
+  }, [form, showWarning, t]);
 
   const handleVariantFieldChange = useCallback((index: number, field: keyof SellerProductVariantForm, value: string | boolean) => {
     const updated = form.data.variants.map((variant, idx) => {
@@ -372,7 +372,7 @@ function EditContent() {
 
   const handleRemoveVariant = useCallback((index: number) => {
     if (form.data.variants.length === 1) {
-      showToast('danger', t('At least one variant must remain.'));
+      showError(t('At least one variant must remain.'));
       return;
     }
 
@@ -386,7 +386,7 @@ function EditContent() {
     }
 
     form.setData('variants', updated);
-  }, [form, showToast, t]);
+  }, [form, showError, t]);
 
   useEffect(() => {
     if (!form.data.name) {
@@ -420,7 +420,7 @@ function EditContent() {
     event.preventDefault();
 
     if (!form.data.name.trim() || !form.data.description.trim()) {
-      showToast('danger', t('Please provide the product name and description.'));
+      showError(t('Please provide the product name and description.'));
       return;
     }
 
@@ -471,16 +471,16 @@ function EditContent() {
       forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
-        showToast('success', t('Product updated successfully!'));
+        showSuccess(t('Product updated successfully!'));
       },
       onError: () => {
-        showToast('danger', t('Please review the highlighted fields.'));
+        showError(t('Please review the highlighted fields.'));
       },
       onFinish: () => {
         form.transform((original) => original);
       },
     });
-  }, [form, product.product_id, showToast, t]);
+  }, [form, product.product_id, showSuccess, showError, t]);
 
   return (
     <>
@@ -497,7 +497,7 @@ function EditContent() {
           label: t('Product Guidelines'),
           icon: 'bx-help-circle',
           onClick: () => {
-            showToast('primary', t('Guidelines are coming soon. This is a placeholder action.'));
+            showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
           },
         }}
       />

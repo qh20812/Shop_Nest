@@ -76,7 +76,7 @@ const STATUS_LABELS = {
 
 function ShowContent() {
   const { t } = useTranslation();
-  const { showToast } = useToast();
+  const { info: showInfo } = useToast();
 
   const { product } = usePage<SellerProductShowPageProps>().props;
 
@@ -122,7 +122,7 @@ function ShowContent() {
           label: t('Product Guidelines'),
           icon: 'bx-help-circle',
           onClick: () => {
-            showToast('primary', t('Guidelines are coming soon. This is a placeholder action.'));
+            showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
           },
         }}
       />

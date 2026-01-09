@@ -81,7 +81,7 @@ const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+
 
 function CreateContent() {
   const { t } = useTranslation();
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError, info: showInfo } = useToast();
 
   const { categories = [], brands = [] } = usePage<SellerProductCreatePageProps>().props;
 
@@ -185,8 +185,8 @@ function CreateContent() {
 
     setMediaPreviews((prev) => [...prev, ...previews]);
     form.setData('images', [...form.data.images, ...files]);
-    showToast('primary', t('Sample previews added. Files are not uploaded yet.'));
-  }, [form, showToast, t]);
+    showInfo(t('Sample previews added. Files are not uploaded yet.'));
+  }, [form, showInfo, t]);
 
   const handleRemoveMedia = useCallback((id: string) => {
     setMediaPreviews((prev) => {
@@ -199,14 +199,14 @@ function CreateContent() {
       }
       return prev.filter((media) => media.id !== id);
     });
-    showToast('warning', t('Removed selected media preview.'));
-  }, [form, showToast, t]);
+    showInfo(t('Removed selected media preview.'));
+  }, [form, showInfo, t]);
 
   const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!form.data.name.trim() || !form.data.description.trim()) {
-      showToast('danger', t('Please provide the product name and description.'));
+      showError(t('Please provide the product name and description.'));
       return;
     }
 
@@ -257,16 +257,16 @@ function CreateContent() {
       forceFormData: true,
       preserveScroll: true,
       onSuccess: () => {
-        showToast('success', t('Product created successfully!'));
+        showSuccess(t('Product created successfully!'));
       },
       onError: () => {
-        showToast('danger', t('Please review the highlighted fields.'));
+        showError(t('Please review the highlighted fields.'));
       },
       onFinish: () => {
         form.transform((original) => original);
       },
     });
-  }, [form, showToast, t]);
+  }, [form, showSuccess, showError, t]);
 
   useEffect(() => {
     if (!form.data.name) {
@@ -313,7 +313,7 @@ function CreateContent() {
           label: t('Product Guidelines'),
           icon: 'bx-help-circle',
           onClick: () => {
-            showToast('primary', t('Guidelines are coming soon. This is a placeholder action.'));
+            showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
           },
         }}
       />

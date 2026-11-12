@@ -2,7 +2,7 @@
 import React from "react";
 import { Head, usePage } from "@inertiajs/react";
 import AppLayout from "../../../layouts/app/AppLayout";
-import UserEditForm from "../../../Components/admin/users/UserEditForm";
+import UserEditForm from "../../../components/admin/users/UserEditForm";
 import { useTranslation } from '../../../lib/i18n';
 import Header from '../../../components/ui/Header';
 

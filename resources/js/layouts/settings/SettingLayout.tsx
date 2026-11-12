@@ -1,6 +1,6 @@
 import React from 'react';
 import AppLayout from '../app/AppLayout';
-import SettingsSidebar from '@/Components/settings/SettingSidebar';
+import SettingsSidebar from '@/components/settings/SettingSidebar';
 
 interface SettingsLayoutProps {
   children: React.ReactNode;

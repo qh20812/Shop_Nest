@@ -1,10 +1,10 @@
 import React from 'react'
 import { usePage } from '@inertiajs/react'
-import Sidebar from '@/Components/customer/ui/Sidebar'
+import Sidebar from '@/components/customer/ui/Sidebar'
 import '@/../css/customer-style/customer-layout.css'
 import '@/../css/customer-style/customer-sidebar.css'
-import Navbar from '@/Components/home/ui/Navbar'
-import Footer from '@/Components/home/ui/Footer'
+import Navbar from '@/components/home/ui/Navbar'
+import Footer from '@/components/home/ui/Footer'
 
 interface User {
   id: number

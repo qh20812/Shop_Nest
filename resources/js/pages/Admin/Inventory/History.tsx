@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import DataTable from '@/Components/ui/DataTable';
-import Pagination from '@/Components/ui/Pagination';
+import DataTable from '@/components/ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
 import '@/../css/Page.css';
 import { useTranslation } from '@/lib/i18n';
 

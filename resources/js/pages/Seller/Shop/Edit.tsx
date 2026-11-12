@@ -12,6 +12,7 @@ interface PageProps {
         logo?: string | null;
         banner?: string | null;
     };
+    [key: string]: unknown;
 }
 
 export default function ShopEdit() {

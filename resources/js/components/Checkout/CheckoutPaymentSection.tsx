@@ -1,5 +1,5 @@
 import React from 'react';
-import PaymentMethodSelector from '@/Components/Shared/PaymentMethodSelector';
+import PaymentMethodSelector from '@/components/Shared/PaymentMethodSelector';
 
 interface PaymentMethod {
   id: string;

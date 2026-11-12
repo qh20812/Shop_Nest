@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import DataTable from '@/Components/ui/DataTable';
-import ActionButtons, { ActionConfig } from '@/Components/ui/ActionButtons';
+import DataTable from '@/components/ui/DataTable';
+import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
 import '@/../css/Page.css';
 import { useTranslation } from '@/lib/i18n';
 

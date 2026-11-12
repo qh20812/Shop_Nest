@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import FilterPanel from '@/Components/ui/FilterPanel';
-import DataTable from '@/Components/ui/DataTable';
-import Pagination from '@/Components/ui/Pagination';
-import ActionButtons, { ActionConfig } from '@/Components/ui/ActionButtons';
-import Toast from '@/Components/admin/users/Toast';
+import FilterPanel from '@/components/ui/FilterPanel';
+import DataTable from '@/components/ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
+import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
+import Toast from '@/components/admin/users/Toast';
 import '@/../css/Page.css';
 import { useTranslation } from '@/lib/i18n';
 
@@ -148,6 +148,7 @@ interface InventoryIndexPageProps {
   stockStatuses: StockStatusOption[];
   flash?: FlashMessages;
   locale: string;
+  [key: string]: unknown;
 }
 
 const resolvePersonName = (person: Person | undefined, locale: string, fallback: string): string => {

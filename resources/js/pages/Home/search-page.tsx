@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import HomeLayout from '@/layouts/app/HomeLayout';
-import ProductCard from '@/Components/home/ui/ProductCard';
+import ProductCard from '@/components/home/ui/ProductCard';
 import '@/../css/home-style/search-page.css';
 
 interface ProductCardData {

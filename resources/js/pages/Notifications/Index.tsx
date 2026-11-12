@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import DataTable from '@/Components/ui/DataTable';
+import DataTable from '@/components/ui/DataTable';
 import { useTranslation } from '@/lib/i18n';
 import type { Notification } from './types';
 import '@/../css/Page.css';
-import Header from '@/Components/ui/Header';
+import Header from '@/components/ui/Header';
 
 interface PageProps extends Record<string, unknown> {
   notifications: {

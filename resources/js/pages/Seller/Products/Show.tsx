@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import Header from '@/Components/ui/Header';
-import ActionButton from '@/Components/ui/ActionButton';
+import Header from '@/components/ui/Header';
+import ActionButton from '@/components/ui/ActionButton';
 import { useTranslation } from '@/lib/i18n';
 import { useToast } from '@/Contexts/ToastContext';
 import '@/../css/Page.css';

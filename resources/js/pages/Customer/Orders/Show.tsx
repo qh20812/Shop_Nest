@@ -1,8 +1,8 @@
 import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import CustomerLayout from '@/layouts/app/CustomerLayout';
-import { Button } from '@/Components/ui/button';
-import OrderShowHeader from '@/Components/customer/ui/orders/OrderShowHeader';
+import { Button } from '@/components/ui/button';
+import OrderShowHeader from '@/components/customer/ui/orders/OrderShowHeader';
 import { Star, Download, RotateCcw, ArrowLeft } from 'lucide-react';
 
 interface Order {
@@ -30,6 +30,10 @@ interface Order {
       name: string;
     };
   }>;
+}
+
+interface Props {
+  order: Order;
 }
 
 const orderStatusThemeMap: Record<string, string> = {

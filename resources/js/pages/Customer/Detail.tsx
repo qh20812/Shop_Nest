@@ -3,7 +3,7 @@ import HomeLayout from '@/layouts/app/HomeLayout';
 import '@/../css/ProductDetail.css';
 import { router } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
-import PopupAddToCart from '@/Components/home/ui/PopupAddToCart';
+import PopupAddToCart from '@/components/home/ui/PopupAddToCart';
 import { useToast } from '@/Contexts/ToastContext';
 
 interface AttributeValue {

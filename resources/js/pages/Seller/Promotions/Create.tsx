@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 
 interface Product {
     product_id: number;
-    name: string;
+    name: string | { vi?: string; en?: string } | null;
     images: Array<{ image_url: string; is_primary: boolean }>;
     variants: Array<{ price: number }>;
 }
@@ -344,7 +344,7 @@ export default function Create() {
                                             </div>
                                             <img
                                                 src={product.images?.find((img) => img.is_primary)?.image_url || '/default-product.png'}
-                                                alt={product.name}
+                                                alt={typeof product.name === 'string' ? product.name : product.name?.vi ?? ''}
                                                 className="product-image"
                                             />
                                             <div className="product-info">

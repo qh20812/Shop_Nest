@@ -103,16 +103,6 @@ export default function Cart() {
     }
   };
 
-  const handleRemoveItem = async (itemId: number) => {
-    try {
-      await axios.delete(`/cart/${itemId}`);
-      router.reload();
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-      alert('Không thể xóa sản phẩm');
-    }
-  };
-
   const handleDeleteSelected = async () => {
     if (selectedItems.length === 0) return;
     

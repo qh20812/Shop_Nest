@@ -2,21 +2,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { usePage, router, Head } from '@inertiajs/react';
 import axios from 'axios';
 import HomeLayout from '@/layouts/app/HomeLayout';
-import CartTitle from '@/Components/cart/CartTitle';
+import CartTitle from '@/components/cart/CartTitle';
 import { useTranslation } from '@/lib/i18n';
 import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
 import { toNumericPrice, type PriceLike } from '@/utils/price';
 
 // Import new components
-import OrderSummary from '@/Components/Shared/OrderSummary';
-import PromotionInput from '@/Components/Shared/PromotionInput';
-import AddressSelector from '@/Components/Shared/AddressSelector';
-import CheckoutProductList from '@/Components/Checkout/CheckoutProductList';
-import CheckoutAddressForm from '@/Components/Checkout/CheckoutAddressForm';
-import CheckoutPaymentSection from '@/Components/Checkout/CheckoutPaymentSection';
-import CheckoutOrderNotes from '@/Components/Checkout/CheckoutOrderNotes';
-import CheckoutModal from '@/Components/Checkout/CheckoutModal';
-import CheckoutExitConfirmation from '@/Components/Checkout/CheckoutExitConfirmation';
+import OrderSummary from '@/components/Shared/OrderSummary';
+import PromotionInput from '@/components/Shared/PromotionInput';
+import AddressSelector from '@/components/Shared/AddressSelector';
+import CheckoutProductList from '@/components/Checkout/CheckoutProductList';
+import CheckoutAddressForm from '@/components/Checkout/CheckoutAddressForm';
+import CheckoutPaymentSection from '@/components/Checkout/CheckoutPaymentSection';
+import CheckoutOrderNotes from '@/components/Checkout/CheckoutOrderNotes';
+import CheckoutModal from '@/components/Checkout/CheckoutModal';
+import CheckoutExitConfirmation from '@/components/Checkout/CheckoutExitConfirmation';
 
 // Interfaces
 interface ProductImage {

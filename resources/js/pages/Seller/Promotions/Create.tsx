@@ -7,10 +7,13 @@ import React, { useState } from 'react';
 
 interface Product {
     product_id: number;
-    name: string;
+    name: string | { vi?: string; en?: string };
     images: Array<{ image_url: string; is_primary: boolean }>;
     variants: Array<{ price: number }>;
 }
+
+const getProductName = (product: Product): string =>
+    typeof product.name === 'string' ? product.name : product.name.vi || product.name.en || '';
 
 interface Wallet {
     balance: number;
@@ -38,7 +41,7 @@ export default function Create() {
 
     // Filter products based on search term
     const filteredProducts = products.filter((product) => {
-        const name = typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || '';
+        const name = getProductName(product);
         return name.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
@@ -344,12 +347,12 @@ export default function Create() {
                                             </div>
                                             <img
                                                 src={product.images?.find((img) => img.is_primary)?.image_url || '/default-product.png'}
-                                                alt={product.name}
+                                                alt={getProductName(product)}
                                                 className="product-image"
                                             />
                                             <div className="product-info">
                                                 <div className="product-name">
-                                                    {typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || ''}
+                                                    {getProductName(product)}
                                                 </div>
 
                                                 <div className="product-price">{product.variants?.[0]?.price?.toLocaleString()} VND</div>

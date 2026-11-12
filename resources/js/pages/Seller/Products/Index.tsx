@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import FilterPanel from '@/Components/ui/FilterPanel';
-import DataTable from '@/Components/ui/DataTable';
-import Pagination from '@/Components/ui/Pagination';
-import ActionButtons, { ActionConfig } from '@/Components/ui/ActionButtons';
-import StatusBadge from '@/Components/ui/StatusBadge';
-import ProductInfoCell from '@/Components/admin/products/ProductInfoCell';
+import FilterPanel from '@/components/ui/FilterPanel';
+import DataTable from '@/components/ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
+import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
+import StatusBadge from '@/components/ui/StatusBadge';
+import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
 import { useTranslation } from '@/lib/i18n';
 import '@/../css/Page.css';
 

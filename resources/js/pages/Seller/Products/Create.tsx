@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
-import Header from '@/Components/ui/Header';
-import PrimaryInput from '@/Components/ui/PrimaryInput';
-import ActionButton from '@/Components/ui/ActionButton';
-import RichTextEditor from '@/Components/ui/RichTextEditor';
+import Header from '@/components/ui/Header';
+import PrimaryInput from '@/components/ui/PrimaryInput';
+import ActionButton from '@/components/ui/ActionButton';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import { useTranslation } from '@/lib/i18n';
 import { useToast } from '@/Contexts/ToastContext';
 import '@/../css/Page.css';
@@ -63,7 +63,7 @@ interface SellerProductFormData {
     sku?: string;
     price: number;
     stock_quantity: number;
-    option_values?: Array<{ name: string; value: string }>;
+    option_values: Array<{ name: string; value: string }>;
     is_primary: boolean;
   }>;
 }

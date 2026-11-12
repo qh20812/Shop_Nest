@@ -2,13 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/Components/Analytics/AnalyticsFilters';
-import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
-import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
-import type { AnalyticsChartPoint as ChartDataPoint } from '@/Components/Analytics/AnalyticsChart';
-import AnalyticsTable from '@/Components/Analytics/AnalyticsTable';
-import type { AnalyticsTableColumn } from '@/Components/Analytics/AnalyticsTable';
-import ExportButton from '@/Components/Analytics/ExportButton';
+import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/Analytics/AnalyticsFilters';
+import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
+import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
+import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
+import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
+import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
+import ExportButton from '@/components/Analytics/ExportButton';
 import '@/../css/Page.css';
 
 type RevenueBreakdownPoint = {

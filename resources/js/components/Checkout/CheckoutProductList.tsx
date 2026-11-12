@@ -1,5 +1,5 @@
 import React from 'react';
-import ProductCard from '@/Components/Shared/ProductCard';
+import ProductCard from '@/components/Shared/ProductCard';
 import { toNumericPrice, type PriceLike } from '@/utils/price';
 import { type LocalizedValue } from '@/utils/localization';
 

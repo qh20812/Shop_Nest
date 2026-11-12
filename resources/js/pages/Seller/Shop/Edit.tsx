@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
 
-interface PageProps {
+interface PageProps extends Record<string, unknown> {
     shop: {
         id: number;
         name: string;

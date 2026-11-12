@@ -1,7 +1,7 @@
 import '@/../css/Page.css';
-import Avatar from '@/Components/ui/Avatar';
-import Header from '@/Components/ui/Header';
-import Insights from '@/Components/ui/Insights';
+import Avatar from '@/components/ui/Avatar';
+import Header from '@/components/ui/Header';
+import Insights from '@/components/ui/Insights';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/utils';

@@ -3,15 +3,15 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
-import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
-import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
-import type { AnalyticsChartPoint as ChartDataPoint } from '@/Components/Analytics/AnalyticsChart';
-import AnalyticsTable from '@/Components/Analytics/AnalyticsTable';
-import type { AnalyticsTableColumn } from '@/Components/Analytics/AnalyticsTable';
-import QuickFilter from '@/Components/Analytics/QuickFilter';
-import type { QuickFilterOption } from '@/Components/Analytics/QuickFilter';
+import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
+import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
+import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
+import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
+import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
+import QuickFilter from '@/components/Analytics/QuickFilter';
+import type { QuickFilterOption } from '@/components/Analytics/QuickFilter';
 import '@/../css/Page.css';
-import Header from '@/Components/ui/Header';
+import Header from '@/components/ui/Header';
 
 interface UserGrowthMetric {
     current: number;

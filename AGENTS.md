@@ -10,6 +10,7 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 - PHP formatting: `vendor/bin/pint`. Frontend: `npm run format` (Prettier, only `resources/`), `npm run lint` (ESLint **with `--fix`**, not a check), `npm run types` (`tsc --noEmit`).
 - CI (`.github/workflows/`) targets `develop`/`main`, uses PHP 8.4 + Node 22. Lint job: `pint` → `npm run format` → `npm run lint`. Test job: installs → `npm run build` → `phpunit`.
 - Dusk browser tests live in `tests/Browser` and are not in `phpunit.xml`; run them with `php artisan dusk`.
+- Docker: `docker compose up --build -d` serves the app on `http://localhost:8080` with MySQL on `localhost:3307`. The image builds assets in a Node 22 stage and runs PHP 8.3 + nginx.
 
 ## Architecture
 

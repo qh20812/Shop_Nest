@@ -178,13 +178,30 @@ Lệnh này khởi động đồng thời:
 
 Mở trình duyệt tại **http://127.0.0.1:9999**.
 
-Nếu dùng realtime (chat, thông báo), chạy Reverb ở terminal khác:
+Nếu dùng realtime (chat, thông báo), cấu hình trong `.env`:
+
+```env
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST="${REVERB_HOST}"
+VITE_REVERB_PORT="${REVERB_PORT}"
+```
+
+Sau đó chạy Reverb ở terminal khác:
 
 ```bash
 php artisan reverb:start
 ```
 
-Reverb mặc định chạy ở port `8080`.
+Reverb mặc định chạy ở port `8080`. `.env.example` mặc định dùng `BROADCAST_CONNECTION=log` để cài đặt/CI không cần Reverb key.
 
 Để build assets cho production:
 
@@ -206,6 +223,7 @@ npm run build
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_SECRET_ID` | Google OAuth client secret |
 | `GOOGLE_REDIRECT` | URL callback Google OAuth |
+| `BROADCAST_CONNECTION` | `log` mặc định; đổi thành `reverb` để bật realtime |
 | `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET` | Cấu hình Reverb server |
 | `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME` | Địa chỉ Reverb |
 | `VITE_REVERB_*` | Cấu hình Reverb cho frontend (được bake lúc build Vite) |

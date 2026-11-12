@@ -1,7 +1,7 @@
+import { appendCsrfToken } from '@/lib/csrf';
+import axios from 'axios';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import axios from 'axios';
-import { appendCsrfToken } from '@/lib/csrf';
 
 window.Pusher = Pusher;
 
@@ -18,17 +18,21 @@ const echo = new Echo({
     authorizer: (channel) => {
         return {
             authorize: (socketId, callback) => {
-                axios.post('/broadcasting/auth', appendCsrfToken({
-                    socket_id: socketId,
-                    channel_name: channel.name
-                }))
-                .then(response => {
-                    callback(false, response.data);
-                })
-                .catch(error => {
-                    callback(true, error);
-                });
-            }
+                axios
+                    .post(
+                        '/broadcasting/auth',
+                        appendCsrfToken({
+                            socket_id: socketId,
+                            channel_name: channel.name,
+                        }),
+                    )
+                    .then((response) => {
+                        callback(false, response.data);
+                    })
+                    .catch((error) => {
+                        callback(true, error);
+                    });
+            },
         };
     },
 });

@@ -2,27 +2,27 @@
 
 :root {
     --light: #f6f6f9;
-    --primary: #1976D2;
-    --light-primary: #CFE8FF;
+    --primary: #1976d2;
+    --light-primary: #cfe8ff;
     --grey: #eee;
-    --dark-grey: #AAAAAA;
+    --dark-grey: #aaaaaa;
     --dark: #363949;
-    --danger: #D32F2F;
-    --light-danger: #FECDD3;
-    --warning: #FBC02D;
-    --light-warning: #FFF2C6;
-    --success: #388E3C;
-    --light-success: #BBF7D0;
+    --danger: #d32f2f;
+    --light-danger: #fecdd3;
+    --warning: #fbc02d;
+    --light-warning: #fff2c6;
+    --success: #388e3c;
+    --light-success: #bbf7d0;
 
-    --primary-dark: #1565C0;
-    --danger-dark: #B71C1C;
-    --warning-dark: #C49000;
-    --success-dark: #2E7D32;
+    --primary-dark: #1565c0;
+    --danger-dark: #b71c1c;
+    --warning-dark: #c49000;
+    --success-dark: #2e7d32;
     --surface: #ffffff;
     --text-primary: #1f2933;
     --text-secondary: #4b5563;
     --text-muted: #6b7280;
-    --border-color: #E0E0E0;
+    --border-color: #e0e0e0;
     --overlay-color: rgba(31, 41, 51, 0.45);
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
     --shadow-md: 0 6px 12px rgba(15, 23, 42, 0.08);
@@ -94,7 +94,9 @@ body {
     line-height: var(--line-height-normal);
     color: var(--text-primary);
     background: var(--surface);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .checkout-textarea {
@@ -130,7 +132,10 @@ body {
     font-size: var(--font-size-base);
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
+    transition:
+        background var(--transition-normal),
+        box-shadow var(--transition-normal),
+        transform var(--transition-normal);
     text-decoration: none;
 }
 
@@ -168,7 +173,7 @@ body {
 }
 
 .checkout-button:disabled,
-.checkout-button[aria-disabled="true"] {
+.checkout-button[aria-disabled='true'] {
     background: var(--dark-grey);
     color: var(--surface);
     cursor: not-allowed;
@@ -299,7 +304,9 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background var(--transition-normal), color var(--transition-normal);
+    transition:
+        background var(--transition-normal),
+        color var(--transition-normal);
 }
 
 .checkout-modal__close:hover {

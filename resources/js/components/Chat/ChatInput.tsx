@@ -45,13 +45,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ value, onChange, onSend, isDisabl
                 disabled={isDisabled}
                 aria-disabled={isDisabled}
             />
-            <button
-                type="submit"
-                className="chat-input-send"
-                onClick={handleClick}
-                disabled={isSendDisabled}
-                aria-disabled={isSendDisabled}
-            >
+            <button type="submit" className="chat-input-send" onClick={handleClick} disabled={isSendDisabled} aria-disabled={isSendDisabled}>
                 Gửi
             </button>
         </div>

@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Head, usePage, router } from "@inertiajs/react";
-import AppLayout from "../../../layouts/app/AppLayout";
-import FilterPanel from "@/components/ui/FilterPanel";
-import DataTable from "@/components/ui/DataTable";
-import Pagination from "@/components/ui/Pagination";
-import Toast from "@/components/admin/users/Toast";
-import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import Avatar from '@/components/ui/Avatar';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
+import Toast from '@/components/admin/users/Toast';
+import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
+import Avatar from '@/components/ui/Avatar';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import DataTable from '@/components/ui/DataTable';
+import FilterPanel from '@/components/ui/FilterPanel';
+import Pagination from '@/components/ui/Pagination';
+import StatusBadge from '@/components/ui/StatusBadge';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 interface ShipperProfile {
     status: 'pending' | 'approved' | 'rejected' | 'suspended';
@@ -48,11 +48,11 @@ export default function Index() {
     const { t } = useTranslation();
     const { shippers, totalShippers = 0, filters, statusOptions, flash } = usePage<PageProps>().props;
 
-    const [search, setSearch] = useState(filters.search || "");
-    const [status, setStatus] = useState(filters.status || "");
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || '');
 
     // Toast state
-    const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     // Confirmation modal state
     const [confirmModal, setConfirmModal] = useState<{
@@ -62,27 +62,27 @@ export default function Index() {
     }>({
         isOpen: false,
         shipperId: null,
-        shipperName: "",
+        shipperName: '',
     });
 
     // When there's flash from backend, show toast
     useEffect(() => {
         if (flash?.success) {
-            setToast({ type: "success", message: flash.success });
+            setToast({ type: 'success', message: flash.success });
         } else if (flash?.error) {
-            setToast({ type: "error", message: flash.error });
+            setToast({ type: 'error', message: flash.error });
         }
     }, [flash]);
 
     const applyFilters = () => {
-        router.get("/admin/shippers", { search, status }, { preserveState: true });
+        router.get('/admin/shippers', { search, status }, { preserveState: true });
     };
 
     const handleCloseModal = () => {
         setConfirmModal({
             isOpen: false,
             shipperId: null,
-            shipperName: "",
+            shipperName: '',
         });
     };
 
@@ -109,48 +109,42 @@ export default function Index() {
     // Define columns for DataTable
     const shipperColumns = [
         {
-            header: "ID",
-            cell: (shipper: Shipper) => `#${shipper.id}`
+            header: 'ID',
+            cell: (shipper: Shipper) => `#${shipper.id}`,
         },
         {
             header: t('Shipper'),
             cell: (shipper: Shipper) => (
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Avatar user={shipper} />
                     <div>
-                        <p style={{ fontWeight: "500", margin: 0 }}>
+                        <p style={{ fontWeight: '500', margin: 0 }}>
                             {(() => {
                                 const fullName = `${shipper.first_name || ''} ${shipper.last_name || ''}`.trim();
                                 return fullName || shipper.username || 'Unknown Shipper';
                             })()}
                         </p>
-                        <p style={{ fontSize: "12px", color: "var(--dark-grey)", margin: 0 }}>
-                            {shipper.email}
-                        </p>
+                        <p style={{ fontSize: '12px', color: 'var(--dark-grey)', margin: 0 }}>{shipper.email}</p>
                     </div>
                 </div>
-            )
+            ),
         },
         {
             header: t('Contact'),
-            cell: (shipper: Shipper) => shipper.phone_number || 'N/A'
+            cell: (shipper: Shipper) => shipper.phone_number || 'N/A',
         },
         {
             header: t('Vehicle'),
             cell: (shipper: Shipper) => (
                 <div>
                     <div>{shipper.shipper_profile.vehicle_type}</div>
-                    <div style={{ fontSize: "12px", color: "var(--dark-grey)" }}>
-                        {shipper.shipper_profile.license_plate}
-                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--dark-grey)' }}>{shipper.shipper_profile.license_plate}</div>
                 </div>
-            )
+            ),
         },
         {
             header: t('Status'),
-            cell: (shipper: Shipper) => (
-                <StatusBadge status={shipper.shipper_profile.status} />
-            )
+            cell: (shipper: Shipper) => <StatusBadge status={shipper.shipper_profile.status} />,
         },
         {
             header: t('Actions'),
@@ -161,23 +155,23 @@ export default function Index() {
                         label: t('View Details'),
                         href: `/admin/shippers/${shipper.id}`,
                         icon: 'bx bx-show',
-                        variant: 'primary'
-                    }
+                        variant: 'primary',
+                    },
                 ];
                 return <ActionButtons actions={actions} />;
-            }
-        }
+            },
+        },
     ];
 
     return (
         <AppLayout>
             <Head title={t('Shipper Management')} />
-            
+
             <FilterPanel
                 title={t('Shipper Management')}
                 breadcrumbs={[
-                    { label: t('Shippers'), href: "#" },
-                    { label: t('Overview'), href: "/admin/shippers", active: true },
+                    { label: t('Shippers'), href: '#' },
+                    { label: t('Overview'), href: '/admin/shippers', active: true },
                 ]}
                 onApplyFilters={applyFilters}
                 searchConfig={{
@@ -209,13 +203,7 @@ export default function Index() {
             <Pagination links={shippers.links} />
 
             {/* Toast Notification */}
-            {toast && (
-                <Toast 
-                    type={toast.type} 
-                    message={toast.message} 
-                    onClose={handleCloseToast} 
-                />
-            )}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
 
             {/* Confirmation Modal */}
             <ConfirmationModal

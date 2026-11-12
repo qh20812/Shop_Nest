@@ -1,5 +1,5 @@
 import '@/../css/login-page.css';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useTranslation } from '../../lib/i18n';
 
@@ -26,11 +26,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
             <Head title={t('Forgot Password')} />
 
             {/* Status Message */}
-            {status && (
-                <div className="login-status">
-                    {status}
-                </div>
-            )}
+            {status && <div className="login-status">{status}</div>}
 
             <div className="login-content-wrapper">
                 <div className="login-card">
@@ -68,11 +64,7 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
                         </div>
 
                         {/* Submit */}
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className="login-submit-btn"
-                        >
+                        <button type="submit" disabled={processing} className="login-submit-btn">
                             {processing ? t('Sending...') : t('Send Password Reset Link')}
                         </button>
 

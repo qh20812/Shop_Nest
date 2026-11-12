@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
-import { usePage } from '@inertiajs/react';
-import { echo } from '@laravel/echo-react';
-import { appendCsrfToken, resolveCsrfToken } from '@/lib/csrf';
 import ChatList, { ConversationItem } from '@/components/Chat/ChatList';
 import ChatWindow, { ChatMessage } from '@/components/Chat/ChatWindow';
 import CreateConversationModal from '@/components/Chat/CreateConversationModal';
+import { appendCsrfToken, resolveCsrfToken } from '@/lib/csrf';
+import { usePage } from '@inertiajs/react';
+import { echo } from '@laravel/echo-react';
+import axios from 'axios';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type Participant = {
     id: number;
@@ -126,11 +126,7 @@ const resolveUserId = (conversation: ConversationPayload): number | null => {
 };
 
 const resolveReceiverId = (conversation: ConversationPayload): number | null => {
-    return (
-        toNumber(conversation.receiver_id) ??
-        toNumber(conversation.receiver?.id) ??
-        null
-    );
+    return toNumber(conversation.receiver_id) ?? toNumber(conversation.receiver?.id) ?? null;
 };
 
 const getConversationPartner = (conversation: ConversationPayload, currentUserId: number | null): Participant | null => {
@@ -222,15 +218,12 @@ const normalizeConversation = (conversation: ConversationPayload, currentUserId:
     const userId = resolveUserId(conversation);
     const receiverId = resolveReceiverId(conversation);
     const partner = getConversationPartner(conversation, currentUserId);
-    const inferredPartnerId = partner?.id ?? (currentUserId !== null
-        ? (userId === currentUserId ? receiverId : userId)
-        : receiverId ?? userId);
-    const partnerStatus = typeof conversation.partner_status === 'string' && conversation.partner_status.trim().length > 0
-        ? conversation.partner_status.trim()
-        : 'Ngoại tuyến';
-    const partnerLastActivityAt = typeof conversation.partner_last_activity_at === 'string'
-        ? conversation.partner_last_activity_at
-        : null;
+    const inferredPartnerId = partner?.id ?? (currentUserId !== null ? (userId === currentUserId ? receiverId : userId) : (receiverId ?? userId));
+    const partnerStatus =
+        typeof conversation.partner_status === 'string' && conversation.partner_status.trim().length > 0
+            ? conversation.partner_status.trim()
+            : 'Ngoại tuyến';
+    const partnerLastActivityAt = typeof conversation.partner_last_activity_at === 'string' ? conversation.partner_last_activity_at : null;
 
     return {
         id: conversation.id,
@@ -322,8 +315,11 @@ const ChatPopup: React.FC = () => {
     const fetchInFlightRef = useRef(false);
     const hasFetchedRef = useRef(false);
 
-    const activeConversation = useMemo(() => conversations.find((conversation) => conversation.id === activeConversationId) ?? null, [conversations, activeConversationId]);
-    const activeDraft = activeConversation ? drafts[activeConversation.id] ?? '' : '';
+    const activeConversation = useMemo(
+        () => conversations.find((conversation) => conversation.id === activeConversationId) ?? null,
+        [conversations, activeConversationId],
+    );
+    const activeDraft = activeConversation ? (drafts[activeConversation.id] ?? '') : '';
     const isInitialLoading = isLoading && !hasFetchedRef.current;
 
     const conversationItems: ConversationItem[] = useMemo(
@@ -428,9 +424,7 @@ const ChatPopup: React.FC = () => {
                         return conversation;
                     }
 
-                    const messages = normalizedMessage
-                        ? mergeMessages(conversation.messages, normalizedMessage)
-                        : conversation.messages;
+                    const messages = normalizedMessage ? mergeMessages(conversation.messages, normalizedMessage) : conversation.messages;
 
                     return {
                         ...conversation,
@@ -476,7 +470,11 @@ const ChatPopup: React.FC = () => {
             try {
                 const response = await axios.get('/chat/conversations');
                 const payload = response.data;
-                const data = Array.isArray(payload?.data) ? (payload.data as ConversationPayload[]) : Array.isArray(payload) ? (payload as ConversationPayload[]) : [];
+                const data = Array.isArray(payload?.data)
+                    ? (payload.data as ConversationPayload[])
+                    : Array.isArray(payload)
+                      ? (payload as ConversationPayload[])
+                      : [];
 
                 const normalized = sortConversations(data.map((item) => normalizeConversation(item, currentUserId)));
                 setConversations(normalized);
@@ -492,7 +490,7 @@ const ChatPopup: React.FC = () => {
                 hasFetchedRef.current = true;
             } catch (error: unknown) {
                 const message = axios.isAxiosError(error)
-                    ? error.response?.data?.message ?? error.message ?? 'Không thể tải danh sách cuộc trò chuyện.'
+                    ? (error.response?.data?.message ?? error.message ?? 'Không thể tải danh sách cuộc trò chuyện.')
                     : 'Không thể tải danh sách cuộc trò chuyện.';
 
                 setLoadError(message);
@@ -539,10 +537,13 @@ const ChatPopup: React.FC = () => {
         try {
             const response = await axios.post(
                 '/chat/messages',
-                appendCsrfToken({
-                    conversation_id: conversationId,
-                    content,
-                }, csrfToken),
+                appendCsrfToken(
+                    {
+                        conversation_id: conversationId,
+                        content,
+                    },
+                    csrfToken,
+                ),
             );
 
             const payload = response.data?.data ?? response.data;
@@ -572,7 +573,7 @@ const ChatPopup: React.FC = () => {
             setDrafts((previous) => ({ ...previous, [conversationId]: '' }));
         } catch (error: unknown) {
             const message = axios.isAxiosError(error)
-                ? error.response?.data?.message ?? error.message ?? 'Không thể gửi tin nhắn.'
+                ? (error.response?.data?.message ?? error.message ?? 'Không thể gửi tin nhắn.')
                 : 'Không thể gửi tin nhắn.';
 
             setSendError(message);
@@ -601,10 +602,12 @@ const ChatPopup: React.FC = () => {
                     const isOwnMessage = currentUserId !== null && incoming.senderId === currentUserId;
                     const shouldIncreaseUnread = !isOwnMessage && (!isOpen || activeConversationId !== conversation.id);
                     const mergedMessages = mergeMessages(conversation.messages, incoming);
-                    const partnerCandidate = conversation.partner ?? ((incoming.sender && incoming.sender.id !== currentUserId) ? incoming.sender : null);
-                    const displayName = conversation.displayName === DEFAULT_CONVERSATION_NAME && partnerCandidate
-                        ? formatParticipantName(partnerCandidate)
-                        : conversation.displayName;
+                    const partnerCandidate =
+                        conversation.partner ?? (incoming.sender && incoming.sender.id !== currentUserId ? incoming.sender : null);
+                    const displayName =
+                        conversation.displayName === DEFAULT_CONVERSATION_NAME && partnerCandidate
+                            ? formatParticipantName(partnerCandidate)
+                            : conversation.displayName;
                     const partnerId = conversation.partnerId ?? (partnerCandidate ? partnerCandidate.id : null);
                     const partnerStatus = !isOwnMessage ? 'Đang trực tuyến' : conversation.partnerStatus;
                     const partnerLastActivityAt = !isOwnMessage ? incoming.createdAt : conversation.partnerLastActivityAt;

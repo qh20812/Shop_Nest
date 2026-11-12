@@ -1,8 +1,8 @@
+import InputError from '@/components/input-error';
 import React from 'react';
+import AutoApplyToggle from './AutoApplyToggle';
 import RuleBuilder, { type PromotionRule } from './RuleBuilder';
 import RulePreview from './RulePreview';
-import AutoApplyToggle from './AutoApplyToggle';
-import InputError from '@/components/input-error';
 
 interface ProductOption {
     product_id: number;
@@ -73,21 +73,12 @@ export default function PromotionForm({
                 <div className="card-body" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                     <div className="form-control">
                         <label>Name</label>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(event) => setData('name', event.target.value)}
-                            required
-                        />
+                        <input type="text" value={data.name} onChange={(event) => setData('name', event.target.value)} required />
                         <InputError message={errors.name} />
                     </div>
                     <div className="form-control">
                         <label>Type</label>
-                        <select
-                            value={data.type}
-                            onChange={(event) => setData('type', event.target.value)}
-                            required
-                        >
+                        <select value={data.type} onChange={(event) => setData('type', event.target.value)} required>
                             <option value="percentage">Percentage Discount</option>
                             <option value="fixed_amount">Fixed Amount Discount</option>
                             <option value="free_shipping">Free Shipping</option>
@@ -141,12 +132,7 @@ export default function PromotionForm({
                     </div>
                     <div className="form-control">
                         <label>Start date</label>
-                        <input
-                            type="datetime-local"
-                            value={data.starts_at}
-                            onChange={(event) => setData('starts_at', event.target.value)}
-                            required
-                        />
+                        <input type="datetime-local" value={data.starts_at} onChange={(event) => setData('starts_at', event.target.value)} required />
                         <InputError message={errors.starts_at} />
                     </div>
                     <div className="form-control">
@@ -162,11 +148,7 @@ export default function PromotionForm({
                 </div>
                 <div className="form-control" style={{ marginTop: '12px' }}>
                     <label>Description</label>
-                    <textarea
-                        value={data.description}
-                        onChange={(event) => setData('description', event.target.value)}
-                        rows={3}
-                    />
+                    <textarea value={data.description} onChange={(event) => setData('description', event.target.value)} rows={3} />
                     <InputError message={errors.description} />
                 </div>
             </section>
@@ -212,7 +194,11 @@ export default function PromotionForm({
                             </div>
                             <div className="form-control">
                                 <label>Categories</label>
-                                <select multiple value={data.category_ids.map(String)} onChange={(event) => handleSelectChange('category_ids', event)}>
+                                <select
+                                    multiple
+                                    value={data.category_ids.map(String)}
+                                    onChange={(event) => handleSelectChange('category_ids', event)}
+                                >
                                     {categories.map((category: CategoryOption) => (
                                         <option key={category.category_id} value={category.category_id}>
                                             {category.name}
@@ -245,11 +231,7 @@ export default function PromotionForm({
                 <h3 className="card-title">Status</h3>
                 <div className="card-body">
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input
-                            type="checkbox"
-                            checked={data.is_active}
-                            onChange={(event) => setData('is_active', event.target.checked)}
-                        />
+                        <input type="checkbox" checked={data.is_active} onChange={(event) => setData('is_active', event.target.checked)} />
                         Promotion is active
                     </label>
                 </div>

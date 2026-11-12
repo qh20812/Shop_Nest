@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import FilterPanel from '@/components/ui/FilterPanel';
-import DataTable from '@/components/ui/DataTable';
-import Pagination from '@/components/ui/Pagination';
-import StatusBadge from '@/components/ui/StatusBadge';
+import '@/../css/Page.css';
+import Toast from '@/components/admin/users/Toast';
 import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import Toast from '@/components/admin/users/Toast';
+import DataTable from '@/components/ui/DataTable';
+import FilterPanel from '@/components/ui/FilterPanel';
+import Pagination from '@/components/ui/Pagination';
+import StatusBadge from '@/components/ui/StatusBadge';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
-import '@/../css/Page.css';
 
 interface PromotionProduct {
     product_id: number;
@@ -250,83 +250,96 @@ export default function Index() {
     const closeToast = () => setToast(null);
 
     const handleApplyFilters = () => {
-        router.get('/seller/promotions', {
-            search: search || undefined,
-            status: statusFilter || undefined,
-            date_range: dateRange || undefined,
-            budget_range: budgetRange || undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            '/seller/promotions',
+            {
+                search: search || undefined,
+                status: statusFilter || undefined,
+                date_range: dateRange || undefined,
+                budget_range: budgetRange || undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
-    const joinLabelWithDate = useCallback((labelKey: string, dateValue: string) => {
-        const formatted = formatDate(dateValue);
-        return formatted ? `${t(labelKey)} ${formatted}` : t(labelKey);
-    }, [t]);
+    const joinLabelWithDate = useCallback(
+        (labelKey: string, dateValue: string) => {
+            const formatted = formatDate(dateValue);
+            return formatted ? `${t(labelKey)} ${formatted}` : t(labelKey);
+        },
+        [t],
+    );
 
-    const determineStatus = useCallback((promotion: Promotion) => {
-        const now = new Date();
-        const startDate = promotion.start_date ? new Date(promotion.start_date) : null;
-        const endDate = promotion.end_date ? new Date(promotion.end_date) : null;
+    const determineStatus = useCallback(
+        (promotion: Promotion) => {
+            const now = new Date();
+            const startDate = promotion.start_date ? new Date(promotion.start_date) : null;
+            const endDate = promotion.end_date ? new Date(promotion.end_date) : null;
 
-        if (!promotion.is_active) {
+            if (!promotion.is_active) {
+                return {
+                    badge: 'Paused',
+                    label: t('Paused'),
+                    helper: endDate ? joinLabelWithDate('Paused until', promotion.end_date) : t('Promotion is paused'),
+                };
+            }
+
+            if (endDate && endDate < now) {
+                return {
+                    badge: 'Expired',
+                    label: t('Expired'),
+                    helper: joinLabelWithDate('Ended on', promotion.end_date),
+                };
+            }
+
+            if (startDate && startDate > now) {
+                return {
+                    badge: 'Upcoming',
+                    label: t('Upcoming'),
+                    helper: joinLabelWithDate('Starts on', promotion.start_date),
+                };
+            }
+
             return {
-                badge: 'Paused',
-                label: t('Paused'),
-                helper: endDate ? joinLabelWithDate('Paused until', promotion.end_date) : t('Promotion is paused'),
+                badge: 'active',
+                label: t('Active'),
+                helper: endDate ? joinLabelWithDate('Ends on', promotion.end_date) : t('Currently running'),
             };
-        }
+        },
+        [joinLabelWithDate, t],
+    );
 
-        if (endDate && endDate < now) {
-            return {
-                badge: 'Expired',
-                label: t('Expired'),
-                helper: joinLabelWithDate('Ended on', promotion.end_date),
-            };
-        }
+    const openConfirmModal = useCallback(
+        (promotion: Promotion, action: ConfirmAction) => {
+            const promotionName = promotion.name ?? t('Unnamed Promotion');
+            let title = '';
+            let message = '';
 
-        if (startDate && startDate > now) {
-            return {
-                badge: 'Upcoming',
-                label: t('Upcoming'),
-                helper: joinLabelWithDate('Starts on', promotion.start_date),
-            };
-        }
+            if (action === 'pause') {
+                title = t('Pause Promotion');
+                message = `${t('Are you sure you want to pause this promotion?')} "${promotionName}". ${t('Campaign delivery will stop immediately.')}`;
+            } else if (action === 'resume') {
+                title = t('Resume Promotion');
+                message = `${t('Resume this promotion?')} "${promotionName}". ${t('Remaining budget will continue to spend.')}`;
+            } else {
+                title = t('Delete Promotion');
+                message = `${t('This will permanently remove the promotion')} "${promotionName}". ${t('This action cannot be undone.')}`;
+            }
 
-        return {
-            badge: 'active',
-            label: t('Active'),
-            helper: endDate ? joinLabelWithDate('Ends on', promotion.end_date) : t('Currently running'),
-        };
-    }, [joinLabelWithDate, t]);
-
-    const openConfirmModal = useCallback((promotion: Promotion, action: ConfirmAction) => {
-        const promotionName = promotion.name ?? t('Unnamed Promotion');
-        let title = '';
-        let message = '';
-
-        if (action === 'pause') {
-            title = t('Pause Promotion');
-            message = `${t('Are you sure you want to pause this promotion?')} "${promotionName}". ${t('Campaign delivery will stop immediately.')}`;
-        } else if (action === 'resume') {
-            title = t('Resume Promotion');
-            message = `${t('Resume this promotion?')} "${promotionName}". ${t('Remaining budget will continue to spend.')}`;
-        } else {
-            title = t('Delete Promotion');
-            message = `${t('This will permanently remove the promotion')} "${promotionName}". ${t('This action cannot be undone.')}`;
-        }
-
-        setConfirmModal({
-            isOpen: true,
-            promotionId: promotion.promotion_id,
-            promotionName,
-            action,
-            title,
-            message,
-        });
-    }, [t]);
+            setConfirmModal({
+                isOpen: true,
+                promotionId: promotion.promotion_id,
+                promotionName,
+                action,
+                title,
+                message,
+            });
+        },
+        [t],
+    );
 
     const closeConfirmModal = () => {
         setConfirmModal({
@@ -354,12 +367,14 @@ export default function Index() {
 
             if (!response.ok) {
                 const errorPayload = await response.json().catch(() => ({}));
-                const message = errorPayload?.message ?? (action === 'pause' ? t('Unable to pause the promotion.') : t('Unable to resume the promotion.'));
+                const message =
+                    errorPayload?.message ?? (action === 'pause' ? t('Unable to pause the promotion.') : t('Unable to resume the promotion.'));
                 throw new Error(message);
             }
 
             const payload = await response.json().catch(() => ({ message: '' }));
-            const successMessage = payload?.message ?? (action === 'pause' ? t('Promotion paused successfully.') : t('Promotion resumed successfully.'));
+            const successMessage =
+                payload?.message ?? (action === 'pause' ? t('Promotion paused successfully.') : t('Promotion resumed successfully.'));
 
             setToast({ type: 'success', message: successMessage });
             router.reload({ only: ['promotions', 'pagination'] });
@@ -384,145 +399,141 @@ export default function Index() {
         await performStatusMutation(confirmModal.promotionId, confirmModal.action);
     };
 
-    const buildActionButtons = useCallback((promotion: Promotion): ActionConfig[] => {
-        const statusSnapshot = determineStatus(promotion);
-        const actions: ActionConfig[] = [
-            {
-                type: 'link',
-                href: `/seller/promotions/${promotion.promotion_id}`,
-                variant: 'primary',
-                icon: 'bx bx-show',
-                label: t('View'),
-            },
-            {
-                type: 'link',
-                href: `/seller/promotions/${promotion.promotion_id}/edit`,
-                variant: 'primary',
-                icon: 'bx bx-edit-alt',
-                label: t('Edit'),
-            },
-        ];
+    const buildActionButtons = useCallback(
+        (promotion: Promotion): ActionConfig[] => {
+            const statusSnapshot = determineStatus(promotion);
+            const actions: ActionConfig[] = [
+                {
+                    type: 'link',
+                    href: `/seller/promotions/${promotion.promotion_id}`,
+                    variant: 'primary',
+                    icon: 'bx bx-show',
+                    label: t('View'),
+                },
+                {
+                    type: 'link',
+                    href: `/seller/promotions/${promotion.promotion_id}/edit`,
+                    variant: 'primary',
+                    icon: 'bx bx-edit-alt',
+                    label: t('Edit'),
+                },
+            ];
 
-        if (statusSnapshot.badge === 'active') {
+            if (statusSnapshot.badge === 'active') {
+                actions.push({
+                    type: 'button',
+                    onClick: () => openConfirmModal(promotion, 'pause'),
+                    variant: 'danger',
+                    icon: 'bx bx-pause',
+                    label: t('Pause'),
+                });
+            } else if (statusSnapshot.badge === 'Paused' || statusSnapshot.badge === 'Expired') {
+                actions.push({
+                    type: 'button',
+                    onClick: () => openConfirmModal(promotion, 'resume'),
+                    variant: 'primary',
+                    icon: 'bx bx-play',
+                    label: t('Resume'),
+                });
+            }
+
             actions.push({
                 type: 'button',
-                onClick: () => openConfirmModal(promotion, 'pause'),
+                onClick: () => openConfirmModal(promotion, 'delete'),
                 variant: 'danger',
-                icon: 'bx bx-pause',
-                label: t('Pause'),
+                icon: 'bx bx-trash',
+                label: t('Delete'),
             });
-        } else if (statusSnapshot.badge === 'Paused' || statusSnapshot.badge === 'Expired') {
-            actions.push({
-                type: 'button',
-                onClick: () => openConfirmModal(promotion, 'resume'),
-                variant: 'primary',
-                icon: 'bx bx-play',
-                label: t('Resume'),
-            });
-        }
 
-        actions.push({
-            type: 'button',
-            onClick: () => openConfirmModal(promotion, 'delete'),
-            variant: 'danger',
-            icon: 'bx bx-trash',
-            label: t('Delete'),
-        });
-
-        return actions;
-    }, [determineStatus, openConfirmModal, t]);
-
-    const columns = useMemo(() => [
-        {
-            id: 'promotion_name',
-            header: t('Promotion'),
-            cell: (promotion: Promotion) => (
-                <div className="promotion-cell">
-                    <div className="promotion-name">{promotion.name}</div>
-                    <div className="promotion-discount">{getDiscountLabel(promotion, t)}</div>
-                    <div className="promotion-meta">
-                        {t('Products')}: {promotion.products?.length ?? 0} · {formatDateRange(promotion.start_date, promotion.end_date)}
-                    </div>
-                </div>
-            ),
+            return actions;
         },
-        {
-            id: 'promotion_budget',
-            header: t('Budget'),
-            cell: (promotion: Promotion) => {
-                const allocated = Number(promotion.allocated_budget ?? 0);
-                const spent = Number(promotion.spent_budget ?? 0);
-                const percent = getPercentValue(spent, allocated);
-                const isOverBudget = spent > allocated && allocated > 0;
+        [determineStatus, openConfirmModal, t],
+    );
 
-                return (
-                    <div className="promotion-budget">
-                        <div className={`promotion-budget-amount${isOverBudget ? ' over-budget' : ''}`}>
-                            {formatCurrency(spent)} / {formatCurrency(allocated)}
-                        </div>
-                        <progress
-                            className={`promotion-progress${isOverBudget ? ' over-budget' : ''}`}
-                            value={percent}
-                            max={100}
-                        >
-                            {percent}%
-                        </progress>
-                        <div className="promotion-budget-caption">
-                            {t('Remains')}: {formatCurrency(Math.max(allocated - spent, 0))}
+    const columns = useMemo(
+        () => [
+            {
+                id: 'promotion_name',
+                header: t('Promotion'),
+                cell: (promotion: Promotion) => (
+                    <div className="promotion-cell">
+                        <div className="promotion-name">{promotion.name}</div>
+                        <div className="promotion-discount">{getDiscountLabel(promotion, t)}</div>
+                        <div className="promotion-meta">
+                            {t('Products')}: {promotion.products?.length ?? 0} · {formatDateRange(promotion.start_date, promotion.end_date)}
                         </div>
                     </div>
-                );
+                ),
             },
-        },
-        {
-            id: 'promotion_status',
-            header: t('Status'),
-            cell: (promotion: Promotion) => {
-                const statusSnapshot = determineStatus(promotion);
+            {
+                id: 'promotion_budget',
+                header: t('Budget'),
+                cell: (promotion: Promotion) => {
+                    const allocated = Number(promotion.allocated_budget ?? 0);
+                    const spent = Number(promotion.spent_budget ?? 0);
+                    const percent = getPercentValue(spent, allocated);
+                    const isOverBudget = spent > allocated && allocated > 0;
 
-                return (
-                    <div className="promotion-status">
-                        <StatusBadge status={statusSnapshot.badge} />
-                        <div className="promotion-status-text">{statusSnapshot.helper}</div>
-                    </div>
-                );
+                    return (
+                        <div className="promotion-budget">
+                            <div className={`promotion-budget-amount${isOverBudget ? 'over-budget' : ''}`}>
+                                {formatCurrency(spent)} / {formatCurrency(allocated)}
+                            </div>
+                            <progress className={`promotion-progress${isOverBudget ? 'over-budget' : ''}`} value={percent} max={100}>
+                                {percent}%
+                            </progress>
+                            <div className="promotion-budget-caption">
+                                {t('Remains')}: {formatCurrency(Math.max(allocated - spent, 0))}
+                            </div>
+                        </div>
+                    );
+                },
             },
-        },
-        {
-            id: 'promotion_performance',
-            header: t('Performance'),
-            cell: (promotion: Promotion) => (
-                <div className="promotion-performance">
-                    <div className={`promotion-roi ${getRoiClass(promotion.roi_percentage ?? 0)}`}>
-                        {t('ROI')}: {Number(promotion.roi_percentage ?? 0).toFixed(1)}%
+            {
+                id: 'promotion_status',
+                header: t('Status'),
+                cell: (promotion: Promotion) => {
+                    const statusSnapshot = determineStatus(promotion);
+
+                    return (
+                        <div className="promotion-status">
+                            <StatusBadge status={statusSnapshot.badge} />
+                            <div className="promotion-status-text">{statusSnapshot.helper}</div>
+                        </div>
+                    );
+                },
+            },
+            {
+                id: 'promotion_performance',
+                header: t('Performance'),
+                cell: (promotion: Promotion) => (
+                    <div className="promotion-performance">
+                        <div className={`promotion-roi ${getRoiClass(promotion.roi_percentage ?? 0)}`}>
+                            {t('ROI')}: {Number(promotion.roi_percentage ?? 0).toFixed(1)}%
+                        </div>
+                        <div className="promotion-performance-metric">
+                            <strong>{t('Allocated')}:</strong> {formatCurrency(promotion.allocated_budget)}
+                        </div>
+                        <div className="promotion-performance-metric">
+                            <strong>{t('Spent')}:</strong> {formatCurrency(promotion.spent_budget)}
+                        </div>
                     </div>
-                    <div className="promotion-performance-metric">
-                        <strong>{t('Allocated')}:</strong> {formatCurrency(promotion.allocated_budget)}
-                    </div>
-                    <div className="promotion-performance-metric">
-                        <strong>{t('Spent')}:</strong> {formatCurrency(promotion.spent_budget)}
-                    </div>
-                </div>
-            ),
-        },
-        {
-            id: 'promotion_actions',
-            header: t('Actions'),
-            cell: (promotion: Promotion) => <ActionButtons actions={buildActionButtons(promotion)} />,
-        },
-    ], [buildActionButtons, determineStatus, t]);
+                ),
+            },
+            {
+                id: 'promotion_actions',
+                header: t('Actions'),
+                cell: (promotion: Promotion) => <ActionButtons actions={buildActionButtons(promotion)} />,
+            },
+        ],
+        [buildActionButtons, determineStatus, t],
+    );
 
     return (
         <AppLayout>
             <Head title={t('My Promotions')} />
 
-            {toast && (
-                <Toast
-                    type={toast.type}
-                    message={toast.message}
-                    onClose={closeToast}
-                />
-            )}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={closeToast} />}
 
             <FilterPanel
                 title={t('My Promotions')}

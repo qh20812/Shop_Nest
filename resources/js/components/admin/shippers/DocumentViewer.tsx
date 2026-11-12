@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import React, { useState } from 'react';
 
 interface DocumentViewerProps {
     imageUrl: string;
@@ -67,9 +67,7 @@ export default function DocumentViewer({ imageUrl, documentName, onClose }: Docu
                         borderBottom: '1px solid var(--grey)',
                     }}
                 >
-                    <h3 style={{ margin: 0, color: 'var(--dark)' }}>
-                        {documentName}
-                    </h3>
+                    <h3 style={{ margin: 0, color: 'var(--dark)' }}>{documentName}</h3>
                     <button
                         onClick={onClose}
                         style={{
@@ -123,7 +121,8 @@ export default function DocumentViewer({ imageUrl, documentName, onClose }: Docu
                         >
                             <i className="bx bx-error-circle" style={{ fontSize: '48px' }}></i>
                             <p style={{ margin: 0, textAlign: 'center' }}>
-                                {t('Failed to load document image.')}<br />
+                                {t('Failed to load document image.')}
+                                <br />
                                 {t('Please check if the file exists and try again.')}
                             </p>
                         </div>

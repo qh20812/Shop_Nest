@@ -1,5 +1,5 @@
-import axios, { AxiosHeaders } from 'axios';
 import { configureEcho } from '@laravel/echo-react';
+import axios, { AxiosHeaders } from 'axios';
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -11,9 +11,7 @@ if (csrfToken) {
 }
 
 const getCookieValue = (name: string): string | null => {
-    const match = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith(`${name}=`));
+    const match = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`));
 
     if (!match) {
         return null;
@@ -33,9 +31,7 @@ axios.interceptors.request.use((config) => {
         config.headers = new AxiosHeaders();
     }
 
-    const headers = config.headers instanceof AxiosHeaders
-        ? config.headers
-        : AxiosHeaders.from(config.headers);
+    const headers = config.headers instanceof AxiosHeaders ? config.headers : AxiosHeaders.from(config.headers);
 
     if (csrfToken) {
         headers.set('X-CSRF-TOKEN', csrfToken);

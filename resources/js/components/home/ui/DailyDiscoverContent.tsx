@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import DailyDiscoverCard from './DailyDiscoverCard';
 import { useToast } from '@/Contexts/ToastContext';
+import { useEffect, useState } from 'react';
+import DailyDiscoverCard from './DailyDiscoverCard';
 
 interface Product {
     id: number;
@@ -52,7 +52,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                         const res = await fetch(`/user/wishlist/items/${product.id}`, {
                             method: 'DELETE',
-                            headers: { 'X-CSRF-TOKEN': csrf }
+                            headers: { 'X-CSRF-TOKEN': csrf },
                         });
                         if (res.status === 401) {
                             const data = await res.json();
@@ -71,7 +71,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                         const res = await fetch(`/user/wishlist/items/${product.id}`, {
                             method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': csrf }
+                            headers: { 'X-CSRF-TOKEN': csrf },
                         });
                         if (res.status === 401) {
                             const data = await res.json();
@@ -84,12 +84,10 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
             }
             return next;
         });
-        
+
         // TODO: Persist to server via API
         console.log('Toggled favorite:', product.id);
     };
-
-    
 
     return (
         <>
@@ -99,7 +97,7 @@ export default function DailyDiscoverContent({ products }: DailyDiscoverContentP
                         const hasDiscount = product.discount_price && product.price > product.discount_price;
                         const currentPrice = product.discount_price ?? product.price;
                         const originalPrice = hasDiscount ? product.price : undefined;
-                        
+
                         return (
                             <DailyDiscoverCard
                                 key={product.id}

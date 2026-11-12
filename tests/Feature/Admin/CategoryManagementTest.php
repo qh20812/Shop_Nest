@@ -214,7 +214,7 @@ class CategoryManagementTest extends TestCase
         $this->assertDatabaseHas('categories', [
             'name->en' => 'Electronics',
         ]);
-        Storage::assertExists('categories/' . $image->hashName());
+        Storage::disk('public')->assertExists('categories/' . $image->hashName());
     }
 
     public function test_admin_can_update_category(): void
@@ -382,7 +382,7 @@ class CategoryManagementTest extends TestCase
 
         $response->assertRedirect(route('admin.categories.index'));
         $response->assertSessionHas('success');
-        Storage::assertExists('categories/' . $image->hashName());
+        Storage::disk('public')->assertExists('categories/' . $image->hashName());
     }
 
     public function test_notification_is_sent_when_category_is_created(): void

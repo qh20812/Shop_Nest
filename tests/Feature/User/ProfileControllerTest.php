@@ -103,7 +103,7 @@ class ProfileControllerTest extends TestCase
         $this->user->refresh();
 
         $this->assertNotNull($this->user->avatar);
-        Storage::assertExists($this->user->avatar);
+        Storage::disk('public')->assertExists($this->user->avatar);
     }
 
     #[Test]
@@ -126,9 +126,9 @@ class ProfileControllerTest extends TestCase
 
         $this->actingAs($this->user)->put(route('user.profile.update'), $data);
 
-        Storage::assertMissing($oldPath); // Old deleted
+        Storage::disk('public')->assertMissing($oldPath); // Old deleted
         $this->user->refresh();
-        Storage::assertExists($this->user->avatar); // New exists
+        Storage::disk('public')->assertExists($this->user->avatar); // New exists
     }
 
     #[Test]

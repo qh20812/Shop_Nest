@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
     return (
@@ -22,28 +22,28 @@ export default function Footer() {
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Facebook"
                             >
-                                <Facebook className="h-4 w-4" />
+                                <i className="fa-brands fa-facebook-f text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Twitter"
                             >
-                                <Twitter className="h-4 w-4" />
+                                <i className="fa-brands fa-x-twitter text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Instagram"
                             >
-                                <Instagram className="h-4 w-4" />
+                                <i className="fa-brands fa-instagram text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Youtube"
                             >
-                                <Youtube className="h-4 w-4" />
+                                <i className="fa-brands fa-youtube text-sm" />
                             </a>
                         </div>
                     </div>

@@ -222,11 +222,11 @@ export default function Index() {
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(value: number) => formatCurrency(value, { from: currencyCode, to: currencyCode, rates: {}, locale, abbreviate: true })} width={80} />
                 <Tooltip
-                  formatter={(value: number) => [
-                    formatCurrency(value, { from: currencyCode, to: currencyCode, rates: {}, locale }),
+                  formatter={(value) => [
+                    formatCurrency(Number(value), { from: currencyCode, to: currencyCode, rates: {}, locale }),
                     t('Revenue'),
                   ]}
-                  labelFormatter={(label: string) => `${t('Date')}: ${label}`}
+                  labelFormatter={(label) => `${t('Date')}: ${String(label)}`}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#1976D2" strokeWidth={3} dot={false} />
               </LineChart>
@@ -246,8 +246,8 @@ export default function Index() {
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
                 <Tooltip
-                  formatter={(value: number) => [value.toLocaleString(locale), t('New Users')]}
-                  labelFormatter={(label: string) => `${t('Week')}: ${label}`}
+                  formatter={(value) => [Number(value).toLocaleString(locale), t('New Users')]}
+                  labelFormatter={(label) => `${t('Week')}: ${String(label)}`}
                 />
                 <Bar dataKey="users" fill="#388E3C" radius={[6, 6, 0, 0]} />
               </BarChart>

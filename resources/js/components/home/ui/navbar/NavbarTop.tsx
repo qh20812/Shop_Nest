@@ -37,45 +37,45 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
         <div className="navbar-top">
             <div className="navbar-container-fluid">
                 <div className="navbar-top-left">
-                    <Link href={route('seller.register')} className="navbar-link-hover">
-                        {t('Become a Seller')}
-                    </Link>
-                </div>
+                                <Link href={route('seller.register')} className="navbar-link-hover">
+                                    {t('navbar.become_seller')}
+                                </Link>
+                            </div>
                 <div className="navbar-top-right">
                     
                     
 
                     {/* Language Dropdown */}
                     <div className="navbar-dropdown-wrapper" ref={langDropdownRef}>
-                        <button
+                            <button
                             className="navbar-link-hover navbar-flex-center"
                             onClick={() => setShowLangDropdown(!showLangDropdown)}
                             aria-expanded={showLangDropdown}
                             aria-haspopup="true"
                         >
-                            <span>{locale.toUpperCase()}</span>
+                            <span>{locale === 'vi' ? t('navbar.vietnamese') : t('navbar.english')}</span>
                             <i className="bi bi-chevron-down navbar-icon-sm"></i>
                         </button>
                         {showLangDropdown && (
                             <div className="navbar-dropdown">
-                                <Link 
-                                    href="/language" 
-                                    method="post" 
-                                    data={{ locale: 'vi' }} 
-                                    className="navbar-dropdown-item"
-                                    onClick={() => setShowLangDropdown(false)}
-                                >
-                                    Tiếng Việt
-                                </Link>
-                                <Link 
-                                    href="/language" 
-                                    method="post" 
-                                    data={{ locale: 'en' }} 
-                                    className="navbar-dropdown-item"
-                                    onClick={() => setShowLangDropdown(false)}
-                                >
-                                    English
-                                </Link>
+                                    <Link 
+                                        href="/language" 
+                                        method="post" 
+                                        data={{ locale: 'vi' }} 
+                                        className="navbar-dropdown-item"
+                                        onClick={() => setShowLangDropdown(false)}
+                                    >
+                                        {t('navbar.vietnamese')}
+                                    </Link>
+                                    <Link 
+                                        href="/language" 
+                                        method="post" 
+                                        data={{ locale: 'en' }} 
+                                        className="navbar-dropdown-item"
+                                        onClick={() => setShowLangDropdown(false)}
+                                    >
+                                        {t('navbar.english')}
+                                    </Link>
                             </div>
                         )}
                     </div>
@@ -95,13 +95,13 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                             </button>
                             {showAccountDropdown && (
                                 <div className="navbar-dropdown">
-                                    <Link 
+                                        <Link 
                                         href="/user/profile" 
                                         className="navbar-dropdown-item"
                                         onClick={() => setShowAccountDropdown(false)}
                                     >
                                         <i className="bi bi-person"></i>
-                                        {t('My Profile')}
+                                        {t('navbar.profile')}
                                     </Link>
                                     <Link 
                                         href="/user/orders" 
@@ -109,7 +109,7 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                                         onClick={() => setShowAccountDropdown(false)}
                                     >
                                         <i className="bi bi-box"></i>
-                                        {t('My Orders')}
+                                        {t('navbar.my_orders')}
                                     </Link>
                                     <Link 
                                         href="/logout" 
@@ -118,14 +118,14 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                                         onClick={() => setShowAccountDropdown(false)}
                                     >
                                         <i className="bi bi-box-arrow-right"></i>
-                                        {t('Logout')}
+                                        {t('auth.logout')}
                                     </Link>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <Link href="/login" className="navbar-link-hover">
-                            {t('Login')}
+                            {t('auth.login')}
                         </Link>
                     )}
                 </div>

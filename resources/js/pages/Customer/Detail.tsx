@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import HomeLayout from '@/layouts/app/HomeLayout';
 import '@/../css/ProductDetail.css';
 import { router } from '@inertiajs/react';
+import { useTranslation } from '@/lib/i18n';
 import PopupAddToCart from '@/Components/home/ui/PopupAddToCart';
 import { useToast } from '@/Contexts/ToastContext';
 
@@ -124,6 +125,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
   const [favorited, setFavorited] = useState<boolean>(false);
   // load initial favorited state from server
   React.useEffect(() => {
@@ -360,7 +362,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
             >
               <button
                 className={`pd-fav-btn ${favorited ? 'favorited' : ''}`}
-                aria-label={favorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                aria-label={favorited ? t('wishlist.remove') : t('wishlist.add')}
                 aria-pressed={favorited}
                 onClick={(e) => {
                   e.preventDefault();

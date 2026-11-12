@@ -9,7 +9,7 @@ export default function SettingsSidebar() {
 
   const menuItems = [
     {
-      label: t('Profile'),
+      label: t('navbar.profile'),
       icon: 'bx bx-user',
       href: '/settings/profile',
       active: url.startsWith('/settings/profile') || url === '/settings',
@@ -50,7 +50,7 @@ export default function SettingsSidebar() {
             gap: '12px'
           }}>
             <i className='bx bx-cog' style={{ fontSize: '24px' }}></i>
-            {t('Settings')}
+            {t('navbar.settings')}
           </h2>
         </div>
 

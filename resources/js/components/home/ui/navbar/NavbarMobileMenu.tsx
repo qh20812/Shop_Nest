@@ -70,25 +70,25 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
                             {/* Account Section */}
                             {isLoggedIn ? (
                                 <div className="navbar-mobile-section">
-                                    <div className="navbar-mobile-section-title">{t('Account')}</div>
+                                    <div className="navbar-mobile-section-title">{t('navbar.account')}</div>
                                     <Link href="/user/profile" className="navbar-mobile-link" onClick={closeMenu}>
                                         <i className="bi bi-person"></i>
                                         <span>{user?.username}</span>
                                     </Link>
                                     <Link href="/user/orders" className="navbar-mobile-link" onClick={closeMenu}>
                                         <i className="bi bi-box"></i>
-                                        <span>{t('My Orders')}</span>
+                                        <span>{t('navbar.my_orders')}</span>
                                     </Link>
                                     <Link href="/wishlist" className="navbar-mobile-link" onClick={closeMenu}>
                                         <i className="bi bi-heart"></i>
-                                        <span>{t('Wishlist')}</span>
+                                        <span>{t('navbar.wishlist')}</span>
                                     </Link>
                                 </div>
                             ) : (
                                 <div className="navbar-mobile-section">
                                     <Link href="/login" className="navbar-mobile-link" onClick={closeMenu}>
                                         <i className="bi bi-box-arrow-in-right"></i>
-                                        <span>{t('Login')}</span>
+                                        <span>{t('auth.login')}</span>
                                     </Link>
                                 </div>
                             )}
@@ -97,14 +97,14 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
 
                             {/* Quick Links */}
                             <div className="navbar-mobile-section">
-                                <div className="navbar-mobile-section-title">{t('Quick Links')}</div>
+                                <div className="navbar-mobile-section-title">{t('navbar.quick_links') ?? t('Quick Links')}</div>
                                 <Link href={route('seller.register')} className="navbar-mobile-link" onClick={closeMenu}>
                                     <i className="bi bi-shop"></i>
-                                    <span>{t('Become a Seller')}</span>
+                                    <span>{t('navbar.become_seller')}</span>
                                 </Link>
                                 <Link href="/cart" className="navbar-mobile-link" onClick={closeMenu}>
                                     <i className="bi bi-cart3"></i>
-                                    <span>{t('Shopping Cart')}</span>
+                                    <span>{t('navbar.cart')}</span>
                                 </Link>
                             </div>
 
@@ -112,12 +112,12 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
 
                             {/* Settings */}
                             <div className="navbar-mobile-section">
-                                <div className="navbar-mobile-section-title">{t('Settings')}</div>
+                                <div className="navbar-mobile-section-title">{t('navbar.settings') ?? t('Settings')}</div>
                                 
                                 {/* Language */}
                                 <div className="navbar-mobile-link">
                                     <i className="bi bi-translate"></i>
-                                    <span>{t('Language')}: {locale.toUpperCase()}</span>
+                                    <span>{t('navbar.language')}: {locale.toUpperCase()}</span>
                                 </div>
                                 <div style={{ paddingLeft: '2.25rem', marginTop: '0.5rem' }}>
                                     <Link 
@@ -165,7 +165,7 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
                                             style={{ color: 'var(--danger)' }}
                                         >
                                             <i className="bi bi-box-arrow-right"></i>
-                                            <span>{t('Logout')}</span>
+                                            <span>{t('auth.logout')}</span>
                                         </Link>
                                     </div>
                                 </>

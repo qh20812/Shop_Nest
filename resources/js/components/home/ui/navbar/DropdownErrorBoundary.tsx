@@ -1,4 +1,5 @@
 import React, { Component, ReactNode } from 'react'
+import { tGlobal } from '@/lib/i18n'
 
 interface Props {
   children: ReactNode
@@ -29,7 +30,7 @@ export default class DropdownErrorBoundary extends Component<Props, State> {
       return this.props.fallback || (
         <div className="dropdown-error" role="alert" aria-live="assertive">
           <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
-          <span>Something went wrong with this dropdown</span>
+          <span>{tGlobal('dropdown.error')}</span>
         </div>
       )
     }

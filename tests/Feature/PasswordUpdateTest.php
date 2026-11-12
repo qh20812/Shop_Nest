@@ -15,7 +15,7 @@ class PasswordUpdateTest extends TestCase
     public function test_user_can_update_password_with_different_password()
     {
         $user = User::factory()->create([
-            'password' => Hash::make('old-password')
+            'password' => Hash::make('old-password'),
         ]);
 
         $response = $this->actingAs($user)->put('/settings/password', [
@@ -31,7 +31,7 @@ class PasswordUpdateTest extends TestCase
     public function test_user_cannot_update_password_with_same_password()
     {
         $user = User::factory()->create([
-            'password' => Hash::make('current-password')
+            'password' => Hash::make('current-password'),
         ]);
 
         $response = $this->actingAs($user)->put('/settings/password', [
@@ -47,14 +47,14 @@ class PasswordUpdateTest extends TestCase
     public function test_not_old_password_rule_validates_correctly()
     {
         $user = User::factory()->create([
-            'password' => Hash::make('test-password')
+            'password' => Hash::make('test-password'),
         ]);
 
         $this->actingAs($user);
 
-        $rule = new NotOldPassword();
+        $rule = new NotOldPassword;
         $fail = function ($message) {
-            $this->assertEquals('New password cannot be the same as current password', $message);
+            $this->assertEquals(__('New password cannot be the same as current password'), $message);
         };
 
         // Test với mật khẩu trùng - should fail
@@ -65,7 +65,7 @@ class PasswordUpdateTest extends TestCase
         $failCallback = function ($message) use (&$failCalled) {
             $failCalled = true;
         };
-        
+
         $rule->validate('password', 'different-password', $failCallback);
         $this->assertFalse($failCalled);
     }

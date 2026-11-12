@@ -7,7 +7,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Review;
 use App\Models\User;
-use App\Services\CartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Cache;
@@ -155,9 +154,9 @@ class DetailTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Chuyển đến trang thanh toán.',
-                'redirect' => route('cart.checkout'),
-            ]);
+                'message' => 'Đang chuyển đến trang thanh toán...',
+            ])
+            ->assertJsonStructure(['redirect_url', 'order_id', 'order_number']);
     }
 
     public function test_buy_now_redirects_to_login_for_guest()
@@ -180,8 +179,8 @@ class DetailTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
-                'message' => 'Vui lòng đăng nhập để tiếp tục thanh toán.',
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập để tiếp tục mua hàng.',
                 'redirect' => route('login'),
             ]);
     }

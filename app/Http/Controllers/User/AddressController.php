@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 use App\Enums\AdministrativeDivisionLevel;
+use App\Http\Controllers\Controller;
 use App\Models\AdministrativeDivision;
 use App\Models\Country;
 use App\Models\UserAddress;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AddressController extends Controller
 {
@@ -45,7 +45,7 @@ class AddressController extends Controller
     {
         // Lấy country Việt Nam
         $vietnam = Country::where('iso_code_2', 'VN')->first();
-        
+
         // Lấy danh sách tỉnh/thành phố
         $provinces = AdministrativeDivision::where('country_id', $vietnam->id)
             ->where('level', AdministrativeDivisionLevel::PROVINCE)
@@ -262,7 +262,7 @@ class AddressController extends Controller
 
         // Bỏ chọn tất cả địa chỉ mặc định
         Auth::user()->addresses()->update(['is_default' => false]);
-        
+
         // Đặt địa chỉ hiện tại làm mặc định
         $address->update(['is_default' => true]);
 
@@ -276,52 +276,81 @@ class AddressController extends Controller
         $countries = Country::orderBy('name->vi')
             ->get(['id', 'name', 'iso_code_2']);
 
-        return response()->json(
-            $countries->map(function ($country) {
+        return response()->json([
+            'success' => true,
+            'data' => $countries->map(function ($country) {
                 return [
                     'id' => $country->id,
                     'name' => $country->name['vi'] ?? $country->name,
                     'code' => $country->iso_code_2,
                 ];
-            })
-        );
+            })->values(),
+        ]);
     }
 
     // 10. API: Lấy danh sách tỉnh/thành phố theo quốc gia
-    public function provinces($countryId)
+    public function provinces($countryId = null)
     {
+        $countryId ??= Country::where('iso_code_2', 'VN')->value('id');
+
         $provinces = AdministrativeDivision::where('country_id', $countryId)
             ->where('level', AdministrativeDivisionLevel::PROVINCE)
             ->orderBy('name->vi')
             ->get(['id', 'name', 'code']);
 
-        return response()->json(
-            $provinces->map(function ($province) {
-                return [
-                    'id' => $province->id,
-                    'name' => $province->name['vi'] ?? $province->name,
-                    'code' => $province->code,
-                ];
-            })
-        );
+        return response()->json([
+            'success' => true,
+            'data' => $provinces->map(fn ($province) => [
+                'id' => $province->id,
+                'name' => $province->name['vi'] ?? $province->name,
+                'code' => $province->code,
+            ])->values(),
+        ]);
     }
 
-    // 11. API: Lấy danh sách xã/phường theo tỉnh
-    public function wards($provinceId)
+    public function districts($provinceId)
     {
-        $wards = AdministrativeDivision::where('parent_id', $provinceId)
-            ->where('level', AdministrativeDivisionLevel::WARD)
+        $districts = AdministrativeDivision::where('parent_id', $provinceId)
+            ->where('level', AdministrativeDivisionLevel::DISTRICT)
             ->orderBy('name->vi')
             ->get(['id', 'name', 'code']);
 
-        return response()->json(
-            $wards->map(function ($ward) {
-                return [
-                    'id' => $ward->id,
-                    'name' => $ward->name['vi'] ?? $ward->name,
-                    'code' => $ward->code,
-                ];
+        return response()->json([
+            'success' => true,
+            'data' => $districts->map(fn ($district) => [
+                'id' => $district->id,
+                'name' => $district->name['vi'] ?? $district->name,
+                'code' => $district->code,
+            ])->values(),
+        ]);
+    }
+
+    // 11. API: Lấy danh sách xã/phường theo tỉnh
+    public function wards($parentId)
+    {
+        // Support both the two-level (province → ward) and three-level (district → ward) layouts.
+        $childIds = AdministrativeDivision::where('parent_id', $parentId)
+            ->where('level', AdministrativeDivisionLevel::DISTRICT)
+            ->pluck('id');
+
+        $wards = AdministrativeDivision::where('level', AdministrativeDivisionLevel::WARD)
+            ->where(function ($query) use ($parentId, $childIds) {
+                $query->where('parent_id', $parentId);
+
+                if ($childIds->isNotEmpty()) {
+                    $query->orWhereIn('parent_id', $childIds);
+                }
             })
-        );
+            ->orderBy('name->vi')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $wards->map(fn ($ward) => [
+                'id' => $ward->id,
+                'name' => $ward->name['vi'] ?? $ward->name,
+                'code' => $ward->code,
+            ])->values(),
+        ]);
     }
 }

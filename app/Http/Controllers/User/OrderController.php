@@ -3,10 +3,17 @@
 namespace App\Http\Controllers\User;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
+use App\Exceptions\CartException;
 use App\Http\Controllers\Controller;
+use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\OrderReview;
+use App\Services\CartService;
 use Illuminate\Http\Request;
-use Inertia\Inertia; // assuming Order model exists
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class OrderController extends Controller
 {
@@ -88,6 +95,113 @@ class OrderController extends Controller
         return Inertia::render('Customer/Orders/Show', [
             'order' => $detail,
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'address_id' => [
+                'required',
+                'integer',
+                Rule::exists('user_addresses', 'id')->where('user_id', $user->id),
+            ],
+            'payment_method' => ['required', 'string', Rule::in(['cod', 'stripe'])],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $order = app(CartService::class)->createOrderFromCart($user);
+        } catch (CartException $exception) {
+            return back()->withErrors(['cart' => $exception->getMessage()]);
+        }
+
+        $order->update([
+            'shipping_address_id' => $data['address_id'],
+            'payment_method' => $data['payment_method'] === 'cod' ? 1 : 3,
+            'notes' => $data['notes'] ?? $order->notes,
+        ]);
+
+        return redirect()->route('user.orders.show', $order->order_id);
+    }
+
+    public function cancel(Request $request, Order $order)
+    {
+        $this->authorizeOrder($order, $request->user());
+
+        if (! in_array($order->status, [OrderStatus::PENDING_CONFIRMATION, OrderStatus::PROCESSING], true)) {
+            return back()->withErrors(['order' => 'This order can no longer be cancelled.']);
+        }
+
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $order->update([
+            'status' => OrderStatus::CANCELLED,
+            'notes' => trim(($order->notes ?? '')."\nCancel reason: ".($data['reason'] ?? 'N/A')),
+        ]);
+
+        if ($order->payment_status === PaymentStatus::PAID) {
+            $order->transactions()->create([
+                'type' => 'refund',
+                'amount' => $order->total_amount,
+                'currency' => $order->currency ?? 'VND',
+                'gateway' => $order->payment_method === 1 ? 'cod' : 'stripe',
+                'status' => 'pending',
+            ]);
+        }
+
+        return redirect()->route('user.orders.show', $order->order_id);
+    }
+
+    public function reorder(Request $request, Order $order)
+    {
+        $this->authorizeOrder($order, $request->user());
+
+        $order->loadMissing('items');
+
+        DB::transaction(function () use ($order, $request) {
+            foreach ($order->items as $item) {
+                $cartItem = CartItem::firstOrNew([
+                    'user_id' => $request->user()->id,
+                    'variant_id' => $item->variant_id,
+                ]);
+
+                $cartItem->quantity = (int) ($cartItem->quantity ?? 0) + (int) $item->quantity;
+                $cartItem->save();
+            }
+        });
+
+        return redirect()->route('cart.index');
+    }
+
+    public function review(Request $request, Order $order)
+    {
+        $this->authorizeOrder($order, $request->user());
+
+        if (! in_array($order->status, [OrderStatus::DELIVERED, OrderStatus::COMPLETED], true)) {
+            return back()->withErrors(['review' => 'Only delivered orders can be reviewed.']);
+        }
+
+        $data = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        OrderReview::updateOrCreate(
+            [
+                'order_id' => $order->order_id,
+                'customer_id' => $request->user()->id,
+            ],
+            [
+                'rating' => $data['rating'],
+                'comment' => $data['comment'] ?? null,
+            ]
+        );
+
+        return redirect()->route('user.orders.show', $order->order_id);
     }
 
     protected function authorizeOrder(Order $order, $user)

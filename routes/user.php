@@ -87,10 +87,11 @@ Route::middleware(['auth', 'verified.optional'])
         // Lưu địa chỉ mới
         Route::post('/', [AddressController::class, 'store'])->name('store');
 
-        // API divisions (updated: bỏ cấp quận/huyện)
+        // API divisions (2-level: province → ward, 3-level still supported)
         Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
-        Route::get('/provinces/{countryId}', [AddressController::class, 'provinces'])->name('provinces');
-        Route::get('/wards/{provinceId}', [AddressController::class, 'wards'])->name('wards');
+        Route::get('/provinces/{countryId?}', [AddressController::class, 'provinces'])->name('provinces');
+        Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
+        Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
 
         // Xem chi tiết địa chỉ
         Route::get('/{address}', [AddressController::class, 'show'])
@@ -117,6 +118,14 @@ Route::middleware(['auth', 'verified.optional'])
             ->whereNumber('address')
             ->name('set-default');
     });
+
+// Public divisional lookups used by the checkout address form.
+Route::prefix('addresses')->as('addresses.')->group(function () {
+    Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
+    Route::get('/provinces/{countryId?}', [AddressController::class, 'provinces'])->name('provinces');
+    Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
+    Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
+});
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');

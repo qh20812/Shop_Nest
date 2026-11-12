@@ -85,8 +85,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
               <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <Tooltip
-                formatter={(value: number, name: string, entry) =>
-                  tooltipFormatter ? tooltipFormatter(value, name, entry.payload as AnalyticsChartPoint) : value
+                formatter={(value, name, entry) =>
+                  tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
                 }
                 contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
               />
@@ -110,8 +110,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
               <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <Tooltip
-                formatter={(value: number, name: string, entry) =>
-                  tooltipFormatter ? tooltipFormatter(value, name, entry.payload as AnalyticsChartPoint) : value
+                formatter={(value, name, entry) =>
+                  tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
                 }
                 contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
               />
@@ -129,8 +129,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
               <Tooltip
-                formatter={(value: number, name: string, entry) =>
-                  tooltipFormatter ? tooltipFormatter(value, name, entry.payload as AnalyticsChartPoint) : value
+                formatter={(value, name, entry) =>
+                  tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
                 }
                 contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
               />
@@ -166,8 +166,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
               <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
               <Tooltip
-                formatter={(value: number, name: string, entry) =>
-                  tooltipFormatter ? tooltipFormatter(value, name, entry.payload as AnalyticsChartPoint) : value
+                formatter={(value, name, entry) =>
+                  tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
                 }
                 contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
               />
@@ -188,8 +188,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           <ResponsiveContainer width="100%" height={height}>
             <FunnelChart>
               <Tooltip
-                formatter={(value: number, name: string, entry) =>
-                  tooltipFormatter ? tooltipFormatter(value, name, entry.payload as AnalyticsChartPoint) : value
+                formatter={(value, name, entry) =>
+                  tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
                 }
                 contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
               />
@@ -204,7 +204,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                   fill="var(--dark)"
                   stroke="none"
                   dataKey={categoryKey}
-                  formatter={(label: string) => label}
+                  formatter={(label) => label}
                 />
               </Funnel>
             </FunnelChart>

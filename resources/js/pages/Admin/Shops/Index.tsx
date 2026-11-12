@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';
-import BulkActions from '@/Components/admin/Shops/BulkActions';
-import Pagination from '@/Components/ui/Pagination';
-import DataTable from '@/Components/ui/DataTable';
-import ActionDropdown from '@/Components/ui/ActionDropdown';
+import Pagination from '@/components/ui/Pagination';
+import DataTable from '@/components/ui/DataTable';
+import ActionDropdown from '@/components/ui/ActionDropdown';
 import { useTranslation } from '@/lib/i18n';
-import FilterPanel from '@/Components/ui/FilterPanel';
+import FilterPanel from '@/components/ui/FilterPanel';
 import type { Shop, ShopCollection, ShopFilters as FilterParams, ShopMetrics } from './types';
 import '@/../css/Page.css';
 
@@ -89,17 +88,9 @@ export default function Index() {
   const { t } = useTranslation();
   const { shops, filters } = usePage<PageProps>().props;
 
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isGridLoading, setIsGridLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [actingShopId, setActingShopId] = useState<number | null>(null);
   const [localFilters, setLocalFilters] = useState<FilterParams>(filters);
-
-  const currentShopIds = useMemo(() => shops.data.map((shop) => shop.id), [shops.data]);
-
-  useEffect(() => {
-    setSelectedIds((prev) => prev.filter((id) => currentShopIds.includes(id)));
-  }, [currentShopIds]);
 
   useEffect(() => {
     setIsGridLoading(false);
@@ -109,35 +100,6 @@ export default function Index() {
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
-
-  const allSelectedOnPage = shops.data.length > 0 && shops.data.every((shop) => selectedIds.includes(shop.id));
-
-  const toggleShopSelection = useCallback((shopId: number, isSelected: boolean) => {
-    setSelectedIds((prev) => {
-      if (isSelected) {
-        if (prev.includes(shopId)) {
-          return prev;
-        }
-        return [...prev, shopId];
-      }
-      return prev.filter((id) => id !== shopId);
-    });
-  }, []);
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds((prev) => {
-        const combined = new Set(prev);
-        shops.data.forEach((shop) => combined.add(shop.id));
-        return Array.from(combined);
-      });
-      return;
-    }
-
-    setSelectedIds((prev) => prev.filter((id) => !currentShopIds.includes(id)));
-  };
-
-  const clearSelection = useCallback(() => setSelectedIds([]), []);
 
   const handleShopAction = useCallback(async (shop: Shop, action: ShopAction) => {
     if (actingShopId !== null) {
@@ -198,52 +160,6 @@ export default function Index() {
     });
   }, [actingShopId, t]);
 
-  const handleBulkApprove = () => {
-    if (!selectedIds.length) {
-      return Promise.resolve();
-    }
-
-    setIsProcessing(true);
-
-    return new Promise<void>((resolve) => {
-      router.post(
-        '/admin/shops/bulk-approve',
-        { shop_ids: selectedIds },
-        {
-          preserveScroll: true,
-          onSuccess: () => setSelectedIds([]),
-          onFinish: () => {
-            setIsProcessing(false);
-            resolve();
-          },
-        }
-      );
-    });
-  };
-
-  const handleBulkReject = (reason: string) => {
-    if (!selectedIds.length) {
-      return Promise.resolve();
-    }
-
-    setIsProcessing(true);
-
-    return new Promise<void>((resolve) => {
-      router.post(
-        '/admin/shops/bulk-reject',
-        { shop_ids: selectedIds, reason },
-        {
-          preserveScroll: true,
-          onSuccess: () => setSelectedIds([]),
-          onFinish: () => {
-            setIsProcessing(false);
-            resolve();
-          },
-        }
-      );
-    });
-  };
-
   const handleFilterChange = useCallback((key: keyof FilterParams, value: string | number | undefined) => {
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -254,9 +170,8 @@ export default function Index() {
       preserveState: true,
       onStart: () => setIsGridLoading(true),
       onFinish: () => setIsGridLoading(false),
-      onSuccess: () => clearSelection(),
     });
-  }, [localFilters, clearSelection]);
+  }, [localFilters]);
 
   const paginationLinks = shops.links ?? [];
   const paginationFilters = useMemo(() => {
@@ -438,7 +353,7 @@ export default function Index() {
             },
       },
     ];
-  }, [selectedIds, toggleShopSelection, t, statusLabelMap, handleShopAction, actingShopId]);
+  }, [t, statusLabelMap, handleShopAction, actingShopId]);
 
   return (
     <AppLayout>
@@ -453,17 +368,6 @@ export default function Index() {
         searchConfig={searchConfig}
         filterConfigs={filterConfigs}
       />
-
-      {/* <BulkActions
-        totalOnPage={shops.data.length}
-        selectedCount={selectedIds.length}
-        allSelected={allSelectedOnPage}
-        onToggleSelectAll={handleSelectAll}
-        onClearSelection={clearSelection}
-        onBulkApprove={handleBulkApprove}
-        onBulkReject={handleBulkReject}
-        isProcessing={isProcessing}
-      /> */}
 
       <div style={{ opacity: isGridLoading ? 0.6 : 1 }} aria-busy={isGridLoading}>
         <DataTable

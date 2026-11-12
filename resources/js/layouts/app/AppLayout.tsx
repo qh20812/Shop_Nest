@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Sidebar from '@/Components/ui/Sidebar';
-import Navbar from '@/Components/ui/Navbar';
+import Sidebar from '@/components/ui/Sidebar';
+import Navbar from '@/components/ui/Navbar';
 import { useTranslation } from '../../lib/i18n';
 import { usePage } from '@inertiajs/react';
-import Chatbot from '@/Components/Chatbot';
+import Chatbot from '@/components/Chatbot';
 // ToastProvider is provided globally in `app.tsx`
 
 

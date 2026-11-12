@@ -33,7 +33,7 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title data-inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <link rel="icon" href="/image/ShopnestLogoIcon.ico" sizes="any">
     <link rel="icon" href="/image/ShopnestLogoSVG.svg" type="image/svg+xml">

@@ -1,5 +1,5 @@
 import { ShoppingBag, Heart, Search, User, Package, Home, CreditCard, LogOut, Sun, Moon } from 'lucide-react';
-import Input from '@/Components/ui/input';
+import Input from '@/components/ui/input';
 import { Link, usePage } from '@inertiajs/react';
 import { useToast } from '@/Contexts/ToastContext';
 import { useState, useRef, useEffect } from 'react';

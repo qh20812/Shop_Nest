@@ -1,8 +1,8 @@
 import React from 'react';
-import Navbar from '../../Components/home/ui/Navbar';
-import Header from '../../Components/home/ui/Header';
-import Footer from '../../Components/home/ui/Footer';
-import ChatPopup from '@/Components/Chat/ChatPopup';
+import Navbar from '../../components/home/ui/Navbar';
+import Header from '../../components/home/ui/Header';
+import Footer from '../../components/home/ui/Footer';
+import ChatPopup from '@/components/Chat/ChatPopup';
 // ToastProvider is provided globally in `app.tsx`
 import '@/../css/Home.css';
 import '@/../css/Chat.css';

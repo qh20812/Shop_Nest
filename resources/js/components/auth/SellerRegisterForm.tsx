@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useForm } from "@inertiajs/react";
-import InputLabel from "@/Components/InputLabel";
-import TextInput from "@/Components/TextInput";
-import InputError from "@/Components/InputError";
-import PrimaryButton from "@/Components/PrimaryButton";
+import InputLabel from "@/components/InputLabel";
+import TextInput from "@/components/TextInput";
+import InputError from "@/components/InputError";
+import PrimaryButton from "@/components/PrimaryButton";
 import '@/../css/SellerRegister.css';
 
 export default function SellerRegisterForm() {

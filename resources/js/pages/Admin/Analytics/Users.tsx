@@ -3,14 +3,14 @@ import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/Components/Analytics/AnalyticsFilters';
-import AnalyticsCard from '@/Components/Analytics/AnalyticsCard';
-import AnalyticsChart from '@/Components/Analytics/AnalyticsChart';
-import type { AnalyticsChartPoint as ChartDataPoint } from '@/Components/Analytics/AnalyticsChart';
-import AnalyticsTable from '@/Components/Analytics/AnalyticsTable';
-import type { AnalyticsTableColumn } from '@/Components/Analytics/AnalyticsTable';
-import QuickFilter, { QuickFilterOption } from '@/Components/Analytics/QuickFilter';
-import StatusBadge from '@/Components/ui/StatusBadge';
+import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/Analytics/AnalyticsFilters';
+import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
+import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
+import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
+import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
+import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
+import QuickFilter, { QuickFilterOption } from '@/components/Analytics/QuickFilter';
+import StatusBadge from '@/components/ui/StatusBadge';
 import '@/../css/Page.css';
 
 type UserSegmentPoint = {

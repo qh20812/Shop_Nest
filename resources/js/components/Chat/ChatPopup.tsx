@@ -3,9 +3,9 @@ import axios from 'axios';
 import { usePage } from '@inertiajs/react';
 import { echo } from '@laravel/echo-react';
 import { appendCsrfToken, resolveCsrfToken } from '@/lib/csrf';
-import ChatList, { ConversationItem } from '@/Components/Chat/ChatList';
-import ChatWindow, { ChatMessage } from '@/Components/Chat/ChatWindow';
-import CreateConversationModal from '@/Components/Chat/CreateConversationModal';
+import ChatList, { ConversationItem } from '@/components/Chat/ChatList';
+import ChatWindow, { ChatMessage } from '@/components/Chat/ChatWindow';
+import CreateConversationModal from '@/components/Chat/CreateConversationModal';
 
 type Participant = {
     id: number;

@@ -1,10 +1,10 @@
 import { ShoppingBag, ChevronLeft, ChevronRight, MessageCircle, X, Minus, Heart, FolderOpen, Timer, Lightbulb, TrendingUp, Image as ImageIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ToastProvider, useToast } from '@/Contexts/ToastContext';
-import { SkeletonPage } from '@/Components/home/skeletons';
+import { SkeletonPage } from '@/components/home/skeletons';
 import { usePageLoading } from '@/hooks/usePageLoading';
-import Navbar from '@/Components/home/ui/Navbar';
-import Footer from '@/Components/home/ui/Footer';
+import Navbar from '@/components/home/ui/Navbar';
+import Footer from '@/components/home/ui/Footer';
 import { usePage, Link } from '@inertiajs/react';
 
 interface Category {
@@ -83,7 +83,7 @@ function HomeContent() {
     const suggestedRef = useRef<HTMLDivElement | null>(null);
     const categoriesRef = useRef<HTMLDivElement | null>(null);
 
-    const scrollHorizontal = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right', cardWidth = 280, gap = 24) => {
+    const scrollHorizontal = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right', cardWidth = 280, gap = 24) => {
         const node = ref.current;
         if (!node) return;
         const firstChild = node.firstElementChild as HTMLElement | null;

@@ -10,10 +10,10 @@ use App\Models\Order;
 use App\Services\CartService;
 use App\Services\InventoryService;
 use App\Services\PaymentService;
+use App\Support\Localization;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Support\Localization;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -46,7 +46,6 @@ class PaymentReturnController extends Controller
 
         $orderId = $request->query('order_id')
             ?? $request->input('orderId')
-            ?? $request->input('vnp_TxnRef')
             ?? $result['order_id'] ?? null;
 
         $sanitizedOrderId = $this->sanitizeOrderId($orderId);
@@ -61,11 +60,12 @@ class PaymentReturnController extends Controller
                 DB::transaction(function () use ($sanitizedOrderId, $provider, $payload, $result, $status, &$shouldClearCart, &$shouldRestoreInventory, &$processedOrder) {
                     $order = Order::lockForUpdate()->find($sanitizedOrderId);
 
-                    if (!$order) {
+                    if (! $order) {
                         Log::warning('payment_return.order_not_found', [
                             'provider' => $provider,
                             'order_id' => $sanitizedOrderId,
                         ]);
+
                         return;
                     }
 
@@ -77,6 +77,7 @@ class PaymentReturnController extends Controller
                             'order_id' => $order->order_id,
                             'event_id' => $eventId,
                         ]);
+
                         return;
                     }
 

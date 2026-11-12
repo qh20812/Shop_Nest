@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from '../../../lib/i18n';
 
 interface ProductImage {
@@ -20,13 +20,12 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
         }
         return `/storage/${url}`;
     };
-    
+
     // Set the primary image as default, or the first image if no primary exists
-    const primaryImage = images.find(img => img.is_primary) || images[0];
+    const primaryImage = images.find((img) => img.is_primary) || images[0];
     const [selectedImage, setSelectedImage] = useState<ProductImage | null>(primaryImage || null);
 
     if (!images || images.length === 0) {
-
         return (
             <div className="product-gallery">
                 <div className="product-gallery__main-image">
@@ -43,13 +42,7 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
         <div className="product-gallery">
             {/* Main Image Display */}
             <div className="product-gallery__main-image">
-                {selectedImage && (
-                    <img
-                        src={resolveSrc(selectedImage.image_url)}
-                        alt={t('Product Image')}
-                        className="product-gallery__main-img"
-                    />
-                )}
+                {selectedImage && <img src={resolveSrc(selectedImage.image_url)} alt={t('Product Image')} className="product-gallery__main-img" />}
             </div>
 
             {/* Thumbnail Images */}
@@ -60,14 +53,12 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
                             key={image.image_id}
                             type="button"
                             className={`product-gallery__thumbnail ${
-                                selectedImage?.image_id === image.image_id 
-                                    ? 'product-gallery__thumbnail--active' 
-                                    : ''
+                                selectedImage?.image_id === image.image_id ? 'product-gallery__thumbnail--active' : ''
                             }`}
                             onClick={() => setSelectedImage(image)}
                         >
-                                <img
-                                    src={resolveSrc(image.image_url)}
+                            <img
+                                src={resolveSrc(image.image_url)}
                                 alt={`${t('Product Image')} ${image.image_id}`}
                                 className="product-gallery__thumbnail-img"
                             />

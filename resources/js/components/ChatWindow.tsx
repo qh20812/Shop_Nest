@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import Message from './Message';
+import React, { useEffect, useRef } from 'react';
 import { Icons } from './Icons';
+import Message from './Message';
 
 interface Message {
     id: number;
@@ -27,17 +27,17 @@ interface ChatWindowProps {
     onSoundToggle: () => void;
 }
 
-export default function ChatWindow({ 
-    messages, 
+export default function ChatWindow({
+    messages,
     isTyping,
-    input, 
+    input,
     userRole,
     soundEnabled,
-    onClose, 
-    onSendMessage, 
-    onInputChange, 
+    onClose,
+    onSendMessage,
+    onInputChange,
     onKeyPress,
-    onSoundToggle
+    onSoundToggle,
 }: ChatWindowProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatWindowRef = useRef<HTMLDivElement>(null);
@@ -53,10 +53,10 @@ export default function ChatWindow({
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Tab') {
                 const focusableElements = chatWindowRef.current?.querySelectorAll(
-                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
                 );
                 if (!focusableElements || focusableElements.length === 0) return;
-                
+
                 const firstElement = focusableElements[0] as HTMLElement;
                 const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
@@ -86,30 +86,10 @@ export default function ChatWindow({
     // Get role-based quick questions
     const getQuickQuestions = (): string[] => {
         const questions: Record<SupportedRole, string[]> = {
-            admin: [
-                'Doanh thu tháng này?',
-                'Báo cáo tồn kho thấp',
-                'Thống kê đơn hàng',
-                'Phân tích khách hàng'
-            ],
-            customer: [
-                'Gợi ý sản phẩm cho tôi',
-                'Xem đơn hàng gần đây',
-                'Tình trạng giỏ hàng',
-                'Sản phẩm được yêu thích'
-            ],
-            seller: [
-                'Quản lý sản phẩm',
-                'Báo cáo bán hàng',
-                'Tình trạng kho hàng',
-                'Đánh giá từ khách hàng'
-            ],
-            shipper: [
-                'Đơn hàng cần giao',
-                'Tuyến đường tối ưu',
-                'Trạng thái giao hàng',
-                'Lịch giao hàng hôm nay'
-            ]
+            admin: ['Doanh thu tháng này?', 'Báo cáo tồn kho thấp', 'Thống kê đơn hàng', 'Phân tích khách hàng'],
+            customer: ['Gợi ý sản phẩm cho tôi', 'Xem đơn hàng gần đây', 'Tình trạng giỏ hàng', 'Sản phẩm được yêu thích'],
+            seller: ['Quản lý sản phẩm', 'Báo cáo bán hàng', 'Tình trạng kho hàng', 'Đánh giá từ khách hàng'],
+            shipper: ['Đơn hàng cần giao', 'Tuyến đường tối ưu', 'Trạng thái giao hàng', 'Lịch giao hàng hôm nay'],
         };
 
         return questions[userRole] || questions.customer;
@@ -127,26 +107,18 @@ export default function ChatWindow({
 
     return (
         <>
-            <div
-                className="chatbot__overlay"
-                onClick={handleBackdropClick}
-                aria-hidden="true"
-            ></div>
+            <div className="chatbot__overlay" onClick={handleBackdropClick} aria-hidden="true"></div>
 
-            <div
-                ref={chatWindowRef}
-                className="chatbot__window"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="chat-title"
-            >
+            <div ref={chatWindowRef} className="chatbot__window" role="dialog" aria-modal="true" aria-labelledby="chat-title">
                 <div className="chatbot__header">
                     <div className="chatbot__header-info">
                         <div className="chatbot__header-avatar">
                             <Icons.Robot className="chatbot__header-avatar-icon" />
                         </div>
                         <div>
-                            <h3 id="chat-title" className="chatbot__header-title">AI Assistant</h3>
+                            <h3 id="chat-title" className="chatbot__header-title">
+                                AI Assistant
+                            </h3>
                             <div className="chatbot__header-status">
                                 <span className="chatbot__status-indicator" aria-hidden="true"></span>
                                 <span>Đang hoạt động</span>
@@ -164,12 +136,7 @@ export default function ChatWindow({
                             {soundEnabled ? <Icons.VolumeOn /> : <Icons.VolumeOff />}
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="chatbot__icon-button"
-                            aria-label="Đóng chat"
-                        >
+                        <button type="button" onClick={onClose} className="chatbot__icon-button" aria-label="Đóng chat">
                             <Icons.Close />
                         </button>
                     </div>

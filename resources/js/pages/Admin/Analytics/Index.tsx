@@ -1,17 +1,17 @@
-import React, { useMemo, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import '@/../css/Page.css';
+import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
+import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
+import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
+import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
+import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
+import type { QuickFilterOption } from '@/components/Analytics/QuickFilter';
+import QuickFilter from '@/components/Analytics/QuickFilter';
+import Header from '@/components/ui/Header';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
-import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
-import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
-import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
-import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
-import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
-import QuickFilter from '@/components/Analytics/QuickFilter';
-import type { QuickFilterOption } from '@/components/Analytics/QuickFilter';
-import '@/../css/Page.css';
-import Header from '@/components/ui/Header';
+import { Head, Link, usePage } from '@inertiajs/react';
+import React, { useMemo, useState } from 'react';
 
 interface UserGrowthMetric {
     current: number;
@@ -71,14 +71,15 @@ const Index: React.FC = () => {
     const locale = props.locale ?? 'en';
     const resolvedCurrency = resolveCurrencyCode(props.currency);
 
-    const currencyFormatter = React.useMemo(() => new Intl.NumberFormat(
-        locale.startsWith('vi') ? 'vi-VN' : 'en-US',
-        {
-            style: 'currency',
-            currency: resolvedCurrency,
-            maximumFractionDigits: 0,
-        }
-    ), [locale, resolvedCurrency]);
+    const currencyFormatter = React.useMemo(
+        () =>
+            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : 'en-US', {
+                style: 'currency',
+                currency: resolvedCurrency,
+                maximumFractionDigits: 0,
+            }),
+        [locale, resolvedCurrency],
+    );
     const { t } = useTranslation();
 
     const [selectedRange, setSelectedRange] = useState<string>('7days');
@@ -89,7 +90,7 @@ const Index: React.FC = () => {
             { label: 'Last 30 Days', value: '30days' },
             { label: 'Last 12 Months', value: '12months' },
         ],
-        []
+        [],
     );
 
     const handleRangeChange = (value: string) => {
@@ -129,10 +130,7 @@ const Index: React.FC = () => {
     const normalizedActivities: NormalizedActivity[] = useMemo(() => {
         return recentActivities.map((activity, index) => {
             const reference =
-                activity.reference ||
-                activity.entity ||
-                activity.message ||
-                (activity.id ? `#${activity.id}` : `activity-${index + 1}`);
+                activity.reference || activity.entity || activity.message || (activity.id ? `#${activity.id}` : `activity-${index + 1}`);
 
             const occurredAt = activity.occurred_at || activity.created_at || '';
 
@@ -176,11 +174,7 @@ const Index: React.FC = () => {
                 key: 'status',
                 label: t('Status'),
                 sortable: false,
-                render: (value) => (
-                    <span className={`status ${String(value)}`}>
-                        {t(String(value))}
-                    </span>
-                ),
+                render: (value) => <span className={`status ${String(value)}`}>{t(String(value))}</span>,
             },
             {
                 key: 'occurredAt',
@@ -203,7 +197,7 @@ const Index: React.FC = () => {
                 },
             },
         ],
-        [locale, t]
+        [locale, t],
     );
 
     const kpiCards = useMemo(() => {
@@ -212,48 +206,40 @@ const Index: React.FC = () => {
         }
 
         return [
-            (
-                <AnalyticsCard
-                    key="total-revenue"
-                    title={t('Total Revenue')}
-                    value={currencyFormatter.format(stats.totalRevenue)}
-                    icon="bx bx-line-chart"
-                    color="blue"
-                    tooltip={t('Total revenue generated in the selected period')}
-                />
-            ),
-            (
-                <AnalyticsCard
-                    key="pending-orders"
-                    title={t('Pending Orders')}
-                    value={stats.pendingOrders.toLocaleString(locale)}
-                    icon="bx bx-receipt"
-                    color="yellow"
-                    tooltip={t('Orders awaiting confirmation or processing')}
-                />
-            ),
-            (
-                <AnalyticsCard
-                    key="user-growth"
-                    title={t('User Growth')}
-                    value={stats.userGrowth.current.toLocaleString(locale)}
-                    change={userGrowthChange}
-                    changeLabel={userGrowthLabel}
-                    icon="bx bx-user-plus"
-                    color="green"
-                    tooltip={t('New users acquired compared to the previous period')}
-                />
-            ),
-            (
-                <AnalyticsCard
-                    key="system-health"
-                    title={t('System Health')}
-                    value={`${percentFormatter.format(stats.systemHealth)}%`}
-                    icon="bx bx-shield-quarter"
-                    color="neutral"
-                    tooltip={t('Completion rate of successful orders in the period')}
-                />
-            ),
+            <AnalyticsCard
+                key="total-revenue"
+                title={t('Total Revenue')}
+                value={currencyFormatter.format(stats.totalRevenue)}
+                icon="bx bx-line-chart"
+                color="blue"
+                tooltip={t('Total revenue generated in the selected period')}
+            />,
+            <AnalyticsCard
+                key="pending-orders"
+                title={t('Pending Orders')}
+                value={stats.pendingOrders.toLocaleString(locale)}
+                icon="bx bx-receipt"
+                color="yellow"
+                tooltip={t('Orders awaiting confirmation or processing')}
+            />,
+            <AnalyticsCard
+                key="user-growth"
+                title={t('User Growth')}
+                value={stats.userGrowth.current.toLocaleString(locale)}
+                change={userGrowthChange}
+                changeLabel={userGrowthLabel}
+                icon="bx bx-user-plus"
+                color="green"
+                tooltip={t('New users acquired compared to the previous period')}
+            />,
+            <AnalyticsCard
+                key="system-health"
+                title={t('System Health')}
+                value={`${percentFormatter.format(stats.systemHealth)}%`}
+                icon="bx bx-shield-quarter"
+                color="neutral"
+                tooltip={t('Completion rate of successful orders in the period')}
+            />,
         ];
     }, [currencyFormatter, locale, stats, t, userGrowthChange, userGrowthLabel]);
 
@@ -285,16 +271,19 @@ const Index: React.FC = () => {
                 label: t('Generate Custom Reports'),
             },
         ],
-        [t]
+        [t],
     );
 
     return (
         <AppLayout>
             <Head title={t('Analytics Overview')} />
-            <Header title={t('Analytics Overview')} breadcrumbs={[
-                { label: t('Dashboard'), href: '/admin/dashboard' },
-                { label: t('Analytics'), href: '/admin/analytics' },
-            ]}/>
+            <Header
+                title={t('Analytics Overview')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Analytics'), href: '/admin/analytics' },
+                ]}
+            />
             <div className="inventory-page analytics-page">
                 <section className="inventory-section analytics-page__header">
                     <div className="analytics-page__heading">
@@ -355,8 +344,6 @@ const Index: React.FC = () => {
                         rowKey={(row) => row.id}
                     />
                 </section>
-
-                
             </div>
         </AppLayout>
     );

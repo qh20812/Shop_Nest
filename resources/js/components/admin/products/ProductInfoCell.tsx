@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Product {
@@ -29,11 +28,11 @@ export default function ProductInfoCell({ product }: ProductInfoCellProps) {
     const getProductName = (): string => {
         return getStringValue(product.name) || 'Unnamed Product';
     };
-    
+
     const getCategoryName = (): string => {
         return product.category?.name ? getStringValue(product.category.name) : t('No Category');
-    };    // Get primary image or first image
-    const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
+    }; // Get primary image or first image
+    const primaryImage = product.images?.find((img) => img.is_primary) || product.images?.[0];
 
     const resolveSrc = (url?: string) => {
         if (!url) return null;
@@ -46,41 +45,39 @@ export default function ProductInfoCell({ product }: ProductInfoCellProps) {
     };
 
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {primaryImage ? (
                 <img
                     src={resolveSrc(primaryImage.image_url) || '/image/ShopnestLogo.png'}
                     alt={getProductName()}
                     style={{
-                        width: "50px",
-                        height: "50px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        border: "1px solid var(--grey)"
+                        width: '50px',
+                        height: '50px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid var(--grey)',
                     }}
                 />
             ) : (
-                <div style={{
-                    width: "50px",
-                    height: "50px",
-                    backgroundColor: "var(--grey)",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    color: "var(--dark-grey)"
-                }}>
-                    {t("No Image")}
+                <div
+                    style={{
+                        width: '50px',
+                        height: '50px',
+                        backgroundColor: 'var(--grey)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        color: 'var(--dark-grey)',
+                    }}
+                >
+                    {t('No Image')}
                 </div>
             )}
             <div>
-                <div style={{ fontWeight: "500", color: "var(--dark)", marginBottom: "4px" }}>
-                    {getProductName()}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--dark-grey)" }}>
-                    {getCategoryName()}
-                </div>
+                <div style={{ fontWeight: '500', color: 'var(--dark)', marginBottom: '4px' }}>{getProductName()}</div>
+                <div style={{ fontSize: '12px', color: 'var(--dark-grey)' }}>{getCategoryName()}</div>
             </div>
         </div>
     );

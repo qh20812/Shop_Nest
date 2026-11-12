@@ -28,11 +28,11 @@ trait InventoryReportingTrait
         $this->authorize('viewReports', ProductVariant::class);
 
         $reportData = $this->reportService->buildReportData();
-        $fileName = 'inventory-report-' . now()->format('Ymd_His') . '.csv';
+        $fileName = 'inventory-report-'.now()->format('Ymd_His').'.csv';
 
         $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
 
         $callback = function () use ($reportData) {

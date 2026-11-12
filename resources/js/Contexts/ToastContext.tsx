@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import NotificationToast, { Toast } from '@/components/ui/NotificationToast';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
 interface ToastContextType {
     toasts: Toast[];
@@ -31,7 +31,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
         const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const newToast: Toast = { ...toast, id };
-        
+
         setToasts((prev) => [...prev, newToast]);
     }, []);
 
@@ -39,34 +39,42 @@ export function ToastProvider({ children }: ToastProviderProps) {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
-    const success = useCallback((title: string, message?: string, duration?: number) => {
-        addToast({ type: 'success', title, message, duration });
-    }, [addToast]);
+    const success = useCallback(
+        (title: string, message?: string, duration?: number) => {
+            addToast({ type: 'success', title, message, duration });
+        },
+        [addToast],
+    );
 
-    const error = useCallback((title: string, message?: string, duration?: number) => {
-        addToast({ type: 'danger', title, message, duration });
-    }, [addToast]);
+    const error = useCallback(
+        (title: string, message?: string, duration?: number) => {
+            addToast({ type: 'danger', title, message, duration });
+        },
+        [addToast],
+    );
 
-    const warning = useCallback((title: string, message?: string, duration?: number) => {
-        addToast({ type: 'warning', title, message, duration });
-    }, [addToast]);
+    const warning = useCallback(
+        (title: string, message?: string, duration?: number) => {
+            addToast({ type: 'warning', title, message, duration });
+        },
+        [addToast],
+    );
 
-    const info = useCallback((title: string, message?: string, duration?: number) => {
-        addToast({ type: 'info', title, message, duration });
-    }, [addToast]);
+    const info = useCallback(
+        (title: string, message?: string, duration?: number) => {
+            addToast({ type: 'info', title, message, duration });
+        },
+        [addToast],
+    );
 
     return (
         <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, warning, info }}>
             {children}
-            
+
             {/* Toast Container */}
             <div className="toast-container">
                 {toasts.map((toast) => (
-                    <NotificationToast
-                        key={toast.id}
-                        toast={toast}
-                        onClose={removeToast}
-                    />
+                    <NotificationToast key={toast.id} toast={toast} onClose={removeToast} />
                 ))}
             </div>
         </ToastContext.Provider>

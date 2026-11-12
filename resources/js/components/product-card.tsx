@@ -1,4 +1,3 @@
-import React from 'react';
 import '@/../css/ProductCard.css';
 
 interface ProductCardProps {
@@ -26,13 +25,12 @@ export default function ProductCard({
     onAddToCart,
     onViewDetails,
     onFavorite,
-    favorited = false
+    favorited = false,
 }: ProductCardProps) {
-
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
-            currency: 'VND'
+            currency: 'VND',
         }).format(price);
     };
 
@@ -45,23 +43,17 @@ export default function ProductCard({
 
         // Full stars
         for (let i = 0; i < fullStars; i++) {
-            stars.push(
-                <i key={`full-${i}`} className="bi bi-star-fill product-rating-star filled"></i>
-            );
+            stars.push(<i key={`full-${i}`} className="bi bi-star-fill product-rating-star filled"></i>);
         }
 
         // Half star
         if (hasHalfStar) {
-            stars.push(
-                <i key="half" className="bi bi-star-half product-rating-star half"></i>
-            );
+            stars.push(<i key="half" className="bi bi-star-half product-rating-star half"></i>);
         }
 
         // Empty stars
         for (let i = 0; i < emptyStars; i++) {
-            stars.push(
-                <i key={`empty-${i}`} className="bi bi-star product-rating-star empty"></i>
-            );
+            stars.push(<i key={`empty-${i}`} className="bi bi-star product-rating-star empty"></i>);
         }
 
         return stars;
@@ -70,29 +62,16 @@ export default function ProductCard({
     return (
         <div className="product-card">
             <div className="product-card-image">
-                <div 
-                    className="product-card-image-wrapper" 
-                    style={{ backgroundImage: `url(${image})` }}
-                    role="img"
-                    aria-label={name}
-                />
-                
+                <div className="product-card-image-wrapper" style={{ backgroundImage: `url(${image})` }} role="img" aria-label={name} />
+
                 {(isSale || isNew) && (
                     <div className="product-card-badges">
-                        {isSale && (
-                            <span className="product-badge product-badge-sale">Sale</span>
-                        )}
-                        {isNew && (
-                            <span className="product-badge product-badge-new">New</span>
-                        )}
+                        {isSale && <span className="product-badge product-badge-sale">Sale</span>}
+                        {isNew && <span className="product-badge product-badge-new">New</span>}
                     </div>
                 )}
 
-                <button 
-                    className={`product-favorite-btn ${favorited ? 'favorited' : ''}`}
-                    onClick={onFavorite}
-                    aria-label="Add to favorites"
-                >
+                <button className={`product-favorite-btn ${favorited ? 'favorited' : ''}`} onClick={onFavorite} aria-label="Add to favorites">
                     <i className="bi bi-heart product-favorite-icon"></i>
                 </button>
             </div>
@@ -101,9 +80,7 @@ export default function ProductCard({
                 <h3 className="product-card-title">{name}</h3>
 
                 <div className="product-card-rating">
-                    <div className="product-rating-stars">
-                        {renderStars(rating ?? 0)}
-                    </div>
+                    <div className="product-rating-stars">{renderStars(rating ?? 0)}</div>
                     <p className="product-rating-value">({(rating ?? 0).toFixed(1)})</p>
                 </div>
 
@@ -117,17 +94,11 @@ export default function ProductCard({
                 </div>
 
                 <div className="product-card-actions">
-                    <button 
-                        className="product-btn product-btn-primary"
-                        onClick={onAddToCart}
-                    >
+                    <button className="product-btn product-btn-primary" onClick={onAddToCart}>
                         <i className="bi bi-cart-plus product-btn-icon"></i>
                         <span className="product-btn-text">Add to Cart</span>
                     </button>
-                    <button 
-                        className="product-btn product-btn-secondary"
-                        onClick={onViewDetails}
-                    >
+                    <button className="product-btn product-btn-secondary" onClick={onViewDetails}>
                         <span className="product-btn-text">View Details</span>
                     </button>
                 </div>

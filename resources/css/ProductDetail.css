@@ -2,28 +2,28 @@
 
 :root {
     --light: #f6f6f9;
-    --primary: #1976D2;
-    --light-primary: #CFE8FF;
-    --secondary: #9C27B0;
-    --light-secondary: #E1BEE7;
-    --info: #2196F3;
-    --light-info: #E3F2FD;
-    --neutral: #F5F5F5;
-    --tertiary: #FF9800;
-    --light-tertiary: #FFE0B2;
+    --primary: #1976d2;
+    --light-primary: #cfe8ff;
+    --secondary: #9c27b0;
+    --light-secondary: #e1bee7;
+    --info: #2196f3;
+    --light-info: #e3f2fd;
+    --neutral: #f5f5f5;
+    --tertiary: #ff9800;
+    --light-tertiary: #ffe0b2;
     --focus-outline: 2px solid var(--primary);
     --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
     --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
     --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
     --grey: #eee;
-    --dark-grey: #AAAAAA;
+    --dark-grey: #aaaaaa;
     --dark: #363949;
-    --danger: #D32F2F;
-    --light-danger: #FECDD3;
-    --warning: #FBC02D;
-    --light-warning: #FFF2C6;
-    --success: #388E3C;
-    --light-success: #BBF7D0;
+    --danger: #d32f2f;
+    --light-danger: #fecdd3;
+    --warning: #fbc02d;
+    --light-warning: #fff2c6;
+    --success: #388e3c;
+    --light-success: #bbf7d0;
 }
 
 /* Product Detail Test Page Styles (pure CSS, no Tailwind) */
@@ -107,7 +107,10 @@
     border: none;
     cursor: pointer;
     z-index: 40; /* ensure button floats above images */
-    transition: transform 0.12s ease, background 0.12s ease, filter 0.12s ease;
+    transition:
+        transform 0.12s ease,
+        background 0.12s ease,
+        filter 0.12s ease;
 }
 
 .pd-fav-btn:focus {
@@ -355,7 +358,7 @@
 
 .pd-size.active {
     border-color: var(--primary);
-    background: rgba(25, 118, 210, 0.10);
+    background: rgba(25, 118, 210, 0.1);
     color: var(--primary);
 }
 
@@ -432,7 +435,7 @@
 }
 
 .pd-btn-outline:hover {
-    background: rgba(25, 118, 210, 0.10);
+    background: rgba(25, 118, 210, 0.1);
 }
 
 .pd-btn-primary {

@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
-import { Link } from '@inertiajs/react'
-import { useTranslation } from '@/lib/i18n'
-import { useClickOutside } from '@/hooks/useClickOutside'
-import { useDarkMode } from '@/hooks/useDarkMode'
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { useDarkMode } from '@/hooks/useDarkMode';
+import { useTranslation } from '@/lib/i18n';
+import { Link } from '@inertiajs/react';
+import React, { useState } from 'react';
 
 interface User {
     id: number;
@@ -31,11 +31,7 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
     return (
         <>
             {/* Hamburger Button */}
-            <button
-                className="navbar-hamburger"
-                onClick={() => setIsOpen(true)}
-                aria-label="Open menu"
-            >
+            <button className="navbar-hamburger" onClick={() => setIsOpen(true)} aria-label="Open menu">
                 <i className="bi bi-list"></i>
             </button>
 
@@ -113,27 +109,29 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
                             {/* Settings */}
                             <div className="navbar-mobile-section">
                                 <div className="navbar-mobile-section-title">{t('navbar.settings') ?? t('Settings')}</div>
-                                
+
                                 {/* Language */}
                                 <div className="navbar-mobile-link">
                                     <i className="bi bi-translate"></i>
-                                    <span>{t('navbar.language')}: {locale.toUpperCase()}</span>
+                                    <span>
+                                        {t('navbar.language')}: {locale.toUpperCase()}
+                                    </span>
                                 </div>
                                 <div style={{ paddingLeft: '2.25rem', marginTop: '0.5rem' }}>
-                                    <Link 
-                                        href="/language" 
-                                        method="post" 
-                                        data={{ locale: 'vi' }} 
+                                    <Link
+                                        href="/language"
+                                        method="post"
+                                        data={{ locale: 'vi' }}
                                         className="navbar-mobile-link"
                                         onClick={closeMenu}
                                         style={{ padding: '0.5rem 0.75rem' }}
                                     >
                                         Tiếng Việt
                                     </Link>
-                                    <Link 
-                                        href="/language" 
-                                        method="post" 
-                                        data={{ locale: 'en' }} 
+                                    <Link
+                                        href="/language"
+                                        method="post"
+                                        data={{ locale: 'en' }}
                                         className="navbar-mobile-link"
                                         onClick={closeMenu}
                                         style={{ padding: '0.5rem 0.75rem' }}
@@ -143,8 +141,8 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
                                 </div>
 
                                 {/* Dark Mode */}
-                                <button 
-                                    className="navbar-mobile-link" 
+                                <button
+                                    className="navbar-mobile-link"
                                     onClick={toggleDarkMode}
                                     style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left' }}
                                 >
@@ -157,10 +155,10 @@ export default function NavbarMobileMenu({ isLoggedIn, user, locale }: NavbarMob
                                 <>
                                     <div className="navbar-mobile-divider"></div>
                                     <div className="navbar-mobile-section">
-                                        <Link 
-                                            href="/logout" 
-                                            method="post" 
-                                            className="navbar-mobile-link" 
+                                        <Link
+                                            href="/logout"
+                                            method="post"
+                                            className="navbar-mobile-link"
                                             onClick={closeMenu}
                                             style={{ color: 'var(--danger)' }}
                                         >

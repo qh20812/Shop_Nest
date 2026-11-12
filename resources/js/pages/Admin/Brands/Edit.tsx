@@ -1,10 +1,10 @@
-import React from 'react';
+import '@/../css/Page.css';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
+import React from 'react';
 import BrandForm from '../../../components/admin/brands/BrandForm';
 import Header from '../../../components/ui/Header';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
-import '@/../css/Page.css';
 
 interface Brand {
     brand_id: number;
@@ -30,7 +30,7 @@ interface PageProps {
 export default function Edit() {
     const { t } = useTranslation();
     const { brand } = usePage<PageProps>().props;
-    
+
     const { data, setData, post, processing, errors } = useForm<BrandFormData>({
         _method: 'PUT',
         name: brand.name,
@@ -48,25 +48,18 @@ export default function Edit() {
 
     return (
         <AppLayout>
-            <Head title={t("Edit Brand")} />
-            
+            <Head title={t('Edit Brand')} />
+
             <Header
-                title={t("Edit Brand")}
+                title={t('Edit Brand')}
                 breadcrumbs={[
-                    { label: t("Dashboard"), href: "/admin/dashboard" },
-                    { label: t("Brands"), href: "/admin/brands" },
-                    { label: t("Edit Brand"), href: `/admin/brands/${brand.brand_id}/edit`, active: true }
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Brands'), href: '/admin/brands' },
+                    { label: t('Edit Brand'), href: `/admin/brands/${brand.brand_id}/edit`, active: true },
                 ]}
             />
 
-            <BrandForm
-                data={data}
-                setData={setData}
-                errors={errors}
-                processing={processing}
-                onSubmit={handleSubmit}
-                submitLabel="Update Brand"
-            />
+            <BrandForm data={data} setData={setData} errors={errors} processing={processing} onSubmit={handleSubmit} submitLabel="Update Brand" />
         </AppLayout>
     );
 }

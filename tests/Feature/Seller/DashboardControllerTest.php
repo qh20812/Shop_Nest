@@ -7,15 +7,17 @@ use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
 
 class DashboardControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $admin;
+
     private User $seller;
+
     private User $customer;
 
     protected function setUp(): void
@@ -29,11 +31,11 @@ class DashboardControllerTest extends TestCase
 
         $this->seller = User::factory()->create();
         $this->seller->roles()->attach(Role::where('name->en', 'Seller')->first());
-        
+
         $this->customer = User::factory()->create();
         $this->customer->roles()->attach(Role::where('name->en', 'Customer')->first());
     }
-    
+
     /**
      * Kịch bản 1: Seller có thể truy cập dashboard của mình.
      */
@@ -61,10 +63,15 @@ class DashboardControllerTest extends TestCase
         // Giả sử bạn có middleware IsSeller và nó sẽ chuyển hướng về home
         $response = $this->actingAs($user)->get(route('seller.dashboard'));
 
-        // Tất cả non-sellers đều về home
-        $response->assertRedirect(route('home'));
+        if ($role === 'admin') {
+            // Admins pass the middleware, but the controller still requires a seller account.
+            $response->assertStatus(403);
+        } else {
+            // Regular users are redirected home by the middleware.
+            $response->assertRedirect(route('home'));
+        }
     }
-    
+
     public static function nonSellerUsers(): array
     {
         return [

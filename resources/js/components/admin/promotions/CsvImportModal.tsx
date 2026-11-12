@@ -108,8 +108,7 @@ export default function CsvImportModal({ promotionId, isOpen, onClose }: CsvImpo
                 return;
             }
 
-            const payload: { success: boolean; tracking_token: string; status: ImportStatus['status']; import_id: number } =
-                await response.json();
+            const payload: { success: boolean; tracking_token: string; status: ImportStatus['status']; import_id: number } = await response.json();
 
             if (payload.success) {
                 setPollToken(payload.tracking_token);
@@ -163,9 +162,7 @@ export default function CsvImportModal({ promotionId, isOpen, onClose }: CsvImpo
                 <form onSubmit={handleSubmit}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div>
-                            <label style={{ fontWeight: 500, color: 'var(--dark)', display: 'block', marginBottom: '6px' }}>
-                                CSV file
-                            </label>
+                            <label style={{ fontWeight: 500, color: 'var(--dark)', display: 'block', marginBottom: '6px' }}>CSV file</label>
                             <input
                                 type="file"
                                 accept=".csv,text/csv"
@@ -197,7 +194,9 @@ export default function CsvImportModal({ promotionId, isOpen, onClose }: CsvImpo
                         <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--dark)' }}>Import status</h4>
                         <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: 'var(--dark-grey)' }}>
                             <li>Status: {status.status}</li>
-                            <li>Processed: {status.processed_rows}/{status.total_rows}</li>
+                            <li>
+                                Processed: {status.processed_rows}/{status.total_rows}
+                            </li>
                             <li>Failed rows: {status.failed_rows}</li>
                             {status.completed_at && <li>Completed at: {status.completed_at}</li>}
                         </ul>

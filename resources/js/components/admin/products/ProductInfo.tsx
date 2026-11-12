@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from '../../../lib/i18n';
 
 interface AttributeValue {
@@ -41,9 +41,7 @@ interface ProductInfoProps {
 export default function ProductInfo({ product, currentLocale }: ProductInfoProps) {
     const { t, locale } = useTranslation();
     const [quantity, setQuantity] = useState(1);
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-        product.variants?.[0] || null
-    );
+    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants?.[0] || null);
 
     // Use passed currentLocale or fallback to hook locale
     const activeLocale = currentLocale || (locale as 'en' | 'vi');
@@ -51,29 +49,29 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
     // Helper functions for localized content
     const getProductName = (): string => {
         if (!product.name) return t('Unnamed Product');
-        
+
         // Handle string case (fallback)
         if (typeof product.name === 'string') return product.name;
-        
+
         // Handle multilingual object case
         if (typeof product.name === 'object' && product.name !== null) {
             return product.name[activeLocale] || product.name.en || product.name.vi || t('Unnamed Product');
         }
-        
+
         return t('Unnamed Product');
     };
 
     const getCategoryName = (): string => {
         if (!product.category?.name) return t('No Category');
-        
+
         // Handle string case (fallback)
         if (typeof product.category.name === 'string') return product.category.name;
-        
+
         // Handle multilingual object case
         if (typeof product.category.name === 'object' && product.category.name !== null) {
             return product.category.name[activeLocale] || product.category.name.en || product.category.name.vi || t('No Category');
         }
-        
+
         return t('No Category');
     };
 
@@ -87,7 +85,7 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
             return `${selectedVariant.price.toLocaleString()} VND`;
         }
 
-        const prices = product.variants.map(v => v.price);
+        const prices = product.variants.map((v) => v.price);
         const minPrice = Math.min(...prices);
         const maxPrice = Math.max(...prices);
 
@@ -110,16 +108,16 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
         if (!product.variants || product.variants.length === 0) return {};
 
         const grouped: Record<string, AttributeValue[]> = {};
-        
-        product.variants.forEach(variant => {
+
+        product.variants.forEach((variant) => {
             // ADD NULL CHECK HERE
             if (variant.attributeValues && Array.isArray(variant.attributeValues)) {
-                variant.attributeValues.forEach(attrValue => {
+                variant.attributeValues.forEach((attrValue) => {
                     const attrName = attrValue.attribute.name;
                     if (!grouped[attrName]) {
                         grouped[attrName] = [];
                     }
-                    const exists = grouped[attrName].some(av => av.attribute_value_id === attrValue.attribute_value_id);
+                    const exists = grouped[attrName].some((av) => av.attribute_value_id === attrValue.attribute_value_id);
                     if (!exists) {
                         grouped[attrName].push(attrValue);
                     }
@@ -155,13 +153,13 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
             </div>
 
             {/* Price */}
-            <div className="product-info__price">
-                {getPrice()}
-            </div>
+            <div className="product-info__price">{getPrice()}</div>
 
             {/* Stock Information */}
             <div className="product-info__stock">
-                <span className={`product-info__stock-status ${getStock() > 0 ? 'product-info__stock-status--in-stock' : 'product-info__stock-status--out-of-stock'}`}>
+                <span
+                    className={`product-info__stock-status ${getStock() > 0 ? 'product-info__stock-status--in-stock' : 'product-info__stock-status--out-of-stock'}`}
+                >
                     {getStock() > 0 ? `${t('In Stock')}: ${getStock()} ${t('units')}` : t('Out of Stock')}
                 </span>
             </div>
@@ -172,27 +170,24 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
                     <h3 className="product-info__variants-title">{t('Select Options')}</h3>
                     {Object.entries(groupedAttributes).map(([attributeName, attributeValues]) => (
                         <div key={attributeName} className="product-info__variant-group">
-                            <label className="product-info__variant-label">
-                                {attributeName}:
-                            </label>
-                            <select 
+                            <label className="product-info__variant-label">{attributeName}:</label>
+                            <select
                                 className="product-info__variant-select"
                                 onChange={(e) => {
                                     const selectedValueId = parseInt(e.target.value);
-                                    const variant = product.variants.find(v => 
-                                        v.attributeValues && v.attributeValues.some(av => av.attribute_value_id === selectedValueId)
+                                    const variant = product.variants.find(
+                                        (v) => v.attributeValues && v.attributeValues.some((av) => av.attribute_value_id === selectedValueId),
                                     );
                                     if (variant) {
                                         setSelectedVariant(variant);
                                     }
                                 }}
                             >
-                                <option value="">{t('Select')} {attributeName}</option>
+                                <option value="">
+                                    {t('Select')} {attributeName}
+                                </option>
                                 {attributeValues.map((attrValue) => (
-                                    <option 
-                                        key={attrValue.attribute_value_id} 
-                                        value={attrValue.attribute_value_id}
-                                    >
+                                    <option key={attrValue.attribute_value_id} value={attrValue.attribute_value_id}>
                                         {attrValue.value}
                                     </option>
                                 ))}
@@ -205,11 +200,9 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
             {/* Quantity and Add to Cart */}
             <div className="product-info__actions">
                 <div className="product-info__quantity">
-                    <label className="product-info__quantity-label">
-                        {t('Quantity')}:
-                    </label>
+                    <label className="product-info__quantity-label">{t('Quantity')}:</label>
                     <div className="product-info__quantity-controls">
-                        <button 
+                        <button
                             type="button"
                             className="product-info__quantity-btn"
                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -217,7 +210,7 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
                         >
                             -
                         </button>
-                        <input 
+                        <input
                             type="number"
                             className="product-info__quantity-input"
                             value={quantity}
@@ -225,7 +218,7 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
                             min="1"
                             max={getStock()}
                         />
-                        <button 
+                        <button
                             type="button"
                             className="product-info__quantity-btn"
                             onClick={() => setQuantity(Math.min(getStock(), quantity + 1))}
@@ -236,12 +229,7 @@ export default function ProductInfo({ product, currentLocale }: ProductInfoProps
                     </div>
                 </div>
 
-                <button 
-                    type="button"
-                    className="product-info__add-to-cart"
-                    onClick={handleAddToCart}
-                    disabled={getStock() === 0}
-                >
+                <button type="button" className="product-info__add-to-cart" onClick={handleAddToCart} disabled={getStock() === 0}>
                     <i className="bx bx-cart-add"></i>
                     {t('Add to Cart')}
                 </button>

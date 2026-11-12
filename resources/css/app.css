@@ -7,9 +7,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -67,51 +65,51 @@
     --card-foreground: #111827;
     --popover: #ffffff;
     --popover-foreground: #111827;
-    --primary: #2563EB;
-    --light-primary: #E6F4F1; /* provided */
+    --primary: #2563eb;
+    --light-primary: #e6f4f1; /* provided */
     --primary-foreground: #ffffff;
-    --secondary: #8D8DB9;
-    --light-secondary: #AAA9BC;
+    --secondary: #8d8db9;
+    --light-secondary: #aaa9bc;
     --secondary-foreground: #ffffff;
     --muted: #f3f4f6;
     --muted-foreground: #6b7280;
-    --accent: #CF52D0;
+    --accent: #cf52d0;
     --accent-foreground: #ffffff;
-    --destructive: #DC003E;
+    --destructive: #dc003e;
     --destructive-foreground: #ffffff;
     --border: #e6e7ea;
     --input: #ffffff;
-    --ring: #93C5FD;
-    --chart-1: #FF599F; /* pink */
-    --chart-2: #FFC358; /* light orange */
-    --chart-3: #FF8970; /* coral */
-    --chart-4: #F9F871; /* bright yellow */
-    --chart-5: #008BB4; /* teal */
+    --ring: #93c5fd;
+    --chart-1: #ff599f; /* pink */
+    --chart-2: #ffc358; /* light orange */
+    --chart-3: #ff8970; /* coral */
+    --chart-4: #f9f871; /* bright yellow */
+    --chart-5: #008bb4; /* teal */
     --radius: 0.625rem;
     --sidebar: #f8fafc;
     --sidebar-foreground: #111827;
-    --sidebar-primary: #2563EB;
+    --sidebar-primary: #2563eb;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #AE5500;
+    --sidebar-accent: #ae5500;
     --sidebar-accent-foreground: #111827;
     --sidebar-border: #e6e7ea;
-    --sidebar-ring: #93C5FD;
+    --sidebar-ring: #93c5fd;
 
     /* brand helpers */
-    --neutral: #FFEFCA; /* cream */
-    --grey: #AAA9BC; /* soft grey */
+    --neutral: #ffefca; /* cream */
+    --grey: #aaa9bc; /* soft grey */
     --dark-grey: #847655; /* olive, provided */
     --dark: #464555; /* provided */
-    --tertiary: #C49C00; /* gold */
-    --light-tertiary: #FFC358;
-    --info: #008BB4; /* teal */
-    --light-info: #E6F4F1; /* mint */
-    --danger: #DC003E; /* provided */
-    --light-danger: #FFEFCA; /* cream as soft danger bg */
-    --warning: #FFC358; /* provided */
-    --light-warning: #F9F871; /* bright yellow */
-    --success: #008BB4; /* teal as success */
-    --light-success: #E6F4F1;
+    --tertiary: #c49c00; /* gold */
+    --light-tertiary: #ffc358;
+    --info: #008bb4; /* teal */
+    --light-info: #e6f4f1; /* mint */
+    --danger: #dc003e; /* provided */
+    --light-danger: #ffefca; /* cream as soft danger bg */
+    --warning: #ffc358; /* provided */
+    --light-warning: #f9f871; /* bright yellow */
+    --success: #008bb4; /* teal as success */
+    --light-success: #e6f4f1;
 }
 
 .dark {
@@ -121,20 +119,20 @@
     --card-foreground: #e6eef8;
     --popover: #0b1220;
     --popover-foreground: #e6eef8;
-    --primary: #2563EB; /* keep primary visible in dark */
+    --primary: #2563eb; /* keep primary visible in dark */
     --primary-foreground: #0b1220;
-    --secondary: #8D8DB9;
+    --secondary: #8d8db9;
     --secondary-foreground: #0b1220;
     --muted: #0b1220;
     --muted-foreground: #94a3b8;
-    --accent: #CF52D0;
+    --accent: #cf52d0;
     --accent-foreground: #0b1220;
-    --destructive: #DC003E;
+    --destructive: #dc003e;
     --destructive-foreground: #0b1220;
     /* Make borders slightly lighter than the dark background so they don't visually blend in */
     --border: #273244; /* improved contrast vs background #0f172a */
     --input: #0b1220;
-    --ring: #60A5FA;
+    --ring: #60a5fa;
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -142,12 +140,12 @@
     --chart-5: oklch(0.645 0.246 16.439);
     --sidebar: #0f172a;
     --sidebar-foreground: #e6eef8;
-    --sidebar-primary: #2563EB;
+    --sidebar-primary: #2563eb;
     --sidebar-primary-foreground: #0b1220;
-    --sidebar-accent: #AE5500;
+    --sidebar-accent: #ae5500;
     --sidebar-accent-foreground: #0b1220;
     --sidebar-border: #273244;
-    --sidebar-ring: #60A5FA;
+    --sidebar-ring: #60a5fa;
 }
 
 @layer base {

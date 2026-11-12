@@ -3,7 +3,7 @@ import React from 'react';
 export const SkeletonHero: React.FC = () => {
     return (
         <section className="mb-12 md:mb-16">
-            <div className="w-full h-[500px] rounded-xl bg-card animate-pulse" />
+            <div className="h-[500px] w-full animate-pulse rounded-xl bg-card" />
         </section>
     );
 };

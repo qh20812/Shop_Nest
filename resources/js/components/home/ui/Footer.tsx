@@ -1,10 +1,9 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
 
 export default function Footer() {
     return (
-        <footer className="w-full bg-card border-t border-border">
+        <footer className="w-full border-t border-border bg-card">
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                     {/* Company Info */}
@@ -22,28 +21,28 @@ export default function Footer() {
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Facebook"
                             >
-                                <Facebook className="h-4 w-4" />
+                                <i className="fa-brands fa-facebook-f text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Twitter"
                             >
-                                <Twitter className="h-4 w-4" />
+                                <i className="fa-brands fa-x-twitter text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Instagram"
                             >
-                                <Instagram className="h-4 w-4" />
+                                <i className="fa-brands fa-instagram text-sm" />
                             </a>
                             <a
                                 href="#"
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
                                 aria-label="Youtube"
                             >
-                                <Youtube className="h-4 w-4" />
+                                <i className="fa-brands fa-youtube text-sm" />
                             </a>
                         </div>
                     </div>
@@ -97,19 +96,17 @@ export default function Footer() {
                         <h4 className="text-base font-bold text-foreground">Liên hệ</h4>
                         <div className="flex flex-col gap-3">
                             <div className="flex items-start gap-3">
-                                <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                                <p className="text-sm text-muted-foreground">
-                                    123 Đường ABC, Quận 1, TP. Hồ Chí Minh, Việt Nam
-                                </p>
+                                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                                <p className="text-sm text-muted-foreground">123 Đường ABC, Quận 1, TP. Hồ Chí Minh, Việt Nam</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Phone className="h-5 w-5 text-primary shrink-0" />
+                                <Phone className="h-5 w-5 shrink-0 text-primary" />
                                 <a href="tel:+84123456789" className="text-sm text-muted-foreground transition-colors hover:text-primary">
                                     +84 123 456 789
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Mail className="h-5 w-5 text-primary shrink-0" />
+                                <Mail className="h-5 w-5 shrink-0 text-primary" />
                                 <a href="mailto:support@shopnest.vn" className="text-sm text-muted-foreground transition-colors hover:text-primary">
                                     support@shopnest.vn
                                 </a>
@@ -121,9 +118,7 @@ export default function Footer() {
                 {/* Bottom Bar */}
                 <div className="mt-12 border-t border-border pt-8">
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                        <p className="text-sm text-muted-foreground">
-                            © {new Date().getFullYear()} ShopNest. Tất cả quyền được bảo lưu.
-                        </p>
+                        <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} ShopNest. Tất cả quyền được bảo lưu.</p>
                         <div className="flex gap-6">
                             <Link href="/terms" className="text-sm text-muted-foreground transition-colors hover:text-primary">
                                 Điều khoản

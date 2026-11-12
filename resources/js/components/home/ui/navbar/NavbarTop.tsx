@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react'
-import { Link } from '@inertiajs/react'
-import { useTranslation } from '@/lib/i18n'
-import { useClickOutside } from '@/hooks/useClickOutside'
-import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { useTranslation } from '@/lib/i18n';
+import { Link } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 
 interface User {
     id: number;
@@ -21,14 +21,14 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
     const { t } = useTranslation();
     const [showLangDropdown, setShowLangDropdown] = useState(false);
     const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-    
+
     // Performance monitoring
     usePerformanceMonitor('NavbarTop');
-    
+
     // Refs for click outside detection
     const langDropdownRef = useRef<HTMLDivElement>(null);
     const accountDropdownRef = useRef<HTMLDivElement>(null);
-    
+
     // Close dropdowns when clicking outside
     useClickOutside<HTMLDivElement>(langDropdownRef, () => setShowLangDropdown(false));
     useClickOutside<HTMLDivElement>(accountDropdownRef, () => setShowAccountDropdown(false));
@@ -37,17 +37,14 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
         <div className="navbar-top">
             <div className="navbar-container-fluid">
                 <div className="navbar-top-left">
-                                <Link href={route('seller.register')} className="navbar-link-hover">
-                                    {t('navbar.become_seller')}
-                                </Link>
-                            </div>
+                    <Link href={route('seller.register')} className="navbar-link-hover">
+                        {t('navbar.become_seller')}
+                    </Link>
+                </div>
                 <div className="navbar-top-right">
-                    
-                    
-
                     {/* Language Dropdown */}
                     <div className="navbar-dropdown-wrapper" ref={langDropdownRef}>
-                            <button
+                        <button
                             className="navbar-link-hover navbar-flex-center"
                             onClick={() => setShowLangDropdown(!showLangDropdown)}
                             aria-expanded={showLangDropdown}
@@ -58,24 +55,24 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                         </button>
                         {showLangDropdown && (
                             <div className="navbar-dropdown">
-                                    <Link 
-                                        href="/language" 
-                                        method="post" 
-                                        data={{ locale: 'vi' }} 
-                                        className="navbar-dropdown-item"
-                                        onClick={() => setShowLangDropdown(false)}
-                                    >
-                                        {t('navbar.vietnamese')}
-                                    </Link>
-                                    <Link 
-                                        href="/language" 
-                                        method="post" 
-                                        data={{ locale: 'en' }} 
-                                        className="navbar-dropdown-item"
-                                        onClick={() => setShowLangDropdown(false)}
-                                    >
-                                        {t('navbar.english')}
-                                    </Link>
+                                <Link
+                                    href="/language"
+                                    method="post"
+                                    data={{ locale: 'vi' }}
+                                    className="navbar-dropdown-item"
+                                    onClick={() => setShowLangDropdown(false)}
+                                >
+                                    {t('navbar.vietnamese')}
+                                </Link>
+                                <Link
+                                    href="/language"
+                                    method="post"
+                                    data={{ locale: 'en' }}
+                                    className="navbar-dropdown-item"
+                                    onClick={() => setShowLangDropdown(false)}
+                                >
+                                    {t('navbar.english')}
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -95,28 +92,15 @@ export default function NavbarTop({ isLoggedIn, user, locale }: NavbarTopProps) 
                             </button>
                             {showAccountDropdown && (
                                 <div className="navbar-dropdown">
-                                        <Link 
-                                        href="/user/profile" 
-                                        className="navbar-dropdown-item"
-                                        onClick={() => setShowAccountDropdown(false)}
-                                    >
+                                    <Link href="/user/profile" className="navbar-dropdown-item" onClick={() => setShowAccountDropdown(false)}>
                                         <i className="bi bi-person"></i>
                                         {t('navbar.profile')}
                                     </Link>
-                                    <Link 
-                                        href="/user/orders" 
-                                        className="navbar-dropdown-item"
-                                        onClick={() => setShowAccountDropdown(false)}
-                                    >
+                                    <Link href="/user/orders" className="navbar-dropdown-item" onClick={() => setShowAccountDropdown(false)}>
                                         <i className="bi bi-box"></i>
                                         {t('navbar.my_orders')}
                                     </Link>
-                                    <Link 
-                                        href="/logout" 
-                                        method="post" 
-                                        className="navbar-dropdown-item"
-                                        onClick={() => setShowAccountDropdown(false)}
-                                    >
+                                    <Link href="/logout" method="post" className="navbar-dropdown-item" onClick={() => setShowAccountDropdown(false)}>
                                         <i className="bi bi-box-arrow-right"></i>
                                         {t('auth.logout')}
                                     </Link>

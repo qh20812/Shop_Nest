@@ -6,8 +6,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class ProfileControllerTest extends TestCase
 {
@@ -83,7 +83,7 @@ class ProfileControllerTest extends TestCase
     #[Test]
     public function user_can_update_profile_with_avatar()
     {
-        if (!function_exists('imagecreatetruecolor')) {
+        if (! function_exists('imagecreatetruecolor')) {
             $this->markTestSkipped('GD extension not installed');
         }
 
@@ -93,6 +93,7 @@ class ProfileControllerTest extends TestCase
 
         $data = [
             'first_name' => 'Test',
+            'email' => $this->user->email,
             'avatar' => $avatar,
         ];
 
@@ -102,13 +103,13 @@ class ProfileControllerTest extends TestCase
         $this->user->refresh();
 
         $this->assertNotNull($this->user->avatar);
-        Storage::assertExists('public/' . $this->user->avatar);
+        Storage::assertExists($this->user->avatar);
     }
 
     #[Test]
     public function old_avatar_is_deleted_when_uploading_new_one()
     {
-        if (!function_exists('imagecreatetruecolor')) {
+        if (! function_exists('imagecreatetruecolor')) {
             $this->markTestSkipped('GD extension not installed');
         }
 
@@ -121,13 +122,13 @@ class ProfileControllerTest extends TestCase
 
         // Upload new avatar
         $newAvatar = UploadedFile::fake()->image('new.jpg');
-        $data = ['first_name' => 'Test', 'avatar' => $newAvatar];
+        $data = ['first_name' => 'Test', 'email' => $this->user->email, 'avatar' => $newAvatar];
 
         $this->actingAs($this->user)->put(route('user.profile.update'), $data);
 
-        Storage::assertMissing('public/' . $oldPath); // Old deleted
+        Storage::assertMissing($oldPath); // Old deleted
         $this->user->refresh();
-        Storage::assertExists('public/' . $this->user->avatar); // New exists
+        Storage::assertExists($this->user->avatar); // New exists
     }
 
     #[Test]

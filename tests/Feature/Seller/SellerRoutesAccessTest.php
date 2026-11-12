@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SellerRoutesAccessTest extends TestCase
 {
@@ -18,7 +18,7 @@ class SellerRoutesAccessTest extends TestCase
         if (method_exists($seller, 'roles')) {
             $role = Role::create([
                 'name' => ['en' => 'Seller'],
-                'description' => ['en' => 'Seller role']
+                'description' => ['en' => 'Seller role'],
             ]);
             $seller->roles()->attach($role->id);
         } else {
@@ -36,7 +36,7 @@ class SellerRoutesAccessTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)
             ->get('/seller/dashboard')
-            ->assertRedirect('/dashboard');
+            ->assertRedirect(route('home'));
     }
 
     public function test_ajax_non_seller_gets_403()
@@ -45,6 +45,6 @@ class SellerRoutesAccessTest extends TestCase
         $this->actingAs($user)
             ->getJson('/seller/dashboard')
             ->assertStatus(403)
-            ->assertJson(['message' => 'Forbidden. You do not have seller access.']);
+            ->assertJson(['message' => __('middleware.seller_access_denied')]);
     }
 }

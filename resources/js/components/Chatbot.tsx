@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import '../../css/chatbot.css';
 import ChatBubble from './ChatBubble';
 import ChatWindow from './ChatWindow';
-import '../../css/chatbot.css';
 
 interface Message {
     id: number;
@@ -50,7 +50,7 @@ export default function Chatbot({ user }: ChatbotProps) {
     const [isTyping, setIsTyping] = useState(false);
     const [input, setInput] = useState('');
     const [soundEnabled, setSoundEnabled] = useState(true);
-    
+
     // Sound effects
     const sentSoundRef = useRef<(() => void) | null>(null);
     const receivedSoundRef = useRef<(() => void) | null>(null);
@@ -64,16 +64,16 @@ export default function Chatbot({ user }: ChatbotProps) {
                 const audioContext = new AudioContextClass();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
-                
+
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-                
+
                 oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
                 oscillator.type = type;
-                
+
                 gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                
+
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + duration);
             } catch (error) {
@@ -84,7 +84,7 @@ export default function Chatbot({ user }: ChatbotProps) {
         sentSoundRef.current = () => createNotificationSound(800, 0.1, 'sine');
         receivedSoundRef.current = () => createNotificationSound(600, 0.15, 'sine');
     }, []);
-    
+
     // Load chat state from localStorage
     useEffect(() => {
         const savedState = localStorage.getItem('chatbot-state');
@@ -98,11 +98,14 @@ export default function Chatbot({ user }: ChatbotProps) {
 
     // Save chat state to localStorage
     useEffect(() => {
-        localStorage.setItem('chatbot-state', JSON.stringify({
-            isOpen,
-            messages,
-            soundEnabled
-        }));
+        localStorage.setItem(
+            'chatbot-state',
+            JSON.stringify({
+                isOpen,
+                messages,
+                soundEnabled,
+            }),
+        );
     }, [isOpen, messages, soundEnabled]);
 
     // Handle ESC key to close chat
@@ -148,15 +151,12 @@ export default function Chatbot({ user }: ChatbotProps) {
                 }
             }
 
-            const fallbackValue = Object.values(input).find(
-                (value) => typeof value === 'string' && value.trim().length > 0
-            );
+            const fallbackValue = Object.values(input).find((value) => typeof value === 'string' && value.trim().length > 0);
 
             return typeof fallbackValue === 'string' ? normalizeString(fallbackValue) : null;
         };
 
-        const stripDiacritics = (value: string): string =>
-            value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const stripDiacritics = (value: string): string => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         const roleMatches: Array<string | null> = [];
 
@@ -190,10 +190,7 @@ export default function Chatbot({ user }: ChatbotProps) {
 
             const normalizedStripped = stripDiacritics(match);
 
-            for (const [roleKey, keywords] of Object.entries(ROLE_KEYWORDS) as Array<[
-                Exclude<SupportedRole, 'customer'>,
-                string[]
-            ]>) {
+            for (const [roleKey, keywords] of Object.entries(ROLE_KEYWORDS) as Array<[Exclude<SupportedRole, 'customer'>, string[]]>) {
                 if (keywords.some((keyword) => match.includes(keyword))) {
                     return roleKey;
                 }
@@ -217,13 +214,13 @@ export default function Chatbot({ user }: ChatbotProps) {
             text: textToSend,
             sender: 'user',
             status: 'sent',
-            timestamp: new Date().toLocaleTimeString('vi-VN', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            })
+            timestamp: new Date().toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }),
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        setMessages((prev) => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
 
@@ -238,14 +235,14 @@ export default function Chatbot({ user }: ChatbotProps) {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json'
+                    Accept: 'application/json',
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify({ message: textToSend })
+                body: JSON.stringify({ message: textToSend }),
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.message || 'API call failed');
             }
@@ -256,16 +253,14 @@ export default function Chatbot({ user }: ChatbotProps) {
                 sender: 'ai',
                 provider: data.data.provider,
                 role: data.data.role,
-                timestamp: new Date().toLocaleTimeString('vi-VN', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                })
+                timestamp: new Date().toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
             };
 
-            setMessages(prev => prev.map(msg => 
-                msg.id === userMessage.id ? {...msg, status: 'delivered'} : msg
-            ));
-            setMessages(prev => [...prev, aiMessage]);
+            setMessages((prev) => prev.map((msg) => (msg.id === userMessage.id ? { ...msg, status: 'delivered' } : msg)));
+            setMessages((prev) => [...prev, aiMessage]);
 
             // Play received sound
             if (receivedSoundRef.current && soundEnabled) {
@@ -277,12 +272,12 @@ export default function Chatbot({ user }: ChatbotProps) {
                 id: Date.now() + 1,
                 text: `Lỗi: ${error instanceof Error ? error.message : 'Không thể kết nối AI'}`,
                 sender: 'error',
-                timestamp: new Date().toLocaleTimeString('vi-VN', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                })
+                timestamp: new Date().toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
             };
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages((prev) => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
@@ -301,11 +296,8 @@ export default function Chatbot({ user }: ChatbotProps) {
 
     return (
         <div className="chatbot">
-            <ChatBubble 
-                onClick={toggleChat} 
-                isOpen={isOpen}
-            />
-            
+            <ChatBubble onClick={toggleChat} isOpen={isOpen} />
+
             {isOpen && (
                 <ChatWindow
                     messages={messages}

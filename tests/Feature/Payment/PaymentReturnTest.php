@@ -2,254 +2,163 @@
 
 namespace Tests\Feature\Payment;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\Transaction;
 use App\Models\User;
-use App\Services\CartService;
-use App\Services\PaymentService;
+use App\Models\UserAddress;
+use App\Payments\Gateways\StripeGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Vite;
-use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PaymentReturnTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $user;
-    private Order $order;
-    private Product $product;
-    private ProductVariant $variant;
-
-    protected function setUp(): void
+    private function makeOrder(): array
     {
-        parent::setUp();
+        $user = User::factory()->create();
+        $address = UserAddress::factory()->create(['user_id' => $user->id]);
 
-        $this->user = User::factory()->create();
-        $this->product = Product::factory()->create(['seller_id' => $this->user->id]);
-        $this->variant = ProductVariant::factory()->create([
-            'product_id' => $this->product->product_id,
-            'stock_quantity' => 10,
-            'reserved_quantity' => 2,
-            'track_inventory' => true,
-            'allow_backorder' => false,
-        ]);
-
-        $this->order = Order::factory()->create([
-            'customer_id' => $this->user->id,
+        $order = Order::factory()->create([
+            'customer_id' => $user->id,
+            'shipping_address_id' => $address->id,
+            'status' => OrderStatus::PENDING_CONFIRMATION,
             'payment_status' => PaymentStatus::UNPAID,
+            'payment_method' => 3,
+            'currency' => 'VND',
         ]);
 
-        // Create order item
-        DB::table('order_items')->insert([
-            'order_id' => $this->order->order_id,
-            'variant_id' => $this->variant->variant_id,
-            'quantity' => 3,
-            'unit_price' => 100.00,
-            'total_price' => 300.00,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Mock Log facade to allow any logging calls
-        Log::shouldReceive('info', 'warning', 'error')->andReturnNull();
-
-        // Mock Vite facade to prevent manifest errors
-        Vite::shouldReceive('chunk')->andReturn(['mocked-vite-asset']);
-        Vite::shouldReceive('__invoke')->andReturn('mocked-vite-asset');
+        return [$user, $order];
     }
 
-    public function test_successful_stripe_payment_return()
+    private function mockReturn(array $result): void
     {
-        $this->actingAs($this->user);
+        $this->mock(StripeGateway::class, function ($mock) use ($result) {
+            $mock->shouldReceive('handleReturn')->once()->andReturn($result);
+        });
+    }
 
-        // Mock CartService
-        $cartService = $this->mock(CartService::class);
-        $cartService->shouldReceive('clearCart')
-            ->once()
-            ->with($this->user);
+    #[Test]
+    public function successful_payment_marks_order_as_paid(): void
+    {
+        [$user, $order] = $this->makeOrder();
 
-        $response = $this->withoutMiddleware()
-            ->get("/payments/stripe/return?order_id={$this->order->order_id}&payment_intent=pi_test&status=success");
+        $this->mockReturn([
+            'status' => 'succeeded',
+            'transaction_id' => 'pi_test_123',
+            'order_id' => $order->order_id,
+            'message' => 'Checkout completed',
+        ]);
 
-        $response->assertStatus(200);
+        $response = $this->actingAs($user)->get('/payments/stripe/return?'.http_build_query([
+            'order_id' => $order->order_id,
+            'status' => 'success',
+            'session_id' => 'cs_test_123',
+        ]));
 
-        // Check transaction was created
+        $response->assertOk();
+
+        $order->refresh();
+        $this->assertSame(PaymentStatus::PAID, $order->payment_status);
+        $this->assertSame(OrderStatus::PROCESSING, $order->status);
+        $this->assertSame('pi_test_123', $order->payment_transaction_id);
+
         $this->assertDatabaseHas('transactions', [
-            'order_id' => $this->order->order_id,
+            'order_id' => $order->order_id,
             'gateway' => 'stripe',
             'status' => 'completed',
-            'gateway_transaction_id' => 'pi_test',
         ]);
-
-        // Check order status updated
-        $this->order->refresh();
-        $this->assertEquals(PaymentStatus::PAID, $this->order->payment_status);
     }
 
-    public function test_failed_payment_return()
+    #[Test]
+    public function unverified_session_keeps_order_unpaid(): void
     {
-        $this->actingAs($this->user);
+        [$user, $order] = $this->makeOrder();
 
-        Log::shouldReceive('info')
-            ->once()
-            ->with('payment_return.processed', [
-                'provider' => 'stripe',
-                'order_id' => $this->order->order_id,
-                'status' => 'failed',
-            ]);
+        $this->mockReturn([
+            'status' => 'pending',
+            'transaction_id' => null,
+            'order_id' => $order->order_id,
+            'message' => 'Payment has not been completed',
+        ]);
 
-        $response = $this->get("/payments/stripe/return?order_id={$this->order->order_id}&status=failed&message=Payment declined");
+        $this->actingAs($user)->get('/payments/stripe/return?'.http_build_query([
+            'order_id' => $order->order_id,
+            'status' => 'success',
+        ]))->assertOk();
 
-        $response->assertStatus(200)
-                ->assertInertia(fn ($page) => $page
-                    ->component('PaymentResult')
-                    ->where('provider', 'stripe')
-                    ->where('status', 'failed')
-                    ->where('message', 'Payment declined')
-                );
+        $order->refresh();
+        $this->assertSame(PaymentStatus::UNPAID, $order->payment_status);
+    }
 
-        // Check transaction was created with failed status
-        $this->assertDatabaseHas('transactions', [
-            'order_id' => $this->order->order_id,
-            'gateway' => 'stripe',
+    #[Test]
+    public function failed_payment_creates_refund_transaction(): void
+    {
+        [$user, $order] = $this->makeOrder();
+
+        $this->mockReturn([
             'status' => 'failed',
+            'transaction_id' => null,
+            'order_id' => $order->order_id,
+            'message' => 'Order mismatch',
         ]);
 
-        // Order status should remain unpaid
-        $this->order->refresh();
-        $this->assertEquals(PaymentStatus::UNPAID, $this->order->payment_status);
-    }
+        $this->actingAs($user)->get('/payments/stripe/return?'.http_build_query([
+            'order_id' => $order->order_id,
+            'status' => 'success',
+            'session_id' => 'cs_mismatch',
+        ]))->assertOk();
 
-    public function test_duplicate_payment_return_is_ignored()
-    {
-        $this->actingAs($this->user);
+        $order->refresh();
+        $this->assertSame(PaymentStatus::FAILED, $order->payment_status);
 
-        // Create existing transaction
-        Transaction::create([
-            'order_id' => $this->order->order_id,
-            'type' => 'payment',
-            'amount' => 300.00,
-            'currency' => 'USD',
-            'gateway' => 'stripe',
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $order->order_id,
+            'type' => 'refund',
             'status' => 'completed',
-            'gateway_event_id' => 'evt_duplicate',
+        ]);
+    }
+
+    #[Test]
+    public function canceled_payment_marks_order_failed(): void
+    {
+        [$user, $order] = $this->makeOrder();
+
+        $this->mockReturn([
+            'status' => 'canceled',
+            'transaction_id' => null,
+            'order_id' => $order->order_id,
+            'message' => 'User canceled',
         ]);
 
-        Log::shouldReceive('info')
-            ->once()
-            ->with('payment_return.duplicate_event', [
-                'provider' => 'stripe',
-                'order_id' => $this->order->order_id,
-                'event_id' => 'evt_duplicate',
-            ]);
+        $this->actingAs($user)->get('/payments/stripe/return?'.http_build_query([
+            'order_id' => $order->order_id,
+            'status' => 'cancel',
+        ]))->assertOk();
 
-        $response = $this->get("/payments/stripe/return?order_id={$this->order->order_id}&event_id=evt_duplicate&status=succeeded");
-
-        $response->assertStatus(200);
-
-        // Should only have one transaction
-        $this->assertEquals(1, Transaction::where('gateway_event_id', 'evt_duplicate')->count());
+        $this->assertSame(PaymentStatus::FAILED, $order->fresh()->payment_status);
     }
 
-    public function test_payment_return_with_invalid_order_id()
+    #[Test]
+    public function removed_providers_are_rejected_gracefully(): void
     {
-        $this->actingAs($this->user);
+        [$user, $order] = $this->makeOrder();
 
-        Log::shouldReceive('warning')
-            ->once()
-            ->with('payment_return.invalid_order_id', [
-                'provider' => 'stripe',
-                'raw_order_id' => 'invalid',
-            ]);
+        $this->actingAs($user)->get('/payments/paypal/return?'.http_build_query([
+            'order_id' => $order->order_id,
+            'status' => 'success',
+        ]))->assertOk();
 
-        $response = $this->get('/payments/stripe/return?order_id=invalid');
-
-        $response->assertStatus(200)
-                ->assertInertia(fn ($page) => $page
-                    ->component('PaymentResult')
-                    ->where('provider', 'stripe')
-                    ->where('status', 'failed')
-                );
+        $this->assertSame(PaymentStatus::UNPAID, $order->fresh()->payment_status);
     }
 
-    public function test_payment_return_with_nonexistent_order()
+    #[Test]
+    public function missing_order_id_does_not_change_any_order(): void
     {
-        $this->actingAs($this->user);
+        $this->get('/payments/stripe/return')->assertOk();
 
-        Log::shouldReceive('warning')
-            ->once()
-            ->with('payment_return.order_not_found', [
-                'provider' => 'stripe',
-                'order_id' => 99999,
-            ]);
-
-        $response = $this->get('/payments/stripe/return?order_id=99999&status=succeeded');
-
-        $response->assertStatus(200)
-                ->assertInertia(fn ($page) => $page
-                    ->component('PaymentResult')
-                    ->where('provider', 'stripe')
-                    ->where('status', 'failed')
-                );
-    }
-
-    public function test_cart_not_cleared_for_failed_payment()
-    {
-        $this->actingAs($this->user);
-
-        // Mock CartService - should not be called
-        $cartService = $this->mock(CartService::class);
-        $cartService->shouldNotReceive('clearCart');
-
-        $response = $this->get("/payments/stripe/return?order_id={$this->order->order_id}&status=failed");
-
-        $response->assertStatus(200);
-    }
-
-    public function test_unsupported_payment_provider()
-    {
-        $this->actingAs($this->user);
-
-        Log::shouldReceive('error')
-            ->once()
-            ->with('payment_return.unsupported_provider', [
-                'provider' => 'unsupported',
-                'message' => 'Unsupported payment provider.',
-            ]);
-
-        $response = $this->get('/payments/unsupported/return');
-
-        $response->assertStatus(200)
-                ->assertInertia(fn ($page) => $page
-                    ->component('PaymentResult')
-                    ->where('provider', 'unsupported')
-                    ->where('status', 'failed')
-                    ->where('message', 'Unsupported payment provider.')
-                );
-    }
-
-    public function test_payment_return_with_vnpay_parameters()
-    {
-        $this->actingAs($this->user);
-
-        $cartService = $this->mock(CartService::class);
-        $cartService->shouldReceive('clearCart')
-            ->once()
-            ->with($this->user);
-
-        $response = $this->get("/payments/vnpay/return?vnp_TxnRef={$this->order->order_id}&vnp_ResponseCode=00&vnp_TransactionNo=123456");
-
-        $response->assertStatus(200)
-                ->assertInertia(fn ($page) => $page
-                    ->component('PaymentResult')
-                    ->where('provider', 'vnpay')
-                    ->where('status', 'succeeded')
-                );
+        $this->assertDatabaseCount('transactions', 0);
     }
 }

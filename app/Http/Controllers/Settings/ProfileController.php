@@ -8,9 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,11 +20,11 @@ class ProfileController extends Controller
     public function edit(Request $request): Response
     {
         $user = $request->user();
-        $layout = $request->get('layout','AppLayout');
-        
+        $layout = $request->get('layout', 'AppLayout');
+
         return Inertia::render('Settings/Profile', [
             'user' => array_merge($user->toArray(), [
-                'avatar_url' => $user->avatar_url
+                'avatar_url' => $user->avatar_url,
             ]),
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
@@ -43,21 +41,21 @@ class ProfileController extends Controller
 
         // Handle avatar removal
         if ($request->boolean('remove_avatar')) {
-            if ($user->avatar && !filter_var($user->avatar, FILTER_VALIDATE_URL)) {
+            if ($user->avatar && ! filter_var($user->avatar, FILTER_VALIDATE_URL)) {
                 // Only delete local files, not Google avatars
                 Storage::disk('public')->delete($user->avatar);
             }
             $data['avatar'] = null;
         }
 
-                // Handle avatar upload
+        // Handle avatar upload
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
             $avatarFile = $request->file('avatar');
             $avatarPath = $avatarFile->store('avatars', 'public');
-            
+
             // Delete old avatar if exists and not from Google
-            if ($user->avatar && !$user->isGoogleUser() && Storage::disk('public')->exists($user->avatar)) {
+            if ($user->avatar && ! $user->isGoogleUser() && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
         }
@@ -67,13 +65,11 @@ class ProfileController extends Controller
 
         // Update user
         $user->fill($data);
-        
+
         // Set avatar separately if uploaded
         if ($avatarPath) {
             $user->avatar = $avatarPath;
         }
-        
-        $user->save();
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import PrimaryInput from '../../ui/PrimaryInput';
-import ActionButton from '../../ui/ActionButton';
-import RichTextEditor from '../../ui/RichTextEditor';
 import { useTranslation } from '../../../lib/i18n';
+import ActionButton from '../../ui/ActionButton';
+import PrimaryInput from '../../ui/PrimaryInput';
+import RichTextEditor from '../../ui/RichTextEditor';
 
 interface BrandFormData {
     _method?: string;
@@ -21,21 +21,14 @@ interface BrandFormProps {
     submitLabel?: string;
 }
 
-export default function BrandForm({
-    data,
-    setData,
-    errors,
-    processing,
-    onSubmit,
-    submitLabel = 'Save Brand'
-}: BrandFormProps) {
+export default function BrandForm({ data, setData, errors, processing, onSubmit, submitLabel = 'Save Brand' }: BrandFormProps) {
     const { t } = useTranslation();
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         setData('logo', file);
-        
+
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => setLogoPreview(e.target?.result as string);
@@ -51,36 +44,36 @@ export default function BrandForm({
 
     return (
         <div className="bottom-data">
-            <div style={{ flexGrow: 1, minWidth: "600px" }}>
+            <div style={{ flexGrow: 1, minWidth: '600px' }}>
                 <div className="header">
                     <i className="bx bx-store"></i>
-                    <h3>{t("Brand Information")}</h3>
+                    <h3>{t('Brand Information')}</h3>
                 </div>
 
-                <form onSubmit={onSubmit} style={{ marginTop: "20px" }}>
+                <form onSubmit={onSubmit} style={{ marginTop: '20px' }}>
                     {/* Basic Information */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", marginBottom: "20px" }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '20px' }}>
                         <PrimaryInput
-                            label={t("Brand Name")}
+                            label={t('Brand Name')}
                             name="name"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             error={errors.name}
-                            placeholder={t("Enter brand name")}
+                            placeholder={t('Enter brand name')}
                             required
                         />
 
                         <RichTextEditor
-                            label={t("Description")}
+                            label={t('Description')}
                             value={data.description}
                             onChange={(value) => setData('description', value)}
                             error={errors.description}
-                            placeholder={t("Enter brand description...")}
+                            placeholder={t('Enter brand description...')}
                             height="300px"
                         />
 
                         <PrimaryInput
-                            label={t("Status")}
+                            label={t('Status')}
                             name="is_active"
                             type="select"
                             value={data.is_active ? '1' : '0'}
@@ -89,15 +82,15 @@ export default function BrandForm({
                             required
                             options={[
                                 { value: '1', label: t('Active') },
-                                { value: '0', label: t('Inactive') }
+                                { value: '0', label: t('Inactive') },
                             ]}
                         />
                     </div>
 
                     {/* Logo Upload Section */}
-                    <div style={{ marginBottom: "20px" }}>
+                    <div style={{ marginBottom: '20px' }}>
                         <div className="form-group">
-                            <label className="form-label">{t("Brand Logo")}</label>
+                            <label className="form-label">{t('Brand Logo')}</label>
                             <input
                                 type="file"
                                 accept="image/png,image/jpg,image/jpeg,image/webp"
@@ -108,32 +101,34 @@ export default function BrandForm({
                         </div>
 
                         {/* Logo Preview */}
-                        <div style={{ marginTop: "12px" }}>
+                        <div style={{ marginTop: '12px' }}>
                             {logoPreview ? (
                                 <img
                                     src={logoPreview}
-                                    alt={t("Logo Preview")}
+                                    alt={t('Logo Preview')}
                                     style={{
                                         width: '200px',
                                         height: '150px',
                                         objectFit: 'contain',
                                         border: '1px solid var(--grey)',
                                         borderRadius: '8px',
-                                        padding: '8px'
+                                        padding: '8px',
                                     }}
                                 />
                             ) : (
-                                <div style={{
-                                    width: '200px',
-                                    height: '150px',
-                                    backgroundColor: '#f5f5f5',
-                                    border: '2px dashed #ddd',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#999'
-                                }}>
+                                <div
+                                    style={{
+                                        width: '200px',
+                                        height: '150px',
+                                        backgroundColor: '#f5f5f5',
+                                        border: '2px dashed #ddd',
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#999',
+                                    }}
+                                >
                                     {t('No logo selected')}
                                 </div>
                             )}
@@ -142,20 +137,10 @@ export default function BrandForm({
 
                     {/* Action Buttons */}
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <ActionButton
-                            type="button"
-                            variant="secondary"
-                            onClick={handleCancel}
-                            disabled={processing}
-                        >
+                        <ActionButton type="button" variant="secondary" onClick={handleCancel} disabled={processing}>
                             {t('Cancel')}
                         </ActionButton>
-                        <ActionButton
-                            type="submit"
-                            variant="primary"
-                            disabled={processing}
-                            loading={processing}
-                        >
+                        <ActionButton type="submit" variant="primary" disabled={processing} loading={processing}>
                             {t(submitLabel)}
                         </ActionButton>
                     </div>

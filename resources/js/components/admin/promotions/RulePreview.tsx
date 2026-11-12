@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { PromotionRule } from './RuleBuilder';
 
 interface RulePreviewProps {
@@ -83,18 +83,10 @@ export default function RulePreview({ rules, promotionId, disabled = false }: Ru
                 <button type="button" className="btn btn-primary" onClick={handlePreview} disabled={disabled || loading}>
                     {loading ? 'Checking…' : 'Preview Matching Products'}
                 </button>
-                {result && (
-                    <span style={{ color: 'var(--dark)', fontWeight: 500 }}>
-                        {result.matched_products} products match the current rules
-                    </span>
-                )}
+                {result && <span style={{ color: 'var(--dark)', fontWeight: 500 }}>{result.matched_products} products match the current rules</span>}
             </div>
 
-            {error && (
-                <div style={{ color: 'var(--danger)', fontSize: '14px' }}>
-                    {error}
-                </div>
-            )}
+            {error && <div style={{ color: 'var(--danger)', fontSize: '14px' }}>{error}</div>}
 
             {result && result.products_preview.length > 0 && (
                 <div

@@ -1,6 +1,6 @@
-import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Mail, X } from 'lucide-react';
+import React from 'react';
 
 interface EmailPromptBannerProps {
     dismissible?: boolean;
@@ -39,21 +39,18 @@ export default function EmailPromptBanner({ dismissible = true }: EmailPromptBan
     };
 
     return (
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4 relative">
+        <div className="relative mb-4 border-l-4 border-blue-400 bg-blue-50 p-4">
             <div className="flex items-start">
                 <div className="flex-shrink-0">
                     <Mail className="h-5 w-5 text-blue-400" />
                 </div>
                 <div className="ml-3 flex-1">
                     <p className="text-sm text-blue-700">
-                        <strong>Gợi ý:</strong> Bạn chưa thêm địa chỉ email. Thêm email để nhận thông báo đơn hàng, 
-                        khuyến mãi và bảo mật tài khoản tốt hơn.
+                        <strong>Gợi ý:</strong> Bạn chưa thêm địa chỉ email. Thêm email để nhận thông báo đơn hàng, khuyến mãi và bảo mật tài khoản
+                        tốt hơn.
                     </p>
                     <p className="mt-2">
-                        <Link
-                            href={route('user.profile.index')}
-                            className="text-sm font-medium text-blue-700 hover:text-blue-600 underline"
-                        >
+                        <Link href={route('user.profile.index')} className="text-sm font-medium text-blue-700 underline hover:text-blue-600">
                             Thêm email ngay →
                         </Link>
                     </p>

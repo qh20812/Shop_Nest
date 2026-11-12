@@ -1,11 +1,10 @@
-import React from 'react';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
+import '@/../css/Page.css';
+import ActionButton from '@/components/ui/ActionButton';
 import Header from '@/components/ui/Header';
 import StatusBadge from '@/components/ui/StatusBadge';
-import ActionButton from '@/components/ui/ActionButton';
 import { useTranslation } from '@/lib/i18n';
-import '@/../css/Page.css';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import AppLayout from '../../../layouts/app/AppLayout';
 
 interface ProductSummary {
     product_id: number;
@@ -79,9 +78,7 @@ export default function Show() {
     const { t } = useTranslation();
     const { promotion } = usePage<PageProps>().props;
 
-    const usageText = promotion.usage_limit !== null
-        ? `${promotion.used_count} / ${promotion.usage_limit}`
-        : `${promotion.used_count}`;
+    const usageText = promotion.usage_limit !== null ? `${promotion.used_count} / ${promotion.usage_limit}` : `${promotion.used_count}`;
 
     return (
         <AppLayout>
@@ -115,9 +112,7 @@ export default function Show() {
                         <div>
                             <div className="detail-label">{t('Discount Value')}</div>
                             <div className="detail-value">
-                                {promotion.type === 'percentage'
-                                    ? `${Number(promotion.value).toLocaleString()}%`
-                                    : formatCurrency(promotion.value)}
+                                {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString()}%` : formatCurrency(promotion.value)}
                             </div>
                         </div>
                         <div>

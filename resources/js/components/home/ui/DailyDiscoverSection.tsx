@@ -1,6 +1,5 @@
-import React from 'react';
-import DailyDiscoverContent from './DailyDiscoverContent';
 import { useTranslation } from '../../../lib/i18n';
+import DailyDiscoverContent from './DailyDiscoverContent';
 
 interface DailyDiscoverProduct {
     id: number;
@@ -26,7 +25,9 @@ export default function DailyDiscoverSection({ products }: DailyDiscoverSectionP
         <div className="home-component">
             <div className="daily-discover-title">
                 <h2>{t('Daily Discover')}</h2>
-                <a href="/daily-discover" className="see-all-btn">{t('See All')}</a>
+                <a href="/daily-discover" className="see-all-btn">
+                    {t('See All')}
+                </a>
             </div>
             <DailyDiscoverContent products={products} />
         </div>

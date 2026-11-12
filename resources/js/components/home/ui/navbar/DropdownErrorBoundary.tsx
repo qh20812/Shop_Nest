@@ -1,40 +1,42 @@
-import React, { Component, ReactNode } from 'react'
-import { tGlobal } from '@/lib/i18n'
+import { tGlobal } from '@/lib/i18n';
+import React, { Component, ReactNode } from 'react';
 
 interface Props {
-  children: ReactNode
-  fallback?: ReactNode
+    children: ReactNode;
+    fallback?: ReactNode;
 }
 
 interface State {
-  hasError: boolean
-  error?: Error
+    hasError: boolean;
+    error?: Error;
 }
 
 export default class DropdownErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Dropdown Error Boundary caught an error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback || (
-        <div className="dropdown-error" role="alert" aria-live="assertive">
-          <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
-          <span>{tGlobal('dropdown.error')}</span>
-        </div>
-      )
+    constructor(props: Props) {
+        super(props);
+        this.state = { hasError: false };
     }
 
-    return this.props.children
-  }
+    static getDerivedStateFromError(error: Error): State {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('Dropdown Error Boundary caught an error:', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                this.props.fallback || (
+                    <div className="dropdown-error" role="alert" aria-live="assertive">
+                        <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        <span>{tGlobal('dropdown.error')}</span>
+                    </div>
+                )
+            );
+        }
+
+        return this.props.children;
+    }
 }

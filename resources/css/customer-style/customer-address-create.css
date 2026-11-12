@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --primary: #1976D2;
+    --primary: #1976d2;
     --primary-rgb: 25, 118, 210;
-    --danger: #D32F2F;
+    --danger: #d32f2f;
     --background-dark: #111921;
 }
 
@@ -170,7 +170,9 @@
     font-size: 14px;
     color: #111827;
     background: #ffffff;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .address-create-input:focus,

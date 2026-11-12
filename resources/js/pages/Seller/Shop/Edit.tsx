@@ -12,6 +12,7 @@ interface PageProps extends Record<string, unknown> {
         logo?: string | null;
         banner?: string | null;
     };
+    [key: string]: unknown;
 }
 
 export default function ShopEdit() {

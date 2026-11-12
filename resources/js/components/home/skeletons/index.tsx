@@ -1,8 +1,8 @@
 import React from 'react';
+import { SkeletonFlashSale } from './SkeletonFlashSale';
 import { SkeletonHeader } from './SkeletonHeader';
 import { SkeletonHero } from './SkeletonHero';
 import { SkeletonSection } from './SkeletonSection';
-import { SkeletonFlashSale } from './SkeletonFlashSale';
 
 interface SkeletonPageProps {
     variant?: 'welcome' | 'shop' | 'default';

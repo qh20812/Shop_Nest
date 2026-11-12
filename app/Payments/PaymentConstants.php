@@ -34,15 +34,19 @@ class PaymentConstants
      */
     public const PROVIDERS = [
         'stripe',
-        'paypal',
+        'cod',
     ];
 
     /**
      * Payment statuses.
      */
     public const STATUS_SUCCEEDED = 'succeeded';
+
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_FAILED = 'failed';
+
     public const STATUS_CANCELED = 'canceled';
+
     public const STATUS_IGNORED = 'ignored';
 }

@@ -2,17 +2,17 @@
 :root {
     --light: #f6f6f9;
     --light-2: #ffffff;
-    --primary: #1976D2;
-    --light-primary: #CFE8FF;
+    --primary: #1976d2;
+    --light-primary: #cfe8ff;
     --grey: #eee;
-    --dark-grey: #AAAAAA;
+    --dark-grey: #aaaaaa;
     --dark: #363949;
-    --danger: #D32F2F;
-	--light-danger: #FECDD3;
-    --warning: #FBC02D;
-    --light-warning: #FFF2C6;
-    --success: #388E3C;
-    --light-success: #BBF7D0;
+    --danger: #d32f2f;
+    --light-danger: #fecdd3;
+    --warning: #fbc02d;
+    --light-warning: #fff2c6;
+    --success: #388e3c;
+    --light-success: #bbf7d0;
 
     /* New variables for rgba values */
     --primary-hover: rgba(255, 255, 255, 0.1);
@@ -65,7 +65,9 @@
     border: none;
     cursor: pointer;
     box-shadow: var(--box-shadow-medium);
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-floating-button:hover,
@@ -140,7 +142,9 @@
     border-radius: 8px;
     font-size: var(--font-sm);
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-sidebar-compose:hover,
@@ -166,7 +170,9 @@
     border: 1px solid var(--grey);
     background: #ffffff;
     font-size: var(--font-sm);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-sidebar-search-input:focus {
@@ -192,7 +198,9 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-filter-toggle:hover,
@@ -228,7 +236,9 @@
     font-size: var(--font-sm);
     color: var(--dark);
     cursor: pointer;
-    transition: background var(--transition-fast), color var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast);
 }
 
 .chat-filter-option:hover,
@@ -350,7 +360,10 @@
     font-size: var(--font-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        color var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-sidebar-retry:hover,
@@ -430,7 +443,9 @@
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-window-close:hover,
@@ -482,7 +497,6 @@
 
 .chat-message {
     display: flex;
-
 }
 
 .chat-message--me {
@@ -549,7 +563,9 @@
     border: 1px solid var(--grey);
     background: #ffffff;
     font-size: var(--font-md);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-input-field[disabled] {
@@ -572,7 +588,9 @@
     border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-input-send:hover,
@@ -672,7 +690,9 @@
     border: 1px solid var(--grey);
     background: #ffffff;
     font-size: var(--font-sm);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-modal-input:focus {
@@ -690,7 +710,9 @@
     font-size: var(--font-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-modal-search-button:disabled {
@@ -732,7 +754,9 @@
     font-size: var(--font-sm);
     color: var(--dark);
     cursor: pointer;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast);
 }
 
 .chat-modal-result:hover,
@@ -778,7 +802,9 @@
     padding: 12px;
     resize: vertical;
     font-size: var(--font-sm);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
 }
 
 .chat-modal-textarea:focus {
@@ -800,7 +826,9 @@
     font-weight: 500;
     border: none;
     cursor: pointer;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .chat-modal-button--muted {
@@ -829,4 +857,3 @@
     opacity: 0.7;
     transform: none;
 }
-

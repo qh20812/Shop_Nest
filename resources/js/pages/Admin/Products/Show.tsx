@@ -1,9 +1,8 @@
-import React from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
 import ProductImageGallery from '../../../components/admin/products/ProductImageGallery';
 import ProductInfo from '../../../components/admin/products/ProductInfo';
 import ProductTabs from '../../../components/admin/products/ProductTabs';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 
 interface AttributeValue {
@@ -67,7 +66,7 @@ interface PageProps {
 export default function Show() {
     const { t, locale } = useTranslation();
     const { product } = usePage<PageProps>().props;
-    
+
     // Get current locale for prop passing
     const currentLocale = locale as 'en' | 'vi';
 
@@ -81,7 +80,7 @@ export default function Show() {
     return (
         <AppLayout>
             <Head title={`${getProductName()} - ${t('Product Details')}`} />
-            
+
             <div className="product-detail">
                 {/* Main Product Details Section */}
                 <div className="product-detail__main">
@@ -95,10 +94,7 @@ export default function Show() {
 
                 {/* Description and Reviews Section */}
                 <div className="product-detail__tabs-container">
-                    <ProductTabs 
-                        description={product.description} 
-                        reviews={product.reviews} 
-                    />
+                    <ProductTabs description={product.description} reviews={product.reviews} />
                 </div>
             </div>
         </AppLayout>

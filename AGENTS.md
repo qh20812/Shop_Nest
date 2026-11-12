@@ -23,7 +23,7 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 - CSRF is disabled for `login`, `product/*/buy-now`, `buy-now/checkout/*`, and `webhooks/*` in `bootstrap/app.php`. Webhooks verify signatures themselves; don't widen this list for normal forms.
 - Models use custom primary keys: `product_id`, `category_id`, `brand_id`, `variant_id`. Product/Category/Brand name fields are spatie-translatable JSON (`{en, vi}`); resolve/query them per locale instead of assuming a plain string.
 - Stock changes go through `App\Services\InventoryService` (`adjustStock`, `setStock`, ...) so `InventoryLog` and caches stay consistent. Don't update `stock_quantity` directly.
-- Payments: `App\Services\PaymentService::make($provider)` maps to `app/Payments/Gateways/*` (Stripe, PayPal, VNPay, MoMo); webhook/return handling is in `PaymentWebhookController`/`PaymentReturnController`.
+- Payments: `App\Services\PaymentService::make($provider)` supports only `stripe` and `cod`, implemented in `app/Payments/Gateways/`; webhook/return handling is in `PaymentWebhookController`/`PaymentReturnController`. PayPal/VNPay/MoMo were removed — don't reintroduce them without the matching migrations/UI.
 - Frontend i18n: keys are flat English strings in `lang/vi.json` and `lang/en.json`, shared as `translations` prop. Add new keys to both files; use `useTranslation()` from `@/lib/i18n`, not react-i18next.
 - Tailwind v4 is configured in `resources/css/app.css` (`@import`, `@theme`, CSS variables). `tailwind.config.ts` is not loaded; put new tokens there, not in the JS config. shadcn-style UI primitives are in `resources/js/components/ui`.
 
@@ -35,5 +35,5 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 
 ## Dependency notes
 
-- Treat `package-lock.json` as the JS source of truth: it pins Inertia 2.1, recharts 2.15, and lucide 0.475. If `npm run build`/`types` fail after dependency changes, re-run `npm ci` before debugging source.
-- `vendor/` currently reports Laravel 13/Inertia 3 while `composer.json` pins 12/2. `composer install` fails on local PHP 8.5 because locked packages cap at 8.4; CI uses PHP 8.4.
+- Runtime stack: Laravel 13.42, Inertia 3, React 19, Vite 8, Tailwind 4, recharts 3, lucide-react 1.x. `composer.lock` and `package-lock.json` are in sync; run `npm ci` after switching branches instead of assuming existing `node_modules`.
+- CI uses PHP 8.4 + Node 22. Local PHP 8.5 works but emits deprecation warnings during tests.

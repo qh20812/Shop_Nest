@@ -1,10 +1,10 @@
-import React from 'react';
+import '@/../css/Page.css';
 import { Head, useForm } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
+import React from 'react';
 import BrandForm from '../../../components/admin/brands/BrandForm';
 import Header from '../../../components/ui/Header';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
-import '@/../css/Page.css';
 
 interface BrandFormData {
     name: string;
@@ -31,25 +31,18 @@ export default function Create() {
 
     return (
         <AppLayout>
-            <Head title={t("Create Brand")} />
-            
+            <Head title={t('Create Brand')} />
+
             <Header
-                title={t("Create Brand")}
+                title={t('Create Brand')}
                 breadcrumbs={[
-                    { label: t("Dashboard"), href: "/admin/dashboard" },
-                    { label: t("Brands"), href: "/admin/brands" },
-                    { label: t("Create Brand"), href: "/admin/brands/create", active: true }
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Brands'), href: '/admin/brands' },
+                    { label: t('Create Brand'), href: '/admin/brands/create', active: true },
                 ]}
             />
 
-            <BrandForm
-                data={data}
-                setData={setData}
-                errors={errors}
-                processing={processing}
-                onSubmit={handleSubmit}
-                submitLabel="Create Brand"
-            />
+            <BrandForm data={data} setData={setData} errors={errors} processing={processing} onSubmit={handleSubmit} submitLabel="Create Brand" />
         </AppLayout>
     );
 }

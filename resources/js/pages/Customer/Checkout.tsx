@@ -115,9 +115,7 @@ interface PageProps {
 
 const PAYMENT_METHOD_FALLBACK: PaymentMethod[] = [
   { id: 'stripe', name: 'Stripe (Thẻ quốc tế)', description: 'Thanh toán bằng thẻ Visa/MasterCard/JCB' },
-  { id: 'paypal', name: 'PayPal', description: 'Thanh toán nhanh qua tài khoản PayPal' },
-  { id: 'vnpay', name: 'VNPay', description: 'Thanh toán qua ngân hàng nội địa và QR' },
-  { id: 'momo', name: 'MoMo', description: 'Thanh toán bằng ví điện tử MoMo' },
+  { id: 'cod', name: 'Thanh toán khi nhận hàng (COD)', description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
 ];
 
 // Helper function to get CSRF token

@@ -1,18 +1,19 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\PaymentWebhookController;
-use App\Http\Controllers\CheckoutController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\User\OrderController;
-use App\Http\Controllers\User\WishlistController;
-use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\AddressController;
-use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\ChangePasswordController;
 use App\Http\Controllers\User\NotificationController;
+use App\Http\Controllers\User\OrderController;
+use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\ReviewController;
+use App\Http\Controllers\User\WishlistController;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified.optional'])
@@ -86,10 +87,11 @@ Route::middleware(['auth', 'verified.optional'])
         // Lưu địa chỉ mới
         Route::post('/', [AddressController::class, 'store'])->name('store');
 
-        // API divisions (updated: bỏ cấp quận/huyện)
+        // API divisions (2-level: province → ward, 3-level still supported)
         Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
-        Route::get('/provinces/{countryId}', [AddressController::class, 'provinces'])->name('provinces');
-        Route::get('/wards/{provinceId}', [AddressController::class, 'wards'])->name('wards');
+        Route::get('/provinces/{countryId?}', [AddressController::class, 'provinces'])->name('provinces');
+        Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
+        Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
 
         // Xem chi tiết địa chỉ
         Route::get('/{address}', [AddressController::class, 'show'])
@@ -117,6 +119,14 @@ Route::middleware(['auth', 'verified.optional'])
             ->name('set-default');
     });
 
+// Public divisional lookups used by the checkout address form.
+Route::prefix('addresses')->as('addresses.')->group(function () {
+    Route::get('/countries', [AddressController::class, 'countries'])->name('countries');
+    Route::get('/provinces/{countryId?}', [AddressController::class, 'provinces'])->name('provinces');
+    Route::get('/districts/{provinceId}', [AddressController::class, 'districts'])->name('districts');
+    Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
+});
+
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
@@ -133,7 +143,7 @@ Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Checkout routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-    
+
     // Checkout API routes
     Route::get('/checkout/available-promotions', [CheckoutController::class, 'getAvailablePromotions'])->name('checkout.available-promotions');
 });
@@ -157,26 +167,17 @@ Route::middleware(['auth', 'verified.optional'])
         Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('mark-read');
     });
 
-    // Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
-    Route::middleware(['web'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class])->group(function () {
-        Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])->name('product.buy.now');
-        Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])->name('product.addToCart');
-        Route::get('/buy-now/checkout/{orderId}', [DetailController::class, 'showBuyNowCheckout'])->name('buy.now.checkout.show');
-        Route::post('/buy-now/checkout/{orderId}', [DetailController::class, 'processBuyNowCheckout'])->name('buy.now.checkout');
-    });
+// Buy Now and Add to Cart routes - exclude CSRF for AJAX requests, allow unauthenticated users
+Route::middleware(['web'])->withoutMiddleware([PreventRequestForgery::class])->group(function () {
+    Route::post('/product/{productId}/buy-now', [DetailController::class, 'buyNow'])->name('product.buy.now');
+    Route::post('/product/{productId}/add-to-cart', [DetailController::class, 'addToCart'])->name('product.addToCart');
+    Route::get('/buy-now/checkout/{orderId}', [DetailController::class, 'showBuyNowCheckout'])->name('buy.now.checkout.show');
+    Route::post('/buy-now/checkout/{orderId}', [DetailController::class, 'processBuyNowCheckout'])->name('buy.now.checkout');
+});
 
 Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
     ->middleware('throttle:60,1')
     ->name('webhooks.stripe');
-Route::post('/webhooks/paypal', [PaymentWebhookController::class, 'paypal'])
-    ->middleware('throttle:60,1')
-    ->name('webhooks.paypal');
-Route::post('/webhooks/vnpay', [PaymentWebhookController::class, 'vnpay'])
-    ->middleware('throttle:60,1')
-    ->name('webhooks.vnpay');
-Route::post('/webhooks/momo', [PaymentWebhookController::class, 'momo'])
-    ->middleware('throttle:60,1')
-    ->name('webhooks.momo');
 
 Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
     ->middleware('throttle:30,1');

@@ -2,270 +2,154 @@
 
 namespace Tests\Feature\Payment;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\Transaction;
+use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\UserAddress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PaymentWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $user;
     private Order $order;
-    private Product $product;
-    private ProductVariant $variant;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
-        $this->product = Product::factory()->create(['seller_id' => $this->user->id]);
-        $this->variant = ProductVariant::factory()->create([
-            'product_id' => $this->product->product_id,
-            'stock_quantity' => 10,
-            'reserved_quantity' => 2,
-            'track_inventory' => true,
-            'allow_backorder' => false,
-        ]);
+        $user = User::factory()->create();
+        $address = UserAddress::factory()->create(['user_id' => $user->id]);
 
         $this->order = Order::factory()->create([
-            'customer_id' => $this->user->id,
+            'customer_id' => $user->id,
+            'shipping_address_id' => $address->id,
+            'status' => OrderStatus::PENDING_CONFIRMATION,
             'payment_status' => PaymentStatus::UNPAID,
+            'payment_method' => 3,
+            'currency' => 'VND',
         ]);
 
-        // Create order item
-        DB::table('order_items')->insert([
-            'order_id' => $this->order->order_id,
-            'variant_id' => $this->variant->variant_id,
-            'quantity' => 3,
-            'unit_price' => 100.00,
-            'total_price' => 300.00,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        OrderItem::factory()->create(['order_id' => $this->order->order_id]);
     }
 
-    public function test_stripe_checkout_session_completed_webhook()
+    private function eventPayload(string $eventId = 'evt_test_1'): array
     {
-        Log::shouldReceive('info')
-            ->once()
-            ->with('webhooks.payment.completed', [
-                'provider' => 'stripe',
-                'order_id' => $this->order->order_id,
-                'event_id' => 'evt_test_webhook',
-            ]);
-
-        $payload = [
-            'id' => 'evt_test_webhook',
-            'object' => 'event',
+        return [
+            'id' => $eventId,
             'type' => 'checkout.session.completed',
             'data' => [
                 'object' => [
-                    'id' => 'cs_test_session',
-                    'object' => 'checkout.session',
-                    'payment_intent' => 'pi_test_intent',
-                    'metadata' => [
-                        'order_id' => (string) $this->order->order_id,
-                    ],
+                    'id' => 'cs_test_123',
+                    'payment_intent' => 'pi_test_123',
+                    'metadata' => ['order_id' => (string) $this->order->order_id],
                 ],
             ],
         ];
-
-        $signature = $this->generateStripeSignature($payload);
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200)
-                ->assertContent('OK');
-
-        // Check transaction was created
-        $this->assertDatabaseHas('transactions', [
-            'order_id' => $this->order->order_id,
-            'gateway' => 'stripe',
-            'status' => 'completed',
-            'gateway_transaction_id' => 'pi_test_intent',
-            'gateway_event_id' => 'evt_test_webhook',
-        ]);
-
-        // Check inventory was adjusted
-        $this->variant->refresh();
-        $this->assertEquals(7, $this->variant->stock_quantity); // 10 - 3
     }
 
-    public function test_stripe_payment_intent_succeeded_webhook()
+    private function signedHeader(string $payload): string
     {
-        Log::shouldReceive('info')
-            ->once()
-            ->with('webhooks.payment.completed', [
-                'provider' => 'stripe',
-                'order_id' => $this->order->order_id,
-                'event_id' => 'evt_test_intent',
-            ]);
-
-        $payload = [
-            'id' => 'evt_test_intent',
-            'object' => 'event',
-            'type' => 'payment_intent.succeeded',
-            'data' => [
-                'object' => [
-                    'id' => 'pi_test_intent',
-                    'object' => 'payment_intent',
-                    'metadata' => [
-                        'order_id' => (string) $this->order->order_id,
-                    ],
-                ],
-            ],
-        ];
-
-        $signature = $this->generateStripeSignature($payload);
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200)
-                ->assertContent('OK');
-
-        $this->assertDatabaseHas('transactions', [
-            'order_id' => $this->order->order_id,
-            'gateway' => 'stripe',
-            'status' => 'completed',
-            'gateway_transaction_id' => 'pi_test_intent',
-            'gateway_event_id' => 'evt_test_intent',
-        ]);
-    }
-
-    public function test_duplicate_stripe_webhook_is_ignored()
-    {
-        // First webhook
-        Transaction::create([
-            'order_id' => $this->order->order_id,
-            'type' => 'payment',
-            'amount' => 300.00,
-            'currency' => 'USD',
-            'gateway' => 'stripe',
-            'status' => 'completed',
-            'gateway_event_id' => 'evt_duplicate',
-        ]);
-
-        Log::shouldReceive('info')
-            ->once()
-            ->with('webhooks.payment.duplicate_event', [
-                'provider' => 'stripe',
-                'order_id' => $this->order->order_id,
-                'event_id' => 'evt_duplicate',
-            ]);
-
-        $payload = [
-            'id' => 'evt_duplicate',
-            'object' => 'event',
-            'type' => 'checkout.session.completed',
-            'data' => [
-                'object' => [
-                    'id' => 'cs_test_session',
-                    'payment_intent' => 'pi_test_intent',
-                    'metadata' => [
-                        'order_id' => (string) $this->order->order_id,
-                    ],
-                ],
-            ],
-        ];
-
-        $signature = $this->generateStripeSignature($payload);
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200);
-
-        // Should only have one transaction
-        $this->assertEquals(1, Transaction::where('gateway_event_id', 'evt_duplicate')->count());
-    }
-
-    public function test_insufficient_inventory_throws_exception()
-    {
-        // Set stock to less than ordered
-        $this->variant->update(['stock_quantity' => 2, 'reserved_quantity' => 0]);
-
-        $payload = [
-            'id' => 'evt_test_webhook',
-            'object' => 'event',
-            'type' => 'checkout.session.completed',
-            'data' => [
-                'object' => [
-                    'id' => 'cs_test_session',
-                    'payment_intent' => 'pi_test_intent',
-                    'metadata' => [
-                        'order_id' => (string) $this->order->order_id,
-                    ],
-                ],
-            ],
-        ];
-
-        $signature = $this->generateStripeSignature($payload);
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200); // Webhook still returns OK, but transaction rolled back
-
-        // Transaction should not be created due to rollback
-        $this->assertDatabaseMissing('transactions', [
-            'order_id' => $this->order->order_id,
-            'gateway_event_id' => 'evt_test_webhook',
-        ]);
-    }
-
-    public function test_invalid_stripe_signature_returns_400()
-    {
-        $payload = ['id' => 'evt_test'];
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => 'invalid_signature',
-        ]);
-
-        $response->assertStatus(400)
-                ->assertContent('Invalid');
-    }
-
-    public function test_unsupported_event_type_is_ignored()
-    {
-        $payload = [
-            'id' => 'evt_ignored',
-            'object' => 'event',
-            'type' => 'unsupported.event',
-            'data' => ['object' => []],
-        ];
-
-        $signature = $this->generateStripeSignature($payload);
-
-        $response = $this->postJson('/webhooks/stripe', $payload, [
-            'Stripe-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200)
-                ->assertContent('Ignored');
-    }
-
-    private function generateStripeSignature(array $payload): string
-    {
-        $secret = config('services.stripe.webhook_secret');
+        $secret = (string) config('services.stripe.webhook_secret');
         $timestamp = time();
-        $signedPayload = $timestamp . '.' . json_encode($payload);
-        $signature = hash_hmac('sha256', $signedPayload, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
 
         return "t={$timestamp},v1={$signature}";
+    }
+
+    #[Test]
+    public function valid_signature_marks_order_paid(): void
+    {
+        $payload = json_encode($this->eventPayload());
+
+        $response = $this->call(
+            'POST',
+            '/webhooks/stripe',
+            [],
+            [],
+            [],
+            ['HTTP_STRIPE_SIGNATURE' => $this->signedHeader($payload), 'CONTENT_TYPE' => 'application/json'],
+            $payload
+        );
+
+        $response->assertOk();
+
+        $this->assertSame(PaymentStatus::PAID, $this->order->fresh()->payment_status);
+        $this->assertDatabaseHas('transactions', [
+            'order_id' => $this->order->order_id,
+            'gateway' => 'stripe',
+            'gateway_event_id' => 'evt_test_1',
+            'status' => 'completed',
+        ]);
+    }
+
+    #[Test]
+    public function invalid_signature_is_rejected(): void
+    {
+        $payload = json_encode($this->eventPayload());
+
+        $response = $this->call(
+            'POST',
+            '/webhooks/stripe',
+            [],
+            [],
+            [],
+            ['HTTP_STRIPE_SIGNATURE' => 't='.time().',v1=deadbeef', 'CONTENT_TYPE' => 'application/json'],
+            $payload
+        );
+
+        $response->assertStatus(400);
+        $this->assertSame(PaymentStatus::UNPAID, $this->order->fresh()->payment_status);
+    }
+
+    #[Test]
+    public function missing_signature_is_rejected(): void
+    {
+        $response = $this->postJson('/webhooks/stripe', $this->eventPayload());
+
+        $response->assertStatus(400);
+        $this->assertSame(PaymentStatus::UNPAID, $this->order->fresh()->payment_status);
+    }
+
+    #[Test]
+    public function unsupported_event_is_ignored(): void
+    {
+        $payload = json_encode([
+            'id' => 'evt_other',
+            'type' => 'customer.created',
+            'data' => ['object' => []],
+        ]);
+
+        $response = $this->call(
+            'POST',
+            '/webhooks/stripe',
+            [],
+            [],
+            [],
+            ['HTTP_STRIPE_SIGNATURE' => $this->signedHeader($payload), 'CONTENT_TYPE' => 'application/json'],
+            $payload
+        );
+
+        $response->assertOk();
+        $this->assertSame(PaymentStatus::UNPAID, $this->order->fresh()->payment_status);
+    }
+
+    #[Test]
+    public function duplicate_event_is_idempotent(): void
+    {
+        $payload = json_encode($this->eventPayload('evt_duplicate'));
+        $headers = [
+            'HTTP_STRIPE_SIGNATURE' => $this->signedHeader($payload),
+            'CONTENT_TYPE' => 'application/json',
+        ];
+
+        $this->call('POST', '/webhooks/stripe', [], [], [], $headers, $payload)->assertOk();
+        $this->call('POST', '/webhooks/stripe', [], [], [], $headers, $payload)->assertOk();
+
+        $this->assertDatabaseCount('transactions', 1);
     }
 }

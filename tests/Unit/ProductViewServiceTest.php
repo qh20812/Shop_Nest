@@ -16,22 +16,22 @@ class ProductViewServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ProductViewService();
+        $this->service = new ProductViewService;
     }
 
     public function test_prepare_for_view_returns_correct_structure()
     {
         $product = Product::factory()->create();
-        $variant = $product->variants()->create(['sku' => 'TEST', 'price' => 100, 'stock_quantity' => 50]);
+        $product->variants()->create(['sku' => 'TEST', 'price' => 100, 'stock_quantity' => 50]);
 
         $result = $this->service->prepareForView($product);
 
-        $this->assertArrayHasKey('price', $result);
-        $this->assertArrayHasKey('stock', $result);
-        $this->assertArrayHasKey('variant_id', $result);
-        $this->assertEquals(100, $result['price']);
-        $this->assertEquals(50, $result['stock']);
-        $this->assertEquals($variant->variant_id, $result['variant_id']);
+        $this->assertArrayHasKey('variants', $result);
+        $this->assertArrayHasKey('images', $result);
+        $this->assertArrayHasKey('name_en', $result);
+        $this->assertArrayHasKey('description_en', $result);
+        $this->assertEquals('TEST', $result['variants'][0]['sku']);
+        $this->assertEquals(50, $result['variants'][0]['stock_quantity']);
     }
 
     public function test_prepare_for_view_loads_relations()

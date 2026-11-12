@@ -24,14 +24,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     switch (key) {
       case 'stripe':
         return 'fab fa-cc-stripe';
-      case 'paypal':
-        return 'fab fa-paypal';
       case 'cod':
         return 'fas fa-money-bill-wave';
-      case 'vnpay':
-        return 'fas fa-qrcode';
-      case 'momo':
-        return 'fas fa-wallet';
       default:
         return key.includes('fa-') ? key : 'fas fa-credit-card';
     }

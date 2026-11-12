@@ -2,36 +2,25 @@
 
 namespace App\Services;
 
-use App\Enums\OrderStatus;
 use App\Exceptions\ChatbotApiException;
-use App\Models\AnalyticsReport;
-use App\Models\CartItem;
 use App\Models\ChatMessage;
 use App\Models\ChatParticipant;
 use App\Models\ChatRoom;
-use App\Models\InventoryLog;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Models\User;
-use Illuminate\Support\Arr;
+use App\Services\ContextGatherers\AdminContextGatherer;
+use App\Services\ContextGatherers\CustomerContextGatherer;
+use App\Services\ContextGatherers\DefaultContextGatherer;
+use App\Services\ContextGatherers\SellerContextGatherer;
+use App\Services\ContextGatherers\ShipperContextGatherer;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use App\Services\ContextGatherers\AdminContextGatherer;
-use App\Services\ContextGatherers\ContextGathererInterface;
-use App\Services\ContextGatherers\CustomerContextGatherer;
-use App\Services\ContextGatherers\DefaultContextGatherer;
-use App\Services\ContextGatherers\SellerContextGatherer;
-use App\Services\ContextGatherers\ShipperContextGatherer;
+use Throwable;
 
 class HybridChatbotService
 {
@@ -42,11 +31,11 @@ class HybridChatbotService
     public function __construct()
     {
         $this->contextGatherers = [
-            'admin' => new AdminContextGatherer(),
-            'seller' => new SellerContextGatherer(),
-            'shipper' => new ShipperContextGatherer(),
-            'customer' => new CustomerContextGatherer(),
-            'default' => new DefaultContextGatherer(),
+            'admin' => new AdminContextGatherer,
+            'seller' => new SellerContextGatherer,
+            'shipper' => new ShipperContextGatherer,
+            'customer' => new CustomerContextGatherer,
+            'default' => new DefaultContextGatherer,
         ];
     }
 
@@ -92,14 +81,14 @@ class HybridChatbotService
         ]);
 
         if ($validator->fails()) {
-            throw new ChatbotApiException('Tin nhắn không hợp lệ: ' . $validator->errors()->first());
+            throw new ChatbotApiException('Tin nhắn không hợp lệ: '.$validator->errors()->first());
         }
 
-        if (RateLimiter::tooManyAttempts('chatbot:' . $user->getKey(), 10)) {
+        if (RateLimiter::tooManyAttempts('chatbot:'.$user->getKey(), 10)) {
             throw new ChatbotApiException('Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau.');
         }
 
-        RateLimiter::hit('chatbot:' . $user->getKey(), 60); // 10 per minute
+        RateLimiter::hit('chatbot:'.$user->getKey(), 60); // 10 per minute
 
         if ($message === '') {
             throw new ChatbotApiException('Tin nhắn không hợp lệ.');
@@ -160,8 +149,6 @@ class HybridChatbotService
             return $gatherer->gather($user);
         });
     }
-
-
 
     private function buildMessages(string $role, User $user, string $message, array $context): array
     {
@@ -258,11 +245,11 @@ TEXT;
         $baseUrl = rtrim(Config::get("services.{$provider}.base_url", ''), '/');
         $verifySsl = Config::get("services.{$provider}.verify_ssl", true);
 
-        if (!$apiKey || !$baseUrl) {
-            throw new ChatbotApiException(strtoupper($provider) . ' API key hoặc endpoint chưa được cấu hình.');
+        if (! $apiKey || ! $baseUrl) {
+            throw new ChatbotApiException(strtoupper($provider).' API key hoặc endpoint chưa được cấu hình.');
         }
 
-        $endpoint = $baseUrl . '/chat/completions';
+        $endpoint = $baseUrl.'/chat/completions';
         $payload = [
             'model' => $model,
             'messages' => $messages,
@@ -398,19 +385,19 @@ TEXT;
         $steps = $template['steps'] ?? [];
         $parts = [$template['intro']];
 
-        if (!empty($steps)) {
-            $parts[] = '- ' . implode(PHP_EOL . '- ', $steps);
+        if (! empty($steps)) {
+            $parts[] = '- '.implode(PHP_EOL.'- ', $steps);
         }
 
         $closing = 'Vui lòng thử lại sau vài phút. Cảm ơn bạn đã kiên nhẫn.';
 
         if ($question !== '') {
-            $closing .= PHP_EOL . 'Nội dung bạn vừa hỏi: "' . $question . '"';
+            $closing .= PHP_EOL.'Nội dung bạn vừa hỏi: "'.$question.'"';
         }
 
         $parts[] = $closing;
 
-        return implode(PHP_EOL . PHP_EOL, $parts);
+        return implode(PHP_EOL.PHP_EOL, $parts);
     }
 
     private function storeConversation(User $user, string $role, string $message, array $context, array $result): ChatMessage

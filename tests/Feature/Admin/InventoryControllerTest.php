@@ -15,9 +15,13 @@ class InventoryControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $seller;
+
     private User $customer;
+
     private Product $product;
+
     private ProductVariant $variant;
 
     protected function setUp(): void
@@ -56,11 +60,11 @@ class InventoryControllerTest extends TestCase
         $this->actingAs($this->customer);
 
         $this->get(route('admin.inventory.index'))
-            ->assertRedirect(route('dashboard'))
+            ->assertRedirect(route('home'))
             ->assertSessionHas('error');
 
         $this->post(route('admin.inventory.store'), ['variant_id' => $this->variant->variant_id, 'quantity' => 1, 'reason' => 'test'])
-            ->assertRedirect(route('dashboard'))
+            ->assertRedirect(route('home'))
             ->assertSessionHas('error');
     }
 

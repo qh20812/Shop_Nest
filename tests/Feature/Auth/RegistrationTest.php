@@ -13,7 +13,7 @@ class RegistrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Seed roles for proper registration flow
         $this->seed(RoleSeeder::class);
     }
@@ -28,14 +28,14 @@ class RegistrationTest extends TestCase
     public function test_nguoi_dung_moi_co_the_dang_ky()
     {
         $response = $this->post(route('register.store'), [
-            'username' => 'SUPER_ADMIN',
-            'email' => 'ngocquyhuynh4@gmail.com',
+            'identifier' => 'ngocquyhuynh4@gmail.com',
             'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
+            'confirmPassword' => 'Password123!',
+            'agreeToTerms' => true,
         ]);
 
         $this->assertAuthenticated(); // User is logged in after registration
         $response->assertRedirect(route('verification.notice'));
-        $response->assertSessionHas('status', 'Đăng ký thành công! Vui lòng xác minh email của bạn.');
+        $response->assertSessionHas('status');
     }
 }

@@ -35,15 +35,15 @@ class ProfileController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-    $data['gender'] = ($data['gender'] ?? null) !== '' ? $data['gender'] : null;
-    $data['date_of_birth'] = ($data['date_of_birth'] ?? null) !== '' ? $data['date_of_birth'] : null;
-    $data['phone_number'] = ($data['phone_number'] ?? null) !== '' ? $data['phone_number'] : null;
+        $data['gender'] = filled($data['gender'] ?? null) ? $data['gender'] : null;
+        $data['date_of_birth'] = filled($data['date_of_birth'] ?? null) ? $data['date_of_birth'] : null;
+        $data['phone_number'] = filled($data['phone_number'] ?? null) ? $data['phone_number'] : null;
 
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
 
-            if ($user->avatar && !filter_var($user->avatar, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($user->avatar)) {
+            if ($user->avatar && ! filter_var($user->avatar, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($user->avatar)) {
                 Storage::disk('public')->delete($user->avatar);
             }
         }

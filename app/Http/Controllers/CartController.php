@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\CartException;
-use App\Http\Controllers\Controller;
 use App\Http\Requests\AddToCartRequest;
 use App\Http\Requests\ApplyPromotionRequest;
 use App\Http\Requests\UpdateCartItemRequest;
@@ -12,6 +11,7 @@ use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\CartService;
 use App\Services\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -20,17 +20,12 @@ use Inertia\Response;
 
 class CartController extends Controller
 {
-    public function __construct(private CartService $cartService)
-    {
-    }
+    public function __construct(private CartService $cartService) {}
 
     public function index(): Response
     {
         /** @var User|null $user */
         $user = Auth::user();
-        if (!$user instanceof User) {
-            abort(403);
-        }
         $cartItems = $this->cartService->getCartItems($user);
         $promotion = $this->cartService->getActivePromotion($user);
         $totals = $this->cartService->calculateTotals($cartItems, $promotion);
@@ -150,7 +145,7 @@ class CartController extends Controller
     /**
      * Create order from cart and redirect to payment gateway.
      */
-    public function checkout(): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function checkout(): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
         $cartItems = $this->cartService->getCartItems($user);
@@ -158,7 +153,7 @@ class CartController extends Controller
         if ($cartItems->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Your cart is empty.'
+                'message' => 'Your cart is empty.',
             ], 400);
         }
 
@@ -181,9 +176,9 @@ class CartController extends Controller
 
             // Get payment provider (default to Stripe)
             $provider = request()->input('provider', 'stripe');
-            
+
             try {
-                $gateway = \App\Services\PaymentService::make($provider);
+                $gateway = PaymentService::make($provider);
             } catch (\InvalidArgumentException $e) {
                 Log::error('cart.checkout.invalid_provider', [
                     'user_id' => $user->id,
@@ -191,10 +186,10 @@ class CartController extends Controller
                     'provider' => $provider,
                     'message' => $e->getMessage(),
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid payment provider selected.'
+                    'message' => 'Invalid payment provider selected.',
                 ], 400);
             }
 
@@ -222,10 +217,10 @@ class CartController extends Controller
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $exception->getMessage(),
             ], 400);
         } catch (\Throwable $exception) {
             Log::error('cart.checkout_failed', [
@@ -235,10 +230,10 @@ class CartController extends Controller
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot process payment at this time. Please try again later.'
+                'message' => 'Cannot process payment at this time. Please try again later.',
             ], 500);
         }
     }

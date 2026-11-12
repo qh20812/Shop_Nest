@@ -22,7 +22,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post(route('login.store'), [
-            'email' => $user->email,
+            'identifier' => $user->email,
             'password' => 'password',
         ]);
 
@@ -35,7 +35,7 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post(route('login.store'), [
-            'email' => $user->email,
+            'identifier' => $user->email,
             'password' => 'wrong-password',
         ]);
 
@@ -58,22 +58,22 @@ class AuthenticationTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $this->post(route('login.store'), [
-                'email' => $user->email,
+                'identifier' => $user->email,
                 'password' => 'wrong-password',
             ])->assertStatus(302)->assertSessionHasErrors([
-                'email' => 'Thông tin đăng nhập không khớp với hồ sơ của chúng tôi.',
+                'identifier' => __('auth.failed'),
             ]);
         }
 
         $response = $this->post(route('login.store'), [
-            'email' => $user->email,
+            'identifier' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('identifier');
 
         $errors = session('errors');
 
-        $this->assertStringContainsString('Quá nhiều lần đăng nhập', $errors->first('email'));
+        $this->assertStringContainsString('Quá nhiều lần đăng nhập', $errors->first('identifier'));
     }
 }

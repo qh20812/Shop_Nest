@@ -27,6 +27,7 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 - Payments: `App\Services\PaymentService::make($provider)` supports only `stripe` and `cod`, implemented in `app/Payments/Gateways/`; webhook/return handling is in `PaymentWebhookController`/`PaymentReturnController`. PayPal/VNPay/MoMo were removed — don't reintroduce them without the matching migrations/UI.
 - Frontend i18n: keys are flat English strings in `lang/vi.json` and `lang/en.json`, shared as `translations` prop. Add new keys to both files; use `useTranslation()` from `@/lib/i18n`, not react-i18next.
 - Tailwind v4 is configured in `resources/css/app.css` (`@import`, `@theme`, CSS variables). `tailwind.config.ts` is not loaded; put new tokens there, not in the JS config. shadcn-style UI primitives are in `resources/js/components/ui`.
+- The redesign direction and tokens live in `DESIGN.md`; per-screen Google Stitch prompts live in `PROMPT.md`.
 
 ## Data & tests
 

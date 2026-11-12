@@ -52,6 +52,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'product/*/buy-now',
             'buy-now/checkout/*',
             'login',
+            // Payment gateways call these server-to-server; they verify signatures internally
+            'webhooks/*',
         ]);
 
         $middleware->web(append: [

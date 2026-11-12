@@ -9,10 +9,10 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({ className = '', vari
     if (variant === 'product') {
         return (
             <div className={`animate-pulse ${className}`}>
-                <div className="aspect-square bg-card rounded-lg" />
+                <div className="aspect-square rounded-lg bg-card" />
                 <div className="mt-4 space-y-3">
-                    <div className="h-4 bg-card rounded" />
-                    <div className="h-4 w-1/2 bg-card rounded" />
+                    <div className="h-4 rounded bg-card" />
+                    <div className="h-4 w-1/2 rounded bg-card" />
                 </div>
             </div>
         );
@@ -20,25 +20,23 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({ className = '', vari
 
     if (variant === 'flash-sale') {
         return (
-            <div className="min-w-[260px] w-[260px] animate-pulse">
-                <div className="w-full aspect-square bg-muted rounded-t-lg" />
-                <div className="p-4 space-y-3">
-                    <div className="h-4 bg-muted rounded" />
-                    <div className="h-4 w-1/2 bg-muted rounded" />
+            <div className="w-[260px] min-w-[260px] animate-pulse">
+                <div className="aspect-square w-full rounded-t-lg bg-muted" />
+                <div className="space-y-3 p-4">
+                    <div className="h-4 rounded bg-muted" />
+                    <div className="h-4 w-1/2 rounded bg-muted" />
                 </div>
             </div>
         );
     }
 
     if (variant === 'category') {
-        return (
-            <div className={`h-32 bg-card rounded-lg animate-pulse ${className}`} />
-        );
+        return <div className={`h-32 animate-pulse rounded-lg bg-card ${className}`} />;
     }
 
     return (
         <div className={`animate-pulse ${className}`}>
-            <div className="h-full w-full bg-card rounded" />
+            <div className="h-full w-full rounded bg-card" />
         </div>
     );
 };

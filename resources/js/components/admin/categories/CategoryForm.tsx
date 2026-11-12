@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import PrimaryInput from '../../ui/PrimaryInput';
-import ActionButton from '../../ui/ActionButton';
-import RichTextEditor from '../../ui/RichTextEditor';
 import { useTranslation } from '../../../lib/i18n';
+import ActionButton from '../../ui/ActionButton';
+import PrimaryInput from '../../ui/PrimaryInput';
+import RichTextEditor from '../../ui/RichTextEditor';
 
 interface Category {
     category_id: number;
@@ -37,7 +37,7 @@ export default function CategoryForm({
     processing,
     parentCategories,
     onSubmit,
-    submitLabel = 'Save Category'
+    submitLabel = 'Save Category',
 }: CategoryFormProps) {
     const { t } = useTranslation();
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -126,8 +126,8 @@ export default function CategoryForm({
                                     { value: '', label: t('No Parent Category') },
                                     ...parentCategories.map((category) => ({
                                         value: category.category_id,
-                                        label: category.name.en
-                                    }))
+                                        label: category.name.en,
+                                    })),
                                 ]}
                             />
                         </div>
@@ -144,7 +144,7 @@ export default function CategoryForm({
                                 required
                                 options={[
                                     { value: '1', label: t('Active') },
-                                    { value: '0', label: t('Inactive') }
+                                    { value: '0', label: t('Inactive') },
                                 ]}
                             />
                         </div>
@@ -163,55 +163,53 @@ export default function CategoryForm({
                             />
                             {errors.image && <div className="input-error">{errors.image}</div>}
                         </div>
-                        
+
                         {/* Image Preview */}
                         <div style={{ marginTop: '10px' }}>
                             {imagePreview ? (
                                 <div>
-                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
-                                        {t('New Image Preview')}:
-                                    </p>
-                                    <img 
-                                        src={imagePreview} 
-                                        alt="Preview" 
-                                        style={{ 
-                                            width: '200px', 
-                                            height: '150px', 
-                                            objectFit: 'cover', 
+                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>{t('New Image Preview')}:</p>
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        style={{
+                                            width: '200px',
+                                            height: '150px',
+                                            objectFit: 'cover',
                                             borderRadius: '8px',
-                                            border: '1px solid #ddd'
-                                        }} 
+                                            border: '1px solid #ddd',
+                                        }}
                                     />
                                 </div>
                             ) : data.image_url ? (
                                 <div>
-                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>
-                                        {t('Current Image')}:
-                                    </p>
-                                    <img 
-                                        src={data.image_url} 
-                                        alt="Current category" 
-                                        style={{ 
-                                            width: '200px', 
-                                            height: '150px', 
-                                            objectFit: 'cover', 
+                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>{t('Current Image')}:</p>
+                                    <img
+                                        src={data.image_url}
+                                        alt="Current category"
+                                        style={{
+                                            width: '200px',
+                                            height: '150px',
+                                            objectFit: 'cover',
                                             borderRadius: '8px',
-                                            border: '1px solid #ddd'
-                                        }} 
+                                            border: '1px solid #ddd',
+                                        }}
                                     />
                                 </div>
                             ) : (
-                                <div style={{ 
-                                    width: '200px', 
-                                    height: '150px', 
-                                    backgroundColor: '#f5f5f5', 
-                                    border: '2px dashed #ddd',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#999'
-                                }}>
+                                <div
+                                    style={{
+                                        width: '200px',
+                                        height: '150px',
+                                        backgroundColor: '#f5f5f5',
+                                        border: '2px dashed #ddd',
+                                        borderRadius: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: '#999',
+                                    }}
+                                >
                                     {t('No image selected')}
                                 </div>
                             )}
@@ -220,19 +218,10 @@ export default function CategoryForm({
 
                     {/* Action Buttons */}
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <ActionButton
-                            type="button"
-                            variant="secondary"
-                            onClick={handleCancel}
-                            disabled={processing}
-                        >
+                        <ActionButton type="button" variant="secondary" onClick={handleCancel} disabled={processing}>
                             {t('Cancel')}
                         </ActionButton>
-                        <ActionButton
-                            type="submit"
-                            variant="primary"
-                            disabled={processing}
-                        >
+                        <ActionButton type="submit" variant="primary" disabled={processing}>
                             {processing ? t('Saving...') : t(submitLabel)}
                         </ActionButton>
                     </div>

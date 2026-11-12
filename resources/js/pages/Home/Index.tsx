@@ -1,11 +1,24 @@
-import { ShoppingBag, ChevronLeft, ChevronRight, MessageCircle, X, Minus, Heart, FolderOpen, Timer, Lightbulb, TrendingUp, Image as ImageIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 import { ToastProvider, useToast } from '@/Contexts/ToastContext';
 import { SkeletonPage } from '@/components/home/skeletons';
-import { usePageLoading } from '@/hooks/usePageLoading';
-import Navbar from '@/components/home/ui/Navbar';
 import Footer from '@/components/home/ui/Footer';
-import { usePage, Link } from '@inertiajs/react';
+import Navbar from '@/components/home/ui/Navbar';
+import { usePageLoading } from '@/hooks/usePageLoading';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    FolderOpen,
+    Heart,
+    Image as ImageIcon,
+    Lightbulb,
+    MessageCircle,
+    Minus,
+    ShoppingBag,
+    Timer,
+    TrendingUp,
+    X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Category {
     id: number;
@@ -60,17 +73,14 @@ interface PageProps extends Record<string, unknown> {
 function HomeContent() {
     const isLoading = usePageLoading({ delay: 300, minLoadingTime: 1500 });
     const { info: showInfo, success: showSuccess } = useToast();
-    const {
-        categories = [],
-        flashSale = null,
-        suggestedProducts = [],
-        bestSellers = [],
-        banners = [],
-    } = usePage<PageProps>().props;
+    const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [] } = usePage<PageProps>().props;
 
-    const heroImages = banners.length > 0 ? banners.map((b) => b.image) : [
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCJnd0a7KUIVBOrCCbTD_XI8zjrdFzSTEoaq6b4K3q-WNNZ7Q2Bkcw0YRwFrtyBeGOTDM5kMZeV_Dsx87yglrclO67vmbXOLiWdKSRNsRDazp8Z9RBcwMv21ccDiy7Ejn2xRN_TGm8jLkPPVhgUwBUR7T-IYai9T9Zyr0elbxlqZXV_Nd24e1s71UbqVJ4c0tevgmsrAc6DsnRS8Fxgk8XcjjO2uEtvshEWzXm5XhzWDHs0QAirR_c2Q2e-Q-QD-evUeWdCr7mUVtc',
-    ];
+    const heroImages =
+        banners.length > 0
+            ? banners.map((b) => b.image)
+            : [
+                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCJnd0a7KUIVBOrCCbTD_XI8zjrdFzSTEoaq6b4K3q-WNNZ7Q2Bkcw0YRwFrtyBeGOTDM5kMZeV_Dsx87yglrclO67vmbXOLiWdKSRNsRDazp8Z9RBcwMv21ccDiy7Ejn2xRN_TGm8jLkPPVhgUwBUR7T-IYai9T9Zyr0elbxlqZXV_Nd24e1s71UbqVJ4c0tevgmsrAc6DsnRS8Fxgk8XcjjO2uEtvshEWzXm5XhzWDHs0QAirR_c2Q2e-Q-QD-evUeWdCr7mUVtc',
+              ];
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
@@ -107,21 +117,21 @@ function HomeContent() {
             stars.push(
                 <span key={`star-${i}`} className="text-warning">
                     ★
-                </span>
+                </span>,
             );
         }
         if (hasHalfStar) {
             stars.push(
                 <span key="half-star" className="text-warning">
                     ★
-                </span>
+                </span>,
             );
         }
         for (let i = stars.length; i < 5; i++) {
             stars.push(
                 <span key={`empty-${i}`} className="text-muted-foreground">
                     ★
-                </span>
+                </span>,
             );
         }
         return stars;
@@ -195,22 +205,18 @@ function HomeContent() {
                                 {heroImages.map((src, idx) => (
                                     <div
                                         key={src}
-                                        className={`absolute inset-0 bg-center bg-cover transition-opacity duration-700 ${
-                                            idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                                        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
+                                            idx === activeSlide ? 'z-10 opacity-100' : 'z-0 opacity-0'
                                         }`}
                                         style={{ backgroundImage: `url('${src}')` }}
                                     />
                                 ))}
-                                <div className="absolute inset-0 flex items-center bg-black/40 z-20">
+                                <div className="absolute inset-0 z-20 flex items-center bg-black/40">
                                     <div className="w-full max-w-2xl px-8 text-white md:px-16">
-                                        <h2 className="mb-4 text-4xl font-black leading-tight md:text-5xl">
-                                            Siêu Sale Khai Trương - Giảm tới 50%
-                                        </h2>
-                                        <p className="mb-8 text-lg opacity-90">
-                                            Khám phá các ưu đãi tuyệt vời trong ngày ra mắt của chúng tôi.
-                                        </p>
+                                        <h2 className="mb-4 text-4xl leading-tight font-black md:text-5xl">Siêu Sale Khai Trương - Giảm tới 50%</h2>
+                                        <p className="mb-8 text-lg opacity-90">Khám phá các ưu đãi tuyệt vời trong ngày ra mắt của chúng tôi.</p>
                                         <button
-                                            className="flex h-12 min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-base font-bold leading-normal tracking-[0.015em] text-white transition-colors hover:bg-primary/90"
+                                            className="flex h-12 max-w-[480px] min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-base leading-normal font-bold tracking-[0.015em] text-white transition-colors hover:bg-primary/90"
                                             onClick={() => showSuccess('Đã thêm vào giỏ hàng!')}
                                         >
                                             <span className="truncate">Mua sắm ngay</span>
@@ -220,14 +226,14 @@ function HomeContent() {
                                 <button
                                     aria-label="Previous slide"
                                     onClick={() => setActiveSlide((s) => (s - 1 + heroImages.length) % heroImages.length)}
-                                    className="absolute left-3 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition-colors hover:bg-black/50"
+                                    className="absolute top-1/2 left-3 z-30 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition-colors hover:bg-black/50"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
                                 <button
                                     aria-label="Next slide"
                                     onClick={() => setActiveSlide((s) => (s + 1) % heroImages.length)}
-                                    className="absolute right-3 top-1/2 z-30 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition-colors hover:bg-black/50"
+                                    className="absolute top-1/2 right-3 z-30 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white transition-colors hover:bg-black/50"
                                 >
                                     <ChevronRight className="h-5 w-5" />
                                 </button>
@@ -245,18 +251,14 @@ function HomeContent() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="relative w-full h-[500px] rounded-xl overflow-hidden bg-card flex flex-col items-center justify-center text-center p-8">
-                                <div className="text-primary mb-4">
+                            <div className="relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-xl bg-card p-8 text-center">
+                                <div className="mb-4 text-primary">
                                     <ImageIcon className="h-16 w-16 opacity-70" />
                                 </div>
-                                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                    Chưa có banner nào để hiển thị
-                                </h2>
-                                <p className="text-lg text-muted-foreground mb-8 max-w-xl">
-                                    Banner quảng cáo sẽ xuất hiện ở đây. Hãy quay lại sau!
-                                </p>
+                                <h2 className="mb-2 text-2xl font-bold text-foreground md:text-3xl">Chưa có banner nào để hiển thị</h2>
+                                <p className="mb-8 max-w-xl text-lg text-muted-foreground">Banner quảng cáo sẽ xuất hiện ở đây. Hãy quay lại sau!</p>
                                 <button
-                                    className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-primary text-base font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors"
+                                    className="flex h-12 max-w-[480px] min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-base leading-normal font-bold tracking-[0.015em] text-primary transition-colors hover:bg-primary/90"
                                     onClick={() => showInfo('Khám phá cửa hàng')}
                                 >
                                     <span className="truncate">Khám phá Cửa hàng</span>
@@ -267,24 +269,24 @@ function HomeContent() {
 
                     {/* Categories Section */}
                     <section className="mb-12 md:mb-16">
-                        <h2 className="pb-0 text-[22px] font-bold leading-tight tracking-[-0.015em] text-foreground md:text-2xl mb-5">
+                        <h2 className="mb-5 pb-0 text-[22px] leading-tight font-bold tracking-[-0.015em] text-foreground md:text-2xl">
                             Mua sắm theo Danh mục
                         </h2>
                         {categories.length > 0 ? (
                             <>
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className="flex gap-2 ml-auto">
+                                <div className="mb-5 flex items-center justify-between">
+                                    <div className="ml-auto flex gap-2">
                                         <button
                                             aria-label="Previous categories"
                                             onClick={() => scrollHorizontal(categoriesRef, 'left', 160, 16)}
-                                            className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                         >
                                             <ChevronLeft className="h-5 w-5" />
                                         </button>
                                         <button
                                             aria-label="Next categories"
                                             onClick={() => scrollHorizontal(categoriesRef, 'right', 160, 16)}
-                                            className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                         >
                                             <ChevronRight className="h-5 w-5" />
                                         </button>
@@ -293,31 +295,27 @@ function HomeContent() {
                                 <div className="-mx-2 px-2">
                                     <div
                                         ref={categoriesRef}
-                                        className="flex items-stretch gap-4 pb-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+                                        className="scrollbar-hide flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-4"
                                     >
                                         {categories.map((category) => (
                                             <div
                                                 key={category.id}
-                                                className="flex w-40 sm:w-44 md:w-48 lg:w-[calc((100%-96px)/7)] min-w-0 aspect-square cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:-translate-y-1 hover:shadow-lg snap-start shrink-0"
+                                                className="flex aspect-square w-40 min-w-0 shrink-0 cursor-pointer snap-start flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-4 transition-all hover:-translate-y-1 hover:shadow-lg sm:w-44 md:w-48 lg:w-[calc((100%-96px)/7)]"
                                             >
                                                 <div className="text-4xl text-secondary">{category.icon}</div>
-                                                <h3 className="text-center text-base font-bold leading-tight text-foreground">
-                                                    {category.name}
-                                                </h3>
+                                                <h3 className="text-center text-base leading-tight font-bold text-foreground">{category.name}</h3>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8 min-h-[160px]">
-                                <div className="text-secondary mb-3">
+                            <div className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8">
+                                <div className="mb-3 text-secondary">
                                     <FolderOpen className="h-12 w-12 opacity-70" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-1">Chưa có danh mục nào</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Các danh mục sản phẩm sẽ sớm xuất hiện tại đây.
-                                </p>
+                                <h3 className="mb-1 text-lg font-semibold text-foreground">Chưa có danh mục nào</h3>
+                                <p className="text-sm text-muted-foreground">Các danh mục sản phẩm sẽ sớm xuất hiện tại đây.</p>
                             </div>
                         )}
                     </section>
@@ -325,9 +323,7 @@ function HomeContent() {
                     {/* Flash Sale Section */}
                     <section className="mb-12 rounded-xl bg-card p-6 md:mb-16 md:p-8">
                         <div className="mb-6">
-                            <h2 className="text-[22px] font-bold leading-tight tracking-[-0.015em] text-foreground md:text-2xl">
-                                Flash Sale
-                            </h2>
+                            <h2 className="text-[22px] leading-tight font-bold tracking-[-0.015em] text-foreground md:text-2xl">Flash Sale</h2>
                         </div>
                         {hasFlashSale ? (
                             <>
@@ -347,26 +343,24 @@ function HomeContent() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="-mx-4 flex overflow-x-auto px-4 scrollbar-hide">
+                                <div className="scrollbar-hide -mx-4 flex overflow-x-auto px-4">
                                     <div className="flex items-stretch gap-4 pb-4">
                                         {flashSaleProducts.map((product) => (
                                             <Link
                                                 key={product.id}
                                                 href={`/product/${product.id}`}
-                                                className="group flex min-w-[260px] w-[260px] flex-col overflow-hidden rounded-lg bg-background shadow-md hover:shadow-lg transition-shadow"
+                                                className="group flex w-[260px] min-w-[260px] flex-col overflow-hidden rounded-lg bg-background shadow-md transition-shadow hover:shadow-lg"
                                             >
                                                 <div
                                                     className="relative flex aspect-square w-full flex-col bg-cover bg-center bg-no-repeat"
                                                     style={{ backgroundImage: `url("${product.image}")` }}
                                                 >
-                                                    <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white">
+                                                    <span className="absolute top-3 left-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-white">
                                                         -{product.discount}%
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-1 flex-col gap-2 p-4">
-                                                    <p className="truncate text-base font-medium leading-normal text-foreground">
-                                                        {product.name}
-                                                    </p>
+                                                    <p className="truncate text-base leading-normal font-medium text-foreground">{product.name}</p>
                                                     <div className="flex items-baseline gap-2">
                                                         <p className="text-lg font-bold text-primary">{formatPrice(product.price)}</p>
                                                         {product.oldPrice && (
@@ -382,14 +376,12 @@ function HomeContent() {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center text-center py-10 min-h-[250px]">
-                                <div className="text-primary mb-4">
+                            <div className="flex min-h-[250px] flex-col items-center justify-center py-10 text-center">
+                                <div className="mb-4 text-primary">
                                     <Timer className="h-14 w-14 opacity-70" />
                                 </div>
-                                <h3 className="text-xl font-semibold text-foreground mb-2">
-                                    Chưa có Flash Sale nào đang diễn ra
-                                </h3>
-                                <p className="text-muted-foreground max-w-md mb-6">
+                                <h3 className="mb-2 text-xl font-semibold text-foreground">Chưa có Flash Sale nào đang diễn ra</h3>
+                                <p className="mb-6 max-w-md text-muted-foreground">
                                     Hãy theo dõi trang của chúng tôi! Các ưu đãi chớp nhoáng sẽ sớm xuất hiện.
                                 </p>
                             </div>
@@ -398,43 +390,43 @@ function HomeContent() {
 
                     {/* Suggested Products */}
                     <section className="mb-12 md:mb-16">
-                        <h2 className="pb-0 text-[22px] font-bold leading-tight tracking-[-0.015em] text-foreground md:text-2xl mb-5">
+                        <h2 className="mb-5 pb-0 text-[22px] leading-tight font-bold tracking-[-0.015em] text-foreground md:text-2xl">
                             Gợi ý hôm nay
                         </h2>
                         {suggestedProducts.length > 0 ? (
                             <>
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className="flex gap-2 ml-auto">
+                                <div className="mb-5 flex items-center justify-between">
+                                    <div className="ml-auto flex gap-2">
                                         <button
                                             aria-label="Previous suggested"
                                             onClick={() => scrollHorizontal(suggestedRef, 'left')}
-                                            className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                         >
                                             <ChevronLeft className="h-5 w-5" />
                                         </button>
                                         <button
                                             aria-label="Next suggested"
                                             onClick={() => scrollHorizontal(suggestedRef, 'right')}
-                                            className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                         >
                                             <ChevronRight className="h-5 w-5" />
                                         </button>
                                     </div>
                                 </div>
                                 <div className="-mx-2 px-2">
-                                    <div ref={suggestedRef} className="flex items-stretch gap-6 pb-4 overflow-x-auto scrollbar-hide">
+                                    <div ref={suggestedRef} className="scrollbar-hide flex items-stretch gap-6 overflow-x-auto pb-4">
                                         {suggestedProducts.map((product) => (
                                             <div
                                                 key={product.id}
-                                                className="flex w-full sm:w-1/2 md:w-1/3 lg:w-[calc((100%-72px)/4)] min-w-0 flex-col rounded-lg border border-border bg-card overflow-hidden group shrink-0"
+                                                className="group flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card sm:w-1/2 md:w-1/3 lg:w-[calc((100%-72px)/4)]"
                                             >
                                                 <Link
                                                     href={`/product/${product.id}`}
-                                                    className="relative aspect-square w-full overflow-hidden bg-cover bg-center bg-no-repeat hover:opacity-90 transition-opacity"
+                                                    className="relative aspect-square w-full overflow-hidden bg-cover bg-center bg-no-repeat transition-opacity hover:opacity-90"
                                                     style={{ backgroundImage: `url("${product.image}")` }}
                                                 >
                                                     <button
-                                                        className="absolute right-3 top-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/80 text-foreground backdrop-blur-sm transition-colors hover:text-primary dark:bg-card/80 z-10"
+                                                        className="absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/80 text-foreground backdrop-blur-sm transition-colors hover:text-primary dark:bg-card/80"
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
@@ -446,7 +438,7 @@ function HomeContent() {
                                                 </Link>
                                                 <div className="flex flex-col gap-4 p-4">
                                                     <Link href={`/product/${product.id}`}>
-                                                        <p className="mb-1 text-base font-semibold leading-normal text-foreground hover:text-primary transition-colors">
+                                                        <p className="mb-1 text-base leading-normal font-semibold text-foreground transition-colors hover:text-primary">
                                                             {product.name}
                                                         </p>
                                                         <div className="flex items-center gap-1">
@@ -474,12 +466,12 @@ function HomeContent() {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8 min-h-[250px] text-center">
-                                <div className="text-primary mb-3">
+                            <div className="flex min-h-[250px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8 text-center">
+                                <div className="mb-3 text-primary">
                                     <Lightbulb className="h-12 w-12 opacity-70" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-1">Chưa có sản phẩm gợi ý</h3>
-                                <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                                <h3 className="mb-1 text-lg font-semibold text-foreground">Chưa có sản phẩm gợi ý</h3>
+                                <p className="mb-4 max-w-sm text-sm text-muted-foreground">
                                     Hãy quay lại sau để khám phá các sản phẩm được tuyển chọn đặc biệt dành cho bạn.
                                 </p>
                             </div>
@@ -488,23 +480,21 @@ function HomeContent() {
 
                     {/* Best Sellers */}
                     <section className="mb-12 md:mb-16">
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-[22px] font-bold leading-tight tracking-[-0.015em] text-foreground md:text-2xl">
-                                Sản phẩm bán chạy
-                            </h2>
+                        <div className="mb-5 flex items-center justify-between">
+                            <h2 className="text-[22px] leading-tight font-bold tracking-[-0.015em] text-foreground md:text-2xl">Sản phẩm bán chạy</h2>
                             {bestSellers.length > 0 && (
                                 <div className="flex gap-2">
                                     <button
                                         aria-label="Previous best sellers"
                                         onClick={() => scrollHorizontal(bestSellerRef, 'left')}
-                                        className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                     >
                                         <ChevronLeft className="h-5 w-5" />
                                     </button>
                                     <button
                                         aria-label="Next best sellers"
                                         onClick={() => scrollHorizontal(bestSellerRef, 'right')}
-                                        className="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-card text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-card text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                     >
                                         <ChevronRight className="h-5 w-5" />
                                     </button>
@@ -513,19 +503,19 @@ function HomeContent() {
                         </div>
                         {bestSellers.length > 0 ? (
                             <div className="-mx-2 px-2">
-                                <div ref={bestSellerRef} className="flex items-stretch gap-6 pb-4 overflow-x-auto scrollbar-hide">
+                                <div ref={bestSellerRef} className="scrollbar-hide flex items-stretch gap-6 overflow-x-auto pb-4">
                                     {bestSellers.map((product) => (
                                         <div
                                             key={product.id}
-                                            className="flex w-full sm:w-1/2 md:w-1/3 lg:w-[calc((100%-72px)/4)] min-w-0 flex-col rounded-lg bg-background shadow-md overflow-hidden group shrink-0"
+                                            className="group flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-lg bg-background shadow-md sm:w-1/2 md:w-1/3 lg:w-[calc((100%-72px)/4)]"
                                         >
                                             <Link
                                                 href={`/product/${product.id}`}
-                                                className="relative aspect-square w-full bg-cover bg-center bg-no-repeat hover:opacity-90 transition-opacity"
+                                                className="relative aspect-square w-full bg-cover bg-center bg-no-repeat transition-opacity hover:opacity-90"
                                                 style={{ backgroundImage: `url("${product.image}")` }}
                                             >
                                                 <button
-                                                    className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-foreground backdrop-blur-sm transition-colors hover:text-primary dark:bg-card/80 z-10"
+                                                    className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-foreground backdrop-blur-sm transition-colors hover:text-primary dark:bg-card/80"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
@@ -537,14 +527,14 @@ function HomeContent() {
                                             </Link>
                                             <div className="flex flex-1 flex-col gap-2 p-4">
                                                 <Link href={`/product/${product.id}`}>
-                                                    <p className="mb-1 text-base font-semibold leading-normal text-foreground truncate hover:text-primary transition-colors">
+                                                    <p className="mb-1 truncate text-base leading-normal font-semibold text-foreground transition-colors hover:text-primary">
                                                         {product.name}
                                                     </p>
                                                 </Link>
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-lg font-bold text-foreground">{formatPrice(product.price)}</p>
                                                     <button
-                                                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/20 text-secondary hover:bg-secondary hover:text-white transition-colors"
+                                                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/20 text-secondary transition-colors hover:bg-secondary hover:text-white"
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
@@ -560,14 +550,12 @@ function HomeContent() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8 min-h-[250px]">
-                                <div className="text-secondary mb-3">
+                            <div className="flex min-h-[250px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-8">
+                                <div className="mb-3 text-secondary">
                                     <TrendingUp className="h-12 w-12 opacity-70" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-1">Chưa có sản phẩm bán chạy</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Khi có sản phẩm bán chạy, chúng sẽ được hiển thị ở đây.
-                                </p>
+                                <h3 className="mb-1 text-lg font-semibold text-foreground">Chưa có sản phẩm bán chạy</h3>
+                                <p className="text-sm text-muted-foreground">Khi có sản phẩm bán chạy, chúng sẽ được hiển thị ở đây.</p>
                             </div>
                         )}
                     </section>
@@ -580,7 +568,7 @@ function HomeContent() {
             <button
                 aria-label="Open chat"
                 onClick={() => setIsChatOpen((s) => !s)}
-                className="fixed bottom-6 right-6 z-50 flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-secondary text-white shadow-lg transition-transform hover:scale-110"
+                className="fixed right-6 bottom-6 z-50 flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-secondary text-white shadow-lg transition-transform hover:scale-110"
             >
                 <MessageCircle className="h-7 w-7" />
             </button>
@@ -589,12 +577,12 @@ function HomeContent() {
             {isChatOpen && (
                 <>
                     {isChatMinimized ? (
-                        <div className="fixed bottom-28 right-6 z-50 w-72 rounded-lg bg-card shadow-md flex items-center justify-between px-3 py-2">
+                        <div className="fixed right-6 bottom-28 z-50 flex w-72 items-center justify-between rounded-lg bg-card px-3 py-2 shadow-md">
                             <div className="flex items-center gap-3">
                                 <div className="text-primary">
                                     <ShoppingBag className="h-5 w-5" />
                                 </div>
-                                <div className="text-sm font-semibold truncate">ShopNest Assistant</div>
+                                <div className="truncate text-sm font-semibold">ShopNest Assistant</div>
                             </div>
                             <div className="flex gap-2">
                                 <button
@@ -617,8 +605,8 @@ function HomeContent() {
                             </div>
                         </div>
                     ) : (
-                        <div className="fixed bottom-28 right-6 z-50 w-96 max-w-[calc(100%-1rem)] rounded-xl shadow-2xl flex flex-col h-[600px] max-h-[calc(100vh-3rem)] bg-card">
-                            <header className="flex items-center justify-between p-4 border-b border-border">
+                        <div className="fixed right-6 bottom-28 z-50 flex h-[600px] max-h-[calc(100vh-3rem)] w-96 max-w-[calc(100%-1rem)] flex-col rounded-xl bg-card shadow-2xl">
+                            <header className="flex items-center justify-between border-b border-border p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="text-primary">
                                         <ShoppingBag className="h-6 w-6" />
@@ -626,7 +614,7 @@ function HomeContent() {
                                     <div>
                                         <div className="text-sm font-semibold">ShopNest Assistant</div>
                                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                                            <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
                                             <span>Online</span>
                                         </div>
                                     </div>
@@ -635,7 +623,7 @@ function HomeContent() {
                                     <button
                                         aria-label="Minimize chat"
                                         onClick={() => setIsChatMinimized(true)}
-                                        className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                        className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                     >
                                         <Minus className="h-4 w-4" />
                                     </button>
@@ -645,18 +633,18 @@ function HomeContent() {
                                             setIsChatOpen(false);
                                             setIsChatMinimized(false);
                                         }}
-                                        className="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                        className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                     >
                                         <X className="h-4 w-4" />
                                     </button>
                                 </div>
                             </header>
-                            <main className="flex-1 overflow-y-auto p-4 bg-muted/50">
+                            <main className="flex-1 overflow-y-auto bg-muted/50 p-4">
                                 <div className="flex flex-col gap-4">
                                     {messages.map((m) => (
                                         <div key={m.id} className={`flex items-start gap-3 ${m.from === 'user' ? 'flex-row-reverse' : ''}`}>
                                             <div
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                                                     m.from === 'bot' ? 'bg-secondary text-white' : ''
                                                 }`}
                                             >
@@ -664,7 +652,7 @@ function HomeContent() {
                                             </div>
                                             <div className={`flex flex-col gap-1 ${m.from === 'user' ? 'items-end' : ''}`}>
                                                 <div
-                                                    className={`rounded-lg p-3 max-w-xs ${
+                                                    className={`max-w-xs rounded-lg p-3 ${
                                                         m.from === 'bot' ? 'bg-background' : 'bg-primary text-white'
                                                     }`}
                                                 >
@@ -676,10 +664,10 @@ function HomeContent() {
                                     ))}
                                 </div>
                             </main>
-                            <footer className="p-3 border-t border-border">
+                            <footer className="border-t border-border p-3">
                                 <div className="flex items-center gap-2">
                                     <input
-                                        className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-sm focus:outline-0 focus:ring-2 focus:ring-primary/50 border-none bg-muted px-4 py-2 placeholder:text-muted-foreground"
+                                        className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border-none bg-muted px-4 py-2 text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/50 focus:outline-0"
                                         placeholder="Nhập tin nhắn..."
                                         value={chatInput}
                                         onChange={(e) => setChatInput(e.target.value)}
@@ -691,7 +679,7 @@ function HomeContent() {
                                         }}
                                     />
                                     <button
-                                        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-colors hover:bg-primary/90 shrink-0"
+                                        className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-colors hover:bg-primary/90"
                                         onClick={() => sendMessage()}
                                     >
                                         Gửi

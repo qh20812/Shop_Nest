@@ -148,7 +148,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 {isLoading && <div className="chat-window-status-banner">Đang tải tin nhắn...</div>}
                 {error && !isLoading && <div className="chat-window-status-banner chat-window-status-banner--error">{error}</div>}
                 {showEmptyState && <div className="chat-window-placeholder">{emptyMessage}</div>}
-                {!isLoading && !error &&
+                {!isLoading &&
+                    !error &&
                     messages.map((message) => (
                         <div key={message.id} className={`chat-message chat-message--${message.sender}`}>
                             <div className="chat-message-bubble">
@@ -162,13 +163,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
             <footer className="chat-window-footer">
                 <form className="chat-input-form" onSubmit={handleSubmit}>
-                    <ChatInput
-                        value={draft}
-                        onChange={onDraftChange}
-                        onSend={onSend}
-                        isDisabled={inputDisabled}
-                        placeholder={placeholder}
-                    />
+                    <ChatInput value={draft} onChange={onDraftChange} onSend={onSend} isDisabled={inputDisabled} placeholder={placeholder} />
                 </form>
                 {isSending && <div className="chat-window-status-banner chat-window-status-banner--inline">Đang gửi...</div>}
             </footer>

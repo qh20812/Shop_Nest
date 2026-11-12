@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from '../../../lib/i18n';
 import { decodeHtmlEntities } from '../../../utils/htmlUtils';
 
@@ -52,10 +52,8 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
             stars.push(
                 <i
                     key={i}
-                    className={`bx ${i <= rating ? 'bxs-star' : 'bx-star'} product-tabs__star ${
-                        i <= rating ? 'product-tabs__star--filled' : ''
-                    }`}
-                ></i>
+                    className={`bx ${i <= rating ? 'bxs-star' : 'bx-star'} product-tabs__star ${i <= rating ? 'product-tabs__star--filled' : ''}`}
+                ></i>,
             );
         }
         return stars;
@@ -67,18 +65,14 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
             <div className="product-tabs__nav">
                 <button
                     type="button"
-                    className={`product-tabs__button ${
-                        activeTab === 'description' ? 'product-tabs__button--active' : ''
-                    }`}
+                    className={`product-tabs__button ${activeTab === 'description' ? 'product-tabs__button--active' : ''}`}
                     onClick={() => setActiveTab('description')}
                 >
                     {t('Description')}
                 </button>
                 <button
                     type="button"
-                    className={`product-tabs__button ${
-                        activeTab === 'reviews' ? 'product-tabs__button--active' : ''
-                    }`}
+                    className={`product-tabs__button ${activeTab === 'reviews' ? 'product-tabs__button--active' : ''}`}
                     onClick={() => setActiveTab('reviews')}
                 >
                     {t('Reviews')} ({reviews.length})
@@ -89,9 +83,7 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
             <div className="product-tabs__content">
                 {activeTab === 'description' && (
                     <div className="product-tabs__description">
-                        <div className="product-tabs__description-content">
-                            {getDescription()}
-                        </div>
+                        <div className="product-tabs__description-content">{getDescription()}</div>
                     </div>
                 )}
 
@@ -116,16 +108,10 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
                                                     })()}
                                                 </strong>
                                             </div>
-                                            <div className="product-tabs__review-rating">
-                                                {renderStars(review.rating)}
-                                            </div>
-                                            <div className="product-tabs__review-date">
-                                                {formatDate(review.created_at)}
-                                            </div>
+                                            <div className="product-tabs__review-rating">{renderStars(review.rating)}</div>
+                                            <div className="product-tabs__review-date">{formatDate(review.created_at)}</div>
                                         </div>
-                                        <div className="product-tabs__review-comment">
-                                            {decodeHtmlEntities(review.comment)}
-                                        </div>
+                                        <div className="product-tabs__review-comment">{decodeHtmlEntities(review.comment)}</div>
                                     </div>
                                 ))}
                             </div>

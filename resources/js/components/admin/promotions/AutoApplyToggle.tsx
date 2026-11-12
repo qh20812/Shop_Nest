@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface AutoApplyToggleProps {
     initialEnabled: boolean;
@@ -89,9 +89,7 @@ export default function AutoApplyToggle({ initialEnabled, promotionId, onChange,
                         }}
                     />
                 </button>
-                <span style={{ color: 'var(--dark-grey)', fontSize: '13px' }}>
-                    {enabled ? 'Enabled' : 'Disabled'}
-                </span>
+                <span style={{ color: 'var(--dark-grey)', fontSize: '13px' }}>{enabled ? 'Enabled' : 'Disabled'}</span>
             </label>
             {loading && <span style={{ fontSize: '12px', color: 'var(--dark-grey)' }}>Saving...</span>}
             {error && <span style={{ fontSize: '12px', color: 'var(--danger)' }}>{error}</span>}

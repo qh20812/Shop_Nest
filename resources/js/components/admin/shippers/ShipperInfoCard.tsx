@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 interface ShipperInfoCardProps {
     title: string;
@@ -13,11 +13,7 @@ export default function ShipperInfoCard({ title, icon, children, actionButtons }
             <div className="header">
                 <i className={icon}></i>
                 <h3>{title}</h3>
-                {actionButtons && (
-                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                        {actionButtons}
-                    </div>
-                )}
+                {actionButtons && <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>{actionButtons}</div>}
             </div>
             {children}
         </div>

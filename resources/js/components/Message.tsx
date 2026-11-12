@@ -1,4 +1,3 @@
-import React from 'react';
 import { Icons } from './Icons';
 
 interface MessageData {
@@ -91,20 +90,15 @@ export default function Message({ message, isLoading = false, isTyping = false }
     const isUser = message.sender === 'user';
     const isError = message.sender === 'error';
 
-    const containerClassName = [
-        'chat-message',
-        isUser ? 'chat-message--user' : 'chat-message--ai',
-        isError ? 'chat-message--error' : ''
-    ].filter(Boolean).join(' ');
+    const containerClassName = ['chat-message', isUser ? 'chat-message--user' : 'chat-message--ai', isError ? 'chat-message--error' : '']
+        .filter(Boolean)
+        .join(' ');
 
-    const avatarClassName = [
-        'chat-message__avatar',
-        isUser ? 'chat-message__avatar--user' : 'chat-message__avatar--ai'
-    ].join(' ');
+    const avatarClassName = ['chat-message__avatar', isUser ? 'chat-message__avatar--user' : 'chat-message__avatar--ai'].join(' ');
 
     const bubbleClassName = [
         'chat-message__bubble',
-        isUser ? 'chat-message__bubble--user' : isError ? 'chat-message__bubble--error' : 'chat-message__bubble--ai'
+        isUser ? 'chat-message__bubble--user' : isError ? 'chat-message__bubble--error' : 'chat-message__bubble--ai',
     ].join(' ');
 
     return (
@@ -120,7 +114,9 @@ export default function Message({ message, isLoading = false, isTyping = false }
                     {message.text}
                     {!isUser && !isError && message.provider && (
                         <div className="chat-message__provider">
-                            <span role="img" aria-hidden="true">🤖</span>
+                            <span role="img" aria-hidden="true">
+                                🤖
+                            </span>
                             <span>{message.provider?.toUpperCase()}</span>
                             {message.role && <span>• {message.role}</span>}
                         </div>

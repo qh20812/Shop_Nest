@@ -3,10 +3,10 @@ import { SkeletonCard } from './SkeletonCard';
 
 export const SkeletonFlashSale: React.FC = () => {
     return (
-        <section className="bg-card rounded-xl p-6 md:p-8 mb-12 md:mb-16 animate-pulse">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-                <div className="h-8 w-48 bg-muted rounded-md" />
-                <div className="h-10 w-64 bg-muted rounded-md" />
+        <section className="mb-12 animate-pulse rounded-xl bg-card p-6 md:mb-16 md:p-8">
+            <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div className="h-8 w-48 rounded-md bg-muted" />
+                <div className="h-10 w-64 rounded-md bg-muted" />
             </div>
             <div className="flex gap-4 overflow-hidden">
                 {Array.from({ length: 4 }).map((_, i) => (

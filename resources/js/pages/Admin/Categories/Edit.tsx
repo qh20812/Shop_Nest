@@ -1,9 +1,9 @@
-import React from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import Header from '../../../components/ui/Header';
+import React from 'react';
 import CategoryForm from '../../../components/admin/categories/CategoryForm';
 import Toast from '../../../components/admin/users/Toast';
+import Header from '../../../components/ui/Header';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
@@ -31,7 +31,7 @@ export default function Edit() {
         name: category.name || { en: '', vi: '' },
         description: {
             en: category.description?.en || '',
-            vi: category.description?.vi || ''
+            vi: category.description?.vi || '',
         },
         parent_category_id: category.parent_category_id?.toString() || '',
         is_active: category.is_active ?? true,
@@ -47,15 +47,9 @@ export default function Edit() {
     return (
         <AppLayout>
             <Head title={t('Edit Category')} />
-            
+
             {/* Toast notification */}
-            {flash?.error && (
-                <Toast
-                    type="error"
-                    message={flash.error}
-                    onClose={() => {}}
-                />
-            )}
+            {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
             <Header
                 title={t('Edit Category')}
@@ -73,7 +67,7 @@ export default function Edit() {
                 processing={processing}
                 parentCategories={parentCategories}
                 onSubmit={handleSubmit}
-                submitLabel={t("Update Category")}
+                submitLabel={t('Update Category')}
             />
         </AppLayout>
     );

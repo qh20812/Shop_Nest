@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 
 interface Category {
@@ -14,10 +14,7 @@ interface CategoryCarouselProps {
 }
 
 // Debounce utility function
-function debounce<T extends (...args: unknown[]) => void>(
-    func: T,
-    wait: number
-): (...args: Parameters<T>) => void {
+function debounce<T extends (...args: unknown[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout;
     return (...args: Parameters<T>) => {
         clearTimeout(timeout);
@@ -71,10 +68,7 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
         setCurrentPage(0); // Reset to first page when changing layout
     }, []);
 
-    const debouncedUpdateItemsPerPage = useCallback(
-        () => debounce(updateItemsPerPage, 150),
-        [updateItemsPerPage]
-    );
+    const debouncedUpdateItemsPerPage = useCallback(() => debounce(updateItemsPerPage, 150), [updateItemsPerPage]);
 
     useEffect(() => {
         updateItemsPerPage();
@@ -87,10 +81,7 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
     }, [updateItemsPerPage, debouncedUpdateItemsPerPage]);
 
     const totalPages = Math.ceil(categories.length / itemsPerPage);
-    const currentCategories = categories.slice(
-        currentPage * itemsPerPage,
-        (currentPage + 1) * itemsPerPage
-    );
+    const currentCategories = categories.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
     const nextPage = () => {
         if (currentPage < totalPages - 1) {
@@ -107,7 +98,7 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
     // Handle image error
     const handleImageError = useCallback((categoryId: number | string) => {
         const key = String(categoryId);
-        setImageErrors(prev => ({ ...prev, [key]: true }));
+        setImageErrors((prev) => ({ ...prev, [key]: true }));
     }, []);
 
     // Touch/swipe handlers
@@ -131,12 +122,17 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
                 <div className="carousel-container" {...swipeHandlers}>
                     {/* Previous Button */}
                     {currentPage > 0 && (
-                        <button
-                            className="carousel-btn carousel-btn-prev"
-                            onClick={prevPage}
-                            aria-label="Previous categories"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <button className="carousel-btn carousel-btn-prev" onClick={prevPage} aria-label="Previous categories">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
                                 <polyline points="15,18 9,12 15,6"></polyline>
                             </svg>
                         </button>
@@ -147,12 +143,12 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
                             {currentCategories.map((category) => (
                                 <li key={`category-${category.id}`}>
                                     {!imageErrors[String(category.id)] ? (
-                                                <img
-                                                    src={category.img ?? '/images/placeholder.jpg'}
-                                                    alt={category.name}
-                                                    loading="lazy"
-                                                    onError={() => handleImageError(category.id)}
-                                                />
+                                        <img
+                                            src={category.img ?? '/images/placeholder.jpg'}
+                                            alt={category.name}
+                                            loading="lazy"
+                                            onError={() => handleImageError(category.id)}
+                                        />
                                     ) : (
                                         <div className="image-placeholder">
                                             <span>📁</span>
@@ -166,12 +162,17 @@ export default function CategoryCarousel({ categories, isLoading = false }: Cate
 
                     {/* Next Button */}
                     {currentPage < totalPages - 1 && (
-                        <button
-                            className="carousel-btn carousel-btn-next"
-                            onClick={nextPage}
-                            aria-label="Next categories"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <button className="carousel-btn carousel-btn-next" onClick={nextPage} aria-label="Next categories">
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
                                 <polyline points="9,18 15,12 9,6"></polyline>
                             </svg>
                         </button>

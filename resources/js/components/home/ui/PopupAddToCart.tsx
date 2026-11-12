@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
 import '@/../css/PopupAddToCart.css';
 import { router } from '@inertiajs/react';
+import React, { useEffect } from 'react';
 
 interface Product {
     id: number;
@@ -66,11 +66,7 @@ export default function PopupAddToCart({ isOpen, product, onClose }: PopupAddToC
         <div className="popup-overlay" onClick={handleOverlayClick}>
             <div className="popup-modal">
                 {/* Close Button */}
-                <button 
-                    className="popup-close-btn"
-                    onClick={onClose}
-                    aria-label="Đóng"
-                >
+                <button className="popup-close-btn" onClick={onClose} aria-label="Đóng">
                     <i className="bi bi-x popup-close-icon"></i>
                 </button>
 
@@ -82,14 +78,12 @@ export default function PopupAddToCart({ isOpen, product, onClose }: PopupAddToC
                     </div>
 
                     {/* Headline Text */}
-                    <h3 className="popup-headline">
-                        Đã thêm vào giỏ hàng thành công!
-                    </h3>
+                    <h3 className="popup-headline">Đã thêm vào giỏ hàng thành công!</h3>
 
                     {/* Product Information Card */}
                     <div className="popup-product-card">
                         <div className="popup-product-info">
-                            <div 
+                            <div
                                 className="popup-product-image"
                                 style={{ backgroundImage: `url(${product.image})` }}
                                 role="img"
@@ -97,25 +91,17 @@ export default function PopupAddToCart({ isOpen, product, onClose }: PopupAddToC
                             />
                             <div className="popup-product-details">
                                 <p className="popup-product-name">{product.name}</p>
-                                <p className="popup-product-quantity">
-                                    Số lượng: {product.quantity}
-                                </p>
+                                <p className="popup-product-quantity">Số lượng: {product.quantity}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Button Group */}
                     <div className="popup-button-group">
-                        <button 
-                            className="popup-btn popup-btn-primary"
-                            onClick={handleGoToCart}
-                        >
+                        <button className="popup-btn popup-btn-primary" onClick={handleGoToCart}>
                             <span className="popup-btn-text">Đi đến giỏ hàng</span>
                         </button>
-                        <button 
-                            className="popup-btn popup-btn-secondary"
-                            onClick={handleContinueShopping}
-                        >
+                        <button className="popup-btn popup-btn-secondary" onClick={handleContinueShopping}>
                             <span className="popup-btn-text">Tiếp tục mua sắm</span>
                         </button>
                     </div>

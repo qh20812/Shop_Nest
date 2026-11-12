@@ -2,30 +2,30 @@
 
 :root {
     --light: #f6f6f9;
-    --primary: #1976D2;
-    --light-primary: #CFE8FF;
-    --secondary: #9C27B0;
-    --light-secondary: #E1BEE7;
-    --info: #2196F3;
-    --light-info: #E3F2FD;
-    --neutral: #F5F5F5;
-    --tertiary: #FF9800;
-    --light-tertiary: #FFE0B2;
+    --primary: #1976d2;
+    --light-primary: #cfe8ff;
+    --secondary: #9c27b0;
+    --light-secondary: #e1bee7;
+    --info: #2196f3;
+    --light-info: #e3f2fd;
+    --neutral: #f5f5f5;
+    --tertiary: #ff9800;
+    --light-tertiary: #ffe0b2;
     --focus-outline: 2px solid var(--primary);
     --shadow-light: 0 2px 4px rgba(25, 118, 210, 0.1);
     --shadow-medium: 0 4px 8px rgba(25, 118, 210, 0.15);
     --shadow-heavy: 0 8px 16px rgba(25, 118, 210, 0.2);
     --grey: #eee;
-    --dark-grey: #AAAAAA;
+    --dark-grey: #aaaaaa;
     --dark: #363949;
-    --danger: #D32F2F;
-	--light-danger: #FECDD3;
-    --warning: #FBC02D;
-    --light-warning: #FFF2C6;
-    --success: #388E3C;
-    --light-success: #BBF7D0;
+    --danger: #d32f2f;
+    --light-danger: #fecdd3;
+    --warning: #fbc02d;
+    --light-warning: #fff2c6;
+    --success: #388e3c;
+    --light-success: #bbf7d0;
     --common-border-radius: 16px;
-    
+
     /* Additional navbar colors */
     --background-light: #ffffff;
     --background-dark: #1a1a1a;
@@ -198,7 +198,7 @@
 }
 
 .navbar-search-button:hover {
-    background-color: #1565C0;
+    background-color: #1565c0;
 }
 
 .navbar-search-button i {
@@ -455,76 +455,76 @@
     .navbar-hamburger {
         display: flex;
     }
-    
+
     .navbar-mobile-menu {
         display: block;
     }
-    
+
     /* Hide desktop menu items */
     .navbar-top-left {
         display: none;
     }
-    
+
     .navbar-top-right {
         gap: 0.5rem;
     }
-    
+
     /* Adjust navbar spacing */
     .navbar-container-fluid {
         padding: 0 0.5rem;
     }
-    
+
     .navbar-main .navbar-container-fluid {
         gap: 0.5rem;
     }
-    
+
     /* Logo adjustments - hide text, keep icon */
     .navbar-logo-text {
         display: none;
     }
-    
+
     .navbar-logo-icon {
         width: 2rem;
         height: 2rem;
     }
-    
+
     /* Search bar stays but smaller */
     .navbar-search-wrapper {
         flex: 1;
         max-width: none;
     }
-    
+
     .navbar-search-container {
         height: 2rem;
     }
-    
+
     .navbar-search-input {
         font-size: 0.875rem;
         padding: 0 0.5rem;
     }
-    
+
     .navbar-search-button {
         padding: 0 0.75rem;
     }
-    
+
     .navbar-search-button i {
         font-size: 1.25rem;
     }
-    
+
     /* Action icons smaller */
     .navbar-actions {
         gap: 0.25rem;
     }
-    
+
     .navbar-icon-button {
         width: 2rem;
         height: 2rem;
     }
-    
+
     .navbar-icon-button i {
         font-size: 1.125rem;
     }
-    
+
     /* Hide desktop dropdowns on mobile */
     .navbar-top-right > .navbar-dropdown-wrapper {
         display: none;
@@ -535,16 +535,16 @@
     .navbar-search-input {
         font-size: 0.8125rem;
     }
-    
+
     .navbar-icon-button {
         width: 1.75rem;
         height: 1.75rem;
     }
-    
+
     .navbar-icon-button i {
         font-size: 1rem;
     }
-    
+
     .navbar-badge {
         width: 0.875rem;
         height: 0.875rem;

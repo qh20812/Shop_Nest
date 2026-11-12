@@ -1,9 +1,9 @@
-import React from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import Header from '@/components/ui/Header';
 import CategoryForm from '@/components/admin/categories/CategoryForm';
 import Toast from '@/components/admin/users/Toast';
+import Header from '@/components/ui/Header';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import React from 'react';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Category {
@@ -40,15 +40,9 @@ export default function Create() {
     return (
         <AppLayout>
             <Head title={t('Create Category')} />
-            
+
             {/* Toast notification */}
-            {flash?.error && (
-                <Toast
-                    type="error"
-                    message={flash.error}
-                    onClose={() => {}}
-                />
-            )}
+            {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
             <Header
                 title={t('Create New Category')}
@@ -66,7 +60,7 @@ export default function Create() {
                 processing={processing}
                 parentCategories={parentCategories}
                 onSubmit={handleSubmit}
-                submitLabel={t("Create Category")}
+                submitLabel={t('Create Category')}
             />
         </AppLayout>
     );

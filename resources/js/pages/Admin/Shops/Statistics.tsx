@@ -1,11 +1,5 @@
-import React from 'react'
-
 function Statistics() {
-  return (
-    <div>
-      
-    </div>
-  )
+    return <div></div>;
 }
 
-export default Statistics
+export default Statistics;

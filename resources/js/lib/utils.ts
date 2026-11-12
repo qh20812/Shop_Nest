@@ -58,9 +58,9 @@ export function formatCurrency(value: number, options: FormatCurrencyOptions): s
         // Define tier-based abbreviation system for reliable large number handling
         const tiers = [
             { value: 1e12, vi: ' nghìn tỷ', en: 'T' },
-            { value: 1e9,  vi: ' tỷ',       en: 'B' },
-            { value: 1e6,  vi: 'tr',        en: 'M' },
-            { value: 1e3,  vi: 'K',         en: 'K' },
+            { value: 1e9, vi: ' tỷ', en: 'B' },
+            { value: 1e6, vi: 'tr', en: 'M' },
+            { value: 1e3, vi: 'K', en: 'K' },
         ];
 
         // Find the appropriate tier for the converted value
@@ -82,10 +82,13 @@ export function formatCurrency(value: number, options: FormatCurrencyOptions): s
         }).format(Math.abs(abbreviatedValue));
 
         // Extract currency symbol using formatToParts for reliable symbol extraction
-        const currencySymbol = new Intl.NumberFormat(options.locale, {
-            style: 'currency',
-            currency: options.to,
-        }).formatToParts(0).find(part => part.type === 'currency')?.value || options.to;
+        const currencySymbol =
+            new Intl.NumberFormat(options.locale, {
+                style: 'currency',
+                currency: options.to,
+            })
+                .formatToParts(0)
+                .find((part) => part.type === 'currency')?.value || options.to;
 
         // Handle negative values
         const sign = convertedValue < 0 ? '-' : '';

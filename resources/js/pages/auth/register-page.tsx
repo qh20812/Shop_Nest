@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { router, Link } from '@inertiajs/react';
 import '@/../css/register-page.css';
+import { Link, router } from '@inertiajs/react';
+import React, { useState } from 'react';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -61,7 +61,7 @@ export default function RegisterPage() {
         }
 
         setErrors(newErrors);
-        return Object.values(newErrors).every(error => error === '');
+        return Object.values(newErrors).every((error) => error === '');
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +78,7 @@ export default function RegisterPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Clear previous errors
         setErrors({
             identifier: '',
@@ -89,30 +89,34 @@ export default function RegisterPage() {
 
         if (validateForm()) {
             setProcessing(true);
-            
-            router.post(route('register.store'), {
-                identifier: formData.identifier,
-                password: formData.password,
-                confirmPassword: formData.confirmPassword,
-                agreeToTerms: formData.agreeToTerms,
-            }, {
-                onError: (errors) => {
-                    setProcessing(false);
-                    // Map backend errors to frontend state
-                    setErrors({
-                        identifier: errors.identifier || '',
-                        password: errors.password || '',
-                        confirmPassword: errors.confirmPassword || '',
-                        agreeToTerms: errors.agreeToTerms || '',
-                    });
+
+            router.post(
+                route('register.store'),
+                {
+                    identifier: formData.identifier,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword,
+                    agreeToTerms: formData.agreeToTerms,
                 },
-                onSuccess: () => {
-                    setProcessing(false);
+                {
+                    onError: (errors) => {
+                        setProcessing(false);
+                        // Map backend errors to frontend state
+                        setErrors({
+                            identifier: errors.identifier || '',
+                            password: errors.password || '',
+                            confirmPassword: errors.confirmPassword || '',
+                            agreeToTerms: errors.agreeToTerms || '',
+                        });
+                    },
+                    onSuccess: () => {
+                        setProcessing(false);
+                    },
+                    onFinish: () => {
+                        setProcessing(false);
+                    },
                 },
-                onFinish: () => {
-                    setProcessing(false);
-                }
-            });
+            );
         }
     };
 
@@ -127,18 +131,12 @@ export default function RegisterPage() {
                     <div className="register-header">
                         {/* Use external SVG asset from public/image to allow consistent logo updates */}
                         <Link href="/">
-                            <img
-                                src="/image/ShopnestLogoSVG.svg"
-                                alt="ShopNest logo"
-                                className="register-logo"
-                            />
+                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="register-logo" />
                         </Link>
 
                         <div className="register-title-wrapper">
                             <p className="register-title">Tạo tài khoản mới</p>
-                            <p className="register-subtitle">
-                                Bắt đầu hành trình mua sắm của bạn với ShopNest.
-                            </p>
+                            <p className="register-subtitle">Bắt đầu hành trình mua sắm của bạn với ShopNest.</p>
                         </div>
                     </div>
 
@@ -170,14 +168,8 @@ export default function RegisterPage() {
                                         value={formData.password}
                                         onChange={handleInputChange}
                                     />
-                                    <button
-                                        className="register-toggle-password"
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        <span className="material-symbols-outlined">
-                                            {showPassword ? 'visibility_off' : 'visibility'}
-                                        </span>
+                                    <button className="register-toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>
+                                        <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                     </button>
                                 </div>
                             </label>
@@ -201,9 +193,7 @@ export default function RegisterPage() {
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     >
-                                        <span className="material-symbols-outlined">
-                                            {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                                        </span>
+                                        <span className="material-symbols-outlined">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
                                     </button>
                                 </div>
                             </label>
@@ -223,30 +213,29 @@ export default function RegisterPage() {
                                     Tôi đồng ý với{' '}
                                     <a className="register-checkbox-link" href="#">
                                         Điều khoản Dịch vụ
-                                    </a>
-                                    {' '}và{' '}
+                                    </a>{' '}
+                                    và{' '}
                                     <a className="register-checkbox-link" href="#">
                                         Chính sách Bảo mật
-                                    </a>
-                                    {' '}của ShopNest.
+                                    </a>{' '}
+                                    của ShopNest.
                                 </p>
                             </label>
-
                         </div>
                         {errors.agreeToTerms && <p className="register-error register-error-checkbox">{errors.agreeToTerms}</p>}
                         <div>
                             <button
                                 className="register-submit-btn"
                                 type="submit"
-                                                            disabled={
-                                                                processing ||
-                                                                // disable button if any validation error exists or required fields are missing
-                                                                Object.values(errors).some(error => error !== '') ||
-                                                                !formData.identifier.trim() ||
-                                                                !formData.password ||
-                                                                !formData.confirmPassword ||
-                                                                !formData.agreeToTerms
-                                                            }
+                                disabled={
+                                    processing ||
+                                    // disable button if any validation error exists or required fields are missing
+                                    Object.values(errors).some((error) => error !== '') ||
+                                    !formData.identifier.trim() ||
+                                    !formData.password ||
+                                    !formData.confirmPassword ||
+                                    !formData.agreeToTerms
+                                }
                             >
                                 {processing ? 'Đang xử lý...' : 'Đăng ký'}
                             </button>
@@ -258,7 +247,9 @@ export default function RegisterPage() {
                         {/* <a className="register-footer-link" href="/login">
                             Đăng nhập ngay
                         </a> */}
-                        <Link className='register-footer-link' href="/login">Đăng nhập ngay</Link>
+                        <Link className="register-footer-link" href="/login">
+                            Đăng nhập ngay
+                        </Link>
                     </p>
                 </div>
             </div>

@@ -1,4 +1,3 @@
-import React from 'react';
 import InputError from '@/components/input-error';
 
 export interface PromotionRule {
@@ -118,9 +117,7 @@ export default function RuleBuilder({ value, onChange, ruleOptions, disabled = f
                     type="text"
                     disabled={disabled}
                     value={current.join(', ')}
-                    onChange={(event) =>
-                        updateRule(index, 'value', ensureArray(event.target.value))
-                    }
+                    onChange={(event) => updateRule(index, 'value', ensureArray(event.target.value))}
                     placeholder="value1, value2, value3"
                     className="rule-input"
                 />
@@ -129,11 +126,7 @@ export default function RuleBuilder({ value, onChange, ruleOptions, disabled = f
 
         const inputType = rule.type === 'price_range' ? 'number' : 'text';
 
-        const displayValue = typeof rule.value === 'number'
-            ? rule.value
-            : typeof rule.value === 'string'
-                ? rule.value
-                : '';
+        const displayValue = typeof rule.value === 'number' ? rule.value : typeof rule.value === 'string' ? rule.value : '';
 
         return (
             <input
@@ -143,11 +136,7 @@ export default function RuleBuilder({ value, onChange, ruleOptions, disabled = f
                 disabled={disabled}
                 value={displayValue}
                 onChange={(event) =>
-                    updateRule(index, 'value',
-                        inputType === 'number' && event.target.value !== ''
-                            ? Number(event.target.value)
-                            : event.target.value
-                    )
+                    updateRule(index, 'value', inputType === 'number' && event.target.value !== '' ? Number(event.target.value) : event.target.value)
                 }
                 placeholder="Enter value"
                 className="rule-input"
@@ -159,12 +148,7 @@ export default function RuleBuilder({ value, onChange, ruleOptions, disabled = f
         <div className="rule-builder">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <h4 style={{ margin: 0, color: 'var(--dark)', fontSize: '15px' }}>Rule Builder</h4>
-                <button
-                    type="button"
-                    onClick={addRule}
-                    disabled={disabled}
-                    className="btn btn-secondary"
-                >
+                <button type="button" onClick={addRule} disabled={disabled} className="btn btn-secondary">
                     + Add Rule
                 </button>
             </div>
@@ -212,12 +196,7 @@ export default function RuleBuilder({ value, onChange, ruleOptions, disabled = f
 
                         {renderValueInput(rule, index)}
 
-                        <button
-                            type="button"
-                            onClick={() => removeRule(index)}
-                            disabled={disabled || rules.length === 1}
-                            className="btn btn-icon"
-                        >
+                        <button type="button" onClick={() => removeRule(index)} disabled={disabled || rules.length === 1} className="btn btn-icon">
                             <i className="bx bx-trash" />
                         </button>
                     </div>

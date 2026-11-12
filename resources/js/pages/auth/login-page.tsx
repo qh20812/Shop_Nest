@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { router, Link } from '@inertiajs/react';
 import '@/../css/login-page.css';
-import { useTranslation} from '@/lib/i18n';
+import { useTranslation } from '@/lib/i18n';
+import { Link, router } from '@inertiajs/react';
+import React, { useState } from 'react';
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({
@@ -36,7 +36,7 @@ export default function LoginPage() {
         }
 
         setErrors(newErrors);
-        return Object.values(newErrors).every(error => error === '');
+        return Object.values(newErrors).every((error) => error === '');
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +50,7 @@ export default function LoginPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         setErrors({
             identifier: '',
             password: '',
@@ -58,19 +58,23 @@ export default function LoginPage() {
 
         if (validateForm()) {
             setSubmitting(true);
-            router.post('/login', {
-                identifier: formData.identifier.trim(),
-                password: formData.password,
-                remember: formData.remember,
-            }, {
-                onError: (serverErrors) => {
-                    setErrors({
-                        identifier: (serverErrors as Record<string, string>).identifier || '',
-                        password: (serverErrors as Record<string, string>).password || '',
-                    });
+            router.post(
+                '/login',
+                {
+                    identifier: formData.identifier.trim(),
+                    password: formData.password,
+                    remember: formData.remember,
                 },
-                onFinish: () => setSubmitting(false),
-            });
+                {
+                    onError: (serverErrors) => {
+                        setErrors({
+                            identifier: (serverErrors as Record<string, string>).identifier || '',
+                            password: (serverErrors as Record<string, string>).password || '',
+                        });
+                    },
+                    onFinish: () => setSubmitting(false),
+                },
+            );
         }
     };
 
@@ -84,18 +88,12 @@ export default function LoginPage() {
                 <div className="login-card">
                     <div className="login-header">
                         <Link href="/">
-                            <img
-                                src="/image/ShopnestLogoSVG.svg"
-                                alt="ShopNest logo"
-                                className="login-logo" 
-                            />
+                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" />
                         </Link>
 
                         <div className="login-title-wrapper">
                             <p className="login-title">{t('login.title')}</p>
-                            <p className="login-subtitle">
-                                Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
-                            </p>
+                            <p className="login-subtitle">Chào mừng trở lại! Vui lòng nhập thông tin của bạn.</p>
                         </div>
                     </div>
 
@@ -127,14 +125,8 @@ export default function LoginPage() {
                                         value={formData.password}
                                         onChange={handleInputChange}
                                     />
-                                    <button
-                                        className="login-toggle-password"
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        <span className="material-symbols-outlined">
-                                            {showPassword ? 'visibility_off' : 'visibility'}
-                                        </span>
+                                    <button className="login-toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>
+                                        <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                     </button>
                                 </div>
                             </label>
@@ -162,7 +154,7 @@ export default function LoginPage() {
                                 className="login-submit-btn"
                                 type="submit"
                                 disabled={
-                                    Object.values(errors).some(error => error !== '') ||
+                                    Object.values(errors).some((error) => error !== '') ||
                                     !formData.identifier.trim() ||
                                     !formData.password ||
                                     submitting
@@ -180,16 +172,8 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <button
-                                className="login-google-btn"
-                                type="button"
-                                onClick={() => window.location.href = '/auth/google'}
-                            >
-                                <img
-                                    className="login-google-icon"
-                                    src="google-color-svgrepo-com.svg"
-                                    alt="Google"
-                                />
+                            <button className="login-google-btn" type="button" onClick={() => (window.location.href = '/auth/google')}>
+                                <img className="login-google-icon" src="google-color-svgrepo-com.svg" alt="Google" />
                                 <span>Google</span>
                             </button>
                         </div>

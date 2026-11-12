@@ -344,7 +344,7 @@ export default function Create() {
                                             </div>
                                             <img
                                                 src={product.images?.find((img) => img.is_primary)?.image_url || '/default-product.png'}
-                                                alt={typeof product.name === 'string' ? product.name : product.name?.vi ?? ''}
+                                                alt={typeof product.name === 'string' ? product.name : (product.name?.vi ?? '')}
                                                 className="product-image"
                                             />
                                             <div className="product-info">

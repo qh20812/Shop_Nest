@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --primary: #1976D2;
+    --primary: #1976d2;
     --primary-rgb: 25, 118, 210;
-    --danger: #D32F2F;
+    --danger: #d32f2f;
     --background-dark: #111921;
 }
 
@@ -47,7 +47,9 @@
 .address-show-content {
     border-radius: 12px;
     background: #ffffff;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid #e5e7eb;
 }
 

@@ -1,8 +1,8 @@
+import ActionButton from '@/components/ui/ActionButton';
+import InputError from '@/components/ui/InputError';
+import PrimaryInput from '@/components/ui/PrimaryInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import React, { useState } from 'react';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import InputError from '@/components/ui/InputError';
-import ActionButton from '@/components/ui/ActionButton';
 
 interface FormData {
     first_name: string;
@@ -46,24 +46,24 @@ export default function ShipperRegister() {
 
     const handleFileChange = (field: keyof Pick<FormData, 'id_card_front' | 'id_card_back' | 'driver_license_front'>, file: File | null) => {
         setData(field, file);
-        
+
         // Create preview URL
         if (file) {
             const previewUrl = URL.createObjectURL(file);
-            setPreviews(prev => ({ ...prev, [field]: previewUrl }));
+            setPreviews((prev) => ({ ...prev, [field]: previewUrl }));
         } else {
-            setPreviews(prev => ({ ...prev, [field]: undefined }));
+            setPreviews((prev) => ({ ...prev, [field]: undefined }));
         }
     };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         post('/register/shipper', {
             onFinish: () => {
                 reset('password', 'password_confirmation');
                 // Clean up preview URLs
-                Object.values(previews).forEach(url => {
+                Object.values(previews).forEach((url) => {
                     if (url) URL.revokeObjectURL(url);
                 });
             },
@@ -73,21 +73,19 @@ export default function ShipperRegister() {
     return (
         <>
             <Head title="Shipper Registration" />
-            
-            <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-                <div className="w-full sm:max-w-4xl mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+
+            <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
+                <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-4xl sm:rounded-lg">
                     <div className="mb-6 text-center">
                         <h1 className="text-3xl font-bold text-gray-900">Become a Shipper</h1>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Join our delivery network and start earning. Fill out the application below.
-                        </p>
+                        <p className="mt-2 text-sm text-gray-600">Join our delivery network and start earning. Fill out the application below.</p>
                     </div>
 
                     <form onSubmit={submit} className="space-y-8">
                         {/* Personal Information Section */}
                         <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Personal Information</h2>
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
                                     <PrimaryInput
                                         label="First Name"
@@ -165,8 +163,8 @@ export default function ShipperRegister() {
 
                         {/* Shipper Information Section */}
                         <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Shipper Information</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Shipper Information</h2>
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
                                     <PrimaryInput
                                         label="ID Card Number"
@@ -194,14 +192,12 @@ export default function ShipperRegister() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Vehicle Type
-                                    </label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Vehicle Type</label>
                                     <select
                                         name="vehicle_type"
                                         value={data.vehicle_type}
                                         onChange={(e) => setData('vehicle_type', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
                                         required
                                     >
                                         <option value="">Select vehicle type</option>
@@ -231,18 +227,18 @@ export default function ShipperRegister() {
 
                         {/* Document Upload Section */}
                         <div className="pb-8">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Document Upload</h2>
-                            <p className="text-sm text-gray-600 mb-6">
+                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Document Upload</h2>
+                            <p className="mb-6 text-sm text-gray-600">
                                 Please upload clear photos of your documents. All documents are required for verification.
                             </p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                 {/* ID Card Front */}
                                 <div>
-                                    <label htmlFor="id_card_front" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label htmlFor="id_card_front" className="mb-2 block text-sm font-medium text-gray-700">
                                         ID Card (Front)
                                     </label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-400 transition-colors">
+                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
                                         <input
                                             id="id_card_front"
                                             type="file"
@@ -255,17 +251,27 @@ export default function ShipperRegister() {
                                         <label htmlFor="id_card_front" className="cursor-pointer">
                                             {previews.id_card_front ? (
                                                 <div>
-                                                    <img 
-                                                        src={previews.id_card_front} 
-                                                        alt="ID Card Front Preview" 
-                                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                                    <img
+                                                        src={previews.id_card_front}
+                                                        alt="ID Card Front Preview"
+                                                        className="mb-2 h-32 w-full rounded-md object-cover"
                                                     />
                                                     <p className="text-sm text-indigo-600">Click to change</p>
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                                                    <svg
+                                                        className="mx-auto h-12 w-12 text-gray-400"
+                                                        stroke="currentColor"
+                                                        fill="none"
+                                                        viewBox="0 0 48 48"
+                                                    >
+                                                        <path
+                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
+                                                            strokeWidth={2}
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
                                                     </svg>
                                                     <p className="mt-2 text-sm text-gray-600">Upload ID Card Front</p>
                                                     <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
@@ -278,10 +284,10 @@ export default function ShipperRegister() {
 
                                 {/* ID Card Back */}
                                 <div>
-                                    <label htmlFor="id_card_back" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label htmlFor="id_card_back" className="mb-2 block text-sm font-medium text-gray-700">
                                         ID Card (Back)
                                     </label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-400 transition-colors">
+                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
                                         <input
                                             id="id_card_back"
                                             type="file"
@@ -294,17 +300,27 @@ export default function ShipperRegister() {
                                         <label htmlFor="id_card_back" className="cursor-pointer">
                                             {previews.id_card_back ? (
                                                 <div>
-                                                    <img 
-                                                        src={previews.id_card_back} 
-                                                        alt="ID Card Back Preview" 
-                                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                                    <img
+                                                        src={previews.id_card_back}
+                                                        alt="ID Card Back Preview"
+                                                        className="mb-2 h-32 w-full rounded-md object-cover"
                                                     />
                                                     <p className="text-sm text-indigo-600">Click to change</p>
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                                                    <svg
+                                                        className="mx-auto h-12 w-12 text-gray-400"
+                                                        stroke="currentColor"
+                                                        fill="none"
+                                                        viewBox="0 0 48 48"
+                                                    >
+                                                        <path
+                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
+                                                            strokeWidth={2}
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
                                                     </svg>
                                                     <p className="mt-2 text-sm text-gray-600">Upload ID Card Back</p>
                                                     <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
@@ -317,10 +333,10 @@ export default function ShipperRegister() {
 
                                 {/* Driver's License */}
                                 <div>
-                                    <label htmlFor="driver_license_front" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label htmlFor="driver_license_front" className="mb-2 block text-sm font-medium text-gray-700">
                                         Driver's License
                                     </label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-400 transition-colors">
+                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
                                         <input
                                             id="driver_license_front"
                                             type="file"
@@ -333,17 +349,27 @@ export default function ShipperRegister() {
                                         <label htmlFor="driver_license_front" className="cursor-pointer">
                                             {previews.driver_license_front ? (
                                                 <div>
-                                                    <img 
-                                                        src={previews.driver_license_front} 
-                                                        alt="Driver's License Preview" 
-                                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                                    <img
+                                                        src={previews.driver_license_front}
+                                                        alt="Driver's License Preview"
+                                                        className="mb-2 h-32 w-full rounded-md object-cover"
                                                     />
                                                     <p className="text-sm text-indigo-600">Click to change</p>
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                                                    <svg
+                                                        className="mx-auto h-12 w-12 text-gray-400"
+                                                        stroke="currentColor"
+                                                        fill="none"
+                                                        viewBox="0 0 48 48"
+                                                    >
+                                                        <path
+                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
+                                                            strokeWidth={2}
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
                                                     </svg>
                                                     <p className="mt-2 text-sm text-gray-600">Upload Driver's License</p>
                                                     <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
@@ -357,21 +383,14 @@ export default function ShipperRegister() {
                         </div>
 
                         {/* Submit Section */}
-                        <div className="pt-6 border-t border-gray-200">
+                        <div className="border-t border-gray-200 pt-6">
                             <div className="flex items-center justify-between">
-                                <Link
-                                    href="/login"
-                                    className="text-sm text-gray-600 hover:text-gray-900 underline"
-                                >
+                                <Link href="/login" className="text-sm text-gray-600 underline hover:text-gray-900">
                                     Already have an account? Login here
                                 </Link>
 
                                 <div className="flex gap-4">
-                                    <ActionButton
-                                        type="submit"
-                                        variant="primary"
-                                        disabled={processing}
-                                    >
+                                    <ActionButton type="submit" variant="primary" disabled={processing}>
                                         {processing ? 'Submitting...' : 'Submit Application'}
                                     </ActionButton>
                                 </div>

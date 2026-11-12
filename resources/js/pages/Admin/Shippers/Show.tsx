@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Head, usePage, router } from '@inertiajs/react';
-import AppLayout from "../../../layouts/app/AppLayout";
-import Header from "@/components/ui/Header";
-import Toast from "@/components/admin/users/Toast";
-import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import ActionButton from '@/components/ui/ActionButton';
+import '@/../css/Page.css';
 import DocumentViewer from '@/components/admin/shippers/DocumentViewer';
 import ShipperInfoCard from '@/components/admin/shippers/ShipperInfoCard';
+import Toast from '@/components/admin/users/Toast';
+import ActionButton from '@/components/ui/ActionButton';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Header from '@/components/ui/Header';
 import StatusBadge from '@/components/ui/StatusBadge';
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 
 interface Role {
@@ -56,9 +56,9 @@ export default function Show() {
     const { shipper, flash } = usePage<PageProps>().props;
 
     const [isUpdating, setIsUpdating] = useState(false);
-    
+
     // Toast state
-    const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     // Document viewer state
     const [documentViewer, setDocumentViewer] = useState<{
@@ -67,8 +67,8 @@ export default function Show() {
         documentName: string;
     }>({
         isOpen: false,
-        imageUrl: "",
-        documentName: "",
+        imageUrl: '',
+        documentName: '',
     });
 
     // Confirmation modal state
@@ -80,27 +80,32 @@ export default function Show() {
     }>({
         isOpen: false,
         action: null,
-        title: "",
-        message: "",
+        title: '',
+        message: '',
     });
 
     // When there's flash from backend, show toast
     useEffect(() => {
         if (flash?.success) {
-            setToast({ type: "success", message: flash.success });
+            setToast({ type: 'success', message: flash.success });
         } else if (flash?.error) {
-            setToast({ type: "error", message: flash.error });
+            setToast({ type: 'error', message: flash.error });
         }
     }, [flash]);
 
     // Helper function to get translated status text for confirmation modals
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'pending': return t('Pending');
-            case 'approved': return t('Approved');
-            case 'rejected': return t('Rejected');
-            case 'suspended': return t('Suspended');
-            default: return status;
+            case 'pending':
+                return t('Pending');
+            case 'approved':
+                return t('Approved');
+            case 'rejected':
+                return t('Rejected');
+            case 'suspended':
+                return t('Suspended');
+            default:
+                return status;
         }
     };
 
@@ -117,14 +122,18 @@ export default function Show() {
     const handleConfirmAction = () => {
         if (confirmModal.action) {
             setIsUpdating(true);
-            router.patch(`/admin/shippers/${shipper.id}/status`, {
-                status: confirmModal.action,
-            }, {
-                onFinish: () => {
-                    setIsUpdating(false);
-                    handleCloseModal();
+            router.patch(
+                `/admin/shippers/${shipper.id}/status`,
+                {
+                    status: confirmModal.action,
                 },
-            });
+                {
+                    onFinish: () => {
+                        setIsUpdating(false);
+                        handleCloseModal();
+                    },
+                },
+            );
         }
     };
 
@@ -132,8 +141,8 @@ export default function Show() {
         setConfirmModal({
             isOpen: false,
             action: null,
-            title: "",
-            message: "",
+            title: '',
+            message: '',
         });
     };
 
@@ -152,60 +161,48 @@ export default function Show() {
     const closeDocumentViewer = () => {
         setDocumentViewer({
             isOpen: false,
-            imageUrl: "",
-            documentName: "",
+            imageUrl: '',
+            documentName: '',
         });
     };
 
     return (
         <AppLayout>
             <Head title={`${t('Shipper')}: ${shipper.first_name} ${shipper.last_name}`} />
-            
+
             <Header
                 title={t('Shipper Details')}
                 breadcrumbs={[
-                    { label: t('Dashboard'), href: "/admin/dashboard" },
-                    { label: t('Shippers'), href: "/admin/shippers" },
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Shippers'), href: '/admin/shippers' },
                     { label: `${shipper.first_name} ${shipper.last_name}`, href: `/admin/shippers/${shipper.id}`, active: true },
                 ]}
                 reportButton={{
                     label: t('Back to List'),
                     icon: 'bx bx-arrow-back',
-                    onClick: () => router.visit('/admin/shippers')
+                    onClick: () => router.visit('/admin/shippers'),
                 }}
             />
 
             <div className="bottom-data">
                 {/* Personal Information Card */}
-                <ShipperInfoCard 
-                    title={t('Personal Information')} 
+                <ShipperInfoCard
+                    title={t('Personal Information')}
                     icon="bx bx-user"
                     actionButtons={
                         <>
                             {shipper.shipper_profile.status === 'pending' && (
                                 <>
-                                    <ActionButton
-                                        variant="primary"
-                                        onClick={() => handleStatusUpdate('approved')}
-                                        disabled={isUpdating}
-                                    >
+                                    <ActionButton variant="primary" onClick={() => handleStatusUpdate('approved')} disabled={isUpdating}>
                                         {isUpdating ? t('Updating...') : t('Approve')}
                                     </ActionButton>
-                                    <ActionButton
-                                        variant="danger"
-                                        onClick={() => handleStatusUpdate('rejected')}
-                                        disabled={isUpdating}
-                                    >
+                                    <ActionButton variant="danger" onClick={() => handleStatusUpdate('rejected')} disabled={isUpdating}>
                                         {isUpdating ? t('Updating...') : t('Reject')}
                                     </ActionButton>
                                 </>
                             )}
                             {shipper.shipper_profile.status === 'approved' && (
-                                <ActionButton
-                                    variant="danger"
-                                    onClick={() => handleStatusUpdate('suspended')}
-                                    disabled={isUpdating}
-                                >
+                                <ActionButton variant="danger" onClick={() => handleStatusUpdate('suspended')} disabled={isUpdating}>
                                     {isUpdating ? t('Updating...') : t('Suspend')}
                                 </ActionButton>
                             )}
@@ -216,7 +213,9 @@ export default function Show() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                             <div>
                                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t('Full Name')}</label>
-                                <p style={{ margin: 0 }}>{shipper.first_name} {shipper.last_name}</p>
+                                <p style={{ margin: 0 }}>
+                                    {shipper.first_name} {shipper.last_name}
+                                </p>
                             </div>
                             <div>
                                 <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t('Email')}</label>
@@ -271,31 +270,38 @@ export default function Show() {
                                     <img
                                         src={shipper.shipper_profile.id_card_front_url}
                                         alt="ID Card Front"
-                                        style={{ 
-                                            width: '100%', 
-                                            height: '120px', 
-                                            objectFit: 'cover', 
+                                        style={{
+                                            width: '100%',
+                                            height: '120px',
+                                            objectFit: 'cover',
                                             borderRadius: '8px',
                                             border: '1px solid var(--grey)',
-                                            transition: 'opacity 0.2s'
+                                            transition: 'opacity 0.2s',
                                         }}
-                                        onMouseOver={(e) => { (e.target as HTMLImageElement).style.opacity = '0.8'; }}
-                                        onMouseOut={(e) => { (e.target as HTMLImageElement).style.opacity = '1'; }}
+                                        onMouseOver={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '0.8';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '1';
+                                        }}
                                     />
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        background: 'rgba(0, 0, 0, 0.7)',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        opacity: 0,
-                                        transition: 'opacity 0.2s',
-                                        pointerEvents: 'none'
-                                    }} className="hover-text">
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            background: 'rgba(0, 0, 0, 0.7)',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            opacity: 0,
+                                            transition: 'opacity 0.2s',
+                                            pointerEvents: 'none',
+                                        }}
+                                        className="hover-text"
+                                    >
                                         {t('Click to view')}
                                     </div>
                                 </div>
@@ -309,31 +315,38 @@ export default function Show() {
                                     <img
                                         src={shipper.shipper_profile.id_card_back_url}
                                         alt="ID Card Back"
-                                        style={{ 
-                                            width: '100%', 
-                                            height: '120px', 
-                                            objectFit: 'cover', 
+                                        style={{
+                                            width: '100%',
+                                            height: '120px',
+                                            objectFit: 'cover',
                                             borderRadius: '8px',
                                             border: '1px solid var(--grey)',
-                                            transition: 'opacity 0.2s'
+                                            transition: 'opacity 0.2s',
                                         }}
-                                        onMouseOver={(e) => { (e.target as HTMLImageElement).style.opacity = '0.8'; }}
-                                        onMouseOut={(e) => { (e.target as HTMLImageElement).style.opacity = '1'; }}
+                                        onMouseOver={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '0.8';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '1';
+                                        }}
                                     />
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        background: 'rgba(0, 0, 0, 0.7)',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        opacity: 0,
-                                        transition: 'opacity 0.2s',
-                                        pointerEvents: 'none'
-                                    }} className="hover-text">
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            background: 'rgba(0, 0, 0, 0.7)',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            opacity: 0,
+                                            transition: 'opacity 0.2s',
+                                            pointerEvents: 'none',
+                                        }}
+                                        className="hover-text"
+                                    >
                                         {t('Click to view')}
                                     </div>
                                 </div>
@@ -347,31 +360,38 @@ export default function Show() {
                                     <img
                                         src={shipper.shipper_profile.driver_license_front_url}
                                         alt="Driver's License"
-                                        style={{ 
-                                            width: '100%', 
-                                            height: '120px', 
-                                            objectFit: 'cover', 
+                                        style={{
+                                            width: '100%',
+                                            height: '120px',
+                                            objectFit: 'cover',
                                             borderRadius: '8px',
                                             border: '1px solid var(--grey)',
-                                            transition: 'opacity 0.2s'
+                                            transition: 'opacity 0.2s',
                                         }}
-                                        onMouseOver={(e) => { (e.target as HTMLImageElement).style.opacity = '0.8'; }}
-                                        onMouseOut={(e) => { (e.target as HTMLImageElement).style.opacity = '1'; }}
+                                        onMouseOver={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '0.8';
+                                        }}
+                                        onMouseOut={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '1';
+                                        }}
                                     />
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        background: 'rgba(0, 0, 0, 0.7)',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        opacity: 0,
-                                        transition: 'opacity 0.2s',
-                                        pointerEvents: 'none'
-                                    }} className="hover-text">
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            background: 'rgba(0, 0, 0, 0.7)',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            opacity: 0,
+                                            transition: 'opacity 0.2s',
+                                            pointerEvents: 'none',
+                                        }}
+                                        className="hover-text"
+                                    >
                                         {t('Click to view')}
                                     </div>
                                 </div>
@@ -382,13 +402,7 @@ export default function Show() {
             </div>
 
             {/* Toast Notification */}
-            {toast && (
-                <Toast 
-                    type={toast.type} 
-                    message={toast.message} 
-                    onClose={handleCloseToast} 
-                />
-            )}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
 
             {/* Confirmation Modal */}
             <ConfirmationModal
@@ -401,11 +415,7 @@ export default function Show() {
 
             {/* Document Viewer Modal */}
             {documentViewer.isOpen && (
-                <DocumentViewer
-                    imageUrl={documentViewer.imageUrl}
-                    documentName={documentViewer.documentName}
-                    onClose={closeDocumentViewer}
-                />
+                <DocumentViewer imageUrl={documentViewer.imageUrl} documentName={documentViewer.documentName} onClose={closeDocumentViewer} />
             )}
         </AppLayout>
     );

@@ -4,9 +4,7 @@ export const readMetaCsrfToken = (): string | null => {
 };
 
 export const readCookieCsrfToken = (): string | null => {
-    const raw = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('XSRF-TOKEN='));
+    const raw = document.cookie.split('; ').find((row) => row.startsWith('XSRF-TOKEN='));
 
     if (!raw) {
         return null;

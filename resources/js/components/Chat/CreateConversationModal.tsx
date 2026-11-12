@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
-import axios from 'axios';
 import { appendCsrfToken } from '@/lib/csrf';
+import axios from 'axios';
+import React, { useCallback, useState } from 'react';
 
 interface ParticipantSummary {
     id: number;
@@ -39,18 +39,11 @@ const toParticipantSummary = (raw: unknown): ParticipantSummary | null => {
         return null;
     }
 
-    const fullName = [candidate.first_name, candidate.last_name]
-        .map(sanitizeString)
-        .filter(Boolean)
-        .join(' ')
-        .trim();
+    const fullName = [candidate.first_name, candidate.last_name].map(sanitizeString).filter(Boolean).join(' ').trim();
 
-    const possibleNames = [
-        sanitizeString(candidate.name),
-        fullName,
-        sanitizeString(candidate.username),
-        sanitizeString(candidate.email),
-    ].filter(Boolean);
+    const possibleNames = [sanitizeString(candidate.name), fullName, sanitizeString(candidate.username), sanitizeString(candidate.email)].filter(
+        Boolean,
+    );
 
     const name = possibleNames[0] ?? `Người dùng #${numericId}`;
 
@@ -137,7 +130,7 @@ const CreateConversationModal: React.FC<CreateConversationModalProps> = ({ isOpe
             setResults(participants);
         } catch (searchError: unknown) {
             const message = axios.isAxiosError(searchError)
-                ? searchError.response?.data?.message ?? searchError.message ?? 'Không thể tìm kiếm người dùng.'
+                ? (searchError.response?.data?.message ?? searchError.message ?? 'Không thể tìm kiếm người dùng.')
                 : 'Không thể tìm kiếm người dùng.';
 
             setError(message);
@@ -147,38 +140,47 @@ const CreateConversationModal: React.FC<CreateConversationModalProps> = ({ isOpe
         }
     }, [currentUserId, isSearching, searchTerm]);
 
-    const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const handleSubmit = useCallback(
+        async (event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
 
-        const content = message.trim();
+            const content = message.trim();
 
-        if (!selectedParticipant || content.length === 0) {
-            return;
-        }
+            if (!selectedParticipant || content.length === 0) {
+                return;
+            }
 
-        setIsSubmitting(true);
-        setError(null);
+            setIsSubmitting(true);
+            setError(null);
 
-        try {
-            const response = await axios.post('/chat/conversations', appendCsrfToken({
-                receiver_id: selectedParticipant.id,
-                content,
-            }, csrfToken));
+            try {
+                const response = await axios.post(
+                    '/chat/conversations',
+                    appendCsrfToken(
+                        {
+                            receiver_id: selectedParticipant.id,
+                            content,
+                        },
+                        csrfToken,
+                    ),
+                );
 
-            onConversationCreated(response.data);
-            setIsSubmitting(false);
-            resetForm();
-            onClose();
-            return;
-        } catch (submitError: unknown) {
-            const message = axios.isAxiosError(submitError)
-                ? submitError.response?.data?.message ?? submitError.message ?? 'Không thể tạo cuộc trò chuyện.'
-                : 'Không thể tạo cuộc trò chuyện.';
+                onConversationCreated(response.data);
+                setIsSubmitting(false);
+                resetForm();
+                onClose();
+                return;
+            } catch (submitError: unknown) {
+                const message = axios.isAxiosError(submitError)
+                    ? (submitError.response?.data?.message ?? submitError.message ?? 'Không thể tạo cuộc trò chuyện.')
+                    : 'Không thể tạo cuộc trò chuyện.';
 
-            setError(message);
-            setIsSubmitting(false);
-        }
-    }, [csrfToken, message, onClose, onConversationCreated, resetForm, selectedParticipant]);
+                setError(message);
+                setIsSubmitting(false);
+            }
+        },
+        [csrfToken, message, onClose, onConversationCreated, resetForm, selectedParticipant],
+    );
 
     const handleResultSelect = useCallback((participant: ParticipantSummary) => {
         setSelectedParticipant(participant);
@@ -223,7 +225,7 @@ const CreateConversationModal: React.FC<CreateConversationModalProps> = ({ isOpe
                     <li key={participant.id}>
                         <button
                             type="button"
-                            className={`chat-modal-result${selectedParticipant?.id === participant.id ? ' chat-modal-result--active' : ''}`}
+                            className={`chat-modal-result${selectedParticipant?.id === participant.id ? 'chat-modal-result--active' : ''}`}
                             onClick={() => handleResultSelect(participant)}
                             disabled={isSubmitting}
                         >

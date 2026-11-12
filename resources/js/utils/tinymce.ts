@@ -1,17 +1,32 @@
 // TinyMCE configuration utilities
 export const TINYMCE_CONFIG = {
     apiKey: import.meta.env.VITE_TINYMCE_API_KEY || 'heeh2pj7evemt40df5dci2t5g8skk80ddh4a0jrlimns9tv5',
-    
+
     // Default editor configuration
     getDefaultConfig: (height: number = 150) => ({
         height,
         menubar: false,
         plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            'advlist',
+            'autolink',
+            'lists',
+            'link',
+            'image',
+            'charmap',
+            'preview',
+            'anchor',
+            'searchreplace',
+            'visualblocks',
+            'code',
+            'fullscreen',
+            'insertdatetime',
+            'media',
+            'table',
+            'help',
+            'wordcount',
         ],
-        toolbar: 'undo redo | blocks | ' +
+        toolbar:
+            'undo redo | blocks | ' +
             'bold italic underline | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | code | help',
@@ -29,7 +44,7 @@ export const TINYMCE_CONFIG = {
             { title: 'Example 1', inline: 'span', classes: 'example1' },
             { title: 'Example 2', inline: 'span', classes: 'example2' },
             { title: 'Table styles' },
-            { title: 'Table row 1', selector: 'tr', classes: 'tablerow1' }
-        ]
-    })
+            { title: 'Table row 1', selector: 'tr', classes: 'tablerow1' },
+        ],
+    }),
 };

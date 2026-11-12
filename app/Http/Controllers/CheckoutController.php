@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\AdministrativeDivision;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Promotion;
@@ -28,7 +29,7 @@ class CheckoutController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             abort(403);
         }
 
@@ -149,21 +150,21 @@ class CheckoutController extends Controller
     public function store(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             abort(403);
         }
 
         $locale = app()->getLocale();
 
         $data = $request->validate([
-            'provider' => ['required', 'string', Rule::in(['stripe', 'paypal', 'vnpay', 'momo'])],
+            'provider' => ['required', 'string', Rule::in(['stripe', 'cod'])],
             'address_id' => ['required', 'integer', 'exists:user_addresses,id'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $address = $user->addresses()->where('id', $data['address_id'])->first();
 
-        if (!$address) {
+        if (! $address) {
             return response()->json([
                 'success' => false,
                 'message' => 'The selected address is not available.',
@@ -221,7 +222,7 @@ class CheckoutController extends Controller
                 'exchange_rate' => 1,
                 'total_amount_base' => $totalAmount,
                 'status' => OrderStatus::PENDING_CONFIRMATION,
-                'payment_method' => 3,
+                'payment_method' => $data['provider'] === 'cod' ? 1 : 3,
                 'payment_status' => PaymentStatus::UNPAID,
                 'shipping_address_id' => $address->id,
                 'notes' => isset($data['notes']) ? trim($data['notes']) : null,
@@ -332,7 +333,7 @@ class CheckoutController extends Controller
      */
     private function generateOrderNumber(): string
     {
-        return 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        return 'ORD-'.date('Ymd').'-'.strtoupper(substr(uniqid(), -6));
     }
 
     private function buildAddressPayload(User $user): array
@@ -363,7 +364,7 @@ class CheckoutController extends Controller
 
     private function calculatePromotionDiscount($promotion, float $subtotal): float
     {
-        if (!$promotion || $subtotal <= 0) {
+        if (! $promotion || $subtotal <= 0) {
             return 0.0;
         }
 
@@ -393,12 +394,12 @@ class CheckoutController extends Controller
     {
         $user = Auth::user();
         $locale = app()->getLocale();
-        
+
         // Get cart items or order items based on checkout type
         $isBuyNow = $request->has('order_id');
         $subtotal = 0;
         $cartItems = collect();
-        
+
         if ($isBuyNow) {
             $order = Order::with('items.variant.product')->findOrFail($request->order_id);
             if ($order->customer_id !== $user->id) {
@@ -422,11 +423,11 @@ class CheckoutController extends Controller
             ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('start_date')
-                      ->orWhere('start_date', '<=', now());
+                    ->orWhere('start_date', '<=', now());
             })
             ->where(function ($query) {
                 $query->whereNull('end_date')
-                      ->orWhere('end_date', '>=', now());
+                    ->orWhere('end_date', '>=', now());
             })
             ->orderBy('priority', 'desc')
             ->get();
@@ -436,7 +437,7 @@ class CheckoutController extends Controller
 
         foreach ($promotions as $promotion) {
             $isEligible = $this->checkPromotionEligibility($promotion, $user, $subtotal, $cartItems);
-            
+
             $promotionData = [
                 'id' => $promotion->promotion_id,
                 'name' => $promotion->name,
@@ -515,13 +516,13 @@ class CheckoutController extends Controller
         if ($promotion->product_restrictions) {
             $restrictedProductIds = $promotion->product_restrictions;
             $cartProductIds = $cartItems->pluck('variant.product.id')->unique();
-            
+
             // If restriction type is 'include', check if cart has restricted products
             // If restriction type is 'exclude', check if cart has non-restricted products
             // This is a simplified check - you might need more complex logic
-            if (!empty($restrictedProductIds)) {
+            if (! empty($restrictedProductIds)) {
                 $hasEligibleProducts = $cartProductIds->intersect($restrictedProductIds)->isNotEmpty();
-                if (!$hasEligibleProducts) {
+                if (! $hasEligibleProducts) {
                     return false;
                 }
             }
@@ -535,7 +536,7 @@ class CheckoutController extends Controller
      */
     public function getProvinces()
     {
-        $provinces = \App\Models\AdministrativeDivision::where('level', 1)
+        $provinces = AdministrativeDivision::where('level', 1)
             ->orderBy('name->vi')
             ->get(['id', 'name', 'code']);
 
@@ -556,7 +557,7 @@ class CheckoutController extends Controller
      */
     public function getDistricts($provinceId)
     {
-        $districts = \App\Models\AdministrativeDivision::where('parent_id', $provinceId)
+        $districts = AdministrativeDivision::where('parent_id', $provinceId)
             ->where('level', 2)
             ->orderBy('name->vi')
             ->get(['id', 'name', 'code']);
@@ -578,7 +579,7 @@ class CheckoutController extends Controller
      */
     public function getWards($districtId)
     {
-        $wards = \App\Models\AdministrativeDivision::where('parent_id', $districtId)
+        $wards = AdministrativeDivision::where('parent_id', $districtId)
             ->where('level', 3)
             ->orderBy('name->vi')
             ->get(['id', 'name', 'code']);

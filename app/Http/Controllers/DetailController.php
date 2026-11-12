@@ -11,8 +11,8 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Review;
-use App\Models\UserAddress;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Services\CartService;
 use App\Services\InventoryService;
 use App\Services\PaymentService;
@@ -34,8 +34,7 @@ class DetailController extends Controller
     public function __construct(
         private CartService $cartService,
         private InventoryService $inventoryService
-    ) {
-    }
+    ) {}
 
     public function show(Request $request, int $productId): Response
     {
@@ -47,7 +46,7 @@ class DetailController extends Controller
             function () use ($productId, $locale) {
                 $product = $this->buildProductQuery($productId)->first();
 
-                if (!$product) {
+                if (! $product) {
                     abort(404);
                 }
 
@@ -94,7 +93,7 @@ class DetailController extends Controller
     public function addToCart(Request $request, int $productId)
     {
         // Require authentication for Add to Cart
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.',
@@ -122,7 +121,7 @@ class DetailController extends Controller
                 ->whereNull('deleted_at')
                 ->first();
 
-            if (!$variant) {
+            if (! $variant) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Biến thể không hợp lệ.',
@@ -171,7 +170,7 @@ class DetailController extends Controller
         ]);
 
         // Require authentication for Buy Now
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Vui lòng đăng nhập để tiếp tục mua hàng.',
@@ -192,7 +191,7 @@ class DetailController extends Controller
                 }),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
-            'provider' => ['nullable', 'string', 'in:stripe,paypal,vnpay,momo'],
+            'provider' => ['nullable', 'string', 'in:stripe,cod'],
         ]);
 
         try {
@@ -202,7 +201,7 @@ class DetailController extends Controller
                 ->whereNull('deleted_at')
                 ->first();
 
-            if (!$variant) {
+            if (! $variant) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Biến thể không hợp lệ.',
@@ -228,7 +227,7 @@ class DetailController extends Controller
 
                 $order = Order::create([
                     'customer_id' => $user->id,
-                    'order_number' => 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                    'order_number' => 'ORD-'.date('Ymd').'-'.strtoupper(substr(uniqid(), -6)),
                     'sub_total' => $subtotal,
                     'shipping_fee' => $shippingFee,
                     'discount_amount' => 0,
@@ -318,7 +317,7 @@ class DetailController extends Controller
 
         $product = $query->first();
 
-        if (!$product) {
+        if (! $product) {
             abort(404);
         }
 
@@ -355,14 +354,14 @@ class DetailController extends Controller
                 'reserved_quantity' => (int) ($variant->reserved_quantity ?? 0),
                 'attribute_values' => $attributeValues,
             ];
-    })->values();
+        })->values();
 
         $attributes = [];
         foreach ($variants as $variant) {
             foreach ($variant['attribute_values'] as $attributeValue) {
                 $attributeId = $attributeValue['attribute_id'];
 
-                if (!isset($attributes[$attributeId])) {
+                if (! isset($attributes[$attributeId])) {
                     $attributes[$attributeId] = [
                         'attribute_id' => $attributeId,
                         'name' => $attributeValue['attribute_name'],
@@ -370,7 +369,7 @@ class DetailController extends Controller
                     ];
                 }
 
-                if (!isset($attributes[$attributeId]['values'][$attributeValue['attribute_value_id']])) {
+                if (! isset($attributes[$attributeId]['values'][$attributeValue['attribute_value_id']])) {
                     $attributes[$attributeId]['values'][$attributeValue['attribute_value_id']] = [
                         'attribute_value_id' => $attributeValue['attribute_value_id'],
                         'value' => $attributeValue['value'],
@@ -381,6 +380,7 @@ class DetailController extends Controller
 
         $attributes = array_map(function (array $attribute) {
             $attribute['values'] = array_values($attribute['values']);
+
             return $attribute;
         }, $attributes);
 
@@ -611,7 +611,7 @@ class DetailController extends Controller
     public function showBuyNowCheckout(int $orderId)
     {
         $user = Auth::user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             abort(403);
         }
 
@@ -646,7 +646,7 @@ class DetailController extends Controller
                     'quantity' => (int) $item->quantity,
                     'unit_price' => Localization::resolveNumber($item->unit_price, $locale),
                     'total_price' => Localization::resolveNumber($item->total_price, $locale),
-                    'image' => $imagePath ? '/storage/' . ltrim($imagePath, '/') : null,
+                    'image' => $imagePath ? '/storage/'.ltrim($imagePath, '/') : null,
                 ];
             }),
             'totals' => [
@@ -663,13 +663,13 @@ class DetailController extends Controller
     public function processBuyNowCheckout(Request $request, int $orderId)
     {
         $user = Auth::user();
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             abort(403);
         }
-        
+
         // Validate request
         $data = $request->validate([
-            'provider' => ['required', 'string', 'in:stripe,paypal,vnpay,momo'],
+            'provider' => ['required', 'string', 'in:stripe,cod'],
             'address_id' => ['nullable', 'exists:user_addresses,id'],
         ]);
 
@@ -679,8 +679,11 @@ class DetailController extends Controller
             ->where('status', OrderStatus::PENDING_CONFIRMATION)
             ->firstOrFail();
 
+        // Keep the order's payment method in sync with the selected provider (1 = COD, 3 = online).
+        $order->update(['payment_method' => $data['provider'] === 'cod' ? 1 : 3]);
+
         // Update shipping address if provided, otherwise use default
-        if (!empty($data['address_id'])) {
+        if (! empty($data['address_id'])) {
             $address = UserAddress::where('id', $data['address_id'])
                 ->where('user_id', $user->id)
                 ->firstOrFail();

@@ -47,7 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Exclude CSRF for Buy Now routes and login
-        $middleware->validateCsrfTokens(except: [
+        // Laravel 13: validateCsrfTokens() được thay bằng preventRequestForgery()
+        $middleware->preventRequestForgery(except: [
             'product/*/buy-now',
             'buy-now/checkout/*',
             'login',

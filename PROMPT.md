@@ -20,18 +20,21 @@ This file contains the global prompt and one prompt block per screen for Google 
 ```text
 You are designing ShopNest, a Vietnamese multi-role e-commerce product, using the "Nếp" design system.
 
-ShopNest has four roles: Customer, Seller, Admin, and Shipper. The product is warm, trustworthy, and highly usable. It should feel like a Vietnamese market reinterpreted as an editorial storefront and a precise back-office ledger. Avoid generic SaaS, neon gradients, glassmorphism, and template-like e-commerce layouts.
+ShopNest has four roles: Customer, Seller, Admin, and Shipper. It is a curated Vietnamese marketplace for the home and everyday life: broad by category but selective by seller. The launch catalog is organized around six anchor categories: Electronics & Technology, Home Appliances & Kitchen, Home & Living, Mother & Baby, Fashion & Accessories, and Beauty & Personal Care. It should feel like a Vietnamese market reinterpreted as an editorial storefront and a precise back-office ledger, not a single-category craft boutique. Avoid generic SaaS, neon gradients, glassmorphism, and template-like e-commerce layouts.
 
 VISUAL MODES
-- Storefront and Auth: editorial, airy, asymmetric. Fraunces for display headings, Be Vietnam Pro for body and UI, JetBrains Mono for prices and order codes.
+- Storefront and Auth: editorial, airy, asymmetric. Fraunces for hero and campaign headings only; Be Vietnam Pro for product, search, category, cart, checkout, and account headings; JetBrains Mono for prices and order codes.
 - Customer account: Be Vietnam Pro only. Calm, practical, no serif.
 - Seller, Admin, Shipper workspaces: Be Vietnam Pro for headings and UI, JetBrains Mono for numbers. Serif is forbidden in dashboards.
+
+CATALOG
+The homepage must read as a multi-category marketplace. Show at least four anchor categories above the fold, with search as the primary discovery surface. Category tiles are warm-neutral, not rainbow-colored. Use a "Shop Việt" badge or filter where relevant. Do not turn the storefront into a pottery, handicraft, or food-only boutique.
 
 PALETTE
 Rice Paper #F6F1E6 (canvas), Warm Porcelain #FFFCF4 (surface), Raw Linen #EDE4D3 (sidebar/muted band), Ink #1D1B17 (text), Ink Muted #6B6458 (secondary text), Ink Faint #9A8F7F (metadata), Border #DCD1BE (1px lines), Lacquer Red #B23A2F (the only UI accent), Lacquer Deep #8C2A22 (hover), Lacquer Wash #F2DCD5 (active background), Jade #2F6B57 (success), Turmeric #8A5A1A (warning), Brick #8B2A24 (danger). Logo Blue #4991D8 appears only inside the existing ShopNest logo and never as a UI accent.
 
 TYPE
-Fraunces for Storefront/Auth display only; Be Vietnam Pro for all body/UI; JetBrains Mono for prices, SKUs, order codes, timestamps, and dashboard numbers. Do not use Inter, Poppins, Montserrat, generic system serifs, or more than one icon family. Use Lucide icons with 1.75px stroke.
+Fraunces for Storefront hero/campaign and Auth display only; Be Vietnam Pro for all body/UI and for search, category, product, cart, checkout, and account headings; JetBrains Mono for prices, SKUs, order codes, timestamps, and dashboard numbers. Do not use Inter, Poppins, Montserrat, generic system serifs, or more than one icon family. Use Lucide icons with 1.75px stroke.
 
 LAYOUT
 Storefront max width 1440px, 12-column grid, asymmetric 7/5 splits for hero, product detail, and checkout. Workspace uses a 240px Raw Linen sidebar, 64px top bar, and 12-column content grid. Mobile below 768px is a single column with 16px padding and 44px minimum touch targets. No horizontal overflow. No overlapping elements. No centered hero. No three equal feature cards. KPI strips may use equal data cards, but marketing sections must be asymmetric.
@@ -43,7 +46,7 @@ MOTION
 Design for spring physics, stiffness 100, damping 20. Hover 150–180ms, press 90ms, section reveal 240–320ms. Stagger lists at 40ms. Use shimmer skeletons, not circular spinners. Respect reduced motion.
 
 CONTENT
-Use the exact Vietnamese copy provided in each screen brief. Use "Bạn" for customers. Prices use dot separators and đồng: 1.290.000 ₫. Dates use dd/MM/yyyy. Order codes look like #SN-24817. No emojis. No AI clichés such as "Elevate", "Seamless", "Unleash", or "Next-Gen". No generic names such as "John Doe" or "Acme". No fake round metrics such as 99.99%.
+Use the exact Vietnamese copy provided in each screen brief. Use "Bạn" for customers. Prices use dot separators and đồng: 14.990.000 ₫. Dates use dd/MM/yyyy. Order codes look like #SN-24817. Product examples should span the six categories: laptop, headphones, air fryer, stroller, diaper, T-shirt, serum. Do not use a single-category artisanal catalog. No emojis. No AI clichés such as "Elevate", "Seamless", "Unleash", or "Next-Gen". No generic names such as "John Doe" or "Acme". No fake round metrics such as 99.99%.
 
 OUTPUT
 Generate a static screen with a clear visual hierarchy, one primary action, realistic Vietnamese content, and explicit states. Do not invent navigation, metrics, or features that are not in the screen brief. Do not add extra tabs or cards to fill space.
@@ -201,23 +204,24 @@ CONSTRAINTS: No emojis. One primary action. Keep copy short.
 SCREEN: S01 Home
 VIEWPORTS: desktop 1440x1024; mobile 390x844
 ROLE: Customer / guest
-GOAL: Make the market feel warm, curated, and easy to browse; lead to product discovery.
+GOAL: Make ShopNest feel like a broad, curated Vietnamese marketplace; help discovery through search or category, then lead to product shelves.
 
-LAYOUT: 12-column grid. Asymmetric hero 7/5. Below: category shelf, flash sale, best sellers, suggested products, trust strip, footer. No centered hero.
+LAYOUT: 12-column grid. Search-first header. Asymmetric hero 7/5. Below: utility strip, six category tiles, flash sale, best sellers, suggested products, trust strip, footer. No centered hero.
 
 SECTIONS:
-- Top bar: logo, search "Tìm món đồ cho tổ ấm...", links "Danh mục", "Khuyến mãi", "Đơn hàng", language "VI", currency "VND", account, cart with count.
-- Hero: eyebrow "Đồ cho tổ ấm"; headline "Chọn [ảnh bát gốm] đồ thật kỹ, [ảnh bàn ăn] sống thật êm."; subcopy "Đồ thủ công, đồ dùng mỗi ngày và món ngon từ các shop nhỏ Việt Nam."; primary CTA "Xem chợ hôm nay". Right side: 2-row bento of still-life images, each in its own cell, no overlap.
-- Trust strip: "Shop được duyệt", "Giao hàng toàn quốc", "Đổi trả trong 7 ngày", "Thanh toán bảo mật" as four inline facts with dividers, not floating cards.
-- Danh mục: horizontal shelf with "Gốm sứ", "Dệt may", "Cà phê", "Trang trí", "Nhà bếp", "Quà tặng".
-- Flash sale: asymmetric 2-column module with a countdown and a horizontal product rail; product cards: "Ấm tử sa Bàu Trúc" 1.280.000 ₫, "Khăn lụa Mỹ A" 690.000 ₫, "Đèn lồng Hội An" 420.000 ₫.
-- Best sellers: 4-up product shelf, not three equal cards. Include shop names and ratings.
-- Suggested: 4-up shelf with a "Xem tất cả" text link.
+- Top bar: logo, search "Tìm laptop, nồi chiên, xe đẩy...", links "Danh mục", "Khuyến mãi", "Shop Việt", "Đơn hàng", language "VI", currency "VND", account, cart with count.
+- Hero: eyebrow "Mọi thứ cho tổ ấm Việt"; headline "Chọn [ảnh laptop] đồ thật kỹ, [ảnh bàn ăn] sống thật êm."; subcopy "Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."; primary CTA "Xem chợ hôm nay". Right side: 2-row bento of category-spanning still-life images, each in its own cell: laptop, nồi chiên, xe đẩy, áo thun.
+- Utility strip: "Freeship đơn từ 299.000 ₫", "Trả góp 0%", "Shop Việt", "Giao nhanh 2h" as four inline facts with dividers, not floating cards.
+- Danh mục: six category tiles "Điện tử & công nghệ", "Gia dụng & nhà bếp", "Nhà cửa & trang trí", "Mẹ & bé", "Thời trang & phụ kiện", "Làm đẹp & chăm sóc". Each tile has a simple image or Lucide icon, not a rainbow color.
+- Flash sale: asymmetric 2-column module with a countdown and a horizontal product rail; product cards: "Laptop ASUS Vivobook 14" 14.990.000 ₫, "Tai nghe Sony WH-CH720N" 2.490.000 ₫, "Nồi chiên không dầu 5L" 1.890.000 ₫.
+- Best sellers: 4-up product shelf, not three equal cards. Include shop names and ratings. Example: laptop from TechNest, nồi chiên from Bếp Nhà Mình, xe đẩy from Mẹ & Bé An Nhiên, serum from Lá Beauty.
+- Suggested: 4-up shelf with a "Xem tất cả" text link. Example: áo thun, bỉm quần, tai nghe, đèn bàn.
+- Trust strip: "Shop đã kiểm duyệt", "Đổi trả 7 ngày", "Giao toàn quốc", "Thanh toán bảo mật".
 - Footer: 4 columns, newsletter field "Nhận chuyện chợ mỗi tuần", legal links, payment marks.
 
 STATES: logged-out and logged-in header; empty promotion state; loading shelf state.
 
-CONSTRAINTS: Follow DESIGN.md. Use Fraunces only for display. No emojis. No scroll arrows. No centered hero. No three equal feature cards.
+CONSTRAINTS: Follow DESIGN.md. Multi-category marketplace, not a pottery boutique. Fraunces only for the hero/campaign headline. No emojis. No scroll arrows. No centered hero. No three equal feature cards.
 ```
 
 ### S02 — Search and catalog
@@ -226,21 +230,23 @@ CONSTRAINTS: Follow DESIGN.md. Use Fraunces only for display. No emojis. No scro
 SCREEN: S02 Search and catalog
 VIEWPORTS: desktop 1440x1024; mobile 390x844
 ROLE: Customer
-GOAL: Narrow a large catalog quickly and confidently.
+GOAL: Narrow a broad multi-category catalog quickly and confidently.
 
 LAYOUT: Desktop: 280px filter rail left, results 8 columns right, 3-up product grid. Mobile: search bar, horizontal filter chips, 2-up product grid, filter bottom sheet.
 
 SECTIONS:
-- Header: search field with query "gốm", result count "128 món", sort select "Phù hợp nhất".
-- Filters: Danh mục, Khoảng giá (min/max), Shop, Đánh giá, Tình trạng, Màu sắc. Checkboxes and chips, no heavy cards.
-- Active filter chips with clear "Xoá tất cả".
-- Product grid: 4:5 images, product name, shop, price, rating. Example: "Bát gốm Bát Tràng men rạn" 189.000 ₫, "Ấm tử sa Bàu Trúc" 1.280.000 ₫, "Giỏ mây Đồng Tháp" 265.000 ₫.
+- Header: search field with query "laptop", result count "1.248 món", sort select "Phù hợp nhất".
+- Filters: Danh mục, Thương hiệu, Khoảng giá (min/max), Đánh giá, Nơi bán, Freeship, Tình trạng. Checkboxes and chips, no heavy cards.
+- Active filter chips: "Điện tử & công nghệ", "ASUS", "Dưới 15 triệu" with "Xoá tất cả".
+- Category quick-switch row: "Điện tử", "Gia dụng", "Nhà cửa", "Mẹ & bé", "Thời trang", "Làm đẹp"; current category selected.
+- Product grid: 4:5 images, product name, shop, price, rating. Example: "Laptop ASUS Vivobook 14" 14.990.000 ₫ from TechNest, "Laptop Dell Inspiron 14" 16.490.000 ₫ from Laptop24h, "Laptop Lenovo IdeaPad Slim 5" 15.290.000 ₫ from Máy Tính Việt, "MacBook Air M2 13 inch" 22.990.000 ₫ from TechNest.
+- Product card metadata: "i5 · 16GB · 512GB", "Bảo hành 24 tháng", "Shop Việt" badge.
 - Empty state: "Không tìm thấy món phù hợp. Thử một từ khoá khác." plus "Xoá bộ lọc".
-- Pagination: "Hiển thị 1–24 trong 128" with previous/next.
+- Pagination: "Hiển thị 1–24 trong 1.248" with previous/next.
 
-STATES: loading skeleton grid, no results, filter sheet open, mobile sort sheet.
+STATES: loading skeleton grid, no results, filter sheet open, mobile sort sheet, category switch loading.
 
-CONSTRAINTS: No card soup. Filter rail uses border-top dividers. No emojis.
+CONSTRAINTS: No card soup. Filter rail uses border-top dividers. No emojis. Do not turn the results into a single-category craft grid.
 ```
 
 ### S03 — Product detail
@@ -249,21 +255,21 @@ CONSTRAINTS: No card soup. Filter rail uses border-top dividers. No emojis.
 SCREEN: S03 Product detail
 VIEWPORTS: desktop 1440x1024; mobile 390x844
 ROLE: Customer
-GOAL: Help the shopper decide within 30 seconds and add to cart with confidence.
+GOAL: Help the shopper decide within 30 seconds and add to cart with confidence, using category-specific facts.
 
-LAYOUT: 12-column grid. Gallery 7 columns; sticky buy box 5 columns. Below: description, specifications, reviews, related products. Mobile stacks with a sticky bottom action bar.
+LAYOUT: 12-column grid. Gallery 7 columns; sticky buy box 5 columns. Below: description, specification table, reviews, related products. Mobile stacks with a sticky bottom action bar.
 
 SECTIONS:
-- Breadcrumb: "Chợ / Gốm sứ / Bát gốm Bát Tràng".
+- Breadcrumb: "Chợ / Điện tử & công nghệ / Laptop ASUS Vivobook 14".
 - Gallery: one large 4:5 image, 4 thumbnails below. No carousel arrows.
-- Buy box: shop "Gốm Bát Tràng An Nhiên" with verified badge; title "Bát gốm Bát Tràng men rạn"; rating "4,8/5 · 126 đánh giá"; price "189.000 ₫" and compare-at "240.000 ₫" if applicable; variant chips "Men rạn", "Men lam", "Men nâu"; quantity stepper; primary "Thêm vào giỏ"; secondary "Mua ngay"; delivery note "Giao trong 2–4 ngày tại TP.HCM"; trust notes "Đổi trả 7 ngày", "Shop đã duyệt".
-- Description: short editorial paragraph, max 65ch; materials and dimensions in a clean spec table.
+- Buy box: shop "TechNest" with "Shop Việt" and verified badges; title "Laptop ASUS Vivobook 14"; rating "4,8/5 · 126 đánh giá"; price "14.990.000 ₫" and compare-at "16.490.000 ₫"; variant chips "i5 · 16GB · 512GB", "i7 · 16GB · 512GB", "Ryzen 7 · 16GB · 1TB"; quantity stepper; primary "Thêm vào giỏ"; secondary "Mua ngay"; delivery note "Giao trong 2–4 ngày tại TP.HCM"; trust notes "Bảo hành 24 tháng", "Đổi trả 7 ngày", "Shop đã kiểm duyệt".
+- Description: short editorial paragraph, max 65ch; then a clean spec table with "CPU", "RAM", "Lưu trữ", "Màn hình", "Đồ họa", "Bảo hành". Use Vietnamese labels.
 - Reviews: rating summary, 3 review rows with Vietnamese names and dates, "Xem tất cả đánh giá".
-- Related: 4-up shelf.
+- Related: 4-up shelf with other laptops and accessories, not pottery.
 
-STATES: selected variant, out-of-stock variant, added-to-cart toast, image zoom.
+STATES: selected variant, out-of-stock variant, added-to-cart toast, image zoom, installment note.
 
-CONSTRAINTS: Sticky buy box must not overlap gallery. No emojis. No fake urgency countdown here.
+CONSTRAINTS: Sticky buy box must not overlap gallery. No emojis. No fake urgency countdown here. Use category-specific metadata, not generic craft copy.
 ```
 
 ### S04 — Cart
@@ -277,16 +283,16 @@ GOAL: Review the basket and move to checkout with clear totals.
 LAYOUT: Desktop 8/4 split: line-item ledger 8 columns, sticky summary 4 columns. Mobile: stacked line items, sticky summary bar at bottom.
 
 SECTIONS:
-- Header: "Giỏ hàng" (Fraunces), count "3 món".
-- Line items: image 80x100, product name, shop, variant, quantity stepper, price, remove icon. Example: "Bát gốm Bát Tràng men rạn", "Men rạn", 189.000 ₫.
+- Header: "Giỏ hàng" (Be Vietnam Pro, no serif), count "3 món".
+- Line items: image 80x100, product name, shop, variant, quantity stepper, price, remove icon. Examples: "Laptop ASUS Vivobook 14", "i5 · 16GB · 512GB", 14.990.000 ₫ from TechNest; "Tai nghe Sony WH-CH720N", "Đen", 2.490.000 ₫ from TechNest; "Bỉm quần size L", "Gói 60 miếng", 289.000 ₫ from Mẹ & Bé An Nhiên.
 - Promotion: input "Mã khuyến mãi" with "Áp dụng".
 - Summary: "Tạm tính", "Giảm giá", "Phí vận chuyển" ("Tính ở bước sau"), "Tổng cộng" in JetBrains Mono; primary "Thanh toán".
-- Trust line: "Đổi trả 7 ngày · Thanh toán bảo mật".
+- Trust line: "Shop Việt · Đổi trả 7 ngày · Thanh toán bảo mật".
 - Empty state: composed illustration, "Giỏ đang trống. Chọn một món cho tổ ấm nhé.", CTA "Xem chợ hôm nay".
 
 STATES: empty, updating quantity, invalid promo, remove confirmation.
 
-CONSTRAINTS: One primary CTA. No card around every line item. No emojis.
+CONSTRAINTS: One primary CTA. No card around every line item. No emojis. Use a multi-category basket, not a craft-only cart.
 ```
 
 ---
@@ -308,7 +314,8 @@ SECTIONS:
 - Delivery: saved address cards or address form; fields "Họ tên", "Số điện thoại", "Tỉnh/Thành phố", "Quận/Huyện", "Phường/Xã", "Địa chỉ cụ thể"; checkbox "Dùng làm địa chỉ mặc định".
 - Shipping: "Giao tiêu chuẩn 2–4 ngày" selected; "Giao nhanh 1–2 ngày" optional.
 - Payment: two selectable rows: "Stripe — Thẻ quốc tế" with card marks, and "COD — Thanh toán khi nhận hàng". Selected row uses Lacquer Wash and a Lacquer Red border.
-- Order summary: line items, promotion input, totals in JetBrains Mono; primary "Đặt hàng".
+- Order summary: line items "Laptop ASUS Vivobook 14" 14.990.000 ₫ and "Tai nghe Sony WH-CH720N" 2.490.000 ₫, promotion input, totals in JetBrains Mono; primary "Đặt hàng".
+- Trust line: "Shop Việt · Đổi trả 7 ngày · Thanh toán bảo mật".
 - Legal line: "Bằng cách đặt hàng, bạn đồng ý với Điều khoản và Chính sách bảo mật."
 
 STATES: no saved address, invalid address, payment processing, COD confirmation.
@@ -330,7 +337,7 @@ SECTIONS:
 - Success: Jade check icon, "Đơn hàng đã được đặt", order code "#SN-24817", line "Shop sẽ xác nhận trong ít phút.", primary "Theo dõi đơn", secondary "Tiếp tục mua sắm".
 - Pending: Turmeric clock icon, "Đang chờ thanh toán", line "Chúng tôi sẽ cập nhật khi Stripe xác nhận.", primary "Xem đơn hàng".
 - Failure: Brick alert icon, "Thanh toán chưa hoàn tất", line "Đơn hàng vẫn được giữ trong 15 phút.", primary "Thử thanh toán lại", secondary "Chọn cách khác".
-- Summary: order items, delivery address, payment method, totals in JetBrains Mono.
+- Summary: order items "Laptop ASUS Vivobook 14" 14.990.000 ₫ and "Tai nghe Sony WH-CH720N" 2.490.000 ₫, delivery address, payment method, totals in JetBrains Mono.
 
 STATES: success, pending, failed, COD confirmed.
 
@@ -353,7 +360,7 @@ LAYOUT: Customer account shell: top bar plus 220px account tabs on desktop; hori
 
 SECTIONS:
 - Account header: "Đơn hàng của bạn" (Be Vietnam Pro, no serif), count and filter chips "Tất cả", "Chờ xác nhận", "Đang giao", "Hoàn thành", "Đã huỷ".
-- Order rows: order code, date, item thumbnails, item count, total, status chip, action "Xem chi tiết". Example "#SN-24817", 12/11/2026, "Bát gốm Bát Tràng men rạn" + 1 món, 189.000 ₫, "Đang giao".
+- Order rows: order code, date, item thumbnails, item count, total, status chip, action "Xem chi tiết". Example "#SN-24817", 12/11/2026, "Laptop ASUS Vivobook 14" + 2 món, 17.480.000 ₫, "Đang giao".
 - Empty state: "Chưa có đơn nào. Món đầu tiên đang chờ bạn." CTA "Xem chợ hôm nay".
 - Pagination.
 
@@ -375,11 +382,11 @@ LAYOUT: Desktop 8/4: main order content 8 columns, sticky action panel 4 columns
 SECTIONS:
 - Header: "#SN-24817" in JetBrains Mono, status chip "Đang giao", date.
 - Timeline: "Đã đặt", "Shop xác nhận", "Đã giao cho đơn vị vận chuyển", "Đang giao", "Đã nhận" with current step in Lacquer Red. Use vertical line and compact spacing.
-- Items: product image, name, variant, quantity, price.
+- Items: "Laptop ASUS Vivobook 14", "i5 · 16GB · 512GB", 1 × 14.990.000 ₫ from TechNest; "Tai nghe Sony WH-CH720N", "Đen", 1 × 2.490.000 ₫ from TechNest. Total 17.480.000 ₫.
 - Delivery: recipient, phone, address, shipping method, tracking code.
 - Payment: "Stripe" or "COD", payment status.
 - Actions: primary "Theo dõi đơn", secondary "Tải hoá đơn", quiet links "Yêu cầu trả hàng", "Đánh giá sản phẩm", "Mua lại".
-- Support: small link "Cần hỗ trợ? Chat với shop".
+- Support: small link "Cần hỗ trợ? Chat với TechNest".
 
 STATES: cancelled, delivered, return requested, review available.
 
@@ -486,7 +493,7 @@ SECTIONS:
 - Header: "Thông báo" with unread count, action "Đánh dấu tất cả đã đọc".
 - Filters: "Tất cả", "Đơn hàng", "Khuyến mãi", "Hệ thống".
 - Rows: status dot, title, one-line body, time, action link. Unread rows use Warm Porcelain; read rows use Rice Paper.
-- Examples: "Đơn #SN-24817 đang giao", "Shop Gốm Bát Tràng An Nhiên vừa trả lời bạn", "Ưu đãi 12% cho đồ gốm".
+- Examples: "Đơn #SN-24817 đang giao", "Shop TechNest vừa trả lời bạn", "Ưu đãi 12% cho laptop".
 - Empty state: "Chưa có thông báo. Những cập nhật mới sẽ xuất hiện ở đây."
 
 STATES: unread, read, empty, loading rows.
@@ -532,12 +539,12 @@ LAYOUT: 240px Raw Linen sidebar, 64px top bar, 12-column content. KPI strip of 4
 
 SECTIONS:
 - Sidebar: Tổng quan, Sản phẩm, Đơn hàng, Khuyến mãi, Ví, Shop. Active "Tổng quan" with Lacquer Wash and a 3px left bar. Role badge "Người bán".
-- Top bar: shop name "Nhà Gỗ Sài Gòn", search, notifications, avatar.
+- Top bar: shop name "TechNest", search, notifications, avatar.
 - KPIs: "Doanh thu tháng" 128.460.000 ₫, "Đơn hàng" 247, "Sản phẩm đang bán" 86, "Sắp hết hàng" 12. Numbers in JetBrains Mono.
 - Revenue chart: last 30 days, Lacquer Red line, no gradient; filter "30 ngày".
-- Top products: 4 rows with thumbnail, name, sold count, revenue.
-- Recent orders: table with order code, customer, total, status, date. Example "#SN-24817", "Nguyễn Thu Hà", 1.290.000 ₫, "Đang giao", 12/11/2026.
-- Low stock: list with variant, stock, action "Nhập hàng".
+- Top products: 4 rows with thumbnail, name, sold count, revenue: "Laptop ASUS Vivobook 14" 42 sold, "Tai nghe Sony WH-CH720N" 86 sold, "Chuột Logitech MX Master 3S" 31 sold, "Bàn phím Keychron K2" 24 sold.
+- Recent orders: table with order code, customer, total, status, date. Example "#SN-24817", "Nguyễn Thu Hà", 17.480.000 ₫, "Đang giao", 12/11/2026.
+- Low stock: list with variant, stock, action "Nhập hàng": "Laptop ASUS Vivobook 14 · i5/16GB/512GB" stock 4; "Tai nghe Sony WH-CH720N" stock 7.
 
 STATES: empty shop, loading chart, no orders.
 
@@ -558,7 +565,7 @@ SECTIONS:
 - Header: "Sản phẩm", count, primary "Thêm sản phẩm".
 - Filters: search, category, status, stock status; "Bộ lọc" button.
 - Table columns: checkbox, product (thumbnail + name + SKU), category, price, stock, status, updated, actions.
-- Rows: "Bát gốm Bát Tràng men rạn", SKU "GOM-BT-018", 189.000 ₫, 42, "Đang bán"; "Khăn lụa Mỹ A", SKU "LUA-MA-006", 690.000 ₫, 8, "Sắp hết".
+- Rows: "Laptop ASUS Vivobook 14", SKU "LAP-AS-014", 14.990.000 ₫, 42, "Đang bán"; "Tai nghe Sony WH-CH720N", SKU "AUD-SN-021", 2.490.000 ₫, 8, "Sắp hết"; "Chuột Logitech MX Master 3S", SKU "MOU-LG-003", 2.190.000 ₫, 36, "Đang bán".
 - Bulk bar: "Đã chọn 3 sản phẩm", "Cập nhật trạng thái", "Xoá".
 - Pagination.
 
@@ -580,14 +587,15 @@ LAYOUT: Two-column form: main content 8 columns, sticky publish panel 4 columns.
 SECTIONS:
 - Header: "Thêm sản phẩm" or "Sửa sản phẩm"; breadcrumb back to products.
 - Main: name VI/EN, slug, category, brand, status, short description, rich-text description.
-- Variants: table with variant name, SKU, price, stock, option values; add-row action.
+- Category-specific attributes panel: for "Điện tử & công nghệ" show CPU, RAM, lưu trữ, màn hình, đồ họa, bảo hành; for "Gia dụng" show công suất, dung tích, bảo hành; for "Mẹ & bé" show độ tuổi, tiêu chuẩn an toàn; for "Thời trang" show chất liệu, size; for "Làm đẹp" show loại da, dung tích. The panel changes by category but keeps the same layout.
+- Variants: table with variant name, SKU, price, stock, option values; add-row action. Example rows: "i5 · 16GB · 512GB", SKU "LAP-AS-014-I5", 14.990.000 ₫, 24; "i7 · 16GB · 512GB", SKU "LAP-AS-014-I7", 18.490.000 ₫, 12.
 - Images: drag-and-drop zone, primary image marker, reorder, remove.
 - Publish panel: status "Nháp/Đang bán/Ẩn", price summary, "Lưu nháp", primary "Lưu và đăng bán".
 - Meta: SEO title, slug, description.
 
-STATES: validation, unsaved changes warning, uploading images, missing variant.
+STATES: validation, unsaved changes warning, uploading images, missing variant, category changed warning.
 
-CONSTRAINTS: No emojis. No giant card around the whole form.
+CONSTRAINTS: No emojis. No giant card around the whole form. Category-specific fields must not turn the form into a different visual system.
 ```
 
 ### V04 — Seller orders list and detail
@@ -694,10 +702,10 @@ LAYOUT: 240px sidebar, 64px top bar, KPI strip, charts/tables. Dense but calm.
 SECTIONS:
 - Sidebar: Tổng quan, Phân tích, Sản phẩm, Đơn hàng, Tồn kho, Khuyến mãi, Người dùng, Shop, Trả hàng, Shipper, Danh mục. Active "Tổng quan".
 - KPIs: "GMV tháng" 4.820.000.000 ₫, "Đơn hàng" 8.412, "Shop chờ duyệt" 17, "Tồn kho thấp" 42.
-- Revenue chart 8 columns; category mix 4 columns.
+- Revenue chart 8 columns; category mix 4 columns with "Điện tử & công nghệ 38,4%", "Gia dụng & nhà bếp 22,1%", "Nhà cửa & trang trí 14,7%", "Mẹ & bé 11,2%", "Thời trang 8,9%", "Làm đẹp 4,7%".
 - "Việc cần xử lý" list: shop approvals, returns, low-stock alerts, flagged reviews.
-- Recent orders table: code, customer, shop, total, status, date.
-- Top shops: table with GMV, orders, rating.
+- Recent orders table: code, customer, shop, total, status, date. Example "#SN-24817", "Nguyễn Thu Hà", "TechNest", 17.480.000 ₫, "Đang giao", 12/11/2026.
+- Top shops: "TechNest" 1.284.000.000 ₫, "Bếp Nhà Mình" 842.000.000 ₫, "Mẹ & Bé An Nhiên" 617.000.000 ₫; columns GMV, orders, rating.
 
 STATES: empty queue, loading charts, error banner.
 
@@ -779,9 +787,9 @@ GOAL: Keep stock healthy across sellers and spot shrinkage.
 LAYOUT: Tabs "Tồn kho", "Báo cáo", "Lịch sử". List uses table; report uses summary cards plus charts; history is a ledger table.
 
 SECTIONS:
-- List: filters seller/category/stock status, table with product, variant, SKU, stock, reserved, status, updated.
-- Report: KPIs "Tổng tồn", "Sắp hết", "Hết hàng", "Tồn lâu"; charts by seller/category; export CSV.
-- History: date, variant, change, reason, user, note.
+- List: filters seller/category/stock status, table with product, variant, SKU, stock, reserved, status, updated. Examples: "Laptop ASUS Vivobook 14", "i5 · 16GB · 512GB", stock 4, "Sắp hết"; "Tai nghe Sony WH-CH720N", "Đen", stock 8, "Sắp hết"; "Nồi chiên không dầu 5L", "5L", stock 26, "Đang bán".
+- Report: KPIs "Tổng tồn", "Sắp hết", "Hết hàng", "Tồn lâu"; charts by seller/category across Điện tử, Gia dụng, Nhà cửa, Mẹ & bé, Thời trang, Làm đẹp; export CSV.
+- History: date, variant, change, reason, user, note. Example "12/11/2026", "LAP-AS-014-I5", "-2", "Bán hàng", "Nguyễn Thu Hà", "#SN-24817".
 - Actions: stock in, stock out, bulk update.
 
 STATES: empty, low-stock filter, export loading.
@@ -904,8 +912,8 @@ GOAL: Keep the catalog taxonomy clean.
 LAYOUT: Two tabs, each with a table and a side form. No card per row.
 
 SECTIONS:
-- Categories: table with name VI/EN, parent, products, status, order; create/edit form with name, slug, parent, image, status.
-- Brands: table with name, logo, products, status; create/edit form.
+- Categories: table with name VI/EN, parent, products, status, order. Examples: "Điện tử & công nghệ" 1.284 sản phẩm, "Gia dụng & nhà bếp" 842, "Nhà cửa & trang trí" 517, "Mẹ & bé" 396, "Thời trang & phụ kiện" 274, "Làm đẹp & chăm sóc" 188. Create/edit form with name, slug, parent, image, status.
+- Brands: table with name, logo, products, status. Examples: ASUS, Sony, Logitech, Philips, Coolmate, La Roche-Posay. Create/edit form.
 - Actions: restore, force delete, reorder.
 
 STATES: empty, archived, restore confirmation.
@@ -1066,4 +1074,4 @@ CONSTRAINTS: No emojis. No dense legal walls; use spacing and hierarchy.
 
 ## End note
 
-For every screen: follow `DESIGN.md`, use the exact Vietnamese copy, keep one accent, one primary action, and one icon family. If Stitch produces a generic e-commerce layout, regenerate with the constraint that the hero must be asymmetric, product shelves must be editorial, and dashboards must be table-led.
+For every screen: follow `DESIGN.md`, use the exact Vietnamese copy, keep one accent, one primary action, and one icon family. The storefront must read as a multi-category marketplace, not a single-category boutique. If Stitch produces a generic e-commerce layout, regenerate with the constraint that the hero must be asymmetric, product shelves must be editorial, search must be prominent, and dashboards must be table-led.

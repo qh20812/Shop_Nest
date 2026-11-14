@@ -1,127 +1,235 @@
-import React from "react";
-import { router } from "@inertiajs/react";
+import { router } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import * as React from 'react';
 
-interface PaginationLink {
-  url: string | null;
-  label: string;
-  active: boolean;
-}
+import { formatNumber } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
-interface PaginationProps {
-  links: PaginationLink[];
-  filters?: Record<string, string | number | boolean | undefined>;
-  preserveState?: boolean;
-  preserveScroll?: boolean;
-}
+type LegacyLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
 
-export default function Pagination({ links, filters = {}, preserveState = true, preserveScroll = true }: PaginationProps) {
-  const handlePageChange = (url: string | null) => {
-    if (url) {
-      // Remove undefined values from filters to clean up the URL
-      const cleanFilters = Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value !== undefined && value !== '')
-      );
+type PaginationProps = {
+    page?: number;
+    pageCount?: number;
+    total?: number;
+    pageSize?: number;
+    onPageChange?: (page: number) => void;
+    links?: LegacyLink[];
+    filters?: Record<string, string | number | boolean | undefined>;
+    preserveState?: boolean;
+    preserveScroll?: boolean;
+    siblingCount?: number;
+    className?: string;
+};
 
-      router.get(url, cleanFilters, {
-        preserveState,
-        preserveScroll,
-      });
+type PageItem = number | 'ellipsis';
+
+function getPageItems(page: number, pageCount: number, siblingCount: number): PageItem[] {
+    if (pageCount <= 1) {
+        return [1];
     }
-  };
 
-  // Không hiển thị pagination nếu chỉ có 1 trang hoặc không có link
-  if (links.length <= 3) {
-    return null;
-  }
+    const start = Math.max(2, page - siblingCount);
+    const end = Math.min(pageCount - 1, page + siblingCount);
+    const items: PageItem[] = [1];
 
-  return (
-    <div
-      style={{
-        marginTop: "24px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: "8px",
-        background: "var(--light)",
-        padding: "16px",
-        borderRadius: "20px"
-      }}
-    >
-      {links.map((link, index) => {
-        // Robust label processing for previous/next buttons
-        let displayLabel = link.label;
-        
-        // Function to check if this is a previous button
-        const isPreviousButton = (label: string): boolean => {
-          const normalizedLabel = label.toLowerCase().replace(/&[a-z]+;/g, ''); // Remove HTML entities
-          return (
-            normalizedLabel.includes('previous') ||
-            normalizedLabel.includes('trước') ||
-            normalizedLabel.includes('pagination.previous') ||
-            label === '&laquo; Previous' ||
-            label === '&laquo; Trước' ||
-            // Fallback: if it's the first link and has no URL (disabled), it's likely previous
-            (index === 0 && !link.url)
-          );
-        };
-        
-        // Function to check if this is a next button
-        const isNextButton = (label: string): boolean => {
-          const normalizedLabel = label.toLowerCase().replace(/&[a-z]+;/g, ''); // Remove HTML entities
-          return (
-            normalizedLabel.includes('next') ||
-            normalizedLabel.includes('sau') ||
-            normalizedLabel.includes('pagination.next') ||
-            label === 'Next &raquo;' ||
-            label === 'Sau &raquo;' ||
-            // Fallback: if it's the last link, it's likely next
-            (index === links.length - 1)
-          );
-        };
-        
-        // Set display label based on button type
-        if (isPreviousButton(link.label)) {
-          displayLabel = "‹";
-        } else if (isNextButton(link.label)) {
-          displayLabel = "›";
+    if (start > 2) {
+        items.push('ellipsis');
+    }
+
+    for (let index = start; index <= end; index += 1) {
+        items.push(index);
+    }
+
+    if (end < pageCount - 1) {
+        items.push('ellipsis');
+    }
+
+    items.push(pageCount);
+
+    return items;
+}
+
+function cleanLabel(label: string): string {
+    return label
+        .replace(/&[a-z]+;/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+}
+
+function isPreviousLabel(label: string): boolean {
+    return /previous|trước/i.test(cleanLabel(label));
+}
+
+function isNextLabel(label: string): boolean {
+    return /next|sau/i.test(cleanLabel(label));
+}
+
+function PaginationButton({
+    children,
+    active = false,
+    disabled = false,
+    label,
+    onClick,
+}: {
+    children: React.ReactNode;
+    active?: boolean;
+    disabled?: boolean;
+    label: string;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            aria-label={label}
+            aria-current={active ? 'page' : undefined}
+            disabled={disabled}
+            onClick={onClick}
+            className={cn(
+                'inline-flex size-control-md items-center justify-center rounded-control border font-mono text-label-code transition-colors duration-150 ease-nep focus-ring disabled:cursor-not-allowed',
+                active
+                    ? 'border-lacquer-red bg-lacquer-red text-warm-porcelain'
+                    : 'border-border bg-warm-porcelain text-ink hover:bg-rice-paper disabled:text-ink-faint',
+            )}
+        >
+            {children}
+        </button>
+    );
+}
+
+export default function Pagination({
+    page,
+    pageCount,
+    total,
+    pageSize,
+    onPageChange,
+    links,
+    filters = {},
+    preserveState = true,
+    preserveScroll = true,
+    siblingCount = 1,
+    className,
+}: PaginationProps) {
+    const isLegacy = Array.isArray(links);
+
+    const handleLegacyChange = (url: string | null) => {
+        if (!url) {
+            return;
+        }
+
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(([, value]) => value !== undefined && value !== ''),
+        );
+
+        router.get(url, cleanFilters, { preserveState, preserveScroll });
+    };
+
+    if (isLegacy) {
+        if (!links || links.length <= 3) {
+            return null;
         }
 
         return (
-          <button
-            key={index}
-            onClick={() => handlePageChange(link.url)}
-            disabled={!link.url}
-            style={{
-              padding: "8px 12px",
-              border: "none",
-              borderRadius: "8px",
-              background: link.active ? "var(--primary)" : "transparent",
-              color: link.active ? "var(--light)" : link.url ? "var(--dark)" : "var(--dark-grey)",
-              cursor: link.url ? "pointer" : "not-allowed",
-              fontWeight: link.active ? "600" : "400",
-              fontSize: "14px",
-              minWidth: "36px",
-              height: "36px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.3s ease"
-            }}
-            onMouseEnter={(e) => {
-              if (link.url && !link.active) {
-                e.currentTarget.style.background = "var(--grey)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (link.url && !link.active) {
-                e.currentTarget.style.background = "transparent";
-              }
-            }}
-          >
-            {displayLabel}
-          </button>
+            <nav aria-label="Phân trang" className={cn('flex items-center justify-center gap-1', className)}>
+                {links.map((link, index) => {
+                    const label = cleanLabel(link.label);
+                    const previous = isPreviousLabel(link.label);
+                    const next = isNextLabel(link.label);
+                    const isEllipsis = /hellip|…|\.\.\./i.test(link.label);
+
+                    if (isEllipsis) {
+                        return (
+                            <span
+                                key={`ellipsis-${index}`}
+                                className="inline-flex size-control-md items-center justify-center text-ink-faint"
+                            >
+                                <MoreHorizontal aria-hidden="true" className="size-4" />
+                            </span>
+                        );
+                    }
+
+                    return (
+                        <PaginationButton
+                            key={`${label}-${index}`}
+                            active={link.active}
+                            disabled={!link.url}
+                            label={previous ? 'Trang trước' : next ? 'Trang sau' : `Trang ${label}`}
+                            onClick={() => handleLegacyChange(link.url)}
+                        >
+                            {previous ? (
+                                <ChevronLeft aria-hidden="true" className="size-4" />
+                            ) : next ? (
+                                <ChevronRight aria-hidden="true" className="size-4" />
+                            ) : (
+                                label
+                            )}
+                        </PaginationButton>
+                    );
+                })}
+            </nav>
         );
-      })}
-    </div>
-  );
+    }
+
+    if (!page || !pageCount || pageCount <= 1) {
+        return null;
+    }
+
+    const items = getPageItems(page, pageCount, siblingCount);
+    const from = pageSize ? (page - 1) * pageSize + 1 : null;
+    const to = pageSize ? Math.min(page * pageSize, total ?? page * pageSize) : null;
+
+    return (
+        <div className={cn('flex flex-col items-center justify-between gap-3 sm:flex-row', className)}>
+            {total && from && to ? (
+                <span className="font-mono text-label-code text-ink-muted">
+                    Hiển thị {formatNumber(from)}–{formatNumber(to)} trong {formatNumber(total)} sản phẩm
+                </span>
+            ) : (
+                <span />
+            )}
+            <nav aria-label="Phân trang" className="flex items-center gap-1">
+                <PaginationButton
+                    label="Trang trước"
+                    disabled={page <= 1}
+                    onClick={() => onPageChange?.(page - 1)}
+                >
+                    <ChevronLeft aria-hidden="true" className="size-4" />
+                </PaginationButton>
+
+                {items.map((item, index) =>
+                    item === 'ellipsis' ? (
+                        <span
+                            key={`ellipsis-${index}`}
+                            className="inline-flex size-control-md items-center justify-center text-ink-faint"
+                        >
+                            <MoreHorizontal aria-hidden="true" className="size-4" />
+                        </span>
+                    ) : (
+                        <PaginationButton
+                            key={item}
+                            active={item === page}
+                            label={`Trang ${item}`}
+                            onClick={() => onPageChange?.(item)}
+                        >
+                            {item}
+                        </PaginationButton>
+                    ),
+                )}
+
+                <PaginationButton
+                    label="Trang sau"
+                    disabled={page >= pageCount}
+                    onClick={() => onPageChange?.(page + 1)}
+                >
+                    <ChevronRight aria-hidden="true" className="size-4" />
+                </PaginationButton>
+            </nav>
+        </div>
+    );
 }
+
+export { Pagination };
+export type { LegacyLink, PaginationProps };

@@ -1,0 +1,77 @@
+/*
+ * ShopNest — base layer.
+ *
+ * Global element defaults and the small set of utilities that encode Nếp
+ * behaviour. Component-specific styles belong in components, not here.
+ */
+
+@layer base {
+    html {
+        color-scheme: light;
+    }
+
+    body {
+        @apply bg-rice-paper font-sans text-ink antialiased;
+    }
+
+    /* Dark mode is out of scope for the Nếp migration. Keep the legacy
+       behaviour working until Settings/Appearance is redesigned in Phase 4. */
+    .dark body {
+        @apply bg-background text-foreground;
+    }
+
+    ::selection {
+        @apply bg-lacquer-wash text-lacquer-deep;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer utilities {
+    .focus-ring:focus-visible {
+        outline: 2px solid var(--color-lacquer-red);
+        outline-offset: 2px;
+    }
+
+    .z-header {
+        z-index: 30;
+    }
+
+    .z-dropdown {
+        z-index: 40;
+    }
+
+    .z-modal {
+        z-index: 50;
+    }
+
+    .z-toast {
+        z-index: 60;
+    }
+
+    .z-chat {
+        z-index: 40;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}

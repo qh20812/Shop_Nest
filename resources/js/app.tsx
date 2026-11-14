@@ -3,7 +3,7 @@ import '../css/payment.css';
 
 import './bootstrap';
 
-import { ToastProvider } from '@/Contexts/ToastContext';
+import { Toaster, ToastProvider } from '@/components/ui/toaster';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -20,6 +20,7 @@ createInertiaApp({
         root.render(
             <ToastProvider>
                 <App {...props} />
+                <Toaster />
             </ToastProvider>,
         );
     },

@@ -1,72 +1,109 @@
-import React from 'react';
+import * as React from 'react';
 
-interface User {
-  id?: number;
-  first_name?: string;
-  last_name?: string;
-  username?: string;
-  avatar?: string | null;
-  avatar_url?: string | null;
+import { cn } from '@/lib/utils';
+
+type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+
+type LegacyUser = {
+    first_name?: string | null;
+    last_name?: string | null;
+    username?: string | null;
+    avatar?: string | null;
+    avatar_url?: string | null;
+};
+
+type AvatarProps = {
+    user?: LegacyUser;
+    src?: string | null;
+    name?: string;
+    size?: AvatarSize | number;
+    status?: 'online' | 'offline' | 'away';
+    className?: string;
+};
+
+const sizeClasses: Record<AvatarSize, string> = {
+    sm: 'size-8 text-body-sm',
+    md: 'size-10 text-body-md',
+    lg: 'size-12 text-body-md',
+    xl: 'size-16 text-headline-3',
+};
+
+function getInitials(name?: string): string {
+    if (!name) {
+        return 'U';
+    }
+
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) {
+        return 'U';
+    }
+
+    if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+    }
+
+    return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
 }
 
-interface AvatarProps {
-  user: User;
-  size?: number;
-}
+export function Avatar({ user, src, name, size = 'md', status, className }: AvatarProps) {
+    const [imageError, setImageError] = React.useState(false);
 
-export default function Avatar({ user, size = 36 }: AvatarProps) {
-  const [imageError, setImageError] = React.useState(false);
+    const derivedName = [user?.last_name, user?.first_name].filter(Boolean).join(' ') || user?.username || 'Người dùng';
+    const resolvedName = name ?? derivedName;
 
-  // Generate initials from first_name or username
-  const getInitials = () => {
-    const name = user.first_name || user.username || 'U';
-    return name.charAt(0).toUpperCase();
-  };
+    let resolvedSrc = src ?? user?.avatar_url ?? user?.avatar ?? null;
 
-  // Use avatar_url if available, fallback to avatar
-  let avatarSrc = user.avatar_url || user.avatar;
+    if (resolvedSrc && !resolvedSrc.startsWith('http') && !resolvedSrc.startsWith('/')) {
+        resolvedSrc = `/storage/${resolvedSrc}`;
+    }
 
-  // Normalize relative avatar path to the public storage URL
-  if (avatarSrc && !avatarSrc.startsWith('http') && !avatarSrc.startsWith('/')) {
-    avatarSrc = `/storage/${avatarSrc}`;
-  }
-  
-  // If user has avatar and no image error, show the avatar image
-  if (avatarSrc && !imageError) {
+    React.useEffect(() => {
+        setImageError(false);
+    }, [resolvedSrc]);
+
+    const numericSize = typeof size === 'number' ? size : null;
+    const dimensionStyle = numericSize ? { width: numericSize, height: numericSize } : undefined;
+    const textStyle = numericSize ? { fontSize: Math.max(12, numericSize * 0.4) } : undefined;
+
     return (
-      <img
-        src={avatarSrc}
-        alt={`${user.first_name || user.username || 'User'} avatar`}
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          borderRadius: "50%",
-          objectFit: "cover",
-          border: "2px solid var(--grey)"
-        }}
-        onError={() => setImageError(true)}
-      />
+        <span
+            className={cn(
+                'relative inline-flex shrink-0 items-center justify-center',
+                typeof size === 'number' ? '' : sizeClasses[size],
+                className,
+            )}
+            style={dimensionStyle}
+        >
+            {resolvedSrc && !imageError ? (
+                <img
+                    src={resolvedSrc}
+                    alt={resolvedName}
+                    className="size-full rounded-pill border border-border object-cover"
+                    onError={() => setImageError(true)}
+                />
+            ) : (
+                <span
+                    aria-label={resolvedName}
+                    className="flex size-full items-center justify-center rounded-pill border border-border bg-lacquer-wash font-semibold text-lacquer-deep"
+                    style={textStyle}
+                >
+                    {getInitials(resolvedName)}
+                </span>
+            )}
+            {status && (
+                <span
+                    aria-label={status}
+                    className={cn(
+                        'absolute bottom-0 right-0 size-2.5 rounded-pill ring-2 ring-warm-porcelain',
+                        status === 'online' && 'bg-jade',
+                        status === 'away' && 'bg-turmeric',
+                        status === 'offline' && 'bg-ink-faint',
+                    )}
+                />
+            )}
+        </span>
     );
-  }
-
-  // Fallback to initials avatar
-  return (
-    <div 
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: "50%",
-        background: "var(--primary)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "var(--light)",
-        fontWeight: "600",
-        fontSize: `${size * 0.4}px`,
-        border: "2px solid var(--grey)"
-      }}
-    >
-      {getInitials()}
-    </div>
-  );
 }
+
+export default Avatar;

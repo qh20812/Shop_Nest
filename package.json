@@ -8,7 +8,10 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
-        "types": "tsc --noEmit"
+        "types": "tsc --noEmit",
+        "check:tokens": "node scripts/check-tokens.mjs",
+        "check:tokens:all": "node scripts/check-tokens.mjs --all",
+        "check:tokens:baseline": "node scripts/check-tokens.mjs --write-baseline"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.5",

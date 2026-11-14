@@ -1,8 +1,16 @@
-import ActionButton from '@/components/ui/ActionButton';
-import InputError from '@/components/ui/InputError';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import { Head, Link, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, useForm } from '@inertiajs/react';
+import { IdCard, Truck } from 'lucide-react';
+import * as React from 'react';
+
+import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Button } from '@/components/ui/button';
+import { FileDropzone } from '@/components/ui/file-dropzone';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { TextLink } from '@/components/ui/text-link';
+import { Heading, Text } from '@/components/ui/typography';
 
 interface FormData {
     first_name: string;
@@ -19,6 +27,8 @@ interface FormData {
     id_card_back: File | null;
     driver_license_front: File | null;
 }
+
+const MAX_DOCUMENT_SIZE = 2 * 1024 * 1024;
 
 export default function ShipperRegister() {
     const { data, setData, post, processing, errors, reset } = useForm<FormData>({
@@ -37,8 +47,7 @@ export default function ShipperRegister() {
         driver_license_front: null,
     });
 
-    // State for image previews
-    const [previews, setPreviews] = useState<{
+    const [previews, setPreviews] = React.useState<{
         id_card_front?: string;
         id_card_back?: string;
         driver_license_front?: string;
@@ -47,358 +56,198 @@ export default function ShipperRegister() {
     const handleFileChange = (field: keyof Pick<FormData, 'id_card_front' | 'id_card_back' | 'driver_license_front'>, file: File | null) => {
         setData(field, file);
 
-        // Create preview URL
         if (file) {
             const previewUrl = URL.createObjectURL(file);
-            setPreviews((prev) => ({ ...prev, [field]: previewUrl }));
+            setPreviews((current) => ({ ...current, [field]: previewUrl }));
         } else {
-            setPreviews((prev) => ({ ...prev, [field]: undefined }));
+            setPreviews((current) => ({ ...current, [field]: undefined }));
         }
     };
 
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const submit = (event: React.FormEvent) => {
+        event.preventDefault();
 
         post('/register/shipper', {
             onFinish: () => {
                 reset('password', 'password_confirmation');
-                // Clean up preview URLs
                 Object.values(previews).forEach((url) => {
-                    if (url) URL.revokeObjectURL(url);
+                    if (url) {
+                        URL.revokeObjectURL(url);
+                    }
                 });
             },
         });
     };
 
+    const renderDocument = (field: keyof Pick<FormData, 'id_card_front' | 'id_card_back' | 'driver_license_front'>, label: string) => (
+        <div className="flex flex-col gap-2">
+            <span className="text-body-sm font-medium text-ink">
+                {label} <span className="text-lacquer-red">*</span>
+            </span>
+            {previews[field] && <img src={previews[field]} alt={label} className="h-28 w-full rounded-control border border-border object-cover" />}
+            <FileDropzone
+                accept="image/jpeg,image/png"
+                maxSize={MAX_DOCUMENT_SIZE}
+                multiple={false}
+                files={data[field] ? [data[field] as File] : []}
+                onFiles={(files) => handleFileChange(field, files[0] ?? null)}
+                onRemove={() => handleFileChange(field, null)}
+            />
+            {errors[field] && (
+                <span role="alert" className="text-body-sm text-brick">
+                    {errors[field]}
+                </span>
+            )}
+        </div>
+    );
+
     return (
-        <>
-            <Head title="Shipper Registration" />
+        <AuthLayout brand={<AuthBrandPanel role="shipper" />}>
+            <Head title="Đăng ký giao vận" />
 
-            <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-                <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-4xl sm:rounded-lg">
-                    <div className="mb-6 text-center">
-                        <h1 className="text-3xl font-bold text-gray-900">Become a Shipper</h1>
-                        <p className="mt-2 text-sm text-gray-600">Join our delivery network and start earning. Fill out the application below.</p>
-                    </div>
-
-                    <form onSubmit={submit} className="space-y-8">
-                        {/* Personal Information Section */}
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Personal Information</h2>
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div>
-                                    <PrimaryInput
-                                        label="First Name"
-                                        type="text"
-                                        name="first_name"
-                                        value={data.first_name}
-                                        onChange={(e) => setData('first_name', e.target.value)}
-                                        error={errors.first_name}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Last Name"
-                                        type="text"
-                                        name="last_name"
-                                        value={data.last_name}
-                                        onChange={(e) => setData('last_name', e.target.value)}
-                                        error={errors.last_name}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Email Address"
-                                        type="email"
-                                        name="email"
-                                        value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
-                                        error={errors.email}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Phone Number"
-                                        type="text"
-                                        name="phone_number"
-                                        value={data.phone_number}
-                                        placeholder="e.g., 0901234567 or +84901234567"
-                                        onChange={(e) => setData('phone_number', e.target.value)}
-                                        error={errors.phone_number}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Password"
-                                        type="password"
-                                        name="password"
-                                        value={data.password}
-                                        onChange={(e) => setData('password', e.target.value)}
-                                        error={errors.password}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Confirm Password"
-                                        type="password"
-                                        name="password_confirmation"
-                                        value={data.password_confirmation}
-                                        onChange={(e) => setData('password_confirmation', e.target.value)}
-                                        error={errors.password_confirmation}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Shipper Information Section */}
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Shipper Information</h2>
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div>
-                                    <PrimaryInput
-                                        label="ID Card Number"
-                                        type="text"
-                                        name="id_card_number"
-                                        value={data.id_card_number}
-                                        placeholder="e.g., 123456789012"
-                                        onChange={(e) => setData('id_card_number', e.target.value)}
-                                        error={errors.id_card_number}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="Driver's License Number"
-                                        type="text"
-                                        name="driver_license_number"
-                                        value={data.driver_license_number}
-                                        placeholder="e.g., 12-34567890"
-                                        onChange={(e) => setData('driver_license_number', e.target.value)}
-                                        error={errors.driver_license_number}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">Vehicle Type</label>
-                                    <select
-                                        name="vehicle_type"
-                                        value={data.vehicle_type}
-                                        onChange={(e) => setData('vehicle_type', e.target.value)}
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none"
-                                        required
-                                    >
-                                        <option value="">Select vehicle type</option>
-                                        <option value="Motorbike">Motorbike</option>
-                                        <option value="Bicycle">Bicycle</option>
-                                        <option value="Car">Car</option>
-                                        <option value="Van">Van</option>
-                                        <option value="Truck">Truck</option>
-                                    </select>
-                                    <InputError message={errors.vehicle_type} />
-                                </div>
-
-                                <div>
-                                    <PrimaryInput
-                                        label="License Plate"
-                                        type="text"
-                                        name="license_plate"
-                                        value={data.license_plate}
-                                        placeholder="e.g., 59A-12345"
-                                        onChange={(e) => setData('license_plate', e.target.value)}
-                                        error={errors.license_plate}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Document Upload Section */}
-                        <div className="pb-8">
-                            <h2 className="mb-4 text-xl font-semibold text-gray-900">Document Upload</h2>
-                            <p className="mb-6 text-sm text-gray-600">
-                                Please upload clear photos of your documents. All documents are required for verification.
-                            </p>
-
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                                {/* ID Card Front */}
-                                <div>
-                                    <label htmlFor="id_card_front" className="mb-2 block text-sm font-medium text-gray-700">
-                                        ID Card (Front)
-                                    </label>
-                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
-                                        <input
-                                            id="id_card_front"
-                                            type="file"
-                                            name="id_card_front"
-                                            accept="image/jpeg,image/jpg,image/png"
-                                            onChange={(e) => handleFileChange('id_card_front', e.target.files?.[0] || null)}
-                                            className="hidden"
-                                            required
-                                        />
-                                        <label htmlFor="id_card_front" className="cursor-pointer">
-                                            {previews.id_card_front ? (
-                                                <div>
-                                                    <img
-                                                        src={previews.id_card_front}
-                                                        alt="ID Card Front Preview"
-                                                        className="mb-2 h-32 w-full rounded-md object-cover"
-                                                    />
-                                                    <p className="text-sm text-indigo-600">Click to change</p>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <svg
-                                                        className="mx-auto h-12 w-12 text-gray-400"
-                                                        stroke="currentColor"
-                                                        fill="none"
-                                                        viewBox="0 0 48 48"
-                                                    >
-                                                        <path
-                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
-                                                            strokeWidth={2}
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                    </svg>
-                                                    <p className="mt-2 text-sm text-gray-600">Upload ID Card Front</p>
-                                                    <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                                                </div>
-                                            )}
-                                        </label>
-                                    </div>
-                                    <InputError message={errors.id_card_front} />
-                                </div>
-
-                                {/* ID Card Back */}
-                                <div>
-                                    <label htmlFor="id_card_back" className="mb-2 block text-sm font-medium text-gray-700">
-                                        ID Card (Back)
-                                    </label>
-                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
-                                        <input
-                                            id="id_card_back"
-                                            type="file"
-                                            name="id_card_back"
-                                            accept="image/jpeg,image/jpg,image/png"
-                                            onChange={(e) => handleFileChange('id_card_back', e.target.files?.[0] || null)}
-                                            className="hidden"
-                                            required
-                                        />
-                                        <label htmlFor="id_card_back" className="cursor-pointer">
-                                            {previews.id_card_back ? (
-                                                <div>
-                                                    <img
-                                                        src={previews.id_card_back}
-                                                        alt="ID Card Back Preview"
-                                                        className="mb-2 h-32 w-full rounded-md object-cover"
-                                                    />
-                                                    <p className="text-sm text-indigo-600">Click to change</p>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <svg
-                                                        className="mx-auto h-12 w-12 text-gray-400"
-                                                        stroke="currentColor"
-                                                        fill="none"
-                                                        viewBox="0 0 48 48"
-                                                    >
-                                                        <path
-                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
-                                                            strokeWidth={2}
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                    </svg>
-                                                    <p className="mt-2 text-sm text-gray-600">Upload ID Card Back</p>
-                                                    <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                                                </div>
-                                            )}
-                                        </label>
-                                    </div>
-                                    <InputError message={errors.id_card_back} />
-                                </div>
-
-                                {/* Driver's License */}
-                                <div>
-                                    <label htmlFor="driver_license_front" className="mb-2 block text-sm font-medium text-gray-700">
-                                        Driver's License
-                                    </label>
-                                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-indigo-400">
-                                        <input
-                                            id="driver_license_front"
-                                            type="file"
-                                            name="driver_license_front"
-                                            accept="image/jpeg,image/jpg,image/png"
-                                            onChange={(e) => handleFileChange('driver_license_front', e.target.files?.[0] || null)}
-                                            className="hidden"
-                                            required
-                                        />
-                                        <label htmlFor="driver_license_front" className="cursor-pointer">
-                                            {previews.driver_license_front ? (
-                                                <div>
-                                                    <img
-                                                        src={previews.driver_license_front}
-                                                        alt="Driver's License Preview"
-                                                        className="mb-2 h-32 w-full rounded-md object-cover"
-                                                    />
-                                                    <p className="text-sm text-indigo-600">Click to change</p>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <svg
-                                                        className="mx-auto h-12 w-12 text-gray-400"
-                                                        stroke="currentColor"
-                                                        fill="none"
-                                                        viewBox="0 0 48 48"
-                                                    >
-                                                        <path
-                                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v-8a4 4 0 00-4-4h-6m0 0l-6 6m6-6v6"
-                                                            strokeWidth={2}
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                        />
-                                                    </svg>
-                                                    <p className="mt-2 text-sm text-gray-600">Upload Driver's License</p>
-                                                    <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                                                </div>
-                                            )}
-                                        </label>
-                                    </div>
-                                    <InputError message={errors.driver_license_front} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Submit Section */}
-                        <div className="border-t border-gray-200 pt-6">
-                            <div className="flex items-center justify-between">
-                                <Link href="/login" className="text-sm text-gray-600 underline hover:text-gray-900">
-                                    Already have an account? Login here
-                                </Link>
-
-                                <div className="flex gap-4">
-                                    <ActionButton type="submit" variant="primary" disabled={processing}>
-                                        {processing ? 'Submitting...' : 'Submit Application'}
-                                    </ActionButton>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+            <div className="flex flex-col gap-2">
+                <Heading level={1} size="headline-1">
+                    Trở thành đối tác giao vận
+                </Heading>
+                <Text size="body-md" tone="muted">
+                    Tham gia mạng lưới ShopNest và nhận đơn giao rõ ràng mỗi ngày.
+                </Text>
             </div>
-        </>
+
+            <form onSubmit={submit} className="mt-7 flex flex-col gap-8">
+                <section className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2 border-b border-border pb-3">
+                        <IdCard aria-hidden="true" className="size-5 text-lacquer-red" />
+                        <h2 className="text-headline-3 text-ink">Thông tin cá nhân</h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField label="Họ" required error={errors.last_name}>
+                            <Input
+                                value={data.last_name}
+                                onChange={(event) => setData('last_name', event.target.value)}
+                                autoComplete="family-name"
+                                invalid={Boolean(errors.last_name)}
+                            />
+                        </FormField>
+                        <FormField label="Tên" required error={errors.first_name}>
+                            <Input
+                                value={data.first_name}
+                                onChange={(event) => setData('first_name', event.target.value)}
+                                autoComplete="given-name"
+                                invalid={Boolean(errors.first_name)}
+                            />
+                        </FormField>
+                        <FormField label="Email" required error={errors.email}>
+                            <Input
+                                type="email"
+                                value={data.email}
+                                onChange={(event) => setData('email', event.target.value)}
+                                autoComplete="email"
+                                invalid={Boolean(errors.email)}
+                            />
+                        </FormField>
+                        <FormField label="Số điện thoại" required error={errors.phone_number}>
+                            <Input
+                                value={data.phone_number}
+                                onChange={(event) => setData('phone_number', event.target.value)}
+                                placeholder="0912 345 678"
+                                autoComplete="tel"
+                                invalid={Boolean(errors.phone_number)}
+                            />
+                        </FormField>
+                        <FormField label="Mật khẩu" required error={errors.password}>
+                            <Input
+                                type="password"
+                                value={data.password}
+                                onChange={(event) => setData('password', event.target.value)}
+                                autoComplete="new-password"
+                                invalid={Boolean(errors.password)}
+                            />
+                        </FormField>
+                        <FormField label="Xác nhận mật khẩu" required error={errors.password_confirmation}>
+                            <Input
+                                type="password"
+                                value={data.password_confirmation}
+                                onChange={(event) => setData('password_confirmation', event.target.value)}
+                                autoComplete="new-password"
+                                invalid={Boolean(errors.password_confirmation)}
+                            />
+                        </FormField>
+                    </div>
+                </section>
+
+                <section className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2 border-b border-border pb-3">
+                        <Truck aria-hidden="true" className="size-5 text-lacquer-red" />
+                        <h2 className="text-headline-3 text-ink">Thông tin giao vận</h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField label="Số CCCD/CMND" required error={errors.id_card_number}>
+                            <Input
+                                value={data.id_card_number}
+                                onChange={(event) => setData('id_card_number', event.target.value)}
+                                placeholder="123456789012"
+                                invalid={Boolean(errors.id_card_number)}
+                            />
+                        </FormField>
+                        <FormField label="Số giấy phép lái xe" required error={errors.driver_license_number}>
+                            <Input
+                                value={data.driver_license_number}
+                                onChange={(event) => setData('driver_license_number', event.target.value)}
+                                placeholder="12-34567890"
+                                invalid={Boolean(errors.driver_license_number)}
+                            />
+                        </FormField>
+                        <FormField label="Loại phương tiện" required error={errors.vehicle_type}>
+                            <Select
+                                value={data.vehicle_type}
+                                onChange={(event) => setData('vehicle_type', event.target.value)}
+                                placeholder="Chọn phương tiện"
+                                options={[
+                                    { value: 'Motorbike', label: 'Xe máy' },
+                                    { value: 'Bicycle', label: 'Xe đạp' },
+                                    { value: 'Car', label: 'Ô tô' },
+                                    { value: 'Van', label: 'Xe van' },
+                                    { value: 'Truck', label: 'Xe tải' },
+                                ]}
+                                invalid={Boolean(errors.vehicle_type)}
+                            />
+                        </FormField>
+                        <FormField label="Biển số xe" required error={errors.license_plate}>
+                            <Input
+                                value={data.license_plate}
+                                onChange={(event) => setData('license_plate', event.target.value)}
+                                placeholder="59A-12345"
+                                invalid={Boolean(errors.license_plate)}
+                            />
+                        </FormField>
+                    </div>
+                </section>
+
+                <section className="flex flex-col gap-4">
+                    <div className="border-b border-border pb-3">
+                        <h2 className="text-headline-3 text-ink">Hồ sơ xác thực</h2>
+                        <p className="mt-1 text-body-sm text-ink-muted">Ảnh rõ nét giúp hồ sơ được duyệt nhanh hơn. Tối đa 2MB mỗi ảnh.</p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        {renderDocument('id_card_front', 'CCCD mặt trước')}
+                        {renderDocument('id_card_back', 'CCCD mặt sau')}
+                        {renderDocument('driver_license_front', 'Giấy phép lái xe')}
+                    </div>
+                </section>
+
+                <div className="flex flex-col gap-3 border-t border-border pt-6">
+                    <Button type="submit" size="lg" loading={processing} className="w-full">
+                        Gửi hồ sơ
+                    </Button>
+                    <p className="text-center text-body-sm text-ink-muted">
+                        Đã có tài khoản?{' '}
+                        <TextLink href="/login" tone="accent" underline={false}>
+                            Đăng nhập
+                        </TextLink>
+                    </p>
+                </div>
+            </form>
+        </AuthLayout>
     );
 }

@@ -1,9 +1,10 @@
-import HomeLayout from '@/layouts/app/HomeLayout';
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-import React from 'react';
-import '../../../css/Page.css';
-import '../../../css/VerifyEmail.css';
+import { LogOut, MailCheck } from 'lucide-react';
+
+import { ResultState } from '@/components/feedback/ResultState';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface VerifyEmailProps {
     status?: string;
@@ -12,51 +13,37 @@ interface VerifyEmailProps {
 export default function VerifyEmail({ status }: VerifyEmailProps) {
     const { post, processing } = useForm();
 
-    const handleResend = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/email/verification-notification');
-    };
-
-    const handleLogout = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/logout');
-    };
+    const resend = () => post('/email/verification-notification');
+    const logout = () => post('/logout');
 
     return (
-        <HomeLayout>
-            <Head title="Email Verification" />
+        <AuthLayout variant="centered">
+            <Head title="Xác thực email" />
 
-            <div className="verify-email-container">
-                <div className="verify-email-card">
-                    <div className="verify-email-header">
-                        <i className="bx bx-envelope verify-email-icon"></i>
-                        <h1 className="verify-email-title">Verify Your Email</h1>
-                        <p className="verify-email-description">Please verify your email address by clicking on the link we just emailed to you.</p>
-                    </div>
+            {status === 'verification-link-sent' && (
+                <Alert
+                    tone="success"
+                    className="mb-5"
+                    title="Đã gửi liên kết mới"
+                    description="Một liên kết xác thực mới đã được gửi đến email bạn đã đăng ký."
+                />
+            )}
 
-                    {status === 'verification-link-sent' && (
-                        <div className="verify-email-success">
-                            <i className="bx bx-check-circle"></i>
-                            <p>A new verification link has been sent to the email address you provided during registration.</p>
-                        </div>
-                    )}
-
-                    <div className="verify-email-actions">
-                        <form onSubmit={handleResend} className="verify-email-form">
-                            <button type="submit" disabled={processing} className="btn btn-primary verify-email-btn">
-                                {processing && <LoaderCircle className="btn-icon spin-animation" />}
-                                {processing ? 'Sending...' : 'Resend Verification Email'}
-                            </button>
-                        </form>
-
-                        <form onSubmit={handleLogout} className="verify-email-logout-form">
-                            <button type="submit" className="verify-email-logout-link">
-                                Log out
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </HomeLayout>
+            <ResultState
+                status="pending"
+                title="Xác thực email của bạn"
+                message="Mở liên kết xác thực trong email để hoàn tất đăng ký. Nếu chưa nhận được, bạn có thể gửi lại."
+                actions={
+                    <>
+                        <Button loading={processing} leftIcon={MailCheck} onClick={resend}>
+                            Gửi lại email xác thực
+                        </Button>
+                        <Button variant="ghost" leftIcon={LogOut} onClick={logout}>
+                            Đăng xuất
+                        </Button>
+                    </>
+                }
+            />
+        </AuthLayout>
     );
 }

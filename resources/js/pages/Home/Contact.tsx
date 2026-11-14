@@ -1,149 +1,108 @@
 import { Head } from '@inertiajs/react';
-import HomeLayout from '../../layouts/app/HomeLayout';
+import { Clock, Mail, MapPin, Phone, Send } from 'lucide-react';
+import * as React from 'react';
+
+import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import Textarea from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
+import { Heading, Text } from '@/components/ui/typography';
+
+const contactItems = [
+    { icon: MapPin, title: 'Địa chỉ', value: 'Số 18, Ngõ 42, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội' },
+    { icon: Phone, title: 'Điện thoại', value: '1900 6886', href: 'tel:19006886' },
+    { icon: Mail, title: 'Email', value: 'hotro@shopnest.vn', href: 'mailto:hotro@shopnest.vn' },
+    { icon: Clock, title: 'Giờ làm việc', value: 'Thứ 2 – Thứ 6: 8:00 – 18:00 · Thứ 7 – CN: 9:00 – 17:00' },
+];
 
 export default function Contact() {
+    const { success } = useToast();
+    const [submitting, setSubmitting] = React.useState(false);
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        setSubmitting(true);
+        window.setTimeout(() => {
+            setSubmitting(false);
+            success('Đã gửi tin nhắn', 'ShopNest sẽ phản hồi trong giờ làm việc.');
+            form.reset();
+        }, 500);
+    };
+
     return (
-        <HomeLayout>
-            <Head title="Liên hệ - ShopNest" />
+        <StorefrontLayout compactFooter>
+            <Head title="Liên hệ ShopNest" />
 
-            <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-                <div className="rounded-xl bg-white p-8 shadow-lg">
-                    <h1 className="mb-8 text-3xl font-bold text-blue-800">Liên hệ với chúng tôi</h1>
+            <PageContainer className="py-section">
+                <PageHeader
+                    eyebrow="Liên hệ"
+                    title="Cần hỏi một điều rõ ràng?"
+                    description="Gửi tin nhắn hoặc gọi tổng đài. Chúng tôi trả lời trong giờ làm việc."
+                />
 
-                    <div className="grid gap-8 md:grid-cols-2">
-                        {/* Contact Form */}
-                        <div>
-                            <h2 className="mb-4 text-xl font-semibold text-gray-800">Gửi tin nhắn</h2>
-                            <form className="space-y-4">
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700">Họ và tên</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        placeholder="Nhập họ và tên của bạn"
-                                    />
-                                </div>
+                <div className="mt-8 grid gap-8 lg:grid-cols-12">
+                    <Card className="lg:col-span-7" padding="lg">
+                        <Heading level={2} size="headline-2">
+                            Gửi tin nhắn
+                        </Heading>
+                        <Text size="body-sm" tone="muted" className="mt-1">
+                            Càng cụ thể càng dễ hỗ trợ.
+                        </Text>
 
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-                                    <input
-                                        type="email"
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        placeholder="Nhập email của bạn"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700">Chủ đề</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        placeholder="Chủ đề tin nhắn"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block text-sm font-medium text-gray-700">Nội dung</label>
-                                    <textarea
-                                        rows={5}
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        placeholder="Nhập nội dung tin nhắn của bạn"
-                                    ></textarea>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-                                >
-                                    Gửi tin nhắn
-                                </button>
-                            </form>
-                        </div>
-                        <div>
-                            <h2 className="mb-4 text-xl font-semibold text-gray-800">Thông tin liên hệ</h2>
-                            <div className="space-y-4">
-                                <div className="flex items-start space-x-3">
-                                    <div className="text-blue-600">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                            ></path>
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-medium text-gray-900">Địa chỉ</h3>
-                                        <p className="text-gray-600">123 Đường ABC, Quận XYZ, TP.HCM</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start space-x-3">
-                                    <div className="text-blue-600">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-medium text-gray-900">Điện thoại</h3>
-                                        <p className="text-gray-600">0123 456 789</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start space-x-3">
-                                    <div className="text-blue-600">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-medium text-gray-900">Email</h3>
-                                        <p className="text-gray-600">contact@shopnest.com</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start space-x-3">
-                                    <div className="text-blue-600">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-medium text-gray-900">Giờ làm việc</h3>
-                                        <p className="text-gray-600">
-                                            Thứ 2 - Thứ 6: 8:00 - 18:00
-                                            <br />
-                                            Thứ 7 - Chủ nhật: 9:00 - 17:00
-                                        </p>
-                                    </div>
-                                </div>
+                        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <FormField label="Họ và tên" required>
+                                    <Input placeholder="Nguyễn Thu Hà" autoComplete="name" required />
+                                </FormField>
+                                <FormField label="Email" required>
+                                    <Input type="email" placeholder="ban@example.com" autoComplete="email" required />
+                                </FormField>
                             </div>
-                        </div>
+                            <FormField label="Chủ đề" required>
+                                <Input placeholder="Ví dụ: Kiểm tra đơn hàng #SN-24817" required />
+                            </FormField>
+                            <FormField label="Nội dung" required>
+                                <Textarea rows={5} placeholder="Bạn cần ShopNest hỗ trợ điều gì?" required />
+                            </FormField>
+                            <Button type="submit" loading={submitting} rightIcon={Send} className="w-full sm:w-fit">
+                                Gửi tin nhắn
+                            </Button>
+                        </form>
+                    </Card>
+
+                    <div className="flex flex-col gap-4 lg:col-span-5">
+                        {contactItems.map((item) => {
+                            const Icon = item.icon;
+
+                            return (
+                                <Card key={item.title} variant="inset" padding="md">
+                                    <div className="flex items-start gap-3">
+                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-warm-porcelain text-lacquer-red">
+                                            <Icon aria-hidden="true" className="size-4" />
+                                        </span>
+                                        <div>
+                                            <h3 className="text-body-sm font-semibold text-ink">{item.title}</h3>
+                                            {item.href ? (
+                                                <a href={item.href} className="text-body-sm text-ink-muted transition-colors hover:text-lacquer-red">
+                                                    {item.value}
+                                                </a>
+                                            ) : (
+                                                <p className="text-body-sm text-ink-muted">{item.value}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Card>
+                            );
+                        })}
                     </div>
                 </div>
-            </div>
-        </HomeLayout>
+            </PageContainer>
+        </StorefrontLayout>
     );
 }

@@ -1,13 +1,14 @@
-import '@/../css/SellerRegister.css';
+import { Head } from '@inertiajs/react';
+
 import SellerRegisterForm from '@/components/auth/SellerRegisterForm';
-import HomeLayout from '@/layouts/app/HomeLayout';
+import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export default function SellerRegister() {
     return (
-        <HomeLayout>
-            <div className="seller-register-page">
-                <SellerRegisterForm />
-            </div>
-        </HomeLayout>
+        <AuthLayout brand={<AuthBrandPanel role="seller" />}>
+            <Head title="Đăng ký người bán" />
+            <SellerRegisterForm />
+        </AuthLayout>
     );
 }

@@ -1,38 +1,38 @@
 import { router } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
 interface CheckoutExitConfirmationProps {
     hasUnsavedChanges: boolean;
     message?: string;
 }
 
-const CheckoutExitConfirmation: React.FC<CheckoutExitConfirmationProps> = ({
+export default function CheckoutExitConfirmation({
     hasUnsavedChanges,
     message = 'Bạn có chắc muốn rời khỏi trang thanh toán? Các thay đổi chưa được lưu có thể bị mất.',
-}) => {
-    const [showModal, setShowModal] = useState(false);
-    const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+}: CheckoutExitConfirmationProps) {
+    const [showModal, setShowModal] = React.useState(false);
+    const pendingNavigation = React.useRef<(() => void) | null>(null);
 
-    useEffect(() => {
-        // Handle browser navigation (refresh, close tab, back button)
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    React.useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = message;
+                event.preventDefault();
+                event.returnValue = message;
                 return message;
             }
         };
 
-        // Handle Inertia navigation
         const handleInertiaNavigate = (event: Event & { detail?: { visit?: { url?: string } } }) => {
             if (hasUnsavedChanges && !showModal) {
                 event.preventDefault();
                 setShowModal(true);
-                setPendingNavigation(() => () => {
+                pendingNavigation.current = () => {
                     if (event.detail?.visit?.url) {
                         router.visit(event.detail.visit.url);
                     }
-                });
+                };
             }
         };
 
@@ -45,43 +45,29 @@ const CheckoutExitConfirmation: React.FC<CheckoutExitConfirmationProps> = ({
         };
     }, [hasUnsavedChanges, message, showModal]);
 
-    const handleStay = () => {
+    const stay = () => {
         setShowModal(false);
-        setPendingNavigation(null);
+        pendingNavigation.current = null;
     };
 
-    const handleLeave = () => {
+    const leave = () => {
         setShowModal(false);
-        if (pendingNavigation) {
-            pendingNavigation();
-        }
+        pendingNavigation.current?.();
+        pendingNavigation.current = null;
     };
-
-    if (!showModal) return null;
 
     return (
-        <div className="checkout-exit__overlay">
-            <div className="checkout-exit__dialog" role="dialog" aria-modal="true">
-                <div className="checkout-exit__icon">
-                    <i className="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                </div>
-
-                <div className="checkout-exit__content">
-                    <h3 className="checkout-exit__title">Xác nhận rời khỏi trang</h3>
-                    <p className="checkout-exit__message">{message}</p>
-                </div>
-
-                <div className="checkout-exit__actions">
-                    <button type="button" onClick={handleStay} className="checkout-button checkout-button--secondary">
-                        Ở lại
-                    </button>
-                    <button type="button" onClick={handleLeave} className="checkout-button checkout-button--danger">
-                        Rời khỏi
-                    </button>
-                </div>
-            </div>
-        </div>
+        <ConfirmDialog
+            open={showModal}
+            onOpenChange={(open) => {
+                if (!open) stay();
+            }}
+            title="Xác nhận rời khỏi trang"
+            description={message}
+            confirmLabel="Rời khỏi"
+            cancelLabel="Ở lại"
+            tone="warning"
+            onConfirm={leave}
+        />
     );
-};
-
-export default CheckoutExitConfirmation;
+}

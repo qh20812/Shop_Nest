@@ -1,258 +1,224 @@
-import '@/../css/register-page.css';
-import { Link, router } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Eye, EyeOff, Mail } from 'lucide-react';
+import * as React from 'react';
+
+import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import { PasswordStrength } from '@/components/ui/password-strength';
+import { TextLink } from '@/components/ui/text-link';
+import { Heading, Text } from '@/components/ui/typography';
 
 export default function RegisterPage() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = React.useState({
         identifier: '',
         password: '',
         confirmPassword: '',
         agreeToTerms: false,
     });
-
-    const [errors, setErrors] = useState({
+    const [errors, setErrors] = React.useState({
         identifier: '',
         password: '',
         confirmPassword: '',
         agreeToTerms: '',
     });
-
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [processing, setProcessing] = useState(false);
+    const [showPassword, setShowPassword] = React.useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+    const [processing, setProcessing] = React.useState(false);
 
     const validateForm = (data = formData) => {
-        const newErrors = {
+        const identifier = data.identifier.trim();
+        const emailRegex = /\S+@\S+\.\S+/;
+        const phoneRegex = /^\+?[0-9]{9,15}$/;
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+        const nextErrors = {
             identifier: '',
             password: '',
             confirmPassword: '',
             agreeToTerms: '',
         };
 
-        // Validate identifier (email or phone or username)
-        const identifier = data.identifier.trim();
-        const emailRegex = /\S+@\S+\.\S+/;
-        const phoneRegex = /^\+?[0-9]{9,15}$/; // allows optional + and 9-15 digits
-        const usernameRegex = /^[a-zA-Z0-9_]+$/;
-
         if (!identifier) {
-            newErrors.identifier = 'Email, số điện thoại hoặc tên người dùng là bắt buộc.';
+            nextErrors.identifier = 'Email, số điện thoại hoặc tên người dùng là bắt buộc.';
         } else if (!emailRegex.test(identifier) && !phoneRegex.test(identifier) && !usernameRegex.test(identifier)) {
-            newErrors.identifier = 'Email, số điện thoại hoặc tên người dùng không hợp lệ.';
+            nextErrors.identifier = 'Email, số điện thoại hoặc tên người dùng không hợp lệ.';
         }
 
-        // Validate password
         if (!data.password) {
-            newErrors.password = 'Mật khẩu là bắt buộc.';
+            nextErrors.password = 'Mật khẩu là bắt buộc.';
         } else if (data.password.length < 8) {
-            newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự.';
+            nextErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự.';
         }
 
-        // Validate confirm password
         if (!data.confirmPassword) {
-            newErrors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc.';
+            nextErrors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc.';
         } else if (data.password !== data.confirmPassword) {
-            newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp.';
+            nextErrors.confirmPassword = 'Mật khẩu xác nhận không khớp.';
         }
 
-        // Validate terms agreement
         if (!data.agreeToTerms) {
-            newErrors.agreeToTerms = 'Bạn phải đồng ý với Điều khoản Dịch vụ.';
+            nextErrors.agreeToTerms = 'Bạn phải đồng ý với Điều khoản Dịch vụ.';
         }
 
-        setErrors(newErrors);
-        return Object.values(newErrors).every((error) => error === '');
+        setErrors(nextErrors);
+
+        return Object.values(nextErrors).every((error) => error === '');
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target;
-        const newValue = type === 'checkbox' ? checked : value;
-        const newData = { ...formData, [name]: newValue } as typeof formData;
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        setErrors({ identifier: '', password: '', confirmPassword: '', agreeToTerms: '' });
 
-        // Update form data state
-        setFormData(newData);
-
-        // Re-validate live for a better UX so button toggles when the user fixes errors
-        validateForm(newData);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Clear previous errors
-        setErrors({
-            identifier: '',
-            password: '',
-            confirmPassword: '',
-            agreeToTerms: '',
-        });
-
-        if (validateForm()) {
-            setProcessing(true);
-
-            router.post(
-                route('register.store'),
-                {
-                    identifier: formData.identifier,
-                    password: formData.password,
-                    confirmPassword: formData.confirmPassword,
-                    agreeToTerms: formData.agreeToTerms,
-                },
-                {
-                    onError: (errors) => {
-                        setProcessing(false);
-                        // Map backend errors to frontend state
-                        setErrors({
-                            identifier: errors.identifier || '',
-                            password: errors.password || '',
-                            confirmPassword: errors.confirmPassword || '',
-                            agreeToTerms: errors.agreeToTerms || '',
-                        });
-                    },
-                    onSuccess: () => {
-                        setProcessing(false);
-                    },
-                    onFinish: () => {
-                        setProcessing(false);
-                    },
-                },
-            );
+        if (!validateForm()) {
+            return;
         }
+
+        setProcessing(true);
+        router.post(
+            route('register.store'),
+            {
+                identifier: formData.identifier,
+                password: formData.password,
+                confirmPassword: formData.confirmPassword,
+                agreeToTerms: formData.agreeToTerms,
+            },
+            {
+                onError: (serverErrors) => {
+                    setErrors({
+                        identifier: serverErrors.identifier ?? '',
+                        password: serverErrors.password ?? '',
+                        confirmPassword: serverErrors.confirmPassword ?? '',
+                        agreeToTerms: serverErrors.agreeToTerms ?? '',
+                    });
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
-        <div className="register-page-container">
-            <button className="register-dark-toggle" type="button">
-                <span className="material-symbols-outlined">dark_mode</span>
-            </button>
+        <AuthLayout brand={<AuthBrandPanel role="customer" />}>
+            <Head title="Tạo tài khoản" />
 
-            <div className="register-content-wrapper">
-                <div className="register-card">
-                    <div className="register-header">
-                        {/* Use external SVG asset from public/image to allow consistent logo updates */}
-                        <Link href="/">
-                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="register-logo" />
-                        </Link>
-
-                        <div className="register-title-wrapper">
-                            <p className="register-title">Tạo tài khoản mới</p>
-                            <p className="register-subtitle">Bắt đầu hành trình mua sắm của bạn với ShopNest.</p>
-                        </div>
-                    </div>
-
-                    <form className="register-form" onSubmit={handleSubmit}>
-                        <div className="register-form-group">
-                            <label className="register-form-label">
-                                <p className="register-label-text">Email, Số điện thoại hoặc Tên người dùng</p>
-                                <input
-                                    className={`register-input ${errors.identifier ? 'register-input-error' : ''}`}
-                                    type="text"
-                                    name="identifier"
-                                    placeholder="Nhập email, số điện thoại hoặc tên người dùng"
-                                    value={formData.identifier}
-                                    onChange={handleInputChange}
-                                />
-                            </label>
-                            {errors.identifier && <p className="register-error">{errors.identifier}</p>}
-                        </div>
-
-                        <div className="register-form-group">
-                            <label className="register-form-label">
-                                <p className="register-label-text">Mật khẩu</p>
-                                <div className="register-input-wrapper">
-                                    <input
-                                        className={`register-input register-input-password ${errors.password ? 'register-input-error' : ''}`}
-                                        type={showPassword ? 'text' : 'password'}
-                                        name="password"
-                                        placeholder="Tạo mật khẩu của bạn"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                    />
-                                    <button className="register-toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>
-                                        <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                    </button>
-                                </div>
-                            </label>
-                            {errors.password && <p className="register-error">{errors.password}</p>}
-                        </div>
-
-                        <div className="register-form-group">
-                            <label className="register-form-label">
-                                <p className="register-label-text">Xác nhận mật khẩu</p>
-                                <div className="register-input-wrapper">
-                                    <input
-                                        className="register-input register-input-password"
-                                        type={showConfirmPassword ? 'text' : 'password'}
-                                        name="confirmPassword"
-                                        placeholder="Nhập lại mật khẩu của bạn"
-                                        value={formData.confirmPassword}
-                                        onChange={handleInputChange}
-                                    />
-                                    <button
-                                        className="register-toggle-password"
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    >
-                                        <span className="material-symbols-outlined">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
-                                    </button>
-                                </div>
-                            </label>
-                            {errors.confirmPassword && <p className="register-error">{errors.confirmPassword}</p>}
-                        </div>
-
-                        <div className="register-checkbox-wrapper">
-                            <label className="register-checkbox-label">
-                                <input
-                                    className="register-checkbox"
-                                    type="checkbox"
-                                    name="agreeToTerms"
-                                    checked={formData.agreeToTerms}
-                                    onChange={handleInputChange}
-                                />
-                                <p className="register-checkbox-text">
-                                    Tôi đồng ý với{' '}
-                                    <a className="register-checkbox-link" href="#">
-                                        Điều khoản Dịch vụ
-                                    </a>{' '}
-                                    và{' '}
-                                    <a className="register-checkbox-link" href="#">
-                                        Chính sách Bảo mật
-                                    </a>{' '}
-                                    của ShopNest.
-                                </p>
-                            </label>
-                        </div>
-                        {errors.agreeToTerms && <p className="register-error register-error-checkbox">{errors.agreeToTerms}</p>}
-                        <div>
-                            <button
-                                className="register-submit-btn"
-                                type="submit"
-                                disabled={
-                                    processing ||
-                                    // disable button if any validation error exists or required fields are missing
-                                    Object.values(errors).some((error) => error !== '') ||
-                                    !formData.identifier.trim() ||
-                                    !formData.password ||
-                                    !formData.confirmPassword ||
-                                    !formData.agreeToTerms
-                                }
-                            >
-                                {processing ? 'Đang xử lý...' : 'Đăng ký'}
-                            </button>
-                        </div>
-                    </form>
-
-                    <p className="register-footer">
-                        <span className="register-footer-text">Đã có tài khoản? </span>
-                        {/* <a className="register-footer-link" href="/login">
-                            Đăng nhập ngay
-                        </a> */}
-                        <Link className="register-footer-link" href="/login">
-                            Đăng nhập ngay
-                        </Link>
-                    </p>
-                </div>
+            <div className="flex flex-col gap-2">
+                <Heading level={1} size="headline-1">
+                    Tạo tài khoản mới
+                </Heading>
+                <Text size="body-md" tone="muted">
+                    Bắt đầu hành trình mua sắm của bạn với ShopNest.
+                </Text>
             </div>
-        </div>
+
+            <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5" noValidate>
+                <FormField label="Email, số điện thoại hoặc tên người dùng" required error={errors.identifier}>
+                    <Input
+                        name="identifier"
+                        value={formData.identifier}
+                        onChange={(event) => setFormData((current) => ({ ...current, identifier: event.target.value }))}
+                        placeholder="ban@example.com hoặc 0912 345 678"
+                        autoComplete="username"
+                        leadingIcon={Mail}
+                        invalid={Boolean(errors.identifier)}
+                    />
+                </FormField>
+
+                <div className="flex flex-col gap-1.5">
+                    <FormField label="Mật khẩu" required error={errors.password}>
+                        <Input
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
+                            placeholder="Tạo mật khẩu của bạn"
+                            autoComplete="new-password"
+                            invalid={Boolean(errors.password)}
+                            trailing={
+                                <button
+                                    type="button"
+                                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                    className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
+                                    onClick={() => setShowPassword((value) => !value)}
+                                >
+                                    {showPassword ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
+                                </button>
+                            }
+                        />
+                    </FormField>
+                    <PasswordStrength value={formData.password} className="mt-1" />
+                </div>
+
+                <FormField label="Xác nhận mật khẩu" required error={errors.confirmPassword}>
+                    <Input
+                        name="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={formData.confirmPassword}
+                        onChange={(event) => setFormData((current) => ({ ...current, confirmPassword: event.target.value }))}
+                        placeholder="Nhập lại mật khẩu"
+                        autoComplete="new-password"
+                        invalid={Boolean(errors.confirmPassword)}
+                        trailing={
+                            <button
+                                type="button"
+                                aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
+                                onClick={() => setShowConfirmPassword((value) => !value)}
+                            >
+                                {showConfirmPassword ? (
+                                    <EyeOff aria-hidden="true" className="size-4" />
+                                ) : (
+                                    <Eye aria-hidden="true" className="size-4" />
+                                )}
+                            </button>
+                        }
+                    />
+                </FormField>
+
+                <div className="flex flex-col gap-2">
+                    <Checkbox
+                        checked={formData.agreeToTerms}
+                        onCheckedChange={(checked) => setFormData((current) => ({ ...current, agreeToTerms: checked === true }))}
+                        label="Tôi đồng ý với điều khoản của ShopNest."
+                    />
+                    <p className="text-body-sm text-ink-muted">
+                        Xem{' '}
+                        <TextLink href="/terms" tone="accent" underline={false}>
+                            Điều khoản Dịch vụ
+                        </TextLink>{' '}
+                        và{' '}
+                        <TextLink href="/privacy-policy" tone="accent" underline={false}>
+                            Chính sách Bảo mật
+                        </TextLink>
+                        .
+                    </p>
+                    {errors.agreeToTerms && (
+                        <span role="alert" className="text-body-sm text-brick">
+                            {errors.agreeToTerms}
+                        </span>
+                    )}
+                </div>
+
+                <Button type="submit" size="lg" loading={processing} className="w-full">
+                    Đăng ký
+                </Button>
+            </form>
+
+            <p className="mt-6 border-t border-border pt-5 text-body-sm text-ink-muted">
+                Đã có tài khoản?{' '}
+                <TextLink href="/login" tone="accent" underline={false}>
+                    Đăng nhập ngay
+                </TextLink>
+            </p>
+
+            <p className="mt-5 text-center text-body-sm text-ink-muted">
+                Bạn muốn bán hàng?{' '}
+                <TextLink href="/register/seller" tone="ink" underline={false}>
+                    Đăng ký người bán
+                </TextLink>
+            </p>
+        </AuthLayout>
     );
 }

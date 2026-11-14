@@ -2,7 +2,7 @@
 
 > Hệ component UI của ShopNest theo hướng **Nếp**.  
 > Nguồn chuẩn: `DESIGN.md` · Kế hoạch: `PLAN.md`  
-> Trạng thái: **Phase 0 + Phase 1 hoàn tất**, layout bắt đầu từ Phase 2.
+> Trạng thái: **Phase 0 + Phase 1 + Phase 2 hoàn tất**, luồng storefront bắt đầu từ Phase 3.
 
 ---
 
@@ -139,13 +139,19 @@ Quy ước file:
 | Overlay/feedback | `Dialog`, `Sheet`, `Toast`, `Toaster`, `EmptyState`, `ErrorState`, `Alert`, `ConfirmDialog`, `LoadingOverlay`, `ResultState` |
 | Commerce atoms | `Price`, `Rating`, `QuantityStepper`, `Countdown`, `PaymentMarks` |
 
-### Phase 2 — Layout/Auth/Home
+### Phase 2 — Layout/Auth/Home — đã dựng
 
 `PageContainer`, `PageHeader`, `SectionHeader`, `StorefrontHeader`, `StorefrontFooter`, `StorefrontLayout`, `AuthLayout`, `AuthBrandPanel`, `AccountLayout`, `MobileNav`; `HeroEditorial`, `UtilityStrip`, `CategoryShelf`, `FlashSaleModule`, `ProductShelf`, `TrustStrip`, `EditorialPillars`, `BrandSpotlight`, `NewsletterSignup`.
 
-### Phase 3 — Storefront flow
+### Phase 3 — Storefront flow — đã dựng
 
-`ProductCard`, `ProductGrid`, `ProductGallery`, `BuyBox`, `VariantSelector`, `SpecTable`, `ReviewSummary`, `ReviewCard`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills`, `CartLine`, `OrderSummary`, `PromoField`, `CheckoutStepper`, `ShippingOption`, `PaymentOption`.
+| Nhóm | Component |
+|---|---|
+| Catalog | `ProductCard`, `ProductGrid`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills` |
+| Product detail | `ProductGallery`, `BuyBox`, `VariantSelector`, `SpecTable`, `ShopIdentity`, `ReviewSummary`, `ReviewCard` |
+| Cart/checkout | `CartLine`, `OrderSummary`, `PromoField`, `CheckoutStepper`, `ShippingOption`, `PaymentOption` |
+
+Page dùng chúng: `Home/search-page.tsx`, `Home/daily-discover-page.tsx`, `Home/flash-sale-page.tsx`, `Customer/Detail.tsx`, `Customer/Cart.tsx`, `Customer/Checkout.tsx`, `Customer/PaymentResult.tsx`. Ví dụ chi tiết ở mục 13.
 
 ### Phase 4 — Account
 
@@ -497,3 +503,273 @@ import { PaymentMarks } from '@/components/commerce/PaymentMarks';
 5. `Dialog`/`Sheet` đã có focus trap; không tự viết modal mới.
 6. Toast dùng store toàn cục; không tạo `ToastProvider` lồng nhau có `Toaster` riêng.
 7. IconButton phải có `label`; icon chỉ dùng Lucide.
+
+---
+
+## 12. Ví dụ layout và storefront
+
+### Storefront shell
+
+```tsx
+import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
+
+<StorefrontLayout>
+  <HeroEditorial ... />
+  <CategoryShelf categories={categories} />
+  <TrustStrip items={trustItems} />
+</StorefrontLayout>
+```
+
+`HomeLayout` hiện chỉ còn là wrapper tương thích:
+
+```tsx
+import HomeLayout from '@/layouts/app/HomeLayout';
+
+<HomeLayout>
+  <LegacyPage />
+</HomeLayout>
+```
+
+Trang mới nên import `StorefrontLayout` trực tiếp.
+
+### Container và heading
+
+```tsx
+import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+
+<PageContainer className="py-section">
+  <PageHeader
+    breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Giỏ hàng' }]}
+    eyebrow="Đơn hàng"
+    title="Giỏ hàng"
+    count="3 món"
+    actions={<Button>Thanh toán</Button>}
+  />
+  <SectionHeader eyebrow="Gợi ý" title="Sản phẩm bán chạy" action={<TextLink href="/search">Xem tất cả</TextLink>} />
+</PageContainer>
+```
+
+### Hero và home modules
+
+```tsx
+<HeroEditorial
+  eyebrow="Mọi thứ cho tổ ấm Việt"
+  title={<>Chọn <HeroInlineImage src={laptop} alt="Laptop" /> đồ thật kỹ,<br />sống <HeroInlineImage src={table} alt="Bàn ăn" /> thật êm.</>}
+  subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
+  cta={{ label: 'Xem chợ hôm nay', href: '/search' }}
+  images={[{ src: laptop, alt: 'Laptop' }, { src: airfryer, alt: 'Nồi chiên' }, { src: stroller, alt: 'Xe đẩy' }]}
+  trust={['1.200+ Shop Việt', '100% kiểm định nguồn gốc']}
+/>
+
+<UtilityStrip items={utilityItems} />
+<CategoryShelf categories={categories} />
+<FlashSaleModule endsAt={endTime} products={products} />
+<ProductShelf title="Sản phẩm bán chạy" products={bestSellers} />
+<BrandSpotlight />
+<TrustStrip items={trustItems} />
+```
+
+### Auth layout
+
+```tsx
+import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+
+<AuthLayout brand={<AuthBrandPanel role="seller" />}>
+  <SellerRegisterForm />
+</AuthLayout>
+
+// A05 / A06
+<AuthLayout variant="centered">
+  <ForgotPasswordForm />
+</AuthLayout>
+```
+
+### Header và footer
+
+```tsx
+import { StorefrontFooter } from '@/components/layout/StorefrontFooter';
+import { StorefrontHeader } from '@/components/layout/StorefrontHeader';
+
+<StorefrontHeader cartCount={3} unreadCount={2} />
+<StorefrontFooter />
+<StorefrontFooter compact />
+```
+
+Header tự lấy `auth.user`, `locale`, `currency`, `cartCount` và `unreadCount` từ Inertia page props; prop truyền vào sẽ override.
+
+### Product card
+
+```tsx
+import { ProductCard } from '@/components/commerce/ProductCard';
+
+<ProductCard
+  product={product}
+  priority
+  onAddToCart={(item) => router.visit(`/product/${item.id}`)}
+  onToggleWishlist={(item) => router.post(`/user/wishlist/items/${item.id}`)}
+/>
+```
+
+`variant="wishlist"` dùng cho lưới yêu thích; `variant="compact"` cho rail hẹp.
+
+---
+
+## 13. Ví dụ storefront flow (Phase 3)
+
+### Catalog: filter rail + grid + phân trang
+
+```tsx
+import { ProductGrid } from '@/components/commerce/ProductGrid';
+import { FilterRail } from '@/components/commerce/FilterRail';
+import { FilterGroup } from '@/components/commerce/FilterGroup';
+import { ActiveFilters } from '@/components/commerce/ActiveFilters';
+import { CategoryPills } from '@/components/commerce/CategoryPills';
+import Pagination from '@/components/ui/Pagination';
+
+<CategoryPills
+  items={[{ value: '', label: 'Tất cả' }, ...categories]}
+  value={selectedCategoryId}
+  onChange={(value) => updateFilters({ category_ids: value === '' ? [] : [Number(value)] })}
+/>
+
+<ActiveFilters filters={activeFilters} onRemove={removeFilter} onClear={clearAll} />
+
+<FilterRail activeCount={activeFilters.length} onClear={clearAll}>
+  <FilterGroup title="Danh mục" count={selectedCategoryIds.length}>
+    <Checkbox checked={checked} onCheckedChange={(next) => toggle(...)} label={category.name} />
+  </FilterGroup>
+</FilterRail>
+
+<ProductGrid
+  products={products}
+  columns={3}
+  onAddToCart={(product) => router.visit(`/product/${product.id}`)}
+  onToggleWishlist={(product) => router.post(`/user/wishlist/items/${product.id}`)}
+/>
+
+<Pagination page={page} pageCount={lastPage} total={total} pageSize={perPage} onPageChange={goToPage} />
+```
+
+- `ProductGrid` có `loading` (render skeleton) và `emptyTitle`/`emptyDescription`.
+- `FilterRail` sticky ở `lg`, dùng lại nguyên khối trong `Sheet` cho mobile.
+- Server giữ query key: `search`, `category_ids[]`, `brand_ids[]`, `price_min`, `price_max`, `rating_min`, `states[]`, `sort`, `page`.
+
+### Product detail
+
+```tsx
+import { ProductGallery } from '@/components/commerce/ProductGallery';
+import { BuyBox } from '@/components/commerce/BuyBox';
+import { VariantSelector } from '@/components/commerce/VariantSelector';
+import { SpecTable } from '@/components/commerce/SpecTable';
+import { ShopIdentity } from '@/components/commerce/ShopIdentity';
+import { ReviewSummary } from '@/components/commerce/ReviewSummary';
+import { ReviewCard } from '@/components/commerce/ReviewCard';
+
+<ProductGallery images={images} activeIndex={index} onChange={setIndex} productName={name}
+  wishlisted={favorited} onToggleWishlist={toggleWishlist} />
+
+<BuyBox
+  title={product.name}
+  shop={shop}
+  rating={rating.average}
+  reviewCount={rating.count}
+  soldCount={soldCount}
+  price={currentPrice}
+  compareAt={compareAt}
+  stock={variant.available_quantity}
+  quantity={quantity}
+  maxQuantity={maxQuantity}
+  onQuantityChange={setQuantity}
+  onAddToCart={handleAddToCart}
+  onBuyNow={handleBuyNow}
+  adding={isAdding}
+  buying={isBuying}
+>
+  <VariantSelector groups={groups} selected={selected} onChange={handleAttributeSelect} />
+</BuyBox>
+
+<SpecTable rows={[{ label: 'Thương hiệu', value: brand.name }]} />
+<ReviewSummary rating={rating.average} count={rating.count} breakdown={breakdown} onFilter={setRatingFilter} />
+<ReviewCard review={{ id, user: { name, avatar }, rating, comment, createdAt, verified }} />
+```
+
+- `BuyBox` sticky ở `lg`, gồm shop, giá, tồn kho, số lượng, CTA và trust list; `children` đặt giữa giá và stepper (dùng cho variant).
+- Route/payload giữ nguyên: `POST /product/{id}/add-to-cart`, `POST /product/{id}/buy-now`, wishlist `/user/wishlist/items/{id}`.
+
+### Cart
+
+```tsx
+import { CartLine } from '@/components/commerce/CartLine';
+import { OrderSummary } from '@/components/commerce/OrderSummary';
+import { PromoField } from '@/components/commerce/PromoField';
+
+<CartLine
+  item={{ id, name, image, href, shopName, variant, price, compareAt, quantity, maxQuantity }}
+  selected={selected}
+  onSelect={setSelected}
+  onQuantityChange={setQuantity}
+  onRemove={() => setPendingDelete([id])}
+/>
+
+<OrderSummary
+  items={summaryItems}
+  subtotal={totals.subtotal}
+  discount={totals.discount}
+  shipping={totals.shipping}
+  shippingLabel={totals.shipping > 0 ? undefined : 'Tính ở bước sau'}
+  total={totals.total}
+  ctaLabel="Thanh toán"
+  onCheckout={() => router.visit('/checkout')}
+  promotion={<PromoField value={code} onChange={setCode} onApply={applyPromo} onRemove={removePromo} appliedCode={promotion?.code} />}
+  footerNote="Đã bao gồm thuế VAT và phí kiểm định."
+/>
+```
+
+- Cart mutation đúng backend: `POST /cart/update/{itemId}` body `{ quantity }`, `POST /cart/remove/{itemId}`.
+- Checkbox trong giỏ chỉ phục vụ xoá hàng loạt; checkout luôn dùng toàn bộ giỏ như backend hiện tại.
+- Xoá dùng `ConfirmDialog`; `OrderSummary` hiển thị tổng theo backend, không tự tính lại.
+
+### Checkout
+
+```tsx
+import { CheckoutStepper } from '@/components/commerce/CheckoutStepper';
+import { PaymentOption } from '@/components/commerce/PaymentOption';
+import { ShippingOption } from '@/components/commerce/ShippingOption';
+
+<CheckoutStepper current={1} steps={[{ label: 'Giỏ hàng', state: 'done' }, { label: 'Thông tin & thanh toán' }, { label: 'Hoàn tất' }]} />
+
+<PaymentOption
+  value="stripe"
+  selected={selectedPayment === 'stripe'}
+  onChange={setSelectedPayment}
+  title="Stripe — Thẻ quốc tế"
+  description="Thanh toán bằng thẻ Visa/MasterCard/JCB"
+  icon={CreditCard}
+  marks={['visa', 'mastercard', 'jcb', 'stripe']}
+/>
+
+<ShippingOption value="standard" selected title="Giao tiêu chuẩn 2–4 ngày" price={shipping} eta="Dự kiến 2–4 ngày" onChange={setShipping} />
+```
+
+- Checkout vẫn gửi `POST /checkout` hoặc `POST /buy-now/checkout/{orderId}` với `provider`, `address_id`, `notes`. Không đổi tên field.
+- Địa chỉ dùng `RadioCard`; thêm địa chỉ mở `Dialog` chứa `CheckoutAddressForm` (province → district → ward, gọi `/addresses/*`).
+- Rời trang khi có ghi chú/promo chưa lưu sẽ hiện `ConfirmDialog` qua `CheckoutExitConfirmation`.
+
+### Kết quả thanh toán
+
+```tsx
+import { ResultState } from '@/components/feedback/ResultState';
+
+<ResultState
+  status="success"
+  orderCode={order.code}
+  title="Đặt hàng thành công"
+  message="Shop sẽ xác nhận đơn trong 15 phút."
+  actions={<Button asChild><Link href="/user/orders">Xem đơn hàng</Link></Button>}
+/>
+```
+
+`status` nhận `success | pending | failure`; `PaymentResult` tự map `succeeded | canceled | failed` từ backend và fallback action theo trạng thái.

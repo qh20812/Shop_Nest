@@ -1,5 +1,11 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
 
 interface AddressOption {
     id: number;
@@ -7,7 +13,7 @@ interface AddressOption {
     code: string;
 }
 
-interface NewAddress {
+export interface NewAddress {
     name: string;
     phone: string;
     address: string;
@@ -22,8 +28,8 @@ interface CheckoutAddressFormProps {
     onCancel: () => void;
 }
 
-const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({ onSubmit, onCancel }) => {
-    const [formData, setFormData] = useState<NewAddress>({
+export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddressFormProps) {
+    const [formData, setFormData] = React.useState<NewAddress>({
         name: '',
         phone: '',
         address: '',
@@ -32,38 +38,35 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({ onSubmit, onC
         ward_id: '',
         is_default: false,
     });
+    const [provinces, setProvinces] = React.useState<AddressOption[]>([]);
+    const [districts, setDistricts] = React.useState<AddressOption[]>([]);
+    const [wards, setWards] = React.useState<AddressOption[]>([]);
+    const [loadingProvinces, setLoadingProvinces] = React.useState(false);
+    const [loadingDistricts, setLoadingDistricts] = React.useState(false);
+    const [loadingWards, setLoadingWards] = React.useState(false);
+    const [submitting, setSubmitting] = React.useState(false);
 
-    const [provinces, setProvinces] = useState<AddressOption[]>([]);
-    const [districts, setDistricts] = useState<AddressOption[]>([]);
-    const [wards, setWards] = useState<AddressOption[]>([]);
+    React.useEffect(() => {
+        const loadProvinces = async () => {
+            setLoadingProvinces(true);
+            try {
+                const response = await axios.get('/addresses/provinces');
+                if (response.data?.success) {
+                    setProvinces(response.data.data);
+                }
+            } catch {
+                // Keep the form usable; the user can retry by reopening.
+            } finally {
+                setLoadingProvinces(false);
+            }
+        };
 
-    const [loadingProvinces, setLoadingProvinces] = useState(false);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
-    const [loadingWards, setLoadingWards] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-
-    useEffect(() => {
         loadProvinces();
     }, []);
-
-    const loadProvinces = async () => {
-        setLoadingProvinces(true);
-        try {
-            const response = await axios.get('/addresses/provinces');
-            if (response.data?.success) {
-                setProvinces(response.data.data);
-            }
-        } catch (error) {
-            console.error('Failed to load provinces:', error);
-        } finally {
-            setLoadingProvinces(false);
-        }
-    };
 
     const loadDistricts = async (provinceId: string) => {
         if (!provinceId) {
             setDistricts([]);
-            setWards([]);
             return;
         }
 
@@ -73,8 +76,8 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({ onSubmit, onC
             if (response.data?.success) {
                 setDistricts(response.data.data);
             }
-        } catch (error) {
-            console.error('Failed to load districts:', error);
+        } catch {
+            setDistricts([]);
         } finally {
             setLoadingDistricts(false);
         }
@@ -92,42 +95,17 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({ onSubmit, onC
             if (response.data?.success) {
                 setWards(response.data.data);
             }
-        } catch (error) {
-            console.error('Failed to load wards:', error);
+        } catch {
+            setWards([]);
         } finally {
             setLoadingWards(false);
         }
     };
 
-    const handleProvinceChange = (provinceId: string) => {
-        setFormData({
-            ...formData,
-            province_id: provinceId,
-            district_id: '',
-            ward_id: '',
-        });
-        setDistricts([]);
-        setWards([]);
-        if (provinceId) {
-            loadDistricts(provinceId);
-        }
-    };
-
-    const handleDistrictChange = (districtId: string) => {
-        setFormData({
-            ...formData,
-            district_id: districtId,
-            ward_id: '',
-        });
-        setWards([]);
-        if (districtId) {
-            loadWards(districtId);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
         setSubmitting(true);
+
         try {
             await onSubmit(formData);
         } finally {
@@ -136,134 +114,94 @@ const CheckoutAddressForm: React.FC<CheckoutAddressFormProps> = ({ onSubmit, onC
     };
 
     return (
-        <form onSubmit={handleSubmit} className="checkout-form">
-            <div className="checkout-form__group">
-                <label className="checkout-form__label">
-                    Họ và tên <span className="checkout-form__required">*</span>
-                </label>
-                <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nhập họ tên"
-                    required
-                    className="checkout-input"
-                />
+        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField label="Họ và tên" required>
+                    <Input
+                        value={formData.name}
+                        onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
+                        placeholder="Nguyễn Thu Hà"
+                        required
+                    />
+                </FormField>
+                <FormField label="Số điện thoại" required>
+                    <Input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(event) => setFormData((current) => ({ ...current, phone: event.target.value }))}
+                        placeholder="0912 345 678"
+                        required
+                    />
+                </FormField>
             </div>
 
-            <div className="checkout-form__group">
-                <label className="checkout-form__label">
-                    Số điện thoại <span className="checkout-form__required">*</span>
-                </label>
-                <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Nhập số điện thoại"
-                    required
-                    className="checkout-input"
-                />
-            </div>
-
-            <div className="checkout-form__group">
-                <label className="checkout-form__label">
-                    Địa chỉ <span className="checkout-form__required">*</span>
-                </label>
-                <input
-                    type="text"
+            <FormField label="Địa chỉ" required>
+                <Input
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    onChange={(event) => setFormData((current) => ({ ...current, address: event.target.value }))}
                     placeholder="Số nhà, tên đường"
                     required
-                    className="checkout-input"
                 />
-            </div>
+            </FormField>
 
-            <div className="checkout-form__split">
-                <div className="checkout-form__group">
-                    <label className="checkout-form__label">
-                        Tỉnh/Thành phố <span className="checkout-form__required">*</span>
-                    </label>
-                    <select
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <FormField label="Tỉnh/Thành phố" required>
+                    <Select
                         value={formData.province_id}
-                        onChange={(e) => handleProvinceChange(e.target.value)}
+                        onChange={(event) => {
+                            const provinceId = event.target.value;
+                            setFormData((current) => ({ ...current, province_id: provinceId, district_id: '', ward_id: '' }));
+                            setDistricts([]);
+                            setWards([]);
+                            loadDistricts(provinceId);
+                        }}
+                        placeholder={loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}
+                        options={provinces.map((province) => ({ value: String(province.id), label: province.name }))}
                         disabled={loadingProvinces}
                         required
-                        className="checkout-select"
-                    >
-                        <option value="">Chọn tỉnh/thành phố</option>
-                        {provinces.map((province) => (
-                            <option key={province.id} value={province.id}>
-                                {province.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="checkout-form__group">
-                    <label className="checkout-form__label">
-                        Quận/Huyện <span className="checkout-form__required">*</span>
-                    </label>
-                    <select
+                    />
+                </FormField>
+                <FormField label="Quận/Huyện" required>
+                    <Select
                         value={formData.district_id}
-                        onChange={(e) => handleDistrictChange(e.target.value)}
+                        onChange={(event) => {
+                            const districtId = event.target.value;
+                            setFormData((current) => ({ ...current, district_id: districtId, ward_id: '' }));
+                            setWards([]);
+                            loadWards(districtId);
+                        }}
+                        placeholder={loadingDistricts ? 'Đang tải...' : 'Chọn quận/huyện'}
+                        options={districts.map((district) => ({ value: String(district.id), label: district.name }))}
                         disabled={!formData.province_id || loadingDistricts}
                         required
-                        className="checkout-select"
-                    >
-                        <option value="">Chọn quận/huyện</option>
-                        {districts.map((district) => (
-                            <option key={district.id} value={district.id}>
-                                {district.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                    />
+                </FormField>
+                <FormField label="Phường/Xã" required>
+                    <Select
+                        value={formData.ward_id}
+                        onChange={(event) => setFormData((current) => ({ ...current, ward_id: event.target.value }))}
+                        placeholder={loadingWards ? 'Đang tải...' : 'Chọn phường/xã'}
+                        options={wards.map((ward) => ({ value: String(ward.id), label: ward.name }))}
+                        disabled={!formData.district_id || loadingWards}
+                        required
+                    />
+                </FormField>
             </div>
 
-            <div className="checkout-form__group">
-                <label className="checkout-form__label">
-                    Phường/Xã <span className="checkout-form__required">*</span>
-                </label>
-                <select
-                    value={formData.ward_id}
-                    onChange={(e) => setFormData({ ...formData, ward_id: e.target.value })}
-                    disabled={!formData.district_id || loadingWards}
-                    required
-                    className="checkout-select"
-                >
-                    <option value="">Chọn phường/xã</option>
-                    {wards.map((ward) => (
-                        <option key={ward.id} value={ward.id}>
-                            {ward.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            <Checkbox
+                checked={formData.is_default}
+                onCheckedChange={(checked) => setFormData((current) => ({ ...current, is_default: checked === true }))}
+                label="Đặt làm địa chỉ mặc định"
+            />
 
-            <div className="checkout-checkbox">
-                <input
-                    type="checkbox"
-                    id="is_default"
-                    checked={formData.is_default}
-                    onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                    className="checkout-checkbox__input"
-                />
-                <label htmlFor="is_default" className="checkout-checkbox__label">
-                    Đặt làm địa chỉ mặc định
-                </label>
-            </div>
-
-            <div className="checkout-form__actions">
-                <button type="button" onClick={onCancel} className="checkout-button checkout-button--secondary">
-                    Hủy
-                </button>
-                <button type="submit" disabled={submitting} className="checkout-button checkout-button--primary">
-                    {submitting ? 'Đang lưu...' : 'Lưu địa chỉ'}
-                </button>
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
+                    Huỷ
+                </Button>
+                <Button type="submit" loading={submitting}>
+                    Lưu địa chỉ
+                </Button>
             </div>
         </form>
     );
-};
-
-export default CheckoutAddressForm;
+}

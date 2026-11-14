@@ -1,192 +1,167 @@
-import '@/../css/login-page.css';
-import { useTranslation } from '@/lib/i18n';
-import { Link, router } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Eye, EyeOff, Mail } from 'lucide-react';
+import * as React from 'react';
+
+import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import { TextLink } from '@/components/ui/text-link';
+import { Heading, Text } from '@/components/ui/typography';
 
 export default function LoginPage() {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = React.useState({
         identifier: '',
         password: '',
         remember: false,
     });
-    const { t } = useTranslation();
-
-    const [errors, setErrors] = useState({
-        identifier: '',
-        password: '',
-    });
-
-    const [showPassword, setShowPassword] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = React.useState({ identifier: '', password: '' });
+    const [showPassword, setShowPassword] = React.useState(false);
+    const [submitting, setSubmitting] = React.useState(false);
 
     const validateForm = (data = formData) => {
-        const newErrors = {
-            identifier: '',
-            password: '',
+        const nextErrors = {
+            identifier: data.identifier.trim() ? '' : 'Email, số điện thoại hoặc tên người dùng là bắt buộc.',
+            password: data.password ? '' : 'Mật khẩu là bắt buộc.',
         };
 
-        // Validate identifier
-        if (!data.identifier.trim()) {
-            newErrors.identifier = 'Email, số điện thoại hoặc tên người dùng là bắt buộc.';
-        }
+        setErrors(nextErrors);
 
-        // Validate password
-        if (!data.password) {
-            newErrors.password = 'Mật khẩu là bắt buộc.';
-        }
-
-        setErrors(newErrors);
-        return Object.values(newErrors).every((error) => error === '');
+        return Object.values(nextErrors).every((error) => error === '');
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type, checked } = e.target;
-        const newValue = type === 'checkbox' ? checked : value;
-        const newData = { ...formData, [name]: newValue } as typeof formData;
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        setErrors({ identifier: '', password: '' });
 
-        setFormData(newData);
-        validateForm(newData);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        setErrors({
-            identifier: '',
-            password: '',
-        });
-
-        if (validateForm()) {
-            setSubmitting(true);
-            router.post(
-                '/login',
-                {
-                    identifier: formData.identifier.trim(),
-                    password: formData.password,
-                    remember: formData.remember,
-                },
-                {
-                    onError: (serverErrors) => {
-                        setErrors({
-                            identifier: (serverErrors as Record<string, string>).identifier || '',
-                            password: (serverErrors as Record<string, string>).password || '',
-                        });
-                    },
-                    onFinish: () => setSubmitting(false),
-                },
-            );
+        if (!validateForm()) {
+            return;
         }
+
+        setSubmitting(true);
+        router.post(
+            '/login',
+            {
+                identifier: formData.identifier.trim(),
+                password: formData.password,
+                remember: formData.remember,
+            },
+            {
+                onError: (serverErrors) => {
+                    setErrors({
+                        identifier: (serverErrors as Record<string, string>).identifier ?? '',
+                        password: (serverErrors as Record<string, string>).password ?? '',
+                    });
+                },
+                onFinish: () => setSubmitting(false),
+            },
+        );
     };
 
     return (
-        <div className="login-page-container">
-            <button className="login-dark-toggle" type="button">
-                <span className="material-symbols-outlined">dark_mode</span>
-            </button>
+        <AuthLayout brand={<AuthBrandPanel role="customer" />}>
+            <Head title="Đăng nhập" />
 
-            <div className="login-content-wrapper">
-                <div className="login-card">
-                    <div className="login-header">
-                        <Link href="/">
-                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" />
-                        </Link>
+            <div className="flex flex-col gap-2">
+                <Heading level={1} size="headline-1">
+                    Đăng nhập
+                </Heading>
+                <Text size="body-md" tone="muted">
+                    Tiếp tục với tài khoản của bạn để theo dõi đơn hàng và giỏ hàng.
+                </Text>
+            </div>
 
-                        <div className="login-title-wrapper">
-                            <p className="login-title">{t('login.title')}</p>
-                            <p className="login-subtitle">Chào mừng trở lại! Vui lòng nhập thông tin của bạn.</p>
-                        </div>
-                    </div>
+            <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5" noValidate>
+                <FormField label="Email, số điện thoại hoặc tên đăng nhập" required error={errors.identifier}>
+                    <Input
+                        name="identifier"
+                        value={formData.identifier}
+                        onChange={(event) => setFormData((current) => ({ ...current, identifier: event.target.value }))}
+                        placeholder="ban@example.com hoặc 0912 345 678"
+                        autoComplete="username"
+                        leadingIcon={Mail}
+                        invalid={Boolean(errors.identifier)}
+                    />
+                </FormField>
 
-                    <form className="login-form" onSubmit={handleSubmit}>
-                        <div className="login-form-group">
-                            <label className="login-form-label">
-                                <p className="login-label-text">Email hoặc số điện thoại hoặc tên người dùng</p>
-                                <input
-                                    className={`login-input ${errors.identifier ? 'login-input-error' : ''}`}
-                                    type="text"
-                                    name="identifier"
-                                    placeholder="Nhập email, số điện thoại hoặc tên người dùng"
-                                    value={formData.identifier}
-                                    onChange={handleInputChange}
-                                />
-                            </label>
-                            {errors.identifier && <p className="login-error">{errors.identifier}</p>}
-                        </div>
-
-                        <div className="login-form-group">
-                            <label className="login-form-label">
-                                <p className="login-label-text">Mật khẩu</p>
-                                <div className="login-input-wrapper">
-                                    <input
-                                        className={`login-input login-input-password ${errors.password ? 'login-input-error' : ''}`}
-                                        type={showPassword ? 'text' : 'password'}
-                                        name="password"
-                                        placeholder="Nhập mật khẩu của bạn"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                    />
-                                    <button className="login-toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>
-                                        <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                    </button>
-                                </div>
-                            </label>
-                            {errors.password && <p className="login-error">{errors.password}</p>}
-                        </div>
-
-                        <div className="login-remember-row">
-                            <label className="login-checkbox-label">
-                                <input
-                                    className="login-checkbox"
-                                    type="checkbox"
-                                    name="remember"
-                                    checked={formData.remember}
-                                    onChange={handleInputChange}
-                                />
-                                <p className="login-checkbox-text">Ghi nhớ tôi</p>
-                            </label>
-                            <a className="login-forgot-link" href="/forgot-password">
-                                Quên mật khẩu?
-                            </a>
-                        </div>
-
-                        <div>
+                <FormField label="Mật khẩu" required error={errors.password}>
+                    <Input
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
+                        placeholder="Nhập mật khẩu"
+                        autoComplete="current-password"
+                        invalid={Boolean(errors.password)}
+                        trailing={
                             <button
-                                className="login-submit-btn"
-                                type="submit"
-                                disabled={
-                                    Object.values(errors).some((error) => error !== '') ||
-                                    !formData.identifier.trim() ||
-                                    !formData.password ||
-                                    submitting
-                                }
+                                type="button"
+                                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
+                                onClick={() => setShowPassword((value) => !value)}
                             >
-                                Đăng nhập
+                                {showPassword ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
                             </button>
-                        </div>
+                        }
+                    />
+                </FormField>
 
-                        <div className="login-divider">
-                            <div className="login-divider-line"></div>
-                            <div className="login-divider-text-wrapper">
-                                <span className="login-divider-text">Hoặc tiếp tục với</span>
-                            </div>
-                        </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Checkbox
+                        checked={formData.remember}
+                        onCheckedChange={(checked) => setFormData((current) => ({ ...current, remember: checked === true }))}
+                        label="Ghi nhớ đăng nhập"
+                    />
+                    <TextLink href="/forgot-password" tone="muted" underline={false}>
+                        Quên mật khẩu?
+                    </TextLink>
+                </div>
 
-                        <div>
-                            <button className="login-google-btn" type="button" onClick={() => (window.location.href = '/auth/google')}>
-                                <img className="login-google-icon" src="google-color-svgrepo-com.svg" alt="Google" />
-                                <span>Google</span>
-                            </button>
-                        </div>
-                    </form>
+                <Button type="submit" size="lg" loading={submitting} className="w-full">
+                    Đăng nhập
+                </Button>
 
-                    <p className="login-footer">
-                        <span className="login-footer-text">Chưa có tài khoản? </span>
-                        <a className="login-footer-link" href="/register">
-                            Đăng ký ngay
-                        </a>
-                    </p>
+                <div className="flex items-center gap-3">
+                    <span className="h-px flex-1 bg-border" />
+                    <span className="text-label-micro font-semibold tracking-[0.12em] text-ink-faint uppercase">hoặc</span>
+                    <span className="h-px flex-1 bg-border" />
+                </div>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="w-full gap-3"
+                    onClick={() => {
+                        window.location.href = '/auth/google';
+                    }}
+                >
+                    <img src="/google-color-svgrepo-com.svg" alt="" className="size-5" />
+                    Tiếp tục với Google
+                </Button>
+            </form>
+
+            <p className="mt-6 border-t border-border pt-5 text-body-sm text-ink-muted">
+                Chưa có tài khoản?{' '}
+                <TextLink href="/register" tone="accent" underline={false}>
+                    Tạo tài khoản mới
+                </TextLink>
+            </p>
+
+            <div className="mt-5 rounded-control border border-border bg-raw-linen/40 p-3.5 text-center">
+                <p className="mb-2 text-body-sm text-ink-muted">Bạn là đối tác kinh doanh hoặc vận chuyển?</p>
+                <div className="flex flex-wrap items-center justify-center gap-4 text-body-sm font-medium">
+                    <TextLink href="/register/seller" tone="ink" underline={false}>
+                        Bán hàng cùng ShopNest
+                    </TextLink>
+                    <span className="text-border">|</span>
+                    <TextLink href="/register/shipper" tone="ink" underline={false}>
+                        Giao vận đối tác
+                    </TextLink>
                 </div>
             </div>
-        </div>
+        </AuthLayout>
     );
 }

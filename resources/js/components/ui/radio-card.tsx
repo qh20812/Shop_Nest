@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-type RadioCardProps = Omit<React.ComponentProps<'input'>, 'type' | 'value'> & {
+type RadioCardProps = Omit<React.ComponentProps<'input'>, 'type' | 'value' | 'title'> & {
     value: string;
     title: React.ReactNode;
     description?: React.ReactNode;

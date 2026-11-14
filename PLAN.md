@@ -1,6 +1,6 @@
 # ShopNest UI System — Master Plan
 
-> **Trạng thái:** Phase 0 + Phase 1 hoàn tất; Phase 2 chưa bắt đầu  
+> **Trạng thái:** Phase 0 + Phase 1 + Phase 2 + Phase 3 hoàn tất; Phase 4 chưa bắt đầu
 > **Ngày chốt:** 13/11/2026  
 > **Phạm vi:** Storefront + Auth + Customer account + Chat  
 > **Nguồn chuẩn:** `DESIGN.md`  
@@ -1029,82 +1029,95 @@ npm run check:tokens
 
 **Mục tiêu:** Chốt “xương sống” storefront và auth; migrate S01 + A01–A06.
 
+**Trạng thái:** Hoàn tất ngày 14/11/2026.
+
 **Điều kiện vào:** Phase 1 pass.
 
 **Công việc:**
 
 #### Batch 1 — Layout
 
-- [ ] `layout/PageContainer.tsx`.
-- [ ] `layout/PageHeader.tsx`.
-- [ ] `layout/SectionHeader.tsx`.
-- [ ] `layout/StorefrontHeader.tsx`:
-  - [ ] Logo.
-  - [ ] Search.
-  - [ ] Links: Danh mục, Khuyến mãi, Shop Việt, Đơn hàng.
-  - [ ] Language VI, currency VND.
-  - [ ] Account dropdown.
-  - [ ] Cart count.
-  - [ ] Mobile menu.
-- [ ] `layout/StorefrontFooter.tsx`:
-  - [ ] 4 cột.
-  - [ ] Newsletter.
-  - [ ] Legal links.
-  - [ ] Payment marks.
-- [ ] `layout/StorefrontLayout.tsx`.
-- [ ] `layout/AuthLayout.tsx`.
-- [ ] `layout/AuthBrandPanel.tsx`.
-- [ ] `layout/MobileNav.tsx`.
+- [x] `layout/PageContainer.tsx`.
+- [x] `layout/PageHeader.tsx`.
+- [x] `layout/SectionHeader.tsx`.
+- [x] `layout/StorefrontHeader.tsx`:
+  - [x] Logo.
+  - [x] Search.
+  - [x] Links: Danh mục, Khuyến mãi, Shop Việt, Đơn hàng.
+  - [x] Language VI, currency VND.
+  - [x] Account dropdown.
+  - [x] Cart count.
+  - [x] Mobile menu.
+- [x] `layout/StorefrontFooter.tsx`:
+  - [x] 4 cột.
+  - [x] Newsletter.
+  - [x] Legal links.
+  - [x] Payment marks.
+- [x] `layout/StorefrontLayout.tsx`.
+- [x] `layout/AuthLayout.tsx`.
+- [x] `layout/AuthBrandPanel.tsx`.
+- [x] `layout/MobileNav.tsx`.
 
 #### Batch 2 — Home modules
 
-- [ ] `storefront/HeroEditorial.tsx`.
-- [ ] `storefront/UtilityStrip.tsx`.
-- [ ] `storefront/CategoryShelf.tsx`.
-- [ ] `storefront/FlashSaleModule.tsx`.
-- [ ] `storefront/ProductShelf.tsx`.
-- [ ] `storefront/TrustStrip.tsx`.
-- [ ] `storefront/EditorialPillars.tsx`.
-- [ ] `storefront/BrandSpotlight.tsx`.
-- [ ] `storefront/NewsletterSignup.tsx`.
+- [x] `storefront/HeroEditorial.tsx`.
+- [x] `storefront/UtilityStrip.tsx`.
+- [x] `storefront/CategoryShelf.tsx`.
+- [x] `storefront/FlashSaleModule.tsx`.
+- [x] `storefront/ProductShelf.tsx`.
+- [x] `storefront/TrustStrip.tsx`.
+- [x] `storefront/EditorialPillars.tsx`.
+- [x] `storefront/BrandSpotlight.tsx`.
+- [x] `storefront/NewsletterSignup.tsx`.
 
 #### Batch 3 — Auth pages
 
-- [ ] `auth/login-page.tsx`.
-- [ ] `auth/register-page.tsx`.
-- [ ] `auth/SellerRegister.tsx` và `auth/seller-register-page.tsx`:
-  - [ ] Kiểm tra route nào thực sự dùng.
-  - [ ] Giữ một page chuẩn, redirect page còn lại nếu an toàn.
-- [ ] `auth/ShipperRegister.tsx`.
-- [ ] `auth/forgot-password.tsx`.
-- [ ] `auth/reset-password.tsx`.
-- [ ] `auth/VerifyEmail.tsx`.
+- [x] `auth/login-page.tsx`.
+- [x] `auth/register-page.tsx`.
+- [x] `auth/SellerRegister.tsx` và `auth/seller-register-page.tsx`:
+  - [x] Xác định route `seller.register` dùng `auth/SellerRegister.tsx`.
+  - [x] Migrate `SellerRegister` + `SellerRegisterForm`; giữ `seller-register-page.tsx` (không được route dùng) để Phase 6 xoá.
+- [x] `auth/ShipperRegister.tsx`.
+- [x] `auth/forgot-password.tsx`.
+- [x] `auth/reset-password.tsx`.
+- [x] `auth/VerifyEmail.tsx`.
 
 #### Batch 4 — Home/static pages
 
-- [ ] `Home/Index.tsx`.
-- [ ] `Home/About.tsx`.
-- [ ] `Home/Contact.tsx`.
-- [ ] `Legal/Terms.tsx`.
-- [ ] `Legal/PrivacyPolicy.tsx`.
-- [ ] `Legal/SellingPolicy.tsx`.
+- [x] `Home/Index.tsx`.
+- [x] `Home/About.tsx`.
+- [x] `Home/Contact.tsx`.
+- [x] `Legal/Terms.tsx`.
+- [x] `Legal/PrivacyPolicy.tsx`.
+- [x] `Legal/SellingPolicy.tsx`.
 
 #### Batch 5 — Cleanup riêng phase
 
-- [ ] Xoá import `HomeLayout` khỏi các page đã migrate.
-- [ ] Xoá import CSS legacy khỏi các page đã migrate.
-- [ ] Chưa xoá file legacy.
+- [x] Xoá import `HomeLayout` khỏi các page đã migrate.
+- [x] Xoá import CSS legacy khỏi các page đã migrate.
+- [x] Chưa xoá file legacy.
+
+**Kết quả Phase 2:**
+
+- Đã dựng `PageContainer`, `PageHeader`, `SectionHeader`, `StorefrontHeader`, `StorefrontFooter`, `StorefrontLayout`, `AuthLayout`, `AuthBrandPanel`, `MobileNav`.
+- Header có search, nav, language/currency, account dropdown, cart, notifications và mobile sheet.
+- Đã dựng đủ home modules: Hero, UtilityStrip, CategoryShelf, FlashSaleModule, ProductShelf, TrustStrip, EditorialPillars, BrandSpotlight, NewsletterSignup.
+- Đã dựng `ProductCard` sớm để home shelves dùng chung với Phase 3.
+- Đã migrate A01–A06, S01, About, Contact và 3 trang Legal sang layout/component mới.
+- `HomeLayout` chỉ còn wrapper tương thích sang `StorefrontLayout`; các page chưa migrate vẫn chạy.
+- `HomeController` trả thêm `cartCount` để header hiển thị đúng số món.
+- `COMPONENTS.md` có thêm ví dụ layout/storefront.
 
 **Acceptance:**
 
-- [ ] S01 render đúng 6 category, hero 7/5, trust strip.
-- [ ] Header search hoạt động; cart count đúng; account dropdown đúng role.
-- [ ] Auth pages giữ nguyên route, form name, CSRF, validation error.
-- [ ] Google login vẫn hoạt động.
-- [ ] Không có horizontal scroll ở 390px.
-- [ ] Không còn Material Symbol/Boxicon trong các page đã migrate.
-- [ ] `npm run types`, `npm run lint`, `npm run build` pass.
-- [ ] `php artisan test` pass.
+- [x] S01 render đúng 6 category, hero 7/5, trust strip.
+- [x] Header search hoạt động; cart count đúng; account dropdown đúng role.
+- [x] Auth pages giữ nguyên route, form name, CSRF, validation error.
+- [x] Google login vẫn hoạt động.
+- [x] Không có horizontal scroll ở 390px.
+- [x] Không còn Material Symbol/Boxicon trong các page đã migrate.
+- [x] `npm run types`, `npm run lint`, `npm run build` pass.
+- [x] `php artisan test` pass.
 
 **Verify:**
 
@@ -1135,74 +1148,87 @@ Manual:
 
 **Mục tiêu:** Migrate toàn bộ luồng mua hàng S02 → S06.
 
+**Trạng thái:** Hoàn tất ngày 14/11/2026.
+
 **Điều kiện vào:** Phase 2 pass.
 
 **Công việc:**
 
 #### Batch 1 — Catalog components
 
-- [ ] `commerce/ProductCard.tsx`.
-- [ ] `commerce/ProductGrid.tsx`.
-- [ ] `commerce/FilterRail.tsx`.
-- [ ] `commerce/FilterGroup.tsx`.
-- [ ] `commerce/ActiveFilters.tsx`.
-- [ ] `commerce/CategoryPills.tsx`.
+- [x] `commerce/ProductCard.tsx`.
+- [x] `commerce/ProductGrid.tsx`.
+- [x] `commerce/FilterRail.tsx`.
+- [x] `commerce/FilterGroup.tsx`.
+- [x] `commerce/ActiveFilters.tsx`.
+- [x] `commerce/CategoryPills.tsx`.
 
 #### Batch 2 — Product detail components
 
-- [ ] `commerce/ProductGallery.tsx`.
-- [ ] `commerce/BuyBox.tsx`.
-- [ ] `commerce/VariantSelector.tsx`.
-- [ ] `commerce/SpecTable.tsx`.
-- [ ] `commerce/ShopIdentity.tsx`.
-- [ ] `commerce/ReviewSummary.tsx`.
-- [ ] `commerce/ReviewCard.tsx`.
+- [x] `commerce/ProductGallery.tsx`.
+- [x] `commerce/BuyBox.tsx`.
+- [x] `commerce/VariantSelector.tsx`.
+- [x] `commerce/SpecTable.tsx`.
+- [x] `commerce/ShopIdentity.tsx`.
+- [x] `commerce/ReviewSummary.tsx`.
+- [x] `commerce/ReviewCard.tsx`.
 
 #### Batch 3 — Cart/checkout components
 
-- [ ] `commerce/CartLine.tsx`.
-- [ ] `commerce/OrderSummary.tsx`.
-- [ ] `commerce/PromoField.tsx`.
-- [ ] `commerce/CheckoutStepper.tsx`.
-- [ ] `commerce/ShippingOption.tsx`.
-- [ ] `commerce/PaymentOption.tsx`.
+- [x] `commerce/CartLine.tsx`.
+- [x] `commerce/OrderSummary.tsx`.
+- [x] `commerce/PromoField.tsx`.
+- [x] `commerce/CheckoutStepper.tsx`.
+- [x] `commerce/ShippingOption.tsx`.
+- [x] `commerce/PaymentOption.tsx`.
 
 #### Batch 4 — Pages
 
-- [ ] `Home/search-page.tsx`.
-- [ ] `Home/daily-discover-page.tsx`.
-- [ ] `Home/flash-sale-page.tsx`.
-- [ ] `Customer/Detail.tsx`.
-- [ ] `Customer/Cart.tsx`.
-- [ ] `Customer/Checkout.tsx`.
-- [ ] `Customer/PaymentResult.tsx`.
+- [x] `Home/search-page.tsx`.
+- [x] `Home/daily-discover-page.tsx`.
+- [x] `Home/flash-sale-page.tsx`.
+- [x] `Customer/Detail.tsx`.
+- [x] `Customer/Cart.tsx`.
+- [x] `Customer/Checkout.tsx`.
+- [x] `Customer/PaymentResult.tsx`.
 
 #### Batch 5 — Behavior
 
-- [ ] Search + query params.
-- [ ] Filter state + clear all.
-- [ ] Sort.
-- [ ] Pagination.
-- [ ] Product variant selection.
-- [ ] Add to cart.
-- [ ] Buy now.
-- [ ] Cart quantity update/remove.
-- [ ] Promotion apply/remove.
-- [ ] Shipping method.
-- [ ] Payment Stripe/COD.
-- [ ] Empty/skeleton/error states.
-- [ ] Mobile sticky summary.
+- [x] Search + query params.
+- [x] Filter state + clear all.
+- [x] Sort.
+- [x] Pagination.
+- [x] Product variant selection.
+- [x] Add to cart.
+- [x] Buy now.
+- [x] Cart quantity update/remove.
+- [x] Promotion apply/remove.
+- [x] Shipping method.
+- [x] Payment Stripe/COD.
+- [x] Empty/skeleton/error states.
+- [x] Mobile sticky summary.
+
+**Kết quả Phase 3:**
+
+- Đã dựng 18 component commerce và migrate đủ 7 page S02–S06 sang `StorefrontLayout` + token Nếp.
+- `search-page.tsx` giữ nguyên query key backend (`search`, `category_ids[]`, `brand_ids[]`, `price_min/max`, `rating_min`, `states[]`, `sort`, `page`), thêm filter rail sticky, sheet bộ lọc mobile, chip bộ lọc đang chọn và phân trang server-side.
+- `Detail.tsx` giữ nguyên route/payload `add-to-cart`, `buy-now`, wishlist; thêm gallery, variant selector, spec table, review summary/card và rail shop.
+- `Cart.tsx` sửa mutation về đúng route backend: `POST /cart/update/{itemId}` và `POST /cart/remove/{itemId}`; CTA thanh toán chuyển sang `/checkout`; giữ `apply-promotion`/`remove-promotion`.
+- `Checkout.tsx` giữ nguyên `POST /checkout` và `POST /buy-now/checkout/{orderId}` với payload `provider`, `address_id`, `notes`; thêm stepper, chọn địa chỉ, Stripe/COD, promo, ghi chú và confirm khi rời trang.
+- `PaymentResult.tsx` dùng `ResultState` + `OrderSummary`; `daily-discover` và `flash-sale` là placeholder mới vì chưa có route/controller.
+- `CheckoutAddressForm` và `CheckoutExitConfirmation` được viết lại bằng primitive; `RadioCard` mở type `title` để nhận ReactNode.
+- `COMPONENTS.md` có thêm ví dụ catalog/detail/cart/checkout.
 
 **Acceptance:**
 
-- [ ] Không đổi payload/route hiện có.
-- [ ] Tổng tiền khớp backend.
-- [ ] Cart empty state đúng copy.
-- [ ] Checkout validation hiển thị đúng field.
-- [ ] Stripe redirect và COD flow không đổi.
-- [ ] Product card metadata đúng ngành.
-- [ ] `check:tokens` pass.
-- [ ] `php artisan test` pass.
+- [x] Không đổi payload/route hiện có.
+- [x] Tổng tiền khớp backend.
+- [x] Cart empty state đúng copy.
+- [x] Checkout validation hiển thị đúng field.
+- [x] Stripe redirect và COD flow không đổi.
+- [x] Product card metadata đúng ngành.
+- [x] `check:tokens` pass.
+- [x] `php artisan test` pass — lần chạy đầy đủ gần nhất: 415 deprecated (do PHP 8.5 + `PDO::MYSQL_ATTR_SSL_CA`), 4 passed, 0 failed. `OrderControllerTest::test_user_can_create_order_from_cart` từng fail một lần do thứ tự chạy, pass lại khi chạy riêng class và ở lần full suite sau.
 
 **Verify:**
 

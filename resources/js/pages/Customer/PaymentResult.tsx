@@ -1,6 +1,10 @@
-import '@/../css/payment-result-popup.css';
-import { Head, Link, router } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { Head, Link } from '@inertiajs/react';
+
+import { OrderSummary } from '@/components/commerce/OrderSummary';
+import { ResultState } from '@/components/feedback/ResultState';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
+import { Button } from '@/components/ui/button';
 
 interface PaymentResultAction {
     label: string;
@@ -16,6 +20,7 @@ interface PaymentResultItem {
     total_price?: number;
     unit_price?: number;
     price?: number;
+    image?: string;
 }
 
 interface PaymentResultOrder {
@@ -38,171 +43,85 @@ interface PaymentResultProps {
     actions?: PaymentResultAction[];
 }
 
-const statusConfig: Record<
-    string,
-    {
-        icon: string;
-        iconClass: string;
-        title: string;
-        tone: 'success' | 'warning' | 'danger';
-        fallbackMessage: string;
-    }
-> = {
+const statusConfig = {
     succeeded: {
-        icon: 'bi-check-circle-fill',
-        iconClass: 'success',
-        title: 'Thanh toán thành công!',
-        tone: 'success',
-        fallbackMessage: 'Cảm ơn bạn! Đơn hàng của bạn đã được ghi nhận và sẽ được xử lý trong thời gian sớm nhất.',
+        result: 'success' as const,
+        title: 'Đặt hàng thành công',
+        message: 'Shop sẽ xác nhận đơn trong 15 phút. Bạn có thể theo dõi đơn trong mục Đơn hàng.',
     },
     canceled: {
-        icon: 'bi-exclamation-triangle-fill',
-        iconClass: 'warning',
-        title: 'Thanh toán đã hủy!',
-        tone: 'warning',
-        fallbackMessage: 'Thanh toán đã bị hủy. Bạn có thể thử lại hoặc chọn phương thức khác.',
+        result: 'pending' as const,
+        title: 'Thanh toán đã huỷ',
+        message: 'Đơn hàng chưa được thanh toán. Bạn có thể thử lại hoặc chọn phương thức khác.',
     },
     failed: {
-        icon: 'bi-x-circle-fill',
-        iconClass: 'danger',
-        title: 'Thanh toán thất bại!',
-        tone: 'danger',
-        fallbackMessage: 'Thanh toán không thành công. Vui lòng kiểm tra lại thông tin hoặc liên hệ hỗ trợ.',
+        result: 'failure' as const,
+        title: 'Thanh toán thất bại',
+        message: 'Giao dịch không thành công. Vui lòng kiểm tra lại thông tin hoặc liên hệ hỗ trợ.',
     },
 };
 
-const formatCurrency = (value?: number | null, currency = 'VND') => {
-    if (typeof value !== 'number') {
-        return null;
-    }
-
-    try {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency,
-            minimumFractionDigits: currency === 'VND' ? 0 : 2,
-        }).format(value);
-    } catch {
-        return `${value.toLocaleString()} ${currency}`;
-    }
-};
-
-const PaymentResult: React.FC<PaymentResultProps> = ({ status, order, actions }) => {
-    const normalizedStatus = status?.toLowerCase?.() ?? 'failed';
-    const config = statusConfig[normalizedStatus] ?? {
-        icon: 'bi-info-circle-fill',
-        iconClass: 'warning',
-        title: 'Trạng thái thanh toán',
-        tone: 'warning' as const,
-        fallbackMessage: 'Thanh toán đang được xử lý. Vui lòng kiểm tra lại sau.',
+export default function PaymentResult({ status, message, order, actions }: PaymentResultProps) {
+    const normalized = status?.toLowerCase?.() ?? 'failed';
+    const config = statusConfig[normalized as keyof typeof statusConfig] ?? {
+        result: 'pending' as const,
+        title: 'Đang xử lý thanh toán',
+        message: 'Chúng tôi đang kiểm tra giao dịch. Vui lòng quay lại sau ít phút.',
     };
 
-    const currency = order?.currency ?? 'VND';
-    const totalAmount = order?.total ?? order?.total_amount ?? null;
+    const orderCode = order?.reference ?? order?.code ?? order?.id;
+    const total = order?.total ?? order?.total_amount ?? 0;
+    const items = (order?.items ?? []).map((item) => ({
+        id: item.id ?? item.name ?? 'item',
+        name: item.product_name ?? item.name ?? 'Sản phẩm',
+        image: item.image,
+        quantity: item.quantity ?? 1,
+        price: item.unit_price ?? item.price ?? (item.total_price ? item.total_price / Math.max(1, item.quantity ?? 1) : 0),
+    }));
 
-    const fallbackActions: PaymentResultAction[] = (() => {
-        if (normalizedStatus === 'succeeded') {
-            return [
-                { label: 'Xem chi tiết đơn hàng', href: '/user/orders', primary: true },
-                { label: 'Tiếp tục mua sắm', href: '/' },
-            ];
-        }
-
-        if (normalizedStatus === 'canceled') {
-            return [
-                { label: 'Thử thanh toán lại', href: '/checkout', primary: true },
-                { label: 'Tiếp tục mua sắm', href: '/' },
-            ];
-        }
-
-        return [
-            { label: 'Thử lại thanh toán', href: '/checkout', primary: true },
-            { label: 'Về trang chủ', href: '/' },
-        ];
-    })();
+    const fallbackActions: PaymentResultAction[] =
+        config.result === 'success'
+            ? [
+                  { label: 'Xem đơn hàng', href: '/user/orders', primary: true },
+                  { label: 'Tiếp tục mua sắm', href: '/' },
+              ]
+            : [
+                  { label: 'Thử lại thanh toán', href: '/checkout', primary: true },
+                  { label: 'Về trang chủ', href: '/' },
+              ];
 
     const resolvedActions = actions && actions.length > 0 ? actions : fallbackActions;
 
-    const handleClose = () => {
-        router.get('/');
-    };
-
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                handleClose();
-            }
-        };
-
-        document.addEventListener('keydown', handleEscape);
-        return () => document.removeEventListener('keydown', handleEscape);
-    }, []);
-
     return (
-        <>
+        <StorefrontLayout compactFooter>
             <Head title="Kết quả thanh toán" />
-            <div className="payment-result-container">
-                {/* Overlay */}
-                <div className="payment-result-overlay" onClick={handleClose} />
 
-                {/* Modal */}
-                <div className="payment-result-modal">
-                    {/* Close Button */}
-                    <button className="payment-result-close" onClick={handleClose} aria-label="Đóng">
-                        <i className="bi bi-x payment-result-close-icon"></i>
-                    </button>
+            <PageContainer size="narrow" className="py-section">
+                <ResultState
+                    status={config.result}
+                    orderCode={orderCode}
+                    title={config.title}
+                    message={message || config.message}
+                    actions={resolvedActions.map((action) => (
+                        <Button key={`${action.href}-${action.label}`} asChild variant={action.primary ? 'primary' : 'secondary'}>
+                            <Link href={action.href}>{action.label}</Link>
+                        </Button>
+                    ))}
+                />
 
-                    {/* Content */}
-                    <div className="payment-result-content">
-                        {/* Status Icon */}
-                        <div className={`payment-result-icon-wrapper payment-result-icon-wrapper--${config.iconClass}`}>
-                            <i className={`bi ${config.icon} payment-result-icon payment-result-icon--${config.iconClass}`}></i>
-                        </div>
-
-                        {/* Title */}
-                        <h3 className="payment-result-title">{config.title}</h3>
-
-                        {/* Info Card */}
-                        <div className="payment-result-info-card">
-                            <div className="payment-result-info-list">
-                                {order?.payment_method && (
-                                    <div className="payment-result-info-row">
-                                        <p className="payment-result-info-label">Phương thức thanh toán</p>
-                                        <p className="payment-result-info-value">{order.payment_method}</p>
-                                    </div>
-                                )}
-                                {order && (order.id || order.reference || order.code) && (
-                                    <div className="payment-result-info-row">
-                                        <p className="payment-result-info-label">Mã đơn hàng</p>
-                                        <p className="payment-result-info-value">#{order.reference ?? order.code ?? order.id}</p>
-                                    </div>
-                                )}
-                                {totalAmount !== null && (
-                                    <div className="payment-result-info-row">
-                                        <p className="payment-result-info-label">Tổng cộng</p>
-                                        <p className="payment-result-info-value">{formatCurrency(totalAmount, currency) ?? 'Đang cập nhật'}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="payment-result-actions">
-                            {resolvedActions.map((action) => (
-                                <Link
-                                    key={`${action.href}-${action.label}`}
-                                    href={action.href}
-                                    className={`payment-result-btn ${action.primary ? 'payment-result-btn-primary' : 'payment-result-btn-secondary'}`}
-                                >
-                                    <span className="payment-result-btn-text">{action.label}</span>
-                                </Link>
-                            ))}
-                        </div>
+                {order && items.length > 0 && (
+                    <div className="mt-10">
+                        <OrderSummary
+                            items={items}
+                            subtotal={total}
+                            total={total}
+                            showItems
+                            trust={order.payment_method ? [`Thanh toán: ${order.payment_method}`, 'Hỗ trợ 24/7'] : ['Hỗ trợ 24/7']}
+                            footerNote="Cảm ơn bạn đã mua sắm tại ShopNest."
+                        />
                     </div>
-                </div>
-            </div>
-        </>
+                )}
+            </PageContainer>
+        </StorefrontLayout>
     );
-};
-
-export default PaymentResult;
+}

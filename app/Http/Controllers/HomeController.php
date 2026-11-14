@@ -76,6 +76,7 @@ class HomeController extends Controller
             'suggestedProducts' => $suggestedProducts,
             'bestSellers' => $bestSellers,
             'banners' => $banners,
+            'cartCount' => $user ? $this->cartService->getCartItems($user)->count() : 0,
         ]);
     }
 

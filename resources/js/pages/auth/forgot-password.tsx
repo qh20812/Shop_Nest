@@ -1,83 +1,71 @@
-import '@/../css/login-page.css';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React from 'react';
-import { useTranslation } from '../../lib/i18n';
+import { ArrowLeft, Mail } from 'lucide-react';
+import * as React from 'react';
+
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { FormField } from '@/components/ui/form-field';
+import Input from '@/components/ui/input';
+import { Heading, Text } from '@/components/ui/typography';
 
 interface ForgotPasswordProps {
     status?: string;
 }
 
 export default function ForgotPassword({ status }: ForgotPasswordProps) {
-    const { t } = useTranslation();
+    const { data, setData, post, processing, errors, reset } = useForm({ email: '' });
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-    });
-
-    const onSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         post('/forgot-password', {
             onFinish: () => reset('email'),
         });
     };
 
     return (
-        <div className="login-page-container">
-            <Head title={t('Forgot Password')} />
+        <AuthLayout variant="centered">
+            <Head title="Quên mật khẩu" />
 
-            {/* Status Message */}
-            {status && <div className="login-status">{status}</div>}
-
-            <div className="login-content-wrapper">
-                <div className="login-card">
-                    <div className="login-header">
-                        <Link href="/">
-                            <img src="/image/ShopnestLogoSVG.svg" alt="ShopNest logo" className="login-logo" />
-                        </Link>
-
-                        <div className="login-title-wrapper">
-                            <p className="login-title">{t('Forgot Password?')}</p>
-                            <p className="login-subtitle">{t('Enter your email to receive a password reset link')}</p>
-                        </div>
-                    </div>
-
-                    {/* FORM */}
-                    <form onSubmit={onSubmit} className="login-form">
-                        {/* Email */}
-                        <div className="login-form-group">
-                            <label className="login-form-label">
-                                <p className="login-label-text">{t('Email Address')}</p>
-
-                                <input
-                                    id="email"
-                                    type="email"
-                                    placeholder={t('Enter your email')}
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    required
-                                    autoFocus
-                                    className="login-input"
-                                />
-                            </label>
-
-                            {errors.email && <div className="mt-1 text-xs text-red-500">{errors.email}</div>}
-                        </div>
-
-                        {/* Submit */}
-                        <button type="submit" disabled={processing} className="login-submit-btn">
-                            {processing ? t('Sending...') : t('Send Password Reset Link')}
-                        </button>
-
-                        {/* Back to login */}
-                        <p className="login-footer">
-                            <a href="/login" className="login-footer-link">
-                                <span className="material-symbols-outlined">arrow_back</span>
-                                <span style={{ marginLeft: 8 }}>{t('Back to Login')}</span>
-                            </a>
-                        </p>
-                    </form>
-                </div>
+            <div className="flex flex-col gap-2">
+                <Heading level={1} size="headline-1">
+                    Quên mật khẩu?
+                </Heading>
+                <Text size="body-md" tone="muted">
+                    Nhập email để nhận liên kết đặt lại mật khẩu.
+                </Text>
             </div>
-        </div>
+
+            {status && <Alert tone="success" className="mt-5" description={status} />}
+
+            <form onSubmit={onSubmit} className="mt-7 flex flex-col gap-5">
+                <FormField label="Email" required error={errors.email}>
+                    <Input
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={data.email}
+                        onChange={(event) => setData('email', event.target.value)}
+                        placeholder="ban@example.com"
+                        autoComplete="email"
+                        leadingIcon={Mail}
+                        autoFocus
+                        invalid={Boolean(errors.email)}
+                    />
+                </FormField>
+
+                <Button type="submit" size="lg" loading={processing} className="w-full">
+                    Gửi liên kết đặt lại
+                </Button>
+            </form>
+
+            <Link
+                href="/login"
+                className="focus-ring mt-6 inline-flex items-center gap-2 text-body-sm font-medium text-ink-muted transition-colors hover:text-lacquer-red"
+            >
+                <ArrowLeft aria-hidden="true" className="size-4" />
+                Quay lại đăng nhập
+            </Link>
+        </AuthLayout>
     );
 }

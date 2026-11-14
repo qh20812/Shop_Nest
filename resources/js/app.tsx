@@ -1,10 +1,8 @@
 import '../css/app.css';
-import '../css/payment.css';
 
 import './bootstrap';
 
 import { Toaster, ToastProvider } from '@/components/ui/toaster';
-import '@fortawesome/fontawesome-free/css/all.min.css';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { ComponentType } from 'react';

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import '@/../css/Page.css';
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/components/ui/avatar';
 import { useTranslation } from '@/lib/i18n';
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
+import LanguageSwitcher from '@/components/ui/language-switcher';
 
 interface User {
   id: number;

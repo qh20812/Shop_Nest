@@ -1,9 +1,15 @@
-import '@/../css/customer-style/customer-address-show.css';
-import { router, usePage } from '@inertiajs/react';
-import { CheckCircle, Edit, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, BadgeCheck, MapPin, Pencil, Trash2 } from 'lucide-react';
+import * as React from 'react';
 
-interface Address {
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import { AccountLayout } from '@/components/layout/AccountLayout';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
+
+interface AddressModel {
     id: number;
     name: string;
     phone: string;
@@ -14,94 +20,101 @@ interface Address {
     is_default: boolean;
 }
 
-interface PageProps {
-    address: Address;
-    [key: string]: unknown;
+interface PageProps extends Record<string, unknown> {
+    address: AddressModel;
 }
 
-export default function Show() {
+export default function AddressShow() {
     const { address } = usePage<PageProps>().props;
-    const [isDeleting, setIsDeleting] = useState(false);
+    const { success, error: showError } = useToast();
+    const [confirmOpen, setConfirmOpen] = React.useState(false);
+    const [deleting, setDeleting] = React.useState(false);
 
-    const handleClose = () => {
-        router.visit('/user/addresses');
-    };
-
-    const handleEdit = () => {
-        router.visit(`/user/addresses/${address.id}/edit`);
-    };
+    const fullAddress = [address.address, address.ward, address.province, address.country].filter(Boolean).join(', ');
 
     const handleDelete = () => {
-        if (confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
-            setIsDeleting(true);
-            router.delete(`/user/addresses/${address.id}`, {
-                preserveScroll: true,
-                onFinish: () => setIsDeleting(false),
-                onSuccess: () => {
-                    router.visit('/user/addresses');
-                },
-            });
-        }
+        setDeleting(true);
+        router.delete(`/user/addresses/${address.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                success('Đã xoá địa chỉ');
+            },
+            onError: () => showError('Không thể xoá địa chỉ'),
+            onFinish: () => setDeleting(false),
+        });
     };
 
-    const fullAddress = `${address.address}, ${address.ward}, ${address.province}, ${address.country}`;
-
     return (
-        <div className="address-show-overlay">
-            <div className="address-show-container">
-                <div className="address-show-content">
-                    <div className="address-show-header">
-                        <div className="address-show-header-content">
-                            <h1 className="address-show-title">Chi tiết Địa chỉ</h1>
-                            <p className="address-show-subtitle">Xem thông tin chi tiết địa chỉ giao hàng của bạn.</p>
-                        </div>
-                        <button type="button" className="address-show-close" onClick={handleClose}>
-                            <X size={24} />
-                        </button>
-                    </div>
-
-                    <hr className="address-show-divider" />
-
-                    <div className="address-show-body">
-                        <div className="address-show-details">
-                            <div className="address-show-row">
-                                <dt className="address-show-label">Tên người nhận</dt>
-                                <dd className="address-show-value">{address.name}</dd>
-                            </div>
-
-                            <div className="address-show-row">
-                                <dt className="address-show-label">Số điện thoại</dt>
-                                <dd className="address-show-value">{address.phone}</dd>
-                            </div>
-
-                            <div className="address-show-row">
-                                <dt className="address-show-label">Địa chỉ</dt>
-                                <dd className="address-show-value">{fullAddress}</dd>
-                            </div>
-
-                            {address.is_default && (
-                                <div className="address-show-badge-wrapper">
-                                    <span className="address-show-badge">
-                                        <CheckCircle className="address-show-badge-icon" size={18} />
-                                        Địa chỉ mặc định
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="address-show-actions">
-                            <button type="button" className="address-show-btn address-show-btn-delete" onClick={handleDelete} disabled={isDeleting}>
-                                <Trash2 className="address-show-btn-icon" size={20} style={{ fontVariationSettings: '"FILL" 1' }} />
-                                <span>{isDeleting ? 'Đang xóa...' : 'Xóa'}</span>
-                            </button>
-                            <button type="button" className="address-show-btn address-show-btn-edit" onClick={handleEdit}>
-                                <Edit className="address-show-btn-icon" size={20} style={{ fontVariationSettings: '"FILL" 1' }} />
-                                <span>Sửa</span>
-                            </button>
-                        </div>
-                    </div>
+        <AccountLayout
+            active="addresses"
+            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Địa chỉ', href: '/user/addresses' }, { label: address.name }]}
+            eyebrow="Chi tiết địa chỉ"
+            title={address.name}
+            description="Thông tin địa chỉ dùng khi giao hàng."
+            actions={
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="secondary" size="sm" leftIcon={ArrowLeft} asChild>
+                        <Link href="/user/addresses">Danh sách</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" leftIcon={Pencil} onClick={() => router.visit(`/user/addresses/${address.id}/edit`)}>
+                        Sửa
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        leftIcon={Trash2}
+                        className="text-brick hover:bg-brick-soft hover:text-brick"
+                        onClick={() => setConfirmOpen(true)}
+                    >
+                        Xoá
+                    </Button>
                 </div>
-            </div>
-        </div>
+            }
+        >
+            <Head title={`Địa chỉ ${address.name}`} />
+
+            <Card padding="lg" className="max-w-2xl">
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-headline-3 text-ink">{address.name}</span>
+                        <span className="font-mono text-label-code text-ink-muted">{address.phone}</span>
+                        {address.is_default && (
+                            <Badge tone="success" icon={BadgeCheck}>
+                                Mặc định
+                            </Badge>
+                        )}
+                    </div>
+
+                    <div className="flex items-start gap-3 rounded-control bg-rice-paper p-4">
+                        <MapPin aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-lacquer-red" />
+                        <div className="flex flex-col gap-1">
+                            <span className="text-label-micro font-semibold tracking-[0.12em] text-ink-faint uppercase">Địa chỉ giao hàng</span>
+                            <span className="text-body-md text-ink">{fullAddress}</span>
+                        </div>
+                    </div>
+
+                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="rounded-control border border-border p-3">
+                            <dt className="text-label-micro tracking-[0.12em] text-ink-faint uppercase">Tỉnh/Thành phố</dt>
+                            <dd className="mt-1 text-body-sm text-ink">{address.province || '—'}</dd>
+                        </div>
+                        <div className="rounded-control border border-border p-3">
+                            <dt className="text-label-micro tracking-[0.12em] text-ink-faint uppercase">Xã/Phường</dt>
+                            <dd className="mt-1 text-body-sm text-ink">{address.ward || '—'}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </Card>
+
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Xoá địa chỉ này?"
+                description={`${fullAddress}. Địa chỉ đã xoá không thể khôi phục.`}
+                confirmLabel="Xoá địa chỉ"
+                loading={deleting}
+                onConfirm={handleDelete}
+            />
+        </AccountLayout>
     );
 }

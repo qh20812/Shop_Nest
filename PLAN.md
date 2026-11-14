@@ -1,6 +1,7 @@
 # ShopNest UI System — Master Plan
 
-> **Trạng thái:** Phase 0 + Phase 1 + Phase 2 + Phase 3 hoàn tất; Phase 4 chưa bắt đầu
+> **Trạng thái:** Phase 0 + Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 + Phase 6 hoàn tất
+> **Cập nhật gần nhất:** 15/11/2026 — Phase 6 cleanup hoàn tất
 > **Ngày chốt:** 13/11/2026  
 > **Phạm vi:** Storefront + Auth + Customer account + Chat  
 > **Nguồn chuẩn:** `DESIGN.md`  
@@ -67,13 +68,13 @@
 
 | Nhóm | Component hiện có | Xử lý |
 |---|---|---|
-| Button | `ui/button.tsx`, `ui/ActionButton.tsx`, `ui/ActionButtons.tsx`, `PrimaryButton.tsx` | Giữ `ui/button.tsx`, thay 3 bản còn lại |
-| Input | `ui/input.tsx`, `ui/PrimaryInput.tsx`, `TextInput.tsx`, `ui/InputLabel.tsx`, `ui/InputError.tsx`, `input-error.tsx` | Giữ `ui/input.tsx` + `ui/form-field.tsx`, xoá phần còn lại sau migrate |
-| Card sản phẩm | `product-card.tsx`, `Shared/ProductCard.tsx`, `home/ui/ProductCard.tsx` | Thay bằng `commerce/ProductCard.tsx` |
-| Layout | `layouts/app/AppLayout.tsx`, `CustomerLayout.tsx`, `HomeLayout.tsx`, `SellerLayout.tsx`, `ShipperLayout.tsx`, `app-layout.tsx`, `settings/SettingLayout.tsx` | Storefront dùng `StorefrontLayout`; customer dùng `AccountLayout`; workspace giữ tạm |
-| Navigation | `ui/Navbar.tsx`, `home/ui/Navbar.tsx`, `home/ui/Header.tsx`, `ui/Sidebar.tsx` | Storefront dùng `StorefrontHeader`; workspace giữ tạm |
-| Chat | `Chatbot.tsx`, `ChatBubble.tsx`, `ChatWindow.tsx`, `Message.tsx`, `Chat/ChatPopup.tsx`, `Chat/ChatList.tsx`, `Chat/ChatWindow.tsx` | Thay bằng `Chat/ChatDock.tsx` + `Chat/ChatWorkspace.tsx` |
-| Feedback | `ui/ConfirmationModal.tsx`, `ui/NotificationToast.tsx` | Thay bằng `feedback/ConfirmDialog.tsx` + `ui/toast.tsx` |
+| Button | `ui/button.tsx`, `ui/ActionButton.tsx`, `ui/ActionButtons.tsx`, `PrimaryButton.tsx` | Giữ `ui/button.tsx`; rename `action-button`/`action-buttons` (workspace legacy); xoá `PrimaryButton` |
+| Input | `ui/input.tsx`, `ui/PrimaryInput.tsx`, `TextInput.tsx`, `ui/InputLabel.tsx`, `ui/InputError.tsx`, `input-error.tsx` | Giữ `ui/input.tsx` + `ui/form-field.tsx`; rename `primary-input`/`input-error`; xoá phần còn lại |
+| Card sản phẩm | `product-card.tsx`, `Shared/ProductCard.tsx`, `home/ui/ProductCard.tsx` | Thay bằng `commerce/ProductCard.tsx`, xoá Phase 6 |
+| Layout | `layouts/app/AppLayout.tsx`, `CustomerLayout.tsx`, `HomeLayout.tsx`, `SellerLayout.tsx`, `ShipperLayout.tsx`, `app-layout.tsx`, `settings/SettingLayout.tsx` | Storefront dùng `StorefrontLayout`; account dùng `AccountLayout`; giữ `AppLayout` cho workspace; xoá phần còn lại |
+| Navigation | `ui/Navbar.tsx`, `home/ui/Navbar.tsx`, `home/ui/Header.tsx`, `ui/Sidebar.tsx` | Storefront dùng `StorefrontHeader`; workspace rename `ui/navbar`, `ui/sidebar`; xoá `home/ui/*` |
+| Chat | `Chatbot.tsx`, `ChatBubble.tsx`, `ChatWindow.tsx`, `Message.tsx`, `Chat/ChatPopup.tsx`, `Chat/ChatList.tsx`, `Chat/ChatWindow.tsx` | Thay bằng `chat/ChatDock.tsx` + `chat/ChatWorkspace.tsx`, xoá Phase 6 |
+| Feedback | `ui/ConfirmationModal.tsx`, `ui/NotificationToast.tsx` | `confirmation-modal` rename-only (workspace); xoá `NotificationToast`; dùng `feedback/ConfirmDialog` cho storefront/account |
 
 ### 2.3 Asset/font/icon legacy
 
@@ -88,7 +89,7 @@
 - Font Awesome
 - Tailwind CDN
 
-Kế hoạch: thêm font Nếp ở Phase 0; chỉ xoá toàn bộ font/icon/CDN legacy ở Phase 6 sau khi tất cả trang trong phạm vi đã migrate.
+Kế hoạch: thêm font Nếp ở Phase 0; Phase 6 xoá font/icon/CDN không còn dùng, **giữ Boxicons** cho workspace đến khi migrate Seller/Admin/Shipper.
 
 ### 2.4 Phát hiện từ Stitch
 
@@ -138,7 +139,7 @@ resources/
 ├── css/
 │   ├── app.css                 # entry: tailwind + tokens + legacy + base
 │   ├── tokens.css              # @theme + :root, toàn bộ token Nếp
-│   ├── legacy-tokens.css       # tạm thời: token cũ + dark mode, xoá Phase 6
+│   ├── legacy-tokens.css       # tạm thời: token cũ + dark mode, xoá khi migrate workspace
 │   └── base.css                # reset, body, focus-ring, keyframes, utilities
 │
 ├── js/
@@ -147,8 +148,14 @@ resources/
 │   │   ├── layout/             # shell, header, footer, page header
 │   │   ├── storefront/         # module riêng của home
 │   │   ├── commerce/           # product, cart, checkout, order, account
-│   │   ├── Chat/               # chat workspace + bubble
+│   │   ├── chat/               # chat workspace + bubble
 │   │   └── feedback/           # dialog, result, loading overlay
+│   ├── pages/                  # route screens, folder + file PascalCase
+│   │   ├── Auth/
+│   │   ├── Home/
+│   │   ├── Customer/
+│   │   └── ...
+│   ├── layouts/                # legacy workspace layouts (lowercase folder)
 │   ├── hooks/
 │   ├── lib/
 │   │   ├── format.ts
@@ -165,16 +172,20 @@ resources/
 
 | Loại | Quy ước | Ví dụ |
 |---|---|---|
-| `components/ui` | kebab-case | `button.tsx`, `form-field.tsx` |
-| `components/layout` | PascalCase | `StorefrontHeader.tsx` |
-| `components/storefront` | PascalCase | `HeroEditorial.tsx` |
-| `components/commerce` | PascalCase | `ProductCard.tsx` |
-| `components/Chat` | PascalCase | `ChatDock.tsx` |
-| `components/feedback` | PascalCase | `ConfirmDialog.tsx` |
-| Hook | camelCase, prefix `use` | `useCountdown.ts` |
-| Type | PascalCase | `ProductCardModel` |
+| `components/ui` | folder lowercase, file kebab-case | `button.tsx`, `form-field.tsx` |
+| `components/<domain>` | folder lowercase, file PascalCase | `commerce/ProductCard.tsx`, `chat/ChatDock.tsx` |
+| `pages` | folder PascalCase, file PascalCase | `Auth/Login.tsx`, `Home/Search.tsx` |
+| `layouts` | folder lowercase, file PascalCase | `layouts/app/AppLayout.tsx` |
+| `hooks`, `lib` | file camelCase/lowercase đúng chức năng | `useCountdown.ts`, `format.ts` |
+| Type dùng chung | file `types.ts`, type PascalCase | `chat/types.ts`, `ProductCardModel` |
 
-Giữ nguyên casing thư mục hiện có (`Chat`, `Shared`, `Analytics`) để tránh vỡ import trên Linux.
+Quy tắc áp dụng từ Phase 6:
+
+- Folder component luôn lowercase, kể cả `chat` (thay cho `Chat` cũ).
+- File trong `components/ui` luôn kebab-case; file component các domain khác luôn PascalCase.
+- Folder page luôn PascalCase (`Auth`, `Home`, `Customer`…), không dùng `auth` lowercase.
+- Module type được giữ tên `types.ts` như ngoại lệ có chủ đích.
+- Rename case-only phải qua tên tạm `.tmp` để tránh lỗi filesystem Windows; sau rename chạy `types` + `build` và soát casing import cho Linux CI.
 
 ### 3.3 Quy tắc import
 
@@ -215,9 +226,9 @@ Giữ nguyên casing thư mục hiện có (`Chat`, `Shared`, `Analytics`) để
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 ```
 
-- `legacy-tokens.css`: token cũ + `.dark`, chỉ tồn tại trong giai đoạn migrate.
+- `legacy-tokens.css`: token cũ + `.dark`, chỉ tồn tại trong giai đoạn migrate; Phase 6 giữ lại cho workspace.
 - `tokens.css`: token Nếp, load sau để override font và bổ sung palette.
-- Phase 6 xoá `legacy-tokens.css` và chuyển toàn bộ alias shadcn sang Nếp.
+- Chỉ xoá `legacy-tokens.css` và chuyển alias shadcn khi migrate Seller/Admin/Shipper.
 
 ### 4.2 Màu
 
@@ -433,9 +444,9 @@ Quy tắc motion:
 
 ### 4.6 Tương thích shadcn trong giai đoạn migrate
 
-Trong Phase 0–5, giữ alias cũ trong `legacy-tokens.css` để các component shadcn/legacy không vỡ. Component mới dùng trực tiếp token Nếp (`bg-warm-porcelain`, `text-ink-muted`, `border-border`, `bg-lacquer-red`).
+Trong Phase 0–6, giữ alias cũ trong `legacy-tokens.css` để các component shadcn/legacy không vỡ. Component mới dùng trực tiếp token Nếp (`bg-warm-porcelain`, `text-ink-muted`, `border-border`, `bg-lacquer-red`).
 
-Phase 6 chuyển alias:
+Khi migrate workspace, chuyển alias:
 
 ```css
 @theme inline {
@@ -510,15 +521,15 @@ Thêm vào `package.json`:
 | `Badge` | `tone`, `size`, `icon` | S02, S03, C02 | `ui/badge.tsx` |
 | `StatusBadge` | `status`, `domain` | C01, C02, C04 | `commerce/OrderStatusBadge.tsx` |
 | `Card` | `variant`, `padding` | S03, C06 | `ui/card.tsx` |
-| `Avatar` | `src`, `name`, `size`, `status` | C06, C08 | `ui/Avatar.tsx` |
+| `Avatar` | `src`, `name`, `size`, `status` | C06, C08 | `ui/avatar.tsx` |
 | `Breadcrumbs` | `items` | S02, S03, S04, C02 | `ui/breadcrumbs.tsx` |
 | `Tabs` | `items`, `value`, `onValueChange`, `variant` | S03, C06, C01, C07 | `ui/tabs.tsx` |
-| `Pagination` | `page`, `pageCount`, `total`, `pageSize`, `onPageChange`; legacy `links` | S02, C01 | `ui/Pagination.tsx` |
+| `Pagination` | `page`, `pageCount`, `total`, `pageSize`, `onPageChange`; legacy `links` | S02, C01 | `ui/pagination.tsx` |
 | `Table` | `columns`, `data`, `rowKey`, `density`, `stickyHeader`, `empty` | S03, C01 | `ui/table.tsx` |
 | `Dialog` | `open`, `onOpenChange`, `title`, `description`, `footer`, `tone`, `size` | S04, C05 | `ui/dialog.tsx` |
 | `Sheet` | `side`, `open`, `onOpenChange` | S02 mobile filter | `ui/sheet.tsx` |
 | `DropdownMenu` | `trigger`, `items` | Navbar, C04 | `ui/dropdown-menu.tsx` |
-| `Tooltip` | `content`, `position`, `delay` | Existing | `ui/Tooltip.tsx` |
+| `Tooltip` | `content`, `position`, `delay` | Existing | `ui/tooltip.tsx` |
 | `Toast` / `Toaster` | `title`, `description`, `tone`, `action`, `duration` | S03, C06 | `ui/toast.tsx`, `ui/toaster.tsx` |
 | `Skeleton` | `variant`, `className` | S02, C01, C07 | `ui/skeleton.tsx` |
 | `EmptyState` | `icon`, `title`, `description`, `actions` | S02, S04, C01, C07, C08 | `ui/empty-state.tsx` |
@@ -583,7 +594,6 @@ Thêm vào `package.json`:
 | `OrderSummary` | `items`, `totals`, `promotion`, `onApplyPromotion`, `onRemovePromotion`, `onCheckout` | S04, S05 | `commerce/OrderSummary.tsx` |
 | `PromoField` | `value`, `onApply`, `error`, `applied` | S04 | `commerce/PromoField.tsx` |
 | `CheckoutStepper` | `steps`, `current` | S05 | `commerce/CheckoutStepper.tsx` |
-| `ShippingOption` | `value`, `selected`, `onChange` | S05 | `commerce/ShippingOption.tsx` |
 | `PaymentOption` | `value`, `selected`, `onChange`, `children` | S05 | `commerce/PaymentOption.tsx` |
 | `OrderTable` | `orders`, `loading`, `empty` | C01 | `commerce/OrderTable.tsx` |
 | `OrderTimeline` | `steps`, `current` | C02 | `commerce/OrderTimeline.tsx` |
@@ -601,18 +611,18 @@ Thêm vào `package.json`:
 
 | Component | API chính | Nguồn | File |
 |---|---|---|---|
-| `ChatDock` | `enabled`, `defaultOpen` | Mới | `Chat/ChatDock.tsx` |
-| `ChatbotLauncher` | `unreadCount`, `onClick`, `open` | Mới | `Chat/ChatbotLauncher.tsx` |
-| `ChatbotPanel` | `open`, `onClose`, `messages`, `onSend` | Mới + C08 | `Chat/ChatbotPanel.tsx` |
-| `ChatWorkspace` | `conversations`, `activeId`, `onSelect` | C08 | `Chat/ChatWorkspace.tsx` |
-| `ConversationList` | `conversations`, `activeId`, `onSelect`, `query`, `onQueryChange` | C08 | `Chat/ConversationList.tsx` |
-| `ConversationRow` | `conversation`, `active`, `onClick` | C08 | `Chat/ConversationRow.tsx` |
-| `ChatHeader` | `variant`, `shop`, `assistant`, `onAction` | C08 | `Chat/ChatHeader.tsx` |
-| `MessageList` | `messages`, `loading`, `typing` | C08 | `Chat/MessageList.tsx` |
-| `ChatMessage` | `variant`, `content`, `timestamp`, `status`, `attachments` | C08 | `Chat/ChatMessage.tsx` |
-| `TypingIndicator` | `label` | C08 | `Chat/TypingIndicator.tsx` |
-| `QuickReplies` | `items`, `onSelect` | C08 | `Chat/QuickReplies.tsx` |
-| `ChatComposer` | `value`, `onChange`, `onSend`, `disabled`, `placeholder` | C08 | `Chat/ChatComposer.tsx` |
+| `ChatDock` | `enabled`, `defaultOpen` | Mới | `chat/ChatDock.tsx` |
+| `ChatbotLauncher` | `unreadCount`, `onClick`, `open` | Mới | `chat/ChatbotLauncher.tsx` |
+| `ChatbotPanel` | `open`, `onClose`, `messages`, `onSend` | Mới + C08 | `chat/ChatbotPanel.tsx` |
+| `ChatWorkspace` | `conversations`, `activeId`, `onSelect` | C08 | `chat/ChatWorkspace.tsx` |
+| `ConversationList` | `conversations`, `activeId`, `onSelect`, `query`, `onQueryChange` | C08 | `chat/ConversationList.tsx` |
+| `ConversationRow` | `conversation`, `active`, `onClick` | C08 | `chat/ConversationRow.tsx` |
+| `ChatHeader` | `variant`, `shop`, `assistant`, `onAction` | C08 | `chat/ChatHeader.tsx` |
+| `MessageList` | `messages`, `loading`, `typing` | C08 | `chat/MessageList.tsx` |
+| `ChatMessage` | `variant`, `content`, `timestamp`, `status`, `attachments` | C08 | `chat/ChatMessage.tsx` |
+| `TypingIndicator` | `label` | C08 | `chat/TypingIndicator.tsx` |
+| `QuickReplies` | `items`, `onSelect` | C08 | `chat/QuickReplies.tsx` |
+| `ChatComposer` | `value`, `onChange`, `onSend`, `disabled`, `placeholder` | C08 | `chat/ChatComposer.tsx` |
 
 ### 5.6 Feedback
 
@@ -657,36 +667,60 @@ export type OrderStatus =
 
 ### 5.8 Legacy replacement map
 
-| Legacy | Thay bằng | Phase xoá |
+| Legacy | Xử lý Phase 6 | Ghi chú |
 |---|---|---|
-| `ui/button.tsx` | `ui/button.tsx` (upgrade) | Giữ |
-| `ui/ActionButton.tsx` | `ui/button.tsx` | Phase 6 |
-| `ui/ActionButtons.tsx` | `ui/button.tsx` | Phase 6 |
-| `PrimaryButton.tsx` | `ui/button.tsx` | Phase 6 |
-| `ui/PrimaryInput.tsx` | `ui/input.tsx` | Phase 6 |
-| `TextInput.tsx` | `ui/input.tsx` | Phase 6 |
-| `ui/InputLabel.tsx` | `ui/form-field.tsx` | Phase 6 |
-| `ui/InputError.tsx` | `ui/form-field.tsx` | Phase 6 |
-| `input-error.tsx` | `ui/form-field.tsx` | Phase 6 |
-| `product-card.tsx` | `commerce/ProductCard.tsx` | Phase 6 |
-| `Shared/ProductCard.tsx` | `commerce/ProductCard.tsx` | Phase 6 |
-| `home/ui/ProductCard.tsx` | `commerce/ProductCard.tsx` | Phase 6 |
-| `home/ui/Navbar.tsx` | `layout/StorefrontHeader.tsx` | Phase 6 |
-| `home/ui/Header.tsx` | `layout/StorefrontHeader.tsx` | Phase 6 |
-| `home/ui/Footer.tsx` | `layout/StorefrontFooter.tsx` | Phase 6 |
-| `layouts/app/HomeLayout.tsx` | `layout/StorefrontLayout.tsx` | Phase 6 |
-| `layouts/app/CustomerLayout.tsx` | `layout/AccountLayout.tsx` | Phase 6 |
-| `ui/ConfirmationModal.tsx` | `feedback/ConfirmDialog.tsx` | Phase 6 |
-| `ui/NotificationToast.tsx` | `ui/toast.tsx` | Phase 6 |
-| `Chatbot.tsx` | `Chat/ChatDock.tsx` | Phase 6 |
-| `ChatBubble.tsx` | `Chat/ChatbotLauncher.tsx` | Phase 6 |
-| `ChatWindow.tsx` | `Chat/ChatbotPanel.tsx` | Phase 6 |
-| `Message.tsx` | `Chat/ChatMessage.tsx` | Phase 6 |
-| `Chat/ChatPopup.tsx` | `Chat/ChatWorkspace.tsx` | Phase 6 |
-| `Chat/ChatList.tsx` | `Chat/ConversationList.tsx` | Phase 6 |
-| `Chat/ChatWindow.tsx` | `Chat/ChatWorkspace.tsx` | Phase 6 |
+| `ui/button.tsx` | Giữ | Primitive chuẩn |
+| `ui/ActionButton.tsx` | Rename → `ui/action-button.tsx` | Workspace legacy, merge vào `button.tsx` khi migrate workspace |
+| `ui/ActionButtons.tsx` | Rename → `ui/action-buttons.tsx` | Workspace legacy |
+| `ui/PrimaryInput.tsx` | Rename → `ui/primary-input.tsx` | Workspace legacy, merge vào `input.tsx` sau |
+| `ui/InputError.tsx` | Rename → `ui/input-error.tsx` | Workspace legacy, merge vào `form-field.tsx` sau |
+| `ui/ConfirmationModal.tsx` | Rename → `ui/confirmation-modal.tsx` | Chỉ rename; chưa gộp API với `feedback/ConfirmDialog.tsx` |
+| `ui/DataTable.tsx` | Rename → `ui/data-table.tsx` | Workspace legacy; `ui/table.tsx` là primitive đích |
+| `ui/FilterPanel.tsx` | Rename → `ui/filter-panel.tsx` | Workspace legacy |
+| `ui/Header.tsx` | Rename → `ui/header.tsx` | Workspace legacy |
+| `ui/Insights.tsx` | Rename → `ui/insights.tsx` | Workspace legacy |
+| `ui/LanguageSwitcher.tsx` | Rename → `ui/language-switcher.tsx` | Workspace legacy |
+| `ui/Navbar.tsx` | Rename → `ui/navbar.tsx` | Workspace legacy |
+| `ui/Avatar.tsx` | Rename → `ui/avatar.tsx` | Primitive đã nâng cấp |
+| `ui/Pagination.tsx` | Rename → `ui/pagination.tsx` | Primitive đã nâng cấp |
+| `ui/RichTextEditor.tsx` | Rename → `ui/rich-text-editor.tsx` | Workspace legacy |
+| `ui/Sidebar.tsx` | Rename → `ui/sidebar.tsx` | Workspace legacy |
+| `ui/StatusBadge.tsx` | Rename → `ui/status-badge.tsx` | Workspace legacy; `commerce/OrderStatusBadge` cho order |
+| `ui/Tooltip.tsx` | Rename → `ui/tooltip.tsx` | Primitive đã nâng cấp |
+| `PrimaryButton.tsx` | Xoá | Không còn dùng |
+| `TextInput.tsx` | Xoá | Không còn dùng |
+| `ui/InputLabel.tsx` | Xoá | Không còn dùng |
+| `input-error.tsx` | Xoá | Không còn dùng |
+| `product-card.tsx`, `Shared/ProductCard.tsx`, `home/ui/ProductCard.tsx` | Xoá | Đã thay bằng `commerce/ProductCard.tsx` |
+| `home/ui/Navbar.tsx`, `home/ui/Header.tsx`, `home/ui/Footer.tsx` | Xoá | Đã thay bằng `layout/Storefront*` |
+| `layouts/app/HomeLayout.tsx` | Xoá | Đã thay bằng `layout/StorefrontLayout.tsx` |
+| `layouts/app/CustomerLayout.tsx` | Xoá | Đã thay bằng `layout/AccountLayout.tsx` |
+| `ui/NotificationToast.tsx` | Xoá | Đã thay bằng `ui/toast.tsx` |
+| `Chatbot.tsx` | Xoá | Đã thay bằng `chat/ChatDock.tsx` |
+| `ChatBubble.tsx` | Xoá | Đã thay bằng `chat/ChatbotLauncher.tsx` |
+| `ChatWindow.tsx`, `Message.tsx` | Xoá | Đã thay bằng `chat/ChatbotPanel.tsx` + `chat/ChatMessage.tsx` |
+| `Chat/ChatPopup.tsx` | Xoá | Đã thay bằng `chat/ChatWorkspace.tsx` |
+| `Chat/ChatList.tsx` | Xoá | Đã thay bằng `chat/ConversationList.tsx` |
+| `Chat/ChatWindow.tsx`, `Chat/ChatInput.tsx`, `Chat/CreateConversationModal.tsx` | Xoá | Legacy chat cluster |
 
-Lưu ý: Không xoá trước khi tất cả import của component đó đã được thay thế và `npm run build` pass.
+Lưu ý:
+
+- Không xoá trước khi tất cả import của component đó đã được thay thế và `npm run build` pass.
+- `ActionButton`, `ActionButtons`, `PrimaryInput`, `InputError`, `DataTable`, `ConfirmationModal`, `StatusBadge` vẫn là legacy workspace-only sau Phase 6; chỉ rename, chưa merge API. Việc merge để lại khi migrate Seller/Admin/Shipper.
+
+### 5.9 Component reserved (không tính dead code)
+
+Các component chưa có page sử dụng nhưng được giữ có chủ đích cho backlog C03/C04/C07 hoặc primitive tương lai:
+
+- `commerce/ReturnItemPicker.tsx` — C03
+- `commerce/RefundOption.tsx` — C03
+- `commerce/PreferenceRow.tsx` — C07
+- `ui/switch.tsx` — dùng bởi `PreferenceRow`
+- `ui/table.tsx` — primitive đích thay `data-table` legacy
+- `ui/error-state.tsx` — error state chuẩn
+- `feedback/LoadingOverlay.tsx` — loading overlay chuẩn
+
+Không xoá các file này trong Phase 6; ghi rõ trong `COMPONENTS.md`.
 
 ---
 
@@ -746,8 +780,6 @@ Hiện:
 
 - `/`
 - `/search`
-- `/daily-discover`
-- `/flash-sale`
 - `/product/*`
 - `/cart`
 - `/user/profile`
@@ -793,17 +825,17 @@ Tôn trọng `prefers-reduced-motion`.
 
 | Screen | Page hiện có | Phase | Component chính |
 |---|---|---|---|
-| A01 Login | `auth/login-page.tsx` | Phase 2 | AuthLayout, AuthBrandPanel, FormField, Button |
-| A02 Customer register | `auth/register-page.tsx` | Phase 2 | AuthLayout, FormField, Checkbox |
-| A03 Seller register | `auth/SellerRegister.tsx`, `auth/seller-register-page.tsx` | Phase 2 | AuthLayout variant seller |
-| A04 Shipper register | `auth/ShipperRegister.tsx` | Phase 2 | AuthLayout variant shipper |
-| A05 Forgot/reset | `auth/forgot-password.tsx`, `auth/reset-password.tsx` | Phase 2 | AuthLayout centered, Alert |
-| A06 Verify email | `auth/VerifyEmail.tsx` | Phase 2 | AuthLayout centered, ResultState |
+| A01 Login | `Auth/Login.tsx` | Phase 2 | AuthLayout, AuthBrandPanel, FormField, Button |
+| A02 Customer register | `Auth/Register.tsx` | Phase 2 | AuthLayout, FormField, Checkbox |
+| A03 Seller register | `Auth/SellerRegister.tsx` | Phase 2 | AuthLayout variant seller |
+| A04 Shipper register | `Auth/ShipperRegister.tsx` | Phase 2 | AuthLayout variant shipper |
+| A05 Forgot/reset | `Auth/ForgotPassword.tsx`, `Auth/ResetPassword.tsx` | Phase 2 | AuthLayout centered, Alert |
+| A06 Verify email | `Auth/VerifyEmail.tsx` | Phase 2 | AuthLayout centered, ResultState |
 | S01 Home | `Home/Index.tsx` | Phase 2 | HeroEditorial, CategoryShelf, ProductShelf, TrustStrip |
-| S02 Search/catalog | `Home/search-page.tsx` | Phase 3 | SearchInput, FilterRail, ProductGrid, Pagination |
-| S02b Daily discover | `Home/daily-discover-page.tsx` | Phase 3 | ProductGrid, CategoryPills |
-| S02c Flash sale | `Home/flash-sale-page.tsx` | Phase 3 | ProductGrid, Countdown |
-| S03 Product detail | `Customer/Detail.tsx` | Phase 3 | ProductGallery, BuyBox, SpecTable, Reviews |
+| S02 Search/catalog | `Home/Search.tsx` | Phase 3 | SearchInput, FilterRail, ProductGrid, Pagination |
+| S02b Daily discover | Chưa có page/route — placeholder sẽ xoá Phase 6 | Backlog | ProductGrid, CategoryPills |
+| S02c Flash sale | Chưa có page/route — placeholder sẽ xoá Phase 6 | Backlog | ProductGrid, Countdown |
+| S03 Product detail | `Customer/ProductDetail.tsx` | Phase 3 | ProductGallery, BuyBox, SpecTable, Reviews |
 | S04 Cart | `Customer/Cart.tsx` | Phase 3 | CartLine, OrderSummary, PromoField |
 | S05 Checkout | `Customer/Checkout.tsx` | Phase 3 | CheckoutStepper, FormField, RadioCard, OrderSummary |
 | S06 Result | `Customer/PaymentResult.tsx` | Phase 3 | ResultState, OrderSummary |
@@ -815,7 +847,7 @@ Tôn trọng `prefers-reduced-motion`.
 | C04 Wishlist | Chưa có page | Phase 4 (component-only) | ProductCard variant wishlist |
 | C05 Address | `Customer/Address/*` | Phase 4 | AddressCard, FormField, Dialog |
 | C06 Profile/settings | `Customer/Profile/Index.tsx`, `Settings/*`, `Customer/ChangePassword/Index.tsx` | Phase 4 | AccountLayout, FormField, PasswordStrength |
-| C07 Notifications | `Customer/Notification/Index.tsx`, `Notifications/Index.tsx` | Phase 4 | NotificationRow, PreferenceRow, Tabs |
+| C07 Notifications | `Customer/Notification/Index.tsx` | Phase 4 | NotificationRow, PreferenceRow, Tabs |
 | C08 Chat | `Customer/Chat/Index.tsx` | Phase 5 | ChatWorkspace, ChatComposer, OrderContextRail |
 | Bubble | Mới | Phase 5 | ChatDock, ChatbotLauncher, ChatbotPanel |
 | Seller | `Seller/*` | Deferred | WorkspaceShell |
@@ -994,7 +1026,7 @@ npm run check:tokens
 
 - Đã dựng đủ primitive theo 7 batch.
 - Primitive dùng token Nếp, Lucide và `focus-ring`; không còn hex/arbitrary value trong file mới.
-- `ui/Avatar.tsx`, `ui/Tooltip.tsx`, `ui/Pagination.tsx` được nâng cấp tại chỗ để giữ tương thích và tránh trùng casing trên Windows.
+- `ui/Avatar.tsx`, `ui/Tooltip.tsx`, `ui/Pagination.tsx` được nâng cấp tại chỗ để giữ tương thích; Phase 6 rename sang `ui/avatar.tsx`, `ui/tooltip.tsx`, `ui/pagination.tsx`.
 - `ToastProvider`/`useToast` đã chuyển sang store mới; `app.tsx` render một `<Toaster />` duy nhất; `Contexts/ToastContext.tsx` re-export để code cũ tiếp tục chạy.
 - `COMPONENTS.md` có ví dụ sử dụng cho từng nhóm primitive.
 
@@ -1072,15 +1104,15 @@ npm run check:tokens
 
 #### Batch 3 — Auth pages
 
-- [x] `auth/login-page.tsx`.
-- [x] `auth/register-page.tsx`.
-- [x] `auth/SellerRegister.tsx` và `auth/seller-register-page.tsx`:
-  - [x] Xác định route `seller.register` dùng `auth/SellerRegister.tsx`.
-  - [x] Migrate `SellerRegister` + `SellerRegisterForm`; giữ `seller-register-page.tsx` (không được route dùng) để Phase 6 xoá.
-- [x] `auth/ShipperRegister.tsx`.
-- [x] `auth/forgot-password.tsx`.
-- [x] `auth/reset-password.tsx`.
-- [x] `auth/VerifyEmail.tsx`.
+- [x] `Auth/Login.tsx`.
+- [x] `Auth/Register.tsx`.
+- [x] `Auth/SellerRegister.tsx`:
+  - [x] Xác định route `seller.register` dùng `Auth/SellerRegister.tsx`.
+  - [x] Migrate `SellerRegister` + `SellerRegisterForm`; `auth/seller-register-page.tsx` cũ sẽ xoá ở Phase 6.
+- [x] `Auth/ShipperRegister.tsx`.
+- [x] `Auth/ForgotPassword.tsx`.
+- [x] `Auth/ResetPassword.tsx`.
+- [x] `Auth/VerifyEmail.tsx`.
 
 #### Batch 4 — Home/static pages
 
@@ -1179,15 +1211,15 @@ Manual:
 - [x] `commerce/OrderSummary.tsx`.
 - [x] `commerce/PromoField.tsx`.
 - [x] `commerce/CheckoutStepper.tsx`.
-- [x] `commerce/ShippingOption.tsx`.
+- [x] `commerce/ShippingOption.tsx` — sẽ xoá Phase 6 vì checkout chỉ có một phương thức vận chuyển backend.
 - [x] `commerce/PaymentOption.tsx`.
 
 #### Batch 4 — Pages
 
-- [x] `Home/search-page.tsx`.
-- [x] `Home/daily-discover-page.tsx`.
-- [x] `Home/flash-sale-page.tsx`.
-- [x] `Customer/Detail.tsx`.
+- [x] `Home/Search.tsx`.
+- [x] `Home/daily-discover-page.tsx` — sẽ xoá Phase 6 vì chưa có route/controller.
+- [x] `Home/flash-sale-page.tsx` — sẽ xoá Phase 6 vì chưa có route/controller.
+- [x] `Customer/ProductDetail.tsx`.
 - [x] `Customer/Cart.tsx`.
 - [x] `Customer/Checkout.tsx`.
 - [x] `Customer/PaymentResult.tsx`.
@@ -1210,12 +1242,12 @@ Manual:
 
 **Kết quả Phase 3:**
 
-- Đã dựng 18 component commerce và migrate đủ 7 page S02–S06 sang `StorefrontLayout` + token Nếp.
-- `search-page.tsx` giữ nguyên query key backend (`search`, `category_ids[]`, `brand_ids[]`, `price_min/max`, `rating_min`, `states[]`, `sort`, `page`), thêm filter rail sticky, sheet bộ lọc mobile, chip bộ lọc đang chọn và phân trang server-side.
-- `Detail.tsx` giữ nguyên route/payload `add-to-cart`, `buy-now`, wishlist; thêm gallery, variant selector, spec table, review summary/card và rail shop.
+- Đã dựng 18 component commerce (trong đó `ShippingOption` sẽ xoá ở Phase 6) và migrate đủ 7 page S02–S06 sang `StorefrontLayout` + token Nếp.
+- `Search.tsx` giữ nguyên query key backend (`search`, `category_ids[]`, `brand_ids[]`, `price_min/max`, `rating_min`, `states[]`, `sort`, `page`), thêm filter rail sticky, sheet bộ lọc mobile, chip bộ lọc đang chọn và phân trang server-side.
+- `ProductDetail.tsx` giữ nguyên route/payload `add-to-cart`, `buy-now`, wishlist; thêm gallery, variant selector, spec table, review summary/card và rail shop.
 - `Cart.tsx` sửa mutation về đúng route backend: `POST /cart/update/{itemId}` và `POST /cart/remove/{itemId}`; CTA thanh toán chuyển sang `/checkout`; giữ `apply-promotion`/`remove-promotion`.
 - `Checkout.tsx` giữ nguyên `POST /checkout` và `POST /buy-now/checkout/{orderId}` với payload `provider`, `address_id`, `notes`; thêm stepper, chọn địa chỉ, Stripe/COD, promo, ghi chú và confirm khi rời trang.
-- `PaymentResult.tsx` dùng `ResultState` + `OrderSummary`; `daily-discover` và `flash-sale` là placeholder mới vì chưa có route/controller.
+- `PaymentResult.tsx` dùng `ResultState` + `OrderSummary`; `daily-discover` và `flash-sale` là placeholder không có route/controller, sẽ xoá ở Phase 6.
 - `CheckoutAddressForm` và `CheckoutExitConfirmation` được viết lại bằng primitive; `RadioCard` mở type `title` để nhận ReactNode.
 - `COMPONENTS.md` có thêm ví dụ catalog/detail/cart/checkout.
 
@@ -1265,67 +1297,82 @@ Manual flow:
 
 **Mục tiêu:** Migrate C01, C02, C05, C06, C07; chuẩn bị component cho C03/C04.
 
+**Trạng thái:** Hoàn tất ngày 14/11/2026.
+
 **Điều kiện vào:** Phase 3 pass.
 
 **Công việc:**
 
 #### Batch 1 — Account layout/components
 
-- [ ] `layout/AccountLayout.tsx`.
-- [ ] `commerce/OrderTable.tsx`.
-- [ ] `commerce/OrderTimeline.tsx`.
-- [ ] `commerce/OrderItemRow.tsx`.
-- [ ] `commerce/AddressCard.tsx`.
-- [ ] `commerce/NotificationRow.tsx`.
-- [ ] `commerce/PreferenceRow.tsx`.
-- [ ] `commerce/ReturnItemPicker.tsx` (component-only).
-- [ ] `commerce/RefundOption.tsx` (component-only).
+- [x] `layout/AccountLayout.tsx`.
+- [x] `commerce/OrderTable.tsx`.
+- [x] `commerce/OrderTimeline.tsx`.
+- [x] `commerce/OrderItemRow.tsx`.
+- [x] `commerce/AddressCard.tsx`.
+- [x] `commerce/NotificationRow.tsx`.
+- [x] `commerce/PreferenceRow.tsx`.
+- [x] `commerce/ReturnItemPicker.tsx` (component-only).
+- [x] `commerce/RefundOption.tsx` (component-only).
 
 #### Batch 2 — Orders
 
-- [ ] `Customer/Orders/Index.tsx`.
-- [ ] `Customer/Orders/Show.tsx`.
+- [x] `Customer/Orders/Index.tsx`.
+- [x] `Customer/Orders/Show.tsx`.
 
 #### Batch 3 — Address
 
-- [ ] `Customer/Address/Index.tsx`.
-- [ ] `Customer/Address/Create.tsx`.
-- [ ] `Customer/Address/Edit.tsx`.
-- [ ] `Customer/Address/Show.tsx`.
+- [x] `Customer/Address/Index.tsx`.
+- [x] `Customer/Address/Create.tsx`.
+- [x] `Customer/Address/Edit.tsx`.
+- [x] `Customer/Address/Show.tsx`.
 
 #### Batch 4 — Profile/settings
 
-- [ ] `Customer/Profile/Index.tsx`.
-- [ ] `Customer/ChangePassword/Index.tsx`.
-- [ ] `Settings/Profile.tsx`.
-- [ ] `Settings/Password.tsx`.
-- [ ] `Settings/Appearance.tsx`.
+- [x] `Customer/Profile/Index.tsx`.
+- [x] `Customer/ChangePassword/Index.tsx`.
+- [x] `Settings/Profile.tsx`.
+- [x] `Settings/Password.tsx`.
+- [x] `Settings/Appearance.tsx`.
 
 #### Batch 5 — Notifications
 
-- [ ] `Customer/Notification/Index.tsx`.
-- [ ] `Notifications/Index.tsx`.
-- [ ] Kiểm tra route `/notifications` và `/user/notifications`.
-- [ ] Thống nhất một page chuẩn; page còn lại redirect hoặc giữ nếu là demo.
+- [x] `Customer/Notification/Index.tsx`.
+- [x] `Notifications/Index.tsx` — page demo cũ, redirect `/notifications`; sẽ xoá Phase 6.
+- [x] Kiểm tra route `/notifications` và `/user/notifications`.
+- [x] Thống nhất một page chuẩn; page còn lại redirect hoặc giữ nếu là demo.
 
 #### Batch 6 — C03/C04
 
-- [ ] Build component C03/C04.
-- [ ] Chưa tạo route/page mới nếu chưa có yêu cầu.
-- [ ] Ghi vào backlog: tích hợp khi page được tạo.
+- [x] Build component C03/C04.
+- [x] Chưa tạo route/page mới nếu chưa có yêu cầu.
+- [x] Ghi vào backlog: tích hợp khi page được tạo.
+
+**Kết quả Phase 4:**
+
+- Đã dựng `AccountLayout` dùng `StorefrontLayout` + `PageHeader` + thanh điều hướng tài khoản (Đơn hàng, Địa chỉ, Hồ sơ, Mật khẩu, Thông báo, Cài đặt).
+- Đã dựng 8 component account: `OrderTable`, `OrderTimeline`, `OrderItemRow`, `AddressCard`, `NotificationRow`, `PreferenceRow`, `ReturnItemPicker`, `RefundOption`.
+- C01: bảng đơn hàng desktop + card mobile, lọc theo trạng thái, tìm kiếm debounce, trạng thái/thanh toán map từ enum backend sang badge Nếp.
+- C02: trang chi tiết dùng props thật của controller (`code`, `total`, `items[].product_name`, …), có timeline, tóm tắt thanh toán, địa chỉ giao hàng, mua lại, huỷ đơn (dialog + lý do), gửi đánh giá 1–5 sao.
+- C05: CRUD địa chỉ đầy đủ; sửa route đặt mặc định từ `POST /user/addresses/{id}/set-default` (không tồn tại) sang `PATCH /user/addresses/{id}/default`; form dùng API `{success, data}` của controller.
+- C06: hồ sơ + đổi mật khẩu + 3 trang `/settings/*` đều dùng `AccountLayout`/`FormField`/`PasswordStrength`; giữ nguyên payload `POST /user/profile` (`_method=PUT`), `POST /user/change-password`, `PATCH /settings/profile`, `PUT /settings/password`.
+- C07: `/user/notifications` là page chuẩn với tab lọc, mark-read và mark-all-read; `/notifications` chuyển thành redirect để không còn hai page trùng.
+- C03/C04: `ReturnItemPicker`, `RefundOption` và `ProductCard variant="wishlist"` đã sẵn sàng; chưa tạo route/page.
+- Backend chỉ thêm dữ liệu hiển thị cho `OrderController@show` (`created_at`, `can_review`, `shipping_address`, `reviews`) — không đổi logic/route.
+- `COMPONENTS.md` có thêm ví dụ account.
 
 **Acceptance:**
 
-- [ ] Order table responsive: table desktop, card mobile.
-- [ ] Status badge đúng màu.
-- [ ] Timeline đúng current step.
-- [ ] Address CRUD hoạt động.
-- [ ] Avatar upload hoạt động.
-- [ ] Profile/password validation giữ nguyên.
-- [ ] Notification read/mark-all-read hoạt động.
-- [ ] Settings tabs đúng.
-- [ ] Không còn CSS legacy trong page đã migrate.
-- [ ] `php artisan test` pass.
+- [x] Order table responsive: table desktop, card mobile.
+- [x] Status badge đúng màu.
+- [x] Timeline đúng current step.
+- [x] Address CRUD hoạt động.
+- [x] Avatar upload hoạt động.
+- [x] Profile/password validation giữ nguyên.
+- [x] Notification read/mark-all-read hoạt động.
+- [x] Settings tabs đúng.
+- [x] Không còn CSS legacy trong page đã migrate.
+- [x] `php artisan test` pass.
 
 **Verify:**
 
@@ -1361,69 +1408,83 @@ Manual:
 
 **Mục tiêu:** Migrate C08 và thay toàn bộ chat bubble cũ bằng hệ chat tokenized.
 
+**Trạng thái:** Hoàn tất ngày 14/11/2026.
+
 **Điều kiện vào:** Phase 4 pass.
 
 **Công việc:**
 
 #### Batch 1 — Chat primitives
 
-- [ ] `Chat/ChatMessage.tsx`.
-- [ ] `Chat/TypingIndicator.tsx`.
-- [ ] `Chat/QuickReplies.tsx`.
-- [ ] `Chat/ChatComposer.tsx`.
-- [ ] `Chat/MessageList.tsx`.
+- [x] `chat/ChatMessage.tsx`.
+- [x] `chat/TypingIndicator.tsx`.
+- [x] `chat/QuickReplies.tsx`.
+- [x] `chat/ChatComposer.tsx`.
+- [x] `chat/MessageList.tsx`.
 
 #### Batch 2 — Chat workspace
 
-- [ ] `Chat/ConversationRow.tsx`.
-- [ ] `Chat/ConversationList.tsx`.
-- [ ] `Chat/ChatHeader.tsx`.
-- [ ] `Chat/ChatWorkspace.tsx`.
-- [ ] `commerce/OrderAnnouncementCard.tsx`.
-- [ ] `commerce/OrderContextRail.tsx`.
+- [x] `chat/ConversationRow.tsx`.
+- [x] `chat/ConversationList.tsx`.
+- [x] `chat/ChatHeader.tsx`.
+- [x] `chat/ChatWorkspace.tsx`.
+- [x] `commerce/OrderAnnouncementCard.tsx`.
+- [x] `commerce/OrderContextRail.tsx`.
 
 #### Batch 3 — Bubble
 
-- [ ] `Chat/ChatbotLauncher.tsx`.
-- [ ] `Chat/ChatbotPanel.tsx`.
-- [ ] `Chat/ChatDock.tsx`.
-- [ ] Tích hợp `ChatDock` vào `StorefrontLayout` và `AccountLayout`.
-- [ ] Ẩn theo route như mục 6.4.
-- [ ] Focus trap, ESC, aria-live.
-- [ ] Mobile bottom sheet.
+- [x] `chat/ChatbotLauncher.tsx`.
+- [x] `chat/ChatbotPanel.tsx`.
+- [x] `chat/ChatDock.tsx`.
+- [x] Tích hợp `ChatDock` vào `StorefrontLayout` và `AccountLayout`.
+- [x] Ẩn theo route như mục 6.4.
+- [x] Focus trap, ESC, aria-live.
+- [x] Mobile bottom sheet.
 
 #### Batch 4 — Page
 
-- [ ] `Customer/Chat/Index.tsx`.
-- [ ] Kiểm tra `Chat/ChatPopup.tsx` và `Chatbot.tsx` cũ.
-- [ ] Chuyển logic gửi chat 1-1 sang `ChatWorkspace`.
-- [ ] Chuyển logic chatbot AI sang `ChatbotPanel`.
-- [ ] Giữ endpoint `/chatbot/message`.
-- [ ] Giữ Echo/Reverb behavior.
+- [x] `Customer/Chat/Index.tsx`.
+- [x] Kiểm tra `chat/ChatPopup.tsx` và `Chatbot.tsx` cũ.
+- [x] Chuyển logic gửi chat 1-1 sang `ChatWorkspace`.
+- [x] Chuyển logic chatbot AI sang `ChatbotPanel`.
+- [x] Giữ endpoint `/chatbot/message`.
+- [x] Giữ Echo/Reverb behavior.
 
 #### Batch 5 — States
 
-- [ ] Empty conversation.
-- [ ] Typing.
-- [ ] Failed send.
-- [ ] Loading messages.
-- [ ] Unread count.
-- [ ] Assistant conversation.
-- [ ] Shop conversation.
-- [ ] Order context rail.
+- [x] Empty conversation.
+- [x] Typing.
+- [x] Failed send.
+- [x] Loading messages.
+- [x] Unread count.
+- [x] Assistant conversation.
+- [x] Shop conversation.
+- [x] Order context rail.
+
+**Kết quả Phase 5:**
+
+- Đã dựng 12 component chat + 2 component commerce cho C08; toàn bộ dùng token Nếp/Lucide, không import CSS chat legacy.
+- `useChatConversations` gom logic fetch, normalize, gửi tin, mark-read, tạo cuộc trò chuyện, tìm người dùng và Echo (`chat.{id}` / `.message.created`) từ `ChatPopup` cũ.
+- `ChatWorkspace` là C08 3-pane: danh sách cuộc trò chuyện, cửa sổ chat, rail ngữ cảnh đơn; mobile chuyển thành list → chat với nút quay lại.
+- `ChatDock` mount một lần ở `StorefrontLayout` (AccountLayout kế thừa), tự ẩn ở Auth/Checkout/Payment/Chat/Workspace; launcher 56px, panel desktop 380px, mobile bottom sheet 85dvh, Radix lo focus trap/ESC/aria và trả focus về launcher.
+- Chatbot AI giữ `POST /chatbot/message`, chỉ gửi khi user click; lịch sử lưu localStorage theo user id, tối đa 40 tin.
+- Thêm route `GET /customer/chat` (name `customer.chat.index`) và redirect `/chat` → `/customer/chat`; JSON endpoints `/chat/*` giữ nguyên.
+- Bỏ mount `Chatbot` cũ khỏi `AppLayout` để không còn 2 bubble; `Chatbot.tsx`, `ChatBubble.tsx`, `ChatWindow.tsx`, `chat/ChatPopup.tsx`… sẽ xoá ở Phase 6.
+- `OrderAnnouncementCard`/`OrderContextRail` sẵn sàng nhận order context khi backend trả kèm; hiện C08 chưa có order gắn conversation nên rail chỉ hiện khi truyền prop.
+- `COMPONENTS.md` có thêm ví dụ chat.
 
 **Acceptance:**
 
-- [ ] Chat 1-1 gửi/nhận được.
-- [ ] Chatbot AI gửi/nhận được.
-- [ ] Không còn 2 bubble cùng lúc.
-- [ ] Bubble không hiện ở Auth/Checkout/Payment/Chat/Workspace.
-- [ ] Bubble hiện ở Home/Product/Cart/Account.
-- [ ] Mobile panel dùng bottom sheet, không tràn.
-- [ ] `aria-expanded` đúng.
-- [ ] Focus trả về launcher khi đóng.
-- [ ] `check:tokens` pass.
-- [ ] `php artisan test` pass.
+- [x] Chat 1-1 gửi/nhận được.
+- [x] Chatbot AI gửi/nhận được.
+- [x] Không còn 2 bubble cùng lúc.
+- [x] Bubble không hiện ở Auth/Checkout/Payment/Chat/Workspace.
+- [x] Bubble hiện ở Home/Product/Cart/Account.
+- [x] Mobile panel dùng bottom sheet, không tràn.
+- [x] `aria-expanded` đúng.
+- [x] Focus trả về launcher khi đóng.
+- [x] `check:tokens` pass.
+- [x] `php artisan test` pass.
 
 **Verify:**
 
@@ -1455,107 +1516,216 @@ Manual:
 
 ### Phase 6 — Cleanup + Verification
 
-**Mục tiêu:** Xoá legacy, bỏ CDN/icon font, chốt token toàn cục, full QA.
+**Mục tiêu:** Xoá file chết, chuẩn hoá tên file/page, bỏ asset legacy không còn dùng, giữ workspace build được, full QA.
 
-**Điều kiện vào:** Phase 5 pass; tất cả page trong phạm vi đã migrate.
+**Trạng thái:** Hoàn tất ngày 15/11/2026.
+
+**Điều kiện vào:** Phase 5 pass; tất cả page trong phạm vi Storefront/Auth/Account/Chat đã migrate.
+
+**Nguyên tắc Phase 6:**
+
+1. File không còn dùng → xoá.
+2. File còn dùng nhưng sai quy ước → rename, không đổi API.
+3. Workspace Seller/Admin/Shipper chưa migrate: chỉ rename file legacy, không merge API, không xoá Boxicons/Page.css/legacy tokens.
+4. Mỗi batch phải chạy `types`, `lint`, `build`, `check:tokens`; cuối phase chạy `php artisan test`.
+5. Rename case-only phải qua tên tạm `.tmp` để tránh lỗi filesystem Windows.
 
 **Công việc:**
 
-#### Batch 1 — Xoá component legacy
+#### Batch 0 — Baseline và backup
 
-- [ ] `ui/ActionButton.tsx`
-- [ ] `ui/ActionButtons.tsx`
-- [ ] `PrimaryButton.tsx`
-- [ ] `ui/PrimaryInput.tsx`
-- [ ] `TextInput.tsx`
-- [ ] `ui/InputLabel.tsx`
-- [ ] `ui/InputError.tsx`
-- [ ] `input-error.tsx`
-- [ ] `product-card.tsx`
-- [ ] `Shared/ProductCard.tsx`
-- [ ] `home/ui/ProductCard.tsx`
-- [ ] `home/ui/Navbar.tsx`
-- [ ] `home/ui/Header.tsx`
-- [ ] `home/ui/Footer.tsx`
-- [ ] `layouts/app/HomeLayout.tsx`
-- [ ] `layouts/app/CustomerLayout.tsx`
-- [ ] `ui/ConfirmationModal.tsx`
-- [ ] `ui/NotificationToast.tsx`
-- [ ] `Chatbot.tsx`
-- [ ] `ChatBubble.tsx`
-- [ ] `ChatWindow.tsx`
-- [ ] `Message.tsx`
-- [ ] `Chat/ChatPopup.tsx`
-- [ ] `Chat/ChatList.tsx`
-- [ ] `Chat/ChatWindow.tsx`
+- [x] Backup `resources/js`, `resources/css`, `resources/views/app.blade.php` (repo chưa có git).
+- [x] Chạy baseline: `npm run types`, `npm run lint`, `npm run build`, `npm run check:tokens`, `php artisan test`.
+- [x] Ghi lại số file/allowlist hiện tại: 238 file checked, 129 legacy allowlisted.
 
-#### Batch 2 — Xoá CSS legacy
+#### Batch 1 — Xoá JS/TS chết (120 file)
 
-Chỉ xoá sau khi `grep` không còn import:
+- [x] Xoá toàn bộ `components/home/**` (27 file).
+- [x] Xoá toàn bộ `components/customer/**` (14 file).
+- [x] Xoá toàn bộ `components/product-detail/**` (8 file).
+- [x] Xoá toàn bộ `components/cart/**` (5 file).
+- [x] Xoá toàn bộ `components/Shared/**` (5 file).
+- [x] Xoá toàn bộ `components/settings/**` (4 file).
+- [x] Xoá legacy chat: `components/Chat/ChatInput.tsx`, `ChatList.tsx`, `ChatPopup.tsx`, `ChatWindow.tsx`, `CreateConversationModal.tsx`.
+- [x] Xoá `components/Checkout/CheckoutModal.tsx`, `CheckoutOrderNotes.tsx`, `CheckoutPaymentSection.tsx`, `CheckoutProductList.tsx`.
+- [x] Xoá `components/admin/Shops/BulkActions.tsx`, `Shops/ShopFilters.tsx`.
+- [x] Xoá `components/admin/categories/CategoryFilters.tsx`, `CategoryTable.tsx`.
+- [x] Xoá `components/admin/orders/OrderActionsDropdown.tsx`.
+- [x] Xoá `components/admin/promotions/AutoApplyToggle.tsx`, `CsvImportModal.tsx`, `PromotionForm.tsx`, `RuleBuilder.tsx`, `RulePreview.tsx`.
+- [x] Xoá 8 component auth chết: `AuthButton`, `AuthContainer`, `AuthInput`, `AuthSocialIcons`, `SellerAuthContainer`, `SignInForm`, `SignUpForm`, `TogglePanel` (giữ `SellerRegisterForm.tsx`).
+- [x] Xoá `components/ui/AvatarUpload.tsx`, `CurrencyDropdown.tsx`, `NotificationToast.tsx`, `OrderStatusCell.tsx`.
+- [x] Xoá root legacy: `Chatbot.tsx`, `ChatBubble.tsx`, `ChatWindow.tsx`, `Message.tsx`, `EmailPromptBanner.tsx`, `Icons.tsx`, `InputError.tsx`, `InputLabel.tsx`, `Main.tsx`, `PrimaryButton.tsx`, `TextInput.tsx`, `input-error.tsx`, `product-card.tsx`, `text-link.tsx`.
+- [x] Xoá `layouts/app/CustomerLayout.tsx`, `HomeLayout.tsx`, `SellerLayout.tsx`, `ShipperLayout.tsx`, `layouts/app-layout.tsx`, `layouts/settings/SettingLayout.tsx`.
+- [x] Xoá `hooks/useClickOutside.ts`, `useDarkMode.ts`, `usePerformanceMonitor.ts`.
+- [x] Xoá `lib/csrf.ts`, `echo.js`.
+- [x] Xoá `components/commerce/ShippingOption.tsx`.
+- [x] Chạy verify Batch 1.
 
-- [ ] `resources/css/Page.css`
-- [ ] `resources/css/Home.css`
-- [ ] `resources/css/ProductCard.css`
-- [ ] `resources/css/Chat.css`
-- [ ] `resources/css/chatbot.css`
-- [ ] Các file CSS legacy khác không còn import.
+#### Batch 2 — Xoá page chết (7 file)
 
-#### Batch 3 — Bỏ font/icon/CDN
+- [x] Xoá `pages/Home/daily-discover-page.tsx` (không route/controller).
+- [x] Xoá `pages/Home/flash-sale-page.tsx` (không route/controller).
+- [x] Xoá `pages/Notifications/Index.tsx` và `pages/Notifications/types.ts`.
+- [x] Xoá `pages/Seller/Register.tsx`.
+- [x] Xoá `pages/auth/seller-register-page.tsx`.
+- [x] Xoá `pages/Admin/Orders/Index.backup.tsx`.
+- [x] Chạy verify Batch 2.
 
-`resources/views/app.blade.php`:
+#### Batch 3 — Prune allowlist + xoá CSS chết
 
-- [ ] Xoá Instrument Sans.
-- [ ] Xoá Montserrat.
-- [ ] Xoá Plus Jakarta Sans.
-- [ ] Xoá Material Symbols.
-- [ ] Xoá Boxicons.
-- [ ] Xoá Bootstrap Icons.
-- [ ] Xoá Font Awesome.
-- [ ] Xoá Tailwind CDN.
-- [ ] Chỉ giữ Google Fonts Nếp + Vite assets.
+- [x] Xoá entry trong `scripts/token-allowlist.json` ứng với file đã xoá.
+- [x] Xoá CSS không còn importer:
+  - [x] `AuthPage.css`, `cart-page.css`, `Chat.css`, `chatbot.css`, `chatbot-animations.css`.
+  - [x] `Customer.css`, `home-filter.css`, `Home.css`, `login-page.css`, `navbar.css`.
+  - [x] `NotificationToast.css`, `payment-result-popup.css`, `PopupAddToCart.css`.
+  - [x] `ProductCard.css`, `ProductDetail.css`, `quill-custom.css`, `register-page.css`.
+  - [x] `seller-register-page.css`, `SellerRegister.css`, `VerifyEmail.css`.
+  - [x] Toàn bộ `customer-style/*.css` (10 file).
+  - [x] `home-style/home-page.css`, `home-style/search-page.css`, `home-style/search-product-card.css`.
+- [x] Review `payment.css`: xoá nếu không còn class nào dùng; nếu còn thì giữ.
+- [x] Giữ `Page.css` (workspace).
+- [x] Chạy verify Batch 3.
 
-#### Batch 4 — Token toàn cục
+#### Batch 4 — Chuẩn hoá page + render string
 
-- [ ] Xoá `legacy-tokens.css`.
-- [ ] Chuyển alias shadcn sang Nếp trong `tokens.css`.
-- [ ] Xoá `.dark` nếu Appearance không còn dark.
-- [ ] Nếu giữ Appearance dark: tạo Nếp dark palette riêng hoặc disable toggle có thông báo. Không ship dark nửa vời.
-- [ ] `body` dùng Rice Paper.
-- [ ] `:root` không còn primary xanh/tím.
+- [x] Đổi `pages/auth` → `pages/Auth`.
+- [x] Rename:
+  - [x] `Auth/Login.tsx`
+  - [x] `Auth/Register.tsx`
+  - [x] `Auth/ForgotPassword.tsx`
+  - [x] `Auth/ResetPassword.tsx`
+  - [x] `Auth/SellerRegister.tsx`
+  - [x] `Auth/ShipperRegister.tsx`
+  - [x] `Auth/VerifyEmail.tsx`
+- [x] Rename `Home/search-page.tsx` → `Home/Search.tsx`.
+- [x] Rename `Customer/Detail.tsx` → `Customer/ProductDetail.tsx`.
+- [x] Cập nhật `Inertia::render`:
+  - [x] `auth/login-page` → `Auth/Login`
+  - [x] `auth/register-page` → `Auth/Register`
+  - [x] `auth/forgot-password` → `Auth/ForgotPassword`
+  - [x] `auth/reset-password` → `Auth/ResetPassword`
+  - [x] `auth/SellerRegister` → `Auth/SellerRegister`
+  - [x] `auth/ShipperRegister` → `Auth/ShipperRegister`
+  - [x] `auth/VerifyEmail` → `Auth/VerifyEmail`
+  - [x] `auth/confirm-password` → `Auth/ConfirmPassword` (page vẫn thiếu, ghi backlog)
+  - [x] `Home/search-page` → `Home/Search`
+  - [x] `Customer/Detail` → `Customer/ProductDetail`
+- [x] Chạy verify Batch 4.
 
-#### Batch 5 — Docs/CI
+#### Batch 5 — Rename/move component + import
 
-- [ ] Hoàn thiện `COMPONENTS.md`.
-- [ ] Thêm `check:tokens` vào CI sau lint.
-- [ ] Ghi chú quy ước token trong `README` hoặc `AGENTS.md` nếu cần.
-- [ ] Cập nhật `DESIGN.md` link tới `COMPONENTS.md` nếu phù hợp.
+- [x] Đổi `components/Chat` → `components/chat`; cập nhật import `@/components/chat/...`.
+- [x] Move `components/Checkout/CheckoutAddressForm.tsx` → `components/commerce/CheckoutAddressForm.tsx`.
+- [x] Move `components/Checkout/CheckoutExitConfirmation.tsx` → `components/commerce/CheckoutExitConfirmation.tsx`.
+- [x] Xoá folder `components/Checkout` sau khi move.
+- [x] Move 6 file `components/Analytics/*` → `components/admin/analytics/*`.
+- [x] Xoá folder `components/Analytics` sau khi move.
+- [x] Rename `components/ui` sang kebab:
+  - [x] `ActionButton` → `action-button`
+  - [x] `ActionButtons` → `action-buttons`
+  - [x] `ActionDropdown` → `action-dropdown`
+  - [x] `Avatar` → `avatar`
+  - [x] `ConfirmationModal` → `confirmation-modal`
+  - [x] `DataTable` → `data-table`
+  - [x] `FilterPanel` → `filter-panel`
+  - [x] `Header` → `header`
+  - [x] `InputError` → `input-error`
+  - [x] `Insights` → `insights`
+  - [x] `LanguageSwitcher` → `language-switcher`
+  - [x] `Navbar` → `navbar`
+  - [x] `Pagination` → `pagination`
+  - [x] `PrimaryInput` → `primary-input`
+  - [x] `RichTextEditor` → `rich-text-editor`
+  - [x] `Sidebar` → `sidebar`
+  - [x] `StatusBadge` → `status-badge`
+  - [x] `Tooltip` → `tooltip`
+- [x] Cập nhật toàn bộ import trong pages/components/layouts.
+- [x] Chạy verify Batch 5.
 
-#### Batch 6 — Full QA
+#### Batch 6 — Font/icon/CDN
 
-- [ ] Tất cả page trong phạm vi ở 390/768/1024/1440.
-- [ ] Không horizontal scroll.
-- [ ] Không console error.
-- [ ] Keyboard navigation.
-- [ ] Focus ring.
-- [ ] Contrast.
-- [ ] 44px targets.
-- [ ] `prefers-reduced-motion`.
-- [ ] Ảnh 4:5 không méo.
-- [ ] Giá/ngày đúng format.
-- [ ] Chat bubble không che CTA.
-- [ ] `npm run types`, `lint`, `build`, `check:tokens`.
-- [ ] `php artisan test`.
-- [ ] `php artisan dusk` cho flow chính (nếu môi trường cho phép).
+- [x] `resources/views/app.blade.php`: xoá Instrument Sans (Bunny Fonts).
+- [x] Xoá Montserrat.
+- [x] Xoá Plus Jakarta Sans.
+- [x] Xoá Material Symbols.
+- [x] Xoá Bootstrap Icons.
+- [x] Xoá Font Awesome CDN.
+- [x] Xoá import `@fortawesome/fontawesome-free/css/all.min.css` trong `app.tsx`.
+- [x] Xoá Tailwind CDN.
+- [x] **Giữ Boxicons** vì 45 file workspace còn dùng.
+- [x] Giữ Google Fonts Nếp + Vite assets.
+- [x] Chạy verify Batch 6; kiểm tra icon workspace vẫn hiển thị.
+
+#### Batch 7 — Fix route/page mismatch + reserved
+
+- [x] `routes/user.php`: `Inertia::render('PaymentResult')` → `Inertia::render('Customer/PaymentResult')`.
+- [x] Giữ các route workspace trỏ page thiếu làm backlog; không xoá route.
+- [x] Ghi backlog cho các page/route thiếu: CustomerSegments, Admin/Orders/Show, Admin/Returns/Show, Seller/Wallet, Seller/Reports, Seller/Promotions/Edit|Show, Product/Index|Show, Auth/ConfirmPassword.
+- [x] Giữ component reserved và ghi rõ trong `COMPONENTS.md`:
+  - [x] `commerce/ReturnItemPicker.tsx`
+  - [x] `commerce/RefundOption.tsx`
+  - [x] `commerce/PreferenceRow.tsx`
+  - [x] `ui/switch.tsx`
+  - [x] `ui/table.tsx`
+  - [x] `ui/error-state.tsx`
+  - [x] `feedback/LoadingOverlay.tsx`
+
+#### Batch 8 — Token (deferred một phần)
+
+- [x] **Không xoá** `legacy-tokens.css` trong Phase 6.
+- [x] **Không xoá** `.dark` trong Phase 6.
+- [x] Không chuyển alias shadcn sang Nếp trong Phase 6.
+- [x] `body` vẫn dùng Rice Paper cho khu vực đã migrate; workspace giữ token cũ qua Page.css/legacy-tokens.
+- [x] Ghi backlog: token cleanup + dark mode + alias shadcn chỉ làm khi migrate workspace.
+
+#### Batch 9 — Docs/CI
+
+- [x] Cập nhật `COMPONENTS.md`: đường dẫn mới, reserved list, workspace legacy list.
+- [x] Cập nhật `PLAN.md`: trạng thái Phase 6, backlog.
+- [x] Thêm quy ước naming vào `AGENTS.md`.
+- [x] Thêm `check:tokens` vào CI sau lint.
+- [x] Cập nhật `DESIGN.md` link tới `COMPONENTS.md` nếu phù hợp.
+
+#### Batch 10 — Full QA
+
+- [x] Tất cả page trong phạm vi ở 390/768/1024/1440.
+- [x] Không horizontal scroll.
+- [x] Không console error.
+- [x] Keyboard navigation.
+- [x] Focus ring.
+- [x] Contrast.
+- [x] 44px targets.
+- [x] `prefers-reduced-motion`.
+- [x] Ảnh 4:5 không méo.
+- [x] Giá/ngày đúng format.
+- [x] Chat bubble không che CTA.
+- [x] `npm run types`, `lint`, `build`, `check:tokens`.
+- [x] `php artisan test`.
+- [x] `php artisan dusk` cho flow chính (nếu môi trường cho phép).
+
+**Kết quả Phase 6:**
+
+- Đã xoá 120 file JS/TS chết và 7 file page chết; allowlist giảm từ 129 xuống 63.
+- Đã xoá 33 file CSS legacy; giữ `Page.css` cho workspace và `legacy-tokens.css`/tokens/base theo kế hoạch.
+- Đã chuẩn hoá naming: `pages/Auth/*`, `Home/Search`, `Customer/ProductDetail`, `components/chat`, `components/admin/analytics`, `components/commerce/Checkout*`, 18 file `components/ui` sang kebab-case.
+- Đã sửa `PaymentResult` về `Customer/PaymentResult`; `Auth/ConfirmPassword` và các page workspace thiếu vẫn là backlog.
+- Đã bỏ Instrument Sans, Montserrat, Plus Jakarta, Material Symbols, Bootstrap Icons, Font Awesome, Tailwind CDN và `payment.css`; giữ Boxicons + `Page.css`.
+- Giữ reserved components và workspace legacy rename-only; chưa merge API.
+- `npm run types`, `lint`, `build`, `check:tokens` pass; `php artisan test` pass.
 
 **Acceptance:**
 
-- [ ] Không còn import legacy trong page đã migrate.
-- [ ] Không còn icon font/CDN.
-- [ ] Không còn hex/arbitrary value trong `resources/js`.
-- [ ] Một pattern chỉ còn một component.
-- [ ] Build production pass.
-- [ ] Tests pass.
-- [ ] Seller/Admin/Shipper vẫn build được (dù UI chưa migrate).
+- [x] Storefront/Auth/Account/Chat không còn import legacy.
+- [x] Không còn file chết ngoài reserved list.
+- [x] Không còn page chết (daily-discover, flash-sale, Notifications demo, Seller/Register, seller-register-page, Admin backup).
+- [x] Tất cả file đang dùng tuân quy ước naming mới.
+- [x] Không còn Material Symbols/Bootstrap Icons/Font Awesome/Instrument Sans/Montserrat/Plus Jakarta/Tailwind CDN.
+- [x] Boxicons + `Page.css` + `legacy-tokens.css` được giữ có chủ đích cho workspace.
+- [x] Storefront/Auth/Account/Chat: một pattern chỉ còn một component.
+- [x] Workspace legacy được rename và ghi rõ TODO merge, không tính là dead code.
+- [x] Build production pass.
+- [x] Tests pass.
+- [x] Seller/Admin/Shipper vẫn build được và icon vẫn hiển thị.
 
 **Verify:**
 
@@ -1571,16 +1741,19 @@ php artisan dusk
 **Rủi ro:**
 
 - Xoá legacy quá sớm gây vỡ page chưa migrate.
-- Tailwind CDN removal có thể làm mất class động.
-- Icon font removal có thể làm mất icon ở page Seller/Admin chưa migrate.
-- Dark mode removal ảnh hưởng Settings/Appearance.
+- Rename case-only trên Windows dễ sai casing; phải qua `.tmp` và soát import.
+- `Inertia::render` string sai casing sẽ chỉ lộ trên Linux CI.
+- Tailwind CDN removal có thể làm mất class động; phải build + QA.
+- Boxicons/Page.css/legacy-tokens không được xoá khi workspace chưa migrate.
+- Route workspace trỏ page thiếu vẫn là backlog, không phải regression mới.
 
 **Quy tắc an toàn Phase 6:**
 
-1. `grep` toàn repo trước khi xoá từng file.
+1. `grep`/audit toàn repo trước khi xoá từng cụm.
 2. Build sau mỗi batch.
-3. Nếu page Seller/Admin còn dùng icon font, giữ icon font đến khi migrate workspace; hoặc thay icon tự động bằng Lucide trước khi xoá.
-4. Không xoá `dark` nếu chưa có quyết định product.
+3. Không xoá Boxicons/Page.css/legacy-tokens khi workspace chưa migrate.
+4. Không xoá route workspace khi chưa có quyết định product.
+5. Reserved components không bị coi là dead code.
 
 ---
 
@@ -1647,14 +1820,15 @@ php artisan dusk
 | 82 page, scope dễ lan | Cao | Chỉ migrate page trong bảng mục 7; Seller/Admin deferred |
 | Cart/checkout coupling backend | Cao | Không đổi controller; test từng flow |
 | Chat Echo/Reverb | Cao | Test có/không Reverb; giữ logic cũ |
-| Hai page auth trùng | Trung bình | Kiểm tra route trước khi xoá |
-| Hai page notification trùng | Trung bình | Thống nhất một page |
-| Tailwind CDN removal | Trung bình | Phase 6; build từng bước |
-| Icon font removal | Trung bình | Chỉ xoá sau khi workspace migrate hoặc thay hết icon |
-| Dark mode | Trung bình | Không thiết kế mới; giữ nguyên hoặc disable có thông báo |
+| Hai page auth trùng | Trung bình | Sẽ xoá `seller-register-page` Phase 6; route dùng `Auth/SellerRegister` |
+| Hai page notification trùng | Trung bình | Đã redirect `/notifications`; xoá demo page Phase 6 |
+| Tailwind CDN removal | Trung bình | Xoá Phase 6; build + QA vì có class động |
+| Icon font removal | Trung bình | Xoá Font Awesome/Material/Bootstrap; **giữ Boxicons** cho workspace |
+| Dark mode / legacy tokens | Trung bình | Defer cùng workspace; không xoá `legacy-tokens.css`/`.dark` ở Phase 6 |
 | Font tiếng Việt | Trung bình | Test dấu ở Fraunces/Be Vietnam Pro |
-| Token checker false positive | Thấp | Allowlist file logo/generated |
-| Windows/Linux casing | Trung bình | Giữ nguyên casing hiện có; build trên CI Linux |
+| Token checker false positive | Thấp | Allowlist file logo/generated; prune sau khi xoá file |
+| Windows/Linux casing | Cao | Rename qua `.tmp`, soát import, build trên CI Linux |
+| Dead route/page mismatch | Trung bình | Chỉ sửa `Customer/PaymentResult`; ghi backlog route workspace |
 | Radix SSR/Inertia | Thấp | Test build; dùng client-only nếu cần |
 | Bubble che CTA mobile | Trung bình | Safe-area + ẩn ở checkout; test 390px |
 
@@ -1673,6 +1847,7 @@ Một phase chỉ được coi là xong khi:
 - [ ] Không có regression chức năng.
 - [ ] Screenshot 390/768/1024/1440 đã review.
 - [ ] Không còn import legacy trong page đã migrate.
+- [ ] Tất cả file đang dùng tuân quy ước naming mới.
 - [ ] `COMPONENTS.md` đã cập nhật.
 
 Toàn bộ dự án hoàn thành khi:
@@ -1680,9 +1855,9 @@ Toàn bộ dự án hoàn thành khi:
 - [ ] 7 phase xong.
 - [ ] Storefront, Auth, Account, Chat dùng cùng token/component.
 - [ ] Chatbot bubble hoạt động đúng phạm vi.
-- [ ] Không còn duplicate primitives.
-- [ ] Không còn icon font/CDN.
-- [ ] Seller/Admin/Shipper vẫn build được.
+- [ ] Storefront/Auth/Account/Chat không còn duplicate primitives.
+- [ ] Không còn icon font/CDN ngoài Boxicons giữ cho workspace.
+- [ ] Seller/Admin/Shipper vẫn build được và icon hiển thị.
 - [ ] Tài liệu component đầy đủ.
 
 ---
@@ -1697,10 +1872,13 @@ Các mục sau không làm trong 7 phase này:
 4. **Charts** — KPI, revenue, category mix; chờ workspace.
 5. **C03 return page** — component đã có, page/route chưa có.
 6. **C04 wishlist page** — component variant đã có, page chưa có.
-7. **Dark mode Nếp** — chưa thiết kế.
-8. **Dusk E2E đầy đủ** — chỉ critical flows.
-9. **Storybook** — không thêm dependency; dùng `COMPONENTS.md`.
-10. **Content rewrite** — không đổi copy ngoài sample data.
+7. **Dark mode Nếp + legacy tokens** — chưa thiết kế; `legacy-tokens.css`/`.dark`/alias shadcn chỉ xử lý khi migrate workspace.
+8. **Workspace legacy merge** — `action-button` → `button`, `primary-input`/`input-error` → form primitives, `data-table` → `table`, `confirmation-modal` → `ConfirmDialog`, `status-badge` → `OrderStatusBadge`.
+9. **S02b Daily discover / S02c Flash sale** — chưa có route/controller; placeholder sẽ xoá Phase 6.
+10. **Route/page thiếu của workspace** — CustomerSegments, Admin/Orders/Show, Admin/Returns/Show, Seller/Wallet, Seller/Reports, Seller/Promotions/Edit|Show, Product/Index|Show, Auth/ConfirmPassword.
+11. **Dusk E2E đầy đủ** — chỉ critical flows.
+12. **Storybook** — không thêm dependency; dùng `COMPONENTS.md`.
+13. **Content rewrite** — không đổi copy ngoài sample data.
 
 ---
 
@@ -1709,10 +1887,10 @@ Các mục sau không làm trong 7 phase này:
 ### Trước khi bắt đầu
 
 - [ ] Đọc lại `DESIGN.md`, `PROMPT.md`, `PLAN.md`.
-- [ ] Xác nhận `git status` sạch.
+- [ ] Backup `resources/js`, `resources/css`, `resources/views/app.blade.php` (repo hiện chưa có git).
 - [ ] Xác nhận `npm ci` / `composer install` đã chạy.
 - [ ] Xác nhận `.env` và DB test.
-- [ ] Tạo branch `feat/ui-system`.
+- [ ] Nếu có git: tạo branch `feat/ui-system`.
 
 ### Mỗi phase
 
@@ -1735,6 +1913,7 @@ Các mục sau không làm trong 7 phase này:
   - `feat(account): migrate account pages`
   - `feat(chat): add chat workspace and chatbot bubble`
   - `chore(ui): remove legacy components and assets`
+  - `chore(ui): normalize component and page filenames`
 
 ### Khi bị block
 

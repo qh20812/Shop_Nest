@@ -3,8 +3,8 @@ import axios from 'axios';
 import { Banknote, CreditCard, MapPin, Plus, ShieldCheck, Truck } from 'lucide-react';
 import * as React from 'react';
 
-import CheckoutAddressForm from '@/components/Checkout/CheckoutAddressForm';
-import CheckoutExitConfirmation from '@/components/Checkout/CheckoutExitConfirmation';
+import CheckoutAddressForm from '@/components/commerce/CheckoutAddressForm';
+import CheckoutExitConfirmation from '@/components/commerce/CheckoutExitConfirmation';
 import { CheckoutStepper } from '@/components/commerce/CheckoutStepper';
 import { OrderSummary } from '@/components/commerce/OrderSummary';
 import { PaymentOption } from '@/components/commerce/PaymentOption';

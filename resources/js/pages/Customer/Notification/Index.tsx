@@ -1,123 +1,125 @@
-import '@/../css/customer-style/customer-notification.css';
-import CustomerLayout from '@/layouts/app/CustomerLayout';
-import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import { Bell, BellOff, CheckCheck } from 'lucide-react';
+import * as React from 'react';
 
-interface NotificationItem {
-    id: number;
-    title: string;
-    content: string;
-    type: number;
-    type_label: string;
-    category: string;
-    icon: string;
-    color: string;
-    is_read: boolean;
-    action_url?: string | null;
-    created_at: string;
+import { NotificationRow, type NotificationModel } from '@/components/commerce/NotificationRow';
+import { AccountLayout } from '@/components/layout/AccountLayout';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Tabs } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/toast';
+
+interface PageProps extends Record<string, unknown> {
+    notifications?: NotificationModel[];
+    filters?: { tab?: string };
 }
 
-interface PageProps {
-    notifications: NotificationItem[];
-    filters: { tab: string };
-    [key: string]: unknown;
-}
-
-const tabs: { key: string; label: string }[] = [
-    { key: 'all', label: 'Tất cả' },
-    { key: 'unread', label: 'Chưa đọc' },
-    { key: 'promotion', label: 'Khuyến mãi' },
-    { key: 'order', label: 'Đơn hàng' },
+const tabs = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'unread', label: 'Chưa đọc' },
+    { value: 'promotion', label: 'Khuyến mãi' },
+    { value: 'order', label: 'Đơn hàng' },
 ];
 
-export default function Index() {
-    const { notifications = [], filters } = usePage<PageProps>().props;
-    const [activeTab, setActiveTab] = useState(filters.tab || 'all');
+export default function NotificationIndex() {
+    const { notifications = [], filters = {} } = usePage<PageProps>().props;
+    const { success, error: showError } = useToast();
+    const [items, setItems] = React.useState<NotificationModel[]>(notifications);
+    const [markingAll, setMarkingAll] = React.useState(false);
+    const activeTab = filters.tab ?? 'all';
+
+    React.useEffect(() => {
+        setItems(notifications);
+    }, [notifications]);
+
+    const unreadCount = items.filter((item) => !item.is_read).length;
 
     const changeTab = (tab: string) => {
-        setActiveTab(tab);
-        router.get('/user/notifications', { tab }, { preserveScroll: true, preserveState: true });
+        router.get('/user/notifications', { tab }, { preserveScroll: true, preserveState: true, replace: true });
     };
 
     const markAllRead = () => {
-        router.post('/user/notifications/mark-all-read', {}, { preserveScroll: true });
-    };
-
-    const markRead = (id: number) => {
+        setMarkingAll(true);
         router.post(
-            `/user/notifications/${id}/read`,
+            '/user/notifications/mark-all-read',
             {},
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    const idx = notifications.findIndex((n) => n.id === id);
-                    if (idx !== -1) notifications[idx].is_read = true;
+                    setItems((current) => current.map((item) => ({ ...item, is_read: true })));
+                    success('Đã đánh dấu tất cả là đã đọc');
                 },
+                onError: () => showError('Không thể cập nhật thông báo'),
+                onFinish: () => setMarkingAll(false),
             },
         );
     };
 
-    const itemColorClass = (color: string) => `color-${color}`;
-    const unreadClass = (unread: boolean) => (unread ? 'is-unread' : 'is-read');
+    const markRead = (id: number) => {
+        axios
+            .post(`/user/notifications/${id}/read`)
+            .then(() => {
+                setItems((current) => current.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
+            })
+            .catch(() => showError('Không thể đánh dấu thông báo'));
+    };
 
     return (
-        <CustomerLayout>
-            <div className="notification-card">
-                <div className="notification-header">
-                    <div className="notification-header-left">
-                        <h1 className="notification-title">Thông báo</h1>
-                        <p className="notification-subtitle">Tất cả thông báo từ ShopNest sẽ được hiển thị tại đây.</p>
+        <AccountLayout
+            active="notifications"
+            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Thông báo' }]}
+            eyebrow="Tài khoản"
+            title="Thông báo"
+            description="Cập nhật đơn hàng, khuyến mãi và thông tin hệ thống gửi tới bạn."
+            count={unreadCount > 0 ? `${unreadCount} chưa đọc` : `${items.length} thông báo`}
+            actions={
+                <Button variant="secondary" size="sm" leftIcon={CheckCheck} onClick={markAllRead} loading={markingAll} disabled={unreadCount === 0}>
+                    Đánh dấu tất cả đã đọc
+                </Button>
+            }
+        >
+            <Head title="Thông báo" />
+
+            <div className="flex flex-col gap-5">
+                <Tabs
+                    items={tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
+                    value={activeTab}
+                    onValueChange={changeTab}
+                    variant="filter"
+                    ariaLabel="Lọc thông báo"
+                />
+
+                {items.length === 0 ? (
+                    <EmptyState
+                        icon={BellOff}
+                        title="Không có thông báo nào"
+                        description={
+                            activeTab === 'all'
+                                ? 'Khi có cập nhật về đơn hàng hoặc khuyến mãi, thông báo sẽ xuất hiện tại đây.'
+                                : 'Không có thông báo phù hợp với bộ lọc này.'
+                        }
+                        actions={
+                            activeTab === 'all' ? undefined : (
+                                <Button variant="secondary" size="sm" onClick={() => changeTab('all')}>
+                                    Xem tất cả
+                                </Button>
+                            )
+                        }
+                    />
+                ) : (
+                    <div className="rounded-card border border-border bg-warm-porcelain p-5">
+                        {items.map((notification) => (
+                            <NotificationRow key={notification.id} notification={notification} onRead={markRead} />
+                        ))}
                     </div>
-                    <button type="button" onClick={markAllRead} className="notification-mark-all-btn">
-                        <span className="material-symbols-outlined notification-mark-all-icon">mark_chat_read</span>
-                        <span>Đánh dấu tất cả đã đọc</span>
-                    </button>
-                </div>
-                <div className="notification-tabs">
-                    {tabs.map((t) => (
-                        <button
-                            key={t.key}
-                            type="button"
-                            onClick={() => changeTab(t.key)}
-                            className={`notification-tab ${activeTab === t.key ? 'active' : ''}`}
-                        >
-                            {t.label}
-                        </button>
-                    ))}
-                </div>
-                <div className="notification-list">
-                    {notifications.length === 0 && <div className="notification-empty">Không có thông báo.</div>}
-                    {notifications.map((n) => (
-                        <div
-                            key={n.id}
-                            onClick={() => markRead(n.id)}
-                            className={`notification-item ${itemColorClass(n.color)} ${unreadClass(!n.is_read)}`}
-                        >
-                            <div className={`notification-icon-wrapper ${unreadClass(!n.is_read)} ${itemColorClass(n.color)}`}>
-                                <span className="material-symbols-outlined notification-icon">{n.icon}</span>
-                            </div>
-                            <div className="notification-content">
-                                <div className="notification-content-row">
-                                    <div className="notification-text-block">
-                                        <h3 className="notification-item-title">{n.title}</h3>
-                                        <p className="notification-item-text clamp-2">{n.content}</p>
-                                        <div className="notification-meta-row">
-                                            <span className="notification-timestamp">{n.created_at}</span>
-                                            {!n.is_read && <span className="notification-new-pill">Mới</span>}
-                                        </div>
-                                    </div>
-                                    {n.action_url && (
-                                        <a href={n.action_url} className="notification-action-link">
-                                            Xem chi tiết
-                                            <span className="material-symbols-outlined action-arrow">arrow_forward</span>
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                )}
+
+                <p className="flex items-center gap-2 text-label-micro text-ink-faint">
+                    <Bell aria-hidden="true" className="size-3.5" />
+                    Thông báo được giữ tối đa 100 bản gần nhất.
+                </p>
             </div>
-        </CustomerLayout>
+        </AccountLayout>
     );
 }

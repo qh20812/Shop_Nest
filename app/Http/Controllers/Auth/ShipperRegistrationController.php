@@ -22,7 +22,7 @@ class ShipperRegistrationController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/ShipperRegister');
+        return Inertia::render('Auth/ShipperRegister');
     }
 
     /**

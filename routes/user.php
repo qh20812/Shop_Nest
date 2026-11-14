@@ -182,7 +182,7 @@ Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])
 Route::get('/payments/{provider}/return', [PaymentReturnController::class, 'handle'])
     ->middleware('throttle:30,1');
 Route::get('/payments/stripe/cancel', function () {
-    return Inertia::render('PaymentResult', [
+    return Inertia::render('Customer/PaymentResult', [
         'provider' => 'stripe',
         'status' => 'canceled',
     ]);

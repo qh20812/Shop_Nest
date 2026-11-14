@@ -15,8 +15,9 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 ## Architecture
 
 - Role route files live in `routes/{admin,user,seller,shipper,chat,settings,auth}.php`, registered from `bootstrap/app.php` (several are also `require`d in `routes/web.php`). Add role routes to the matching file. `routes/api.php` is intentionally empty: chatbot and notification "API" endpoints are in `web.php` under session auth (`/chatbot/message`, `/api/notifications/*`).
-- Inertia pages resolve to `resources/js/pages/<Component>.tsx` from `Inertia::render('Seller/Products/Index')`. Component paths are case-sensitive on Linux; match the on-disk folder casing exactly (e.g. `auth/`, `Seller/`, `Customer/`).
-- Pages import their layout explicitly (`@/layouts/app/AppLayout`, `SellerLayout`, etc.); there is no automatic role-layout middleware.
+- Inertia pages resolve to `resources/js/pages/<Component>.tsx` from `Inertia::render('Seller/Products/Index')`. Component paths are case-sensitive on Linux; match the on-disk casing exactly (e.g. `Auth/`, `Home/`, `Customer/`, `Seller/`).
+- Pages import their layout explicitly (`@/components/layout/StorefrontLayout` or `AccountLayout`, workspace `@/layouts/app/AppLayout`); there is no automatic role-layout middleware.
+- Naming: page folders/files PascalCase (`pages/Auth/Login.tsx`); component folders lowercase (`components/chat`, `components/commerce`); component files PascalCase except `components/ui/**` kebab-case; hook/lib files camelCase/lowercase; shared type modules stay `types.ts`.
 - `@` → `resources/js` (Vite and tsconfig). Import the folder as lowercase `@/components/...`; mixed-case variants like `@/Components/...` resolve on Windows but break tsc and Linux builds.
 - Wayfinder generates `resources/js/{actions,routes,wayfinder}` (gitignored) during `vite` dev/build. Regenerate with `php artisan wayfinder:generate`; never edit generated files.
 - Auth is session-based. Google login uses Socialite. Roles are in the `role_user` pivot with Spatie-translatable names: query `where('name->en', 'Seller')`, not `where('name', ...)`.

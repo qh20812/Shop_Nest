@@ -1,10 +1,16 @@
-import '@/../css/customer-style/customer-profile.css';
-import CustomerLayout from '@/layouts/app/CustomerLayout';
-import { router, usePage } from '@inertiajs/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Camera, Lock, Save, UserRound } from 'lucide-react';
+import * as React from 'react';
 
-const editableFields = ['first_name', 'last_name', 'email', 'phone_number', 'gender', 'date_of_birth'] as const;
-type EditableField = (typeof editableFields)[number];
+import { AccountLayout } from '@/components/layout/AccountLayout';
+import Avatar from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import { IconButton } from '@/components/ui/icon-button';
+import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
+import { useToast } from '@/components/ui/toast';
 
 interface UserProfile {
     id: number;
@@ -19,6 +25,11 @@ interface UserProfile {
     avatar_url?: string | null;
 }
 
+interface PageProps extends Record<string, unknown> {
+    user: UserProfile;
+    errors?: Record<string, string>;
+}
+
 interface FormState {
     first_name: string;
     last_name: string;
@@ -28,306 +39,228 @@ interface FormState {
     date_of_birth: string;
 }
 
-type ValidationErrors = Partial<Record<EditableField | 'avatar', string>> & Record<string, string>;
+const profileFields: Array<keyof FormState> = ['first_name', 'last_name', 'email', 'phone_number', 'gender', 'date_of_birth'];
 
-interface ProfilePageProps extends Record<string, unknown> {
-    user: UserProfile;
-    errors?: ValidationErrors;
+function toFormState(user: UserProfile): FormState {
+    return {
+        first_name: user.first_name ?? '',
+        last_name: user.last_name ?? '',
+        email: user.email ?? '',
+        phone_number: user.phone_number ?? '',
+        gender: user.gender ?? '',
+        date_of_birth: user.date_of_birth ?? '',
+    };
 }
 
-const createFormState = (user: UserProfile): FormState => ({
-    first_name: user.first_name ?? '',
-    last_name: user.last_name ?? '',
-    email: user.email ?? '',
-    phone_number: user.phone_number ?? '',
-    gender: user.gender ?? '',
-    date_of_birth: user.date_of_birth ?? '',
-});
+export default function ProfileIndex() {
+    const { user, errors = {} } = usePage<PageProps>().props;
+    const { success, error: showError } = useToast();
 
-export default function Index() {
-    const page = usePage<ProfilePageProps>();
-    const { user } = page.props;
-    const validationErrors = (page.props.errors ?? {}) as ValidationErrors;
+    const [form, setForm] = React.useState<FormState>(() => toFormState(user));
+    const initialRef = React.useRef<FormState>(toFormState(user));
+    const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+    const [processing, setProcessing] = React.useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-    const initialValuesRef = useRef<FormState>(createFormState(user));
-    const [formState, setFormState] = useState<FormState>(() => initialValuesRef.current);
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [avatarPreview, setAvatarPreview] = useState<string>(user.avatar_url ?? '');
-    const [avatarDirty, setAvatarDirty] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const userIdRef = useRef<number>(user.id);
-    const inputRefs = useRef<Record<EditableField, HTMLInputElement | HTMLSelectElement | null>>({
-        first_name: null,
-        last_name: null,
-        email: null,
-        phone_number: null,
-        gender: null,
-        date_of_birth: null,
-    });
-    const avatarUrlRef = useRef<string>(user.avatar_url ?? '');
-    const avatarInputRef = useRef<HTMLInputElement | null>(null);
-
-    useEffect(() => {
-        const nextInitial = createFormState(user);
-        const userChanged =
-            userIdRef.current !== user.id ||
-            editableFields.some((field) => nextInitial[field] !== initialValuesRef.current[field]) ||
-            (avatarUrlRef.current ?? '') !== (user.avatar_url ?? '');
-
-        if (!userChanged) return;
-
-        userIdRef.current = user.id;
-        avatarUrlRef.current = user.avatar_url ?? '';
-        initialValuesRef.current = nextInitial;
-        setFormState(nextInitial);
+    React.useEffect(() => {
+        const next = toFormState(user);
+        initialRef.current = next;
+        setForm(next);
         setAvatarFile(null);
-        setAvatarDirty(false);
-        setAvatarPreview((prev) => {
-            if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-            return user.avatar_url ?? '';
+        setAvatarPreview((current) => {
+            if (current?.startsWith('blob:')) {
+                URL.revokeObjectURL(current);
+            }
+            return null;
         });
     }, [user]);
 
-    const handleInputChange = (field: EditableField) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormState((prev) => ({ ...prev, [field]: event.target.value }));
+    React.useEffect(
+        () => () => {
+            if (avatarPreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(avatarPreview);
+            }
+        },
+        [avatarPreview],
+    );
+
+    const updateField = (field: keyof FormState) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setForm((current) => ({ ...current, [field]: event.target.value }));
     };
 
     const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] ?? null;
         setAvatarFile(file);
-        setAvatarDirty(Boolean(file));
-        setAvatarPreview((prev) => {
-            if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-            return file ? URL.createObjectURL(file) : (user.avatar_url ?? '');
-        });
+
+        if (file) {
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+
         event.target.value = '';
     };
 
-    useEffect(
-        () => () => {
-            if (avatarPreview && avatarPreview.startsWith('blob:')) URL.revokeObjectURL(avatarPreview);
-        },
-        [avatarPreview],
-    );
+    const isDirty = Boolean(avatarFile) || profileFields.some((field) => form[field] !== initialRef.current[field]);
 
-    const handleCancel = () => {
-        setFormState(initialValuesRef.current);
+    const handleReset = () => {
+        setForm(initialRef.current);
         setAvatarFile(null);
-        setAvatarDirty(false);
-        avatarUrlRef.current = user.avatar_url ?? '';
-        setAvatarPreview((prev) => {
-            if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-            return user.avatar_url ?? '';
+        setAvatarPreview((current) => {
+            if (current?.startsWith('blob:')) {
+                URL.revokeObjectURL(current);
+            }
+            return null;
         });
     };
 
-    const isDirty = avatarDirty || editableFields.some((field) => formState[field] !== (initialValuesRef.current[field] ?? ''));
-    const resolvedAvatar = avatarPreview || user.avatar_url || '';
-    const canSubmit = isDirty && !isSubmitting;
-
-    const handleSave = () => {
-        if (!canSubmit) return;
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
 
         const payload = new FormData();
         payload.append('_method', 'PUT');
-        editableFields.forEach((field) => payload.append(field, formState[field]));
-        if (avatarFile) payload.append('avatar', avatarFile);
+        profileFields.forEach((field) => payload.append(field, form[field]));
+        if (avatarFile) {
+            payload.append('avatar', avatarFile);
+        }
 
-        setIsSubmitting(true);
+        setProcessing(true);
 
         router.post('/user/profile', payload, {
             forceFormData: true,
             preserveScroll: true,
             preserveState: true,
-            onSuccess: (pageResponse) => {
-                const nextProps = pageResponse.props as unknown as ProfilePageProps;
-                const nextUser = nextProps.user;
-                userIdRef.current = nextUser.id;
-                initialValuesRef.current = createFormState(nextUser);
-                avatarUrlRef.current = nextUser.avatar_url ?? '';
-                setFormState(initialValuesRef.current);
-                setAvatarFile(null);
-                setAvatarDirty(false);
-                setAvatarPreview((prev) => {
-                    if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
-                    return nextUser.avatar_url ?? '';
-                });
+            onSuccess: () => {
+                success('Đã lưu thông tin cá nhân');
             },
-            onFinish: () => setIsSubmitting(false),
+            onError: () => showError('Vui lòng kiểm tra lại thông tin'),
+            onFinish: () => setProcessing(false),
         });
     };
 
+    const maxBirthDate = React.useMemo(() => {
+        const date = new Date();
+        date.setFullYear(date.getFullYear() - 18);
+        return date.toISOString().slice(0, 10);
+    }, []);
+
     return (
-        <CustomerLayout>
-            <div className="profile-content-card">
-                <div className="profile-content-header">
-                    <h1 className="profile-page-title">Thông tin cá nhân</h1>
-                    <p className="profile-page-subtitle">Quản lý thông tin hồ sơ của bạn.</p>
-                </div>
+        <AccountLayout
+            active="profile"
+            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Hồ sơ' }]}
+            eyebrow="Tài khoản"
+            title="Thông tin cá nhân"
+            description="Cập nhật hồ sơ để shop và bưu tá liên hệ đúng người, đúng địa chỉ."
+            actions={
+                <Button variant="secondary" size="sm" leftIcon={Lock} asChild>
+                    <Link href="/user/change-password">Đổi mật khẩu</Link>
+                </Button>
+            }
+        >
+            <Head title="Thông tin cá nhân" />
 
-                <hr className="profile-content-divider" />
+            <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-12">
+                <Card padding="lg" className="flex flex-col items-center gap-3 lg:col-span-4">
+                    <Avatar src={avatarPreview ?? user.avatar_url} name={`${form.last_name} ${form.first_name}`.trim() || user.username} size={112} />
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                    <IconButton label="Chọn ảnh đại diện" variant="secondary" size="md" onClick={() => fileInputRef.current?.click()}>
+                        <Camera aria-hidden="true" />
+                    </IconButton>
+                    <div className="text-center">
+                        <span className="block text-body-sm font-medium text-ink">Ảnh đại diện</span>
+                        <span className="text-label-micro text-ink-faint">JPG, PNG hoặc GIF. Tối đa 2MB.</span>
+                    </div>
+                    {errors.avatar && (
+                        <span role="alert" className="text-body-sm text-brick">
+                            {errors.avatar}
+                        </span>
+                    )}
+                    <div className="w-full border-t border-border pt-3 text-center">
+                        <span className="font-mono text-label-code text-ink-muted">@{user.username}</span>
+                    </div>
+                </Card>
 
-                <form
-                    className="profile-form-container"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSave();
-                    }}
-                >
-                    <div className="profile-avatar-section">
-                        <div className="profile-avatar-wrapper">
-                            <div
-                                className="profile-avatar-image"
-                                style={{ backgroundImage: `url(${resolvedAvatar || '/images/default-avatar.png'})` }}
+                <Card padding="lg" className="flex flex-col gap-5 lg:col-span-8">
+                    <div className="flex items-center gap-2 border-b border-border pb-3">
+                        <UserRound aria-hidden="true" className="size-4 text-lacquer-red" />
+                        <h2 className="text-headline-3 text-ink">Hồ sơ của bạn</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField label="Họ" error={errors.last_name}>
+                            <Input
+                                value={form.last_name}
+                                onChange={updateField('last_name')}
+                                autoComplete="family-name"
+                                invalid={Boolean(errors.last_name)}
                             />
-                            <button
-                                type="button"
-                                className="profile-avatar-edit-btn"
-                                onClick={() => avatarInputRef.current?.click()}
-                                aria-label="Chỉnh sửa ảnh đại diện"
-                            >
-                                <span className="profile-avatar-edit-icon">✎</span>
-                            </button>
-                            <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
-                        </div>
-                        <p className="profile-avatar-hint">JPG, GIF hoặc PNG. 1MB tối đa.</p>
-                        {validationErrors.avatar && <span className="profile-field-error">{validationErrors.avatar}</span>}
+                        </FormField>
+
+                        <FormField label="Tên" error={errors.first_name}>
+                            <Input
+                                value={form.first_name}
+                                onChange={updateField('first_name')}
+                                autoComplete="given-name"
+                                invalid={Boolean(errors.first_name)}
+                            />
+                        </FormField>
+
+                        <FormField label="Email" required error={errors.email} className="sm:col-span-2">
+                            <Input
+                                type="email"
+                                value={form.email}
+                                onChange={updateField('email')}
+                                autoComplete="email"
+                                invalid={Boolean(errors.email)}
+                                required
+                            />
+                        </FormField>
+
+                        <FormField label="Số điện thoại" error={errors.phone_number} hint="Dùng để bưu tá liên hệ khi giao hàng.">
+                            <Input
+                                type="tel"
+                                value={form.phone_number}
+                                onChange={updateField('phone_number')}
+                                autoComplete="tel"
+                                placeholder="0912 345 678"
+                                invalid={Boolean(errors.phone_number)}
+                            />
+                        </FormField>
+
+                        <FormField label="Giới tính" error={errors.gender}>
+                            <Select
+                                value={form.gender}
+                                onChange={updateField('gender')}
+                                placeholder="Chọn giới tính"
+                                options={[
+                                    { value: 'male', label: 'Nam' },
+                                    { value: 'female', label: 'Nữ' },
+                                    { value: 'other', label: 'Khác' },
+                                ]}
+                                invalid={Boolean(errors.gender)}
+                            />
+                        </FormField>
+
+                        <FormField label="Ngày sinh" error={errors.date_of_birth} hint="Bạn cần đủ 18 tuổi để đặt hàng.">
+                            <Input
+                                type="date"
+                                value={form.date_of_birth}
+                                onChange={updateField('date_of_birth')}
+                                max={maxBirthDate}
+                                invalid={Boolean(errors.date_of_birth)}
+                            />
+                        </FormField>
                     </div>
 
-                    <div className="profile-fields-section">
-                        <div className="profile-fields-grid">
-                            <div>
-                                <label className="profile-field-label" htmlFor="first-name">
-                                    Họ
-                                </label>
-                                <input
-                                    ref={(el) => {
-                                        inputRefs.current.first_name = el;
-                                    }}
-                                    id="first-name"
-                                    className={`profile-field-input${validationErrors.first_name ? 'has-error' : ''}`}
-                                    type="text"
-                                    value={formState.first_name}
-                                    onChange={handleInputChange('first_name')}
-                                />
-                                {validationErrors.first_name && <p className="profile-field-error">{validationErrors.first_name}</p>}
-                            </div>
-
-                            <div>
-                                <label className="profile-field-label" htmlFor="last-name">
-                                    Tên
-                                </label>
-                                <input
-                                    ref={(el) => {
-                                        inputRefs.current.last_name = el;
-                                    }}
-                                    id="last-name"
-                                    className={`profile-field-input${validationErrors.last_name ? 'has-error' : ''}`}
-                                    type="text"
-                                    value={formState.last_name}
-                                    onChange={handleInputChange('last_name')}
-                                />
-                                {validationErrors.last_name && <p className="profile-field-error">{validationErrors.last_name}</p>}
-                            </div>
-
-                            <div className="profile-field-col-span">
-                                <label className="profile-field-label" htmlFor="email">
-                                    Email
-                                </label>
-                                <input
-                                    ref={(el) => {
-                                        inputRefs.current.email = el;
-                                    }}
-                                    id="email"
-                                    className={`profile-field-input${validationErrors.email ? 'has-error' : ''}`}
-                                    type="email"
-                                    value={formState.email}
-                                    onChange={handleInputChange('email')}
-                                />
-                                {validationErrors.email && <p className="profile-field-error">{validationErrors.email}</p>}
-                            </div>
-
-                            <div className="profile-field-col-span">
-                                <label className="profile-field-label" htmlFor="phone">
-                                    Số điện thoại
-                                </label>
-                                <input
-                                    ref={(el) => {
-                                        inputRefs.current.phone_number = el;
-                                    }}
-                                    id="phone"
-                                    className={`profile-field-input${validationErrors.phone_number ? 'has-error' : ''}`}
-                                    type="tel"
-                                    value={formState.phone_number}
-                                    onChange={handleInputChange('phone_number')}
-                                />
-                                {validationErrors.phone_number && <p className="profile-field-error">{validationErrors.phone_number}</p>}
-                            </div>
-
-                            <div>
-                                <label className="profile-field-label" htmlFor="gender">
-                                    Giới tính
-                                </label>
-                                <select
-                                    ref={(el) => {
-                                        inputRefs.current.gender = el;
-                                    }}
-                                    id="gender"
-                                    className="profile-field-select"
-                                    value={formState.gender}
-                                    onChange={handleInputChange('gender')}
-                                >
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                    <option value="other">Khác</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="profile-field-label" htmlFor="birthdate">
-                                    Ngày sinh
-                                </label>
-                                <input
-                                    ref={(el) => {
-                                        inputRefs.current.date_of_birth = el;
-                                    }}
-                                    id="birthdate"
-                                    className={`profile-field-input${validationErrors.date_of_birth ? 'has-error' : ''}`}
-                                    type="date"
-                                    value={formState.date_of_birth}
-                                    onChange={handleInputChange('date_of_birth')}
-                                />
-                                {validationErrors.date_of_birth && <p className="profile-field-error">{validationErrors.date_of_birth}</p>}
-                            </div>
-
-                            <div className="profile-field-col-span">
-                                <button
-                                    type="button"
-                                    className="profile-change-password-link"
-                                    onClick={() => (window.location.href = '/user/change-password')}
-                                >
-                                    Đổi mật khẩu
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="profile-form-actions">
-                            <button
-                                type="button"
-                                className="profile-action-btn profile-btn-cancel"
-                                onClick={handleCancel}
-                                disabled={!isDirty || isSubmitting}
-                            >
-                                Hủy
-                            </button>
-                            <button type="submit" className="profile-action-btn profile-btn-save" disabled={!canSubmit}>
-                                {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-                            </button>
-                        </div>
+                    <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+                        <Button type="button" variant="secondary" onClick={handleReset} disabled={!isDirty || processing}>
+                            Hoàn tác
+                        </Button>
+                        <Button type="submit" leftIcon={Save} loading={processing} disabled={!isDirty}>
+                            Lưu thay đổi
+                        </Button>
                     </div>
-                </form>
-            </div>
-        </CustomerLayout>
+                </Card>
+            </form>
+        </AccountLayout>
     );
 }

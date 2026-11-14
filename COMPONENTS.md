@@ -2,7 +2,7 @@
 
 > Hệ component UI của ShopNest theo hướng **Nếp**.  
 > Nguồn chuẩn: `DESIGN.md` · Kế hoạch: `PLAN.md`  
-> Trạng thái: **Phase 0 + Phase 1 + Phase 2 hoàn tất**, luồng storefront bắt đầu từ Phase 3.
+> Trạng thái: **Phase 0 → Phase 6 hoàn tất**, Storefront + Auth + Account + Chat dùng token/component Nếp.
 
 ---
 
@@ -69,6 +69,9 @@
 | `--spacing-chat-pane` | `w-chat-pane` | `20rem` |
 | `--spacing-chat-launcher` | `size-chat-launcher` | `3.5rem` |
 | `--spacing-chat-panel` | `w-chat-panel` | `23.75rem` |
+| `--spacing-chat-panel-height` | `h-[var(--spacing-chat-panel-height)]` | `min(40rem, calc(100dvh - 3rem))` |
+| `--spacing-chat-sheet-height` | `h-chat-sheet-height` | `85dvh` |
+| `--spacing-chat-workspace-height` | `min-h-chat-workspace-height` | `38rem` |
 
 ### Radius và shadow
 
@@ -109,20 +112,23 @@
 
 ```text
 resources/js/components/
-├── ui/           # primitive
+├── ui/           # primitive, file kebab-case
 ├── layout/       # shell, header, footer, page header
 ├── storefront/   # module trang chủ
 ├── commerce/     # product, cart, checkout, order, account
-├── Chat/         # chat workspace + bubble
+├── chat/         # chat workspace + bubble
+├── admin/        # component workspace Admin (legacy)
+├── auth/         # form auth dùng chung (SellerRegisterForm)
 └── feedback/     # dialog, result, loading overlay
 ```
 
 Quy ước file:
 
-- `components/ui`: kebab-case, ví dụ `form-field.tsx`.
-- Các thư mục còn lại: PascalCase, ví dụ `ProductCard.tsx`.
-- Hook: `useSomething.ts`.
-- Type: `PascalCase`.
+- Folder component: lowercase (`ui`, `layout`, `commerce`, `chat`, `admin`, `feedback`).
+- `components/ui`: file kebab-case, ví dụ `form-field.tsx`.
+- Các domain khác: file PascalCase, ví dụ `ProductCard.tsx`.
+- Page: folder + file PascalCase, ví dụ `pages/Auth/Login.tsx`.
+- Hook: `useSomething.ts`; type module: `types.ts`.
 
 ---
 
@@ -149,17 +155,46 @@ Quy ước file:
 |---|---|
 | Catalog | `ProductCard`, `ProductGrid`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills` |
 | Product detail | `ProductGallery`, `BuyBox`, `VariantSelector`, `SpecTable`, `ShopIdentity`, `ReviewSummary`, `ReviewCard` |
-| Cart/checkout | `CartLine`, `OrderSummary`, `PromoField`, `CheckoutStepper`, `ShippingOption`, `PaymentOption` |
+| Cart/checkout | `CartLine`, `OrderSummary`, `PromoField`, `CheckoutStepper`, `PaymentOption` |
 
-Page dùng chúng: `Home/search-page.tsx`, `Home/daily-discover-page.tsx`, `Home/flash-sale-page.tsx`, `Customer/Detail.tsx`, `Customer/Cart.tsx`, `Customer/Checkout.tsx`, `Customer/PaymentResult.tsx`. Ví dụ chi tiết ở mục 13.
+Page dùng chúng: `Home/Search.tsx`, `Customer/ProductDetail.tsx`, `Customer/Cart.tsx`, `Customer/Checkout.tsx`, `Customer/PaymentResult.tsx`. `daily-discover`/`flash-sale` đã xoá vì chưa có route. Ví dụ chi tiết ở mục 13.
 
-### Phase 4 — Account
+### Phase 4 — Account — đã dựng
 
-`OrderTable`, `OrderTimeline`, `OrderItemRow`, `AddressCard`, `NotificationRow`, `PreferenceRow`, `ReturnItemPicker`, `RefundOption`.
+| Nhóm | Component |
+|---|---|
+| Layout | `AccountLayout` |
+| Orders | `OrderTable`, `OrderTimeline`, `OrderItemRow` |
+| Address | `AddressCard` (form địa chỉ nằm trong `pages/Customer/Address/AddressForm.tsx`) |
+| Notifications | `NotificationRow`, `PreferenceRow` |
+| Return/wishlist (component-only) | `ReturnItemPicker`, `RefundOption`, `ProductCard variant="wishlist"` |
 
-### Phase 5 — Chat
+Page dùng chúng: `Customer/Orders/Index.tsx`, `Customer/Orders/Show.tsx`, `Customer/Address/{Index,Create,Edit,Show}.tsx`, `Customer/Profile/Index.tsx`, `Customer/ChangePassword/Index.tsx`, `Customer/Notification/Index.tsx`, `Settings/{Profile,Password,Appearance}.tsx`. Ví dụ chi tiết ở mục 14.
 
-`ChatDock`, `ChatbotLauncher`, `ChatbotPanel`, `ChatWorkspace`, `ConversationList`, `ConversationRow`, `ChatHeader`, `MessageList`, `ChatMessage`, `TypingIndicator`, `QuickReplies`, `ChatComposer`, `OrderAnnouncementCard`, `OrderContextRail`.
+### Phase 5 — Chat — đã dựng
+
+| Nhóm | Component |
+|---|---|
+| Primitives | `ChatMessage`, `TypingIndicator`, `QuickReplies`, `ChatComposer`, `MessageList` |
+| Workspace | `ConversationRow`, `ConversationList`, `ChatHeader`, `ChatWorkspace` |
+| Bubble | `ChatbotLauncher`, `ChatbotPanel`, `ChatDock` |
+| Commerce | `OrderAnnouncementCard`, `OrderContextRail` |
+| Hook | `useChatConversations` |
+
+Page dùng chúng: `Customer/Chat/Index.tsx`; `ChatDock` mount trong `StorefrontLayout` (AccountLayout kế thừa). Ví dụ chi tiết ở mục 15.
+
+### Reserved — chưa dùng nhưng giữ có chủ đích
+
+- `commerce/ReturnItemPicker.tsx`, `RefundOption.tsx` — C03
+- `commerce/PreferenceRow.tsx` + `ui/switch.tsx` — C07
+- `ui/table.tsx` — primitive đích thay `data-table` workspace
+- `ui/error-state.tsx`, `feedback/LoadingOverlay.tsx` — trạng thái chuẩn
+
+### Workspace legacy (đã rename, chưa merge API)
+
+`ui/action-button`, `ui/action-buttons`, `ui/primary-input`, `ui/input-error`, `ui/data-table`, `ui/confirmation-modal`, `ui/status-badge`, `ui/filter-panel`, `ui/header`, `ui/insights`, `ui/language-switcher`, `ui/navbar`, `ui/rich-text-editor`, `ui/sidebar`.
+
+Các file này chỉ dùng cho Seller/Admin/Shipper, sẽ merge vào primitive Nếp khi migrate workspace.
 
 ### Deferred
 
@@ -219,7 +254,8 @@ Quy tắc:
 
 - File mới **không** được thêm vào allowlist.
 - Khi migrate xong một file, xoá entry tương ứng khỏi allowlist.
-- Phase 6 xoá toàn bộ allowlist.
+- Phase 6 giữ allowlist cho workspace legacy (Seller/Admin/Shipper); xoá khi migrate workspace.
+- Reserved components không nằm trong allowlist trừ khi có vi phạm token thật.
 - Chạy `npm run check:tokens:all` để xem toàn bộ vi phạm còn lại.
 
 ---
@@ -267,11 +303,11 @@ npm run check:tokens:baseline
 - [x] Giữ entry legacy cho tới khi page/component được migrate.
 - [x] Không refactor page trước khi primitive ổn định.
 
-Lưu ý casing trên Windows: ba primitive cũ được nâng cấp tại chỗ để tránh trùng file case-insensitive:
+Lưu ý casing trên Windows: Phase 6 đã rename ba primitive cũ sang kebab-case qua tên tạm `.tmp`:
 
-- `components/ui/Avatar.tsx` (không tạo thêm `avatar.tsx`)
-- `components/ui/Tooltip.tsx` (không tạo thêm `tooltip.tsx`)
-- `components/ui/Pagination.tsx` (không tạo thêm `pagination.tsx`)
+- `components/ui/avatar.tsx`
+- `components/ui/tooltip.tsx`
+- `components/ui/pagination.tsx`
 
 ---
 
@@ -372,7 +408,7 @@ import FileDropzone from '@/components/ui/file-dropzone';
 ```tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 
 <Card variant="raised" padding="lg">
@@ -392,7 +428,7 @@ import { Progress } from '@/components/ui/progress';
 ```tsx
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { Tabs } from '@/components/ui/tabs';
-import Pagination from '@/components/ui/Pagination';
+import Pagination from '@/components/ui/pagination';
 import { Table } from '@/components/ui/table';
 
 <Breadcrumbs items={[{ label: 'Chợ', href: '/' }, { label: 'Điện tử' }]} />
@@ -627,7 +663,7 @@ import { FilterRail } from '@/components/commerce/FilterRail';
 import { FilterGroup } from '@/components/commerce/FilterGroup';
 import { ActiveFilters } from '@/components/commerce/ActiveFilters';
 import { CategoryPills } from '@/components/commerce/CategoryPills';
-import Pagination from '@/components/ui/Pagination';
+import Pagination from '@/components/ui/pagination';
 
 <CategoryPills
   items={[{ value: '', label: 'Tất cả' }, ...categories]}
@@ -737,7 +773,6 @@ import { PromoField } from '@/components/commerce/PromoField';
 ```tsx
 import { CheckoutStepper } from '@/components/commerce/CheckoutStepper';
 import { PaymentOption } from '@/components/commerce/PaymentOption';
-import { ShippingOption } from '@/components/commerce/ShippingOption';
 
 <CheckoutStepper current={1} steps={[{ label: 'Giỏ hàng', state: 'done' }, { label: 'Thông tin & thanh toán' }, { label: 'Hoàn tất' }]} />
 
@@ -750,12 +785,11 @@ import { ShippingOption } from '@/components/commerce/ShippingOption';
   icon={CreditCard}
   marks={['visa', 'mastercard', 'jcb', 'stripe']}
 />
-
-<ShippingOption value="standard" selected title="Giao tiêu chuẩn 2–4 ngày" price={shipping} eta="Dự kiến 2–4 ngày" onChange={setShipping} />
 ```
 
 - Checkout vẫn gửi `POST /checkout` hoặc `POST /buy-now/checkout/{orderId}` với `provider`, `address_id`, `notes`. Không đổi tên field.
-- Địa chỉ dùng `RadioCard`; thêm địa chỉ mở `Dialog` chứa `CheckoutAddressForm` (province → district → ward, gọi `/addresses/*`).
+- Vận chuyển hiện chỉ có một phương thức backend tính phí; không còn `ShippingOption` chọn tay.
+- Địa chỉ dùng `RadioCard`; thêm địa chỉ mở `Dialog` chứa `CheckoutAddressForm` (province → ward, gọi `/addresses/*`).
 - Rời trang khi có ghi chú/promo chưa lưu sẽ hiện `ConfirmDialog` qua `CheckoutExitConfirmation`.
 
 ### Kết quả thanh toán
@@ -773,3 +807,204 @@ import { ResultState } from '@/components/feedback/ResultState';
 ```
 
 `status` nhận `success | pending | failure`; `PaymentResult` tự map `succeeded | canceled | failed` từ backend và fallback action theo trạng thái.
+
+---
+
+## 14. Ví dụ account flow (Phase 4)
+
+### Account shell
+
+```tsx
+import { AccountLayout } from '@/components/layout/AccountLayout';
+
+<AccountLayout
+  active="orders"
+  breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Đơn hàng' }]}
+  eyebrow="Tài khoản"
+  title="Đơn hàng của tôi"
+  description="Theo dõi trạng thái và tiến trình giao hàng."
+  count={`${orders.length} đơn`}
+  actions={<Button asChild><Link href="/user/addresses">Địa chỉ</Link></Button>}
+>
+  {children}
+</AccountLayout>
+```
+
+- `AccountLayout` bọc `StorefrontLayout` + `PageContainer` + `PageHeader` và thanh nav tài khoản (Đơn hàng, Địa chỉ, Hồ sơ, Mật khẩu, Thông báo, Cài đặt).
+- Không truyền `active` thì layout tự suy ra từ `usePage().url`; `active` dùng khi cần override (ví dụ `/settings/*`).
+- Page tự render `<Head title="..." />`; layout không đặt title.
+
+### Đơn hàng (C01)
+
+```tsx
+import { OrderTable } from '@/components/commerce/OrderTable';
+
+<OrderTable
+  orders={orders.map((order) => ({
+    id: order.id,
+    code: order.code,
+    status: order.status, // enum backend: pending_confirmation, delivering, ...
+    paymentStatus: order.payment_status,
+    total: order.total,
+    createdAt: order.created_at,
+  }))}
+  emptyDescription="Khi bạn đặt món đầu tiên, đơn hàng sẽ xuất hiện tại đây."
+/>
+```
+
+- Desktop render `<table>`, mobile tự chuyển sang danh sách card.
+- `status` nhận nguyên enum backend; `normalizeOrderStatus` + `backendOrderStatusLabel` trong `lib/status.ts` map sang badge Nếp.
+- `paymentStatus` dùng `paymentStatusTone`/`paymentStatusLabel`.
+
+### Chi tiết đơn + timeline (C02)
+
+```tsx
+import { OrderTimeline } from '@/components/commerce/OrderTimeline';
+import { OrderItemRow } from '@/components/commerce/OrderItemRow';
+import { OrderStatusBadge } from '@/components/commerce/OrderStatusBadge';
+
+<OrderStatusBadge status={normalizeOrderStatus(order.status)} label={backendOrderStatusLabel(order.status)} />
+
+<OrderTimeline
+  steps={[
+    { key: 'placed', label: 'Đặt hàng' },
+    { key: 'confirmed', label: 'Shop xác nhận' },
+    { key: 'shipping', label: 'Đang giao' },
+    { key: 'delivered', label: 'Đã giao' },
+  ]}
+  current={currentStep(order.status)}
+  tone={isCancelled ? 'cancelled' : isReturned ? 'returned' : 'default'}
+/>
+
+<OrderItemRow item={{ id, name, image, variant: sku, quantity, price }} />
+```
+
+- `OrderTimeline` đánh dấu bước đã xong bằng `Check`, bước hiện tại bằng dot, bước huỷ/trả bằng `X`.
+- Huỷ đơn dùng `Dialog` + `Textarea` lý do rồi `POST /user/orders/{id}/cancel`; mua lại dùng `POST /user/orders/{id}/reorder`.
+- Đánh giá chỉ hiện khi `order.can_review` và chưa có review; gửi `POST /user/orders/{id}/review` với `rating`, `comment`.
+
+### Địa chỉ (C05)
+
+```tsx
+import { AddressCard } from '@/components/commerce/AddressCard';
+
+<AddressCard
+  address={address}
+  busy={busyId === address.id}
+  onEdit={() => router.visit(`/user/addresses/${address.id}/edit`)}
+  onSetDefault={() => router.patch(`/user/addresses/${address.id}/default`)}
+  onDelete={() => setPendingDelete(address)}
+/>
+```
+
+- Đặt mặc định dùng `PATCH /user/addresses/{id}/default` (không dùng `set-default`).
+- Xoá dùng `ConfirmDialog`; backend tự chọn địa chỉ kế tiếp làm mặc định.
+- Form create/edit dùng `pages/Customer/Address/AddressForm.tsx`; API tỉnh/xã trả `{ success, data }`.
+
+### Thông báo (C07)
+
+```tsx
+import { NotificationRow } from '@/components/commerce/NotificationRow';
+
+<NotificationRow notification={notification} onRead={(id) => markRead(id)} />
+```
+
+- `NotificationRow` tự chọn icon Lucide theo `category`/`type_label`; không dùng Material Symbol.
+- `POST /user/notifications/mark-all-read` qua Inertia; `POST /user/notifications/{id}/read` qua axios rồi cập nhật state cục bộ.
+- `/notifications` redirect sang `/user/notifications`; page demo `pages/Notifications/Index.tsx` đã xoá ở Phase 6.
+
+### Return/refund (C03/C04 — component-only)
+
+```tsx
+import { ReturnItemPicker } from '@/components/commerce/ReturnItemPicker';
+import { RefundOption } from '@/components/commerce/RefundOption';
+
+<ReturnItemPicker items={items} value={selected} onChange={setSelected} />
+<RefundOption
+  value={method}
+  onChange={setMethod}
+  options={[
+    { value: 'original', title: 'Hoàn về phương thức ban đầu' },
+    { value: 'wallet', title: 'Hoàn vào ví ShopNest' },
+  ]}
+/>
+```
+
+Chưa có route/page C03; chỉ dùng lại khi backend trả hàng được nối.
+
+### Settings
+
+- `SettingsTabs` (page-local) render tab Hồ sơ / Mật khẩu / Giao diện.
+- `Settings/Profile` giữ payload `POST /settings/profile` với `_method=PATCH`, `avatar`, `remove_avatar`.
+- `Settings/Password` giữ payload `PUT /settings/password` với `current_password`, `password`, `password_confirmation`.
+- `Settings/Appearance` dùng `useTheme` + `RadioCard`; giao diện tối vẫn là thử nghiệm và sẽ xử lý cùng workspace/legacy tokens.
+
+---
+
+## 15. Ví dụ chat (Phase 5)
+
+### ChatDock (bubble)
+
+`ChatDock` tự mount trong `StorefrontLayout`; không cần thêm vào page.
+
+```tsx
+import { ChatDock } from '@/components/chat/ChatDock';
+
+<ChatDock />
+<ChatDock enabled={false} />
+```
+
+- Tự ẩn ở `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/checkout`, `/payments/*`, `/chat`, `/customer/chat`, `/admin/*`, `/seller/*`, `/shipper/*`.
+- Chỉ render khi `auth.user` tồn tại; launcher 56px, panel 380px desktop, bottom sheet 85dvh mobile.
+- Radix Dialog lo focus trap, ESC, `aria-expanded`, trả focus về launcher; panel và launcher không hiện cùng lúc.
+- Gọi `POST /chatbot/message` (JSON), hiển thị typing, lỗi mạng thành bubble lỗi; lịch sử lưu localStorage theo user id.
+
+### Primitives
+
+```tsx
+import { ChatMessage } from '@/components/chat/ChatMessage';
+import { MessageList } from '@/components/chat/MessageList';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
+import { QuickReplies } from '@/components/chat/QuickReplies';
+import { ChatComposer } from '@/components/chat/ChatComposer';
+
+<ChatMessage variant="incoming" content="Đơn của bạn đang giao." timestamp="14:30" />
+<ChatMessage variant="outgoing" content="Cảm ơn shop" status="delivered" timestamp="14:31" />
+<ChatMessage variant="error" content="Không thể kết nối trợ lý." />
+
+<TypingIndicator label="Đang soạn tin" />
+<QuickReplies items={['Tra cứu đơn hàng', 'Chính sách đổi trả']} onSelect={(value) => send(value)} />
+<ChatComposer value={draft} onChange={setDraft} onSend={send} />
+<MessageList messages={items} typing={typing} loading={loading} />
+```
+
+- `ChatMessage.variant`: `incoming | outgoing | system | error`; `status`: `sending | sent | delivered | failed`.
+- `MessageList` auto-scroll đáy, `role="log"` + `aria-live="polite"`, có skeleton và empty state.
+- `ChatComposer` Enter gửi, Shift+Enter xuống dòng, chặn IME composition, tối đa 500 ký tự.
+
+### Workspace (C08)
+
+```tsx
+import { ChatWorkspace } from '@/components/chat/ChatWorkspace';
+
+<ChatWorkspace />
+<ChatWorkspace order={{ id: 12, code: 'ORD-123', status: 'delivering', total: 450000 }} />
+```
+
+- `useChatConversations` fetch `GET /chat/conversations`, gửi `POST /chat/messages`, tạo cuộc trò chuyện `POST /chat/conversations`, tìm người `GET /chat/users/search?q=`.
+- Echo private `chat.{id}` lắng nghe `.message.created`; nếu Reverb tắt, gửi/nhận vẫn hoạt động ở phía client đã gửi.
+- Mobile: danh sách → chat, nút back đưa về danh sách; màn hình lớn là 2–3 pane.
+- `OrderContextRail` chỉ hiện khi truyền `order`; hiện backend chat chưa gắn order vào conversation.
+- Trang chuẩn: `/customer/chat`; `/chat` redirect về đó.
+
+### Order context
+
+```tsx
+import { OrderAnnouncementCard } from '@/components/commerce/OrderAnnouncementCard';
+import { OrderContextRail } from '@/components/commerce/OrderContextRail';
+
+<OrderAnnouncementCard order={{ id, code, status, total, itemCount }} />
+<OrderContextRail order={order} onAsk={(question) => setDraft(question)} />
+```
+
+Dùng trong message (order announcement) hoặc rail phải của workspace khi có order context thật.

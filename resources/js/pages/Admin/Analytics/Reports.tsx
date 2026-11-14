@@ -1,8 +1,8 @@
 import '@/../css/Page.css';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/Analytics/AnalyticsFilters';
-import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
-import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
-import ExportButton from '@/components/Analytics/ExportButton';
+import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
+import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
+import ExportButton from '@/components/admin/analytics/ExportButton';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';

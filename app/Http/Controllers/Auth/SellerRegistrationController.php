@@ -25,7 +25,7 @@ class SellerRegistrationController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/SellerRegister');
+        return Inertia::render('Auth/SellerRegister');
     }
 
     /**

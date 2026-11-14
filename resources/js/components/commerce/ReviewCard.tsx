@@ -1,6 +1,6 @@
 import { BadgeCheck } from 'lucide-react';
 
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 

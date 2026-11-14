@@ -1,10 +1,10 @@
 import '@/../css/Page.css';
 import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import DataTable from '@/components/ui/DataTable';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
-import StatusBadge from '@/components/ui/StatusBadge';
+import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
+import StatusBadge from '@/components/ui/status-badge';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';

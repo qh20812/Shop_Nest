@@ -1,7 +1,7 @@
 import '@/../css/Page.css';
 import Toast from '@/components/admin/users/Toast';
-import ActionButton from '@/components/ui/ActionButton';
-import Header from '@/components/ui/Header';
+import ActionButton from '@/components/ui/action-button';
+import Header from '@/components/ui/header';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import React, { useEffect, useMemo, useState } from 'react';

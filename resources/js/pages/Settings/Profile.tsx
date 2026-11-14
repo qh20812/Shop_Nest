@@ -1,186 +1,188 @@
-import SettingsCard from '@/components/settings/SettingsCard';
-import ActionButton from '@/components/ui/ActionButton';
-import AvatarUpload from '@/components/ui/AvatarUpload';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import SettingsLayout from '@/layouts/settings/SettingLayout';
-import { useTranslation } from '@/lib/i18n';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Camera, Save } from 'lucide-react';
+import * as React from 'react';
 
-interface User {
+import { AccountLayout } from '@/components/layout/AccountLayout';
+import Avatar from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import { IconButton } from '@/components/ui/icon-button';
+import Input from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
+
+import SettingsTabs from './SettingsTabs';
+
+interface UserModel {
     id: number;
+    username: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+    phone_number: string | null;
+    avatar?: string | null;
+    avatar_url?: string | null;
+}
+
+interface PageProps extends Record<string, unknown> {
+    user: UserModel;
+    mustVerifyEmail?: boolean;
+    status?: string;
+    errors?: Record<string, string>;
+}
+
+interface SettingsProfileForm {
     username: string;
     first_name: string;
     last_name: string;
     email: string;
     phone_number: string;
-    avatar?: string;
-    avatar_url?: string;
+    avatar: File | null;
+    remove_avatar: boolean;
+    _method: string;
 }
 
-interface PageProps {
-    user: User;
-    mustVerifyEmail: boolean;
-    status?: string;
-    [key: string]: unknown;
-}
-
-export default function Profile() {
+export default function SettingsProfile() {
     const { user } = usePage<PageProps>().props;
-    const { t } = useTranslation();
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const { success } = useToast();
+    const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-    const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
+    const { data, setData, post, processing, errors, recentlySuccessful } = useForm<SettingsProfileForm>({
         username: user.username,
-        first_name: user.first_name,
-        last_name: user.last_name,
+        first_name: user.first_name ?? '',
+        last_name: user.last_name ?? '',
         email: user.email,
-        phone_number: user.phone_number,
+        phone_number: user.phone_number ?? '',
         avatar: null as File | null,
         remove_avatar: false,
-        _method: 'PATCH' as string,
+        _method: 'PATCH',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    React.useEffect(
+        () => () => {
+            if (avatarPreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(avatarPreview);
+            }
+        },
+        [avatarPreview],
+    );
 
-        // Update data with avatar before submit
-        if (avatarFile) {
-            setData('avatar', avatarFile);
-        }
+    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0] ?? null;
+        setData('avatar', file);
+        setData('remove_avatar', file === null);
+        setAvatarPreview(file ? URL.createObjectURL(file) : null);
+        event.target.value = '';
+    };
 
-        // Use POST with _method=PATCH for file uploads in Laravel
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         post('/settings/profile', {
             forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                success('Đã cập nhật hồ sơ');
+                setAvatarPreview(null);
+            },
         });
     };
 
-    const handleAvatarChange = (file: File | null) => {
-        setAvatarFile(file);
-        setData('avatar', file);
-        setData('remove_avatar', file === null);
-    };
-
     return (
-        <SettingsLayout>
-            <Head title={t('Profile Settings')} />
+        <AccountLayout
+            active="settings"
+            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Cài đặt' }]}
+            eyebrow="Cài đặt"
+            title="Hồ sơ tài khoản"
+            description="Thông tin này hiển thị với shop và dùng để liên hệ khi giao hàng."
+        >
+            <Head title="Cài đặt hồ sơ" />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Page Header */}
-                <div>
-                    <h1
-                        style={{
-                            fontSize: '24px',
-                            fontWeight: '600',
-                            color: 'var(--dark)',
-                            margin: '0 0 8px 0',
-                        }}
-                    >
-                        {t('Profile Settings')}
-                    </h1>
-                    <p
-                        style={{
-                            color: 'var(--dark-grey)',
-                            fontSize: '14px',
-                            margin: 0,
-                        }}
-                    >
-                        {t('Manage your account profile and personal information')}
-                    </p>
-                </div>
+            <div className="flex flex-col gap-5">
+                <SettingsTabs />
 
-                {/* Profile Information Card */}
-                <SettingsCard
-                    title={t('Profile Information')}
-                    description={t('Update your account profile information and email address')}
-                    footer={
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <ActionButton type="submit" variant="primary" disabled={processing} form="profile-form">
-                                {t('Save Changes')}
-                            </ActionButton>
-                            {recentlySuccessful && (
-                                <span
-                                    style={{
-                                        color: 'var(--success)',
-                                        fontSize: '14px',
-                                        fontWeight: '500',
-                                    }}
-                                >
-                                    {t('Saved.')}
-                                </span>
-                            )}
-                        </div>
-                    }
-                >
-                    <form id="profile-form" onSubmit={handleSubmit}>
-                        <div style={{ padding: '24px 0' }}>
-                            {/* Avatar Section */}
-                            <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'center' }}>
-                                <AvatarUpload user={user} onAvatarChange={handleAvatarChange} disabled={processing} />
+                <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-12">
+                    <Card padding="lg" className="flex flex-col items-center gap-3 lg:col-span-4">
+                        <Avatar
+                            src={avatarPreview ?? user.avatar_url}
+                            name={`${data.last_name} ${data.first_name}`.trim() || data.username}
+                            size={112}
+                        />
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                        <IconButton label="Chọn ảnh đại diện" variant="secondary" size="md" onClick={() => fileInputRef.current?.click()}>
+                            <Camera aria-hidden="true" />
+                        </IconButton>
+                        <span className="text-label-micro text-ink-faint">JPG, PNG hoặc GIF. Tối đa 2MB.</span>
+                        {errors.avatar && (
+                            <span role="alert" className="text-body-sm text-brick">
+                                {errors.avatar}
+                            </span>
+                        )}
+                        {data.username && (
+                            <div className="w-full border-t border-border pt-3 text-center">
+                                <span className="font-mono text-label-code text-ink-muted">@{data.username}</span>
                             </div>
+                        )}
+                    </Card>
 
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                                    gap: '20px',
-                                }}
-                            >
-                                <PrimaryInput
-                                    label={t('Username')}
-                                    name="username"
-                                    value={data.username}
-                                    onChange={(e) => setData('username', e.target.value)}
-                                    error={errors.username}
-                                    placeholder={t('Enter your username')}
-                                    disabled
-                                    required
-                                />
+                    <Card padding="lg" className="flex flex-col gap-5 lg:col-span-8">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <FormField label="Tên đăng nhập" error={errors.username} hint="Không thể thay đổi sau khi tạo tài khoản.">
+                                <Input value={data.username} disabled autoComplete="username" />
+                            </FormField>
 
-                                <PrimaryInput
-                                    label={t('First Name')}
-                                    name="first_name"
-                                    value={data.first_name}
-                                    onChange={(e) => setData('first_name', e.target.value)}
-                                    error={errors.first_name}
-                                    placeholder={t('Enter your first name')}
-                                    required
-                                />
-
-                                <PrimaryInput
-                                    label={t('Last Name')}
-                                    name="last_name"
+                            <FormField label="Họ" required error={errors.last_name}>
+                                <Input
                                     value={data.last_name}
-                                    onChange={(e) => setData('last_name', e.target.value)}
-                                    error={errors.last_name}
-                                    placeholder={t('Enter your last name')}
+                                    onChange={(event) => setData('last_name', event.target.value)}
+                                    autoComplete="family-name"
+                                    invalid={Boolean(errors.last_name)}
                                     required
                                 />
+                            </FormField>
 
-                                <PrimaryInput
-                                    label={t('Email')}
-                                    name="email"
+                            <FormField label="Tên" required error={errors.first_name}>
+                                <Input
+                                    value={data.first_name}
+                                    onChange={(event) => setData('first_name', event.target.value)}
+                                    autoComplete="given-name"
+                                    invalid={Boolean(errors.first_name)}
+                                    required
+                                />
+                            </FormField>
+
+                            <FormField label="Email" required error={errors.email}>
+                                <Input
                                     type="email"
                                     value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    error={errors.email}
-                                    placeholder={t('Enter your email')}
+                                    onChange={(event) => setData('email', event.target.value)}
+                                    autoComplete="email"
+                                    invalid={Boolean(errors.email)}
                                     required
                                 />
+                            </FormField>
 
-                                <PrimaryInput
-                                    label={t('Phone Number')}
-                                    name="phone_number"
+                            <FormField label="Số điện thoại" error={errors.phone_number}>
+                                <Input
+                                    type="tel"
                                     value={data.phone_number}
-                                    onChange={(e) => setData('phone_number', e.target.value)}
-                                    error={errors.phone_number}
-                                    placeholder={t('Enter your phone number')}
+                                    onChange={(event) => setData('phone_number', event.target.value)}
+                                    autoComplete="tel"
+                                    placeholder="0912 345 678"
+                                    invalid={Boolean(errors.phone_number)}
                                 />
-                            </div>
+                            </FormField>
                         </div>
-                    </form>
-                </SettingsCard>
+
+                        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end">
+                            {recentlySuccessful && <span className="text-body-sm text-jade sm:mr-auto">Đã lưu thay đổi.</span>}
+                            <Button type="submit" leftIcon={Save} loading={processing}>
+                                Lưu thay đổi
+                            </Button>
+                        </div>
+                    </Card>
+                </form>
             </div>
-        </SettingsLayout>
+        </AccountLayout>
     );
 }

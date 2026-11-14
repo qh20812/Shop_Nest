@@ -1,9 +1,9 @@
 import '@/../css/Page.css';
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import DataTable from '@/components/ui/DataTable';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
+import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';

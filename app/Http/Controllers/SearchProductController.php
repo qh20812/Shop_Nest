@@ -225,7 +225,7 @@ class SearchProductController extends Controller
             'sort'         => $sort,
         ];
 
-        return Inertia::render('Home/search-page', [
+        return Inertia::render('Home/Search', [
             'query'      => $keyword,
             'total'      => $productsPaginator->total(),
             'products'   => [

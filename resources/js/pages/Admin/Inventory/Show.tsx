@@ -1,6 +1,6 @@
 import '@/../css/Page.css';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import DataTable from '@/components/ui/DataTable';
+import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import DataTable from '@/components/ui/data-table';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, usePage } from '@inertiajs/react';

@@ -1,8 +1,8 @@
 import '@/../css/Page.css';
-import ActionDropdown from '@/components/ui/ActionDropdown';
-import DataTable from '@/components/ui/DataTable';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
+import ActionDropdown from '@/components/ui/action-dropdown';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';

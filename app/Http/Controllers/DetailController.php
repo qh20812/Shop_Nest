@@ -74,7 +74,7 @@ class DetailController extends Controller
         $user = Auth::user();
         $cartItems = $this->cartService->getCartItems($user);
 
-        return Inertia::render('Customer/Detail', [
+        return Inertia::render('Customer/ProductDetail', [
             'product' => $productPayload,
             'reviews' => $reviews,
             'rating' => $ratingSummary,

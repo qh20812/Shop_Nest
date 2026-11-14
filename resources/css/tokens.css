@@ -110,6 +110,9 @@
     --spacing-chat-pane: 20rem;
     --spacing-chat-launcher: 3.5rem;
     --spacing-chat-panel: 23.75rem;
+    --spacing-chat-panel-height: min(40rem, calc(100dvh - 3rem));
+    --spacing-chat-sheet-height: 85dvh;
+    --spacing-chat-workspace-height: 38rem;
 
     /* ---------------------------------------------------------------
      * Radius

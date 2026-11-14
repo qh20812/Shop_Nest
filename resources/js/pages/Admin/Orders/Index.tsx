@@ -1,8 +1,8 @@
 import OrderFilterPanel from '@/components/admin/orders/OrderFilterPanel';
 import OrderSummaryCards from '@/components/admin/orders/OrderSummaryCards';
 import OrderTable from '@/components/admin/orders/OrderTable';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router } from '@inertiajs/react';

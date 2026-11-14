@@ -1,6 +1,6 @@
 import '@/../css/Page.css';
-import ActionButton from '@/components/ui/ActionButton';
-import Header from '@/components/ui/Header';
+import ActionButton from '@/components/ui/action-button';
+import Header from '@/components/ui/header';
 import { useToast } from '@/Contexts/ToastContext';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';

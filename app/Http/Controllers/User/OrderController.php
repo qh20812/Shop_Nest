@@ -68,7 +68,7 @@ class OrderController extends Controller
     public function show(Request $request, Order $order)
     {
         $this->authorizeOrder($order, $request->user());
-        $order->load(['items.variant.product']);
+        $order->load(['items.variant.product', 'shippingAddress.province', 'shippingAddress.ward', 'shippingAddress.district', 'shippingAddress.country', 'reviews']);
 
         $statusText = $order->status?->value ?? 'unknown';
         $detail = [
@@ -80,16 +80,30 @@ class OrderController extends Controller
             'shipping_fee' => (int) $order->shipping_fee,
             'discount_total' => (int) $order->discount_amount,
             'total' => (int) $order->total_amount,
+            'created_at' => $order->created_at?->format('d/m/Y H:i'),
             'can_cancel' => in_array($order->status, [OrderStatus::PENDING_CONFIRMATION, OrderStatus::PROCESSING], true),
+            'can_review' => in_array($order->status, [OrderStatus::DELIVERED, OrderStatus::COMPLETED], true),
+            'shipping_address' => $order->shippingAddress ? [
+                'name' => $order->shippingAddress->full_name,
+                'phone' => $order->shippingAddress->phone_number,
+                'full_address' => $order->shippingAddress->full_address,
+            ] : null,
             'items' => $order->items->map(function ($item) {
                 return [
                     'id' => $item->getKey(),
                     'product_name' => $item->variant?->product?->name ?? 'Sản phẩm',
                     'product_image' => $item->variant?->product?->image_url ?? null,
+                    'sku' => $item->variant?->sku,
                     'quantity' => (int) $item->quantity,
                     'price' => (int) $item->unit_price,
                 ];
             }),
+            'reviews' => $order->reviews->map(fn ($review) => [
+                'id' => $review->getKey(),
+                'rating' => (int) $review->rating,
+                'comment' => $review->comment,
+                'created_at' => $review->created_at?->format('d/m/Y'),
+            ]),
         ];
 
         return Inertia::render('Customer/Orders/Show', [

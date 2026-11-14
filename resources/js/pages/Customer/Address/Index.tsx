@@ -1,11 +1,15 @@
-import '@/../css/customer-style/customer-address.css';
-import CustomerLayout from '@/layouts/app/CustomerLayout';
-import { router, usePage } from '@inertiajs/react';
-import { MapPin } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import Create from './Create';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { MapPin, Plus } from 'lucide-react';
+import * as React from 'react';
 
-interface Address {
+import { AddressCard } from '@/components/commerce/AddressCard';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import { AccountLayout } from '@/components/layout/AccountLayout';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { useToast } from '@/components/ui/toast';
+
+interface AddressModel {
     id: number;
     name: string;
     phone: string;
@@ -16,152 +20,107 @@ interface Address {
     is_default: boolean;
 }
 
-interface Division {
-    id: number;
-    name: string;
-    code?: string;
+interface PageProps extends Record<string, unknown> {
+    addresses?: AddressModel[];
 }
 
-interface PageProps {
-    addresses: Address[];
-    [key: string]: unknown;
-}
+export default function AddressIndex() {
+    const { addresses = [] } = usePage<PageProps>().props;
+    const { success, error: showError } = useToast();
+    const [pendingDelete, setPendingDelete] = React.useState<AddressModel | null>(null);
+    const [deleting, setDeleting] = React.useState(false);
+    const [busyId, setBusyId] = React.useState<number | null>(null);
 
-export default function Index() {
-    const { addresses } = usePage<PageProps>().props;
-    const [isDeleting, setIsDeleting] = useState<number | null>(null);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [provinces, setProvinces] = useState<Division[]>([]);
-    const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
-
-    useEffect(() => {
-        fetch('/user/addresses/provinces/1', {
-            credentials: 'same-origin',
-        }) // Assuming Vietnam country ID is 1
-            .then((res) => res.json())
-            .then((data) => setProvinces(data))
-            .catch(() => setProvinces([]));
-    }, []);
-
-    const handleSetDefault = (addressId: number) => {
-        router.post(
-            `/user/addresses/${addressId}/set-default`,
+    const handleSetDefault = (address: AddressModel) => {
+        setBusyId(address.id);
+        router.patch(
+            `/user/addresses/${address.id}/default`,
             {},
             {
                 preserveScroll: true,
+                onSuccess: () => success('Đã đặt làm địa chỉ mặc định'),
+                onError: () => showError('Không thể đặt địa chỉ mặc định'),
+                onFinish: () => setBusyId(null),
             },
         );
     };
 
-    const handleDelete = (addressId: number) => {
-        if (confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
-            setIsDeleting(addressId);
-            router.delete(`/user/addresses/${addressId}`, {
-                preserveScroll: true,
-                onFinish: () => setIsDeleting(null),
-            });
+    const handleDelete = () => {
+        if (!pendingDelete) {
+            return;
         }
-    };
 
-    const handleAddNew = () => {
-        setShowCreateModal(true);
-        setCreateErrors({});
-    };
-
-    const handleCloseCreateModal = () => {
-        setShowCreateModal(false);
-        setCreateErrors({});
-    };
-
-    const handleCreateSuccess = () => {
-        setShowCreateModal(false);
-        setCreateErrors({});
-        // Reload addresses
-        router.reload({ preserveUrl: true });
-    };
-
-    const handleEdit = (addressId: number) => {
-        router.visit(`/user/addresses/${addressId}/edit`);
+        setDeleting(true);
+        router.delete(`/user/addresses/${pendingDelete.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                success('Đã xoá địa chỉ');
+                setPendingDelete(null);
+            },
+            onError: () => showError('Không thể xoá địa chỉ'),
+            onFinish: () => setDeleting(false),
+        });
     };
 
     return (
-        <>
-            <CustomerLayout>
-                <div className="address-content-card">
-                    <div className="address-header">
-                        <div className="address-header-content">
-                            <h1 className="address-title">Địa chỉ của tôi</h1>
-                            <p className="address-subtitle">Quản lý địa chỉ nhận hàng của bạn.</p>
-                        </div>
-                        <button type="button" className="address-add-btn" onClick={handleAddNew}>
-                            <MapPin className="address-add-icon" style={{ fontVariationSettings: '"FILL" 1' }} />
-                            <span>Thêm địa chỉ mới</span>
-                        </button>
-                    </div>
+        <AccountLayout
+            active="addresses"
+            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Địa chỉ' }]}
+            eyebrow="Tài khoản"
+            title="Địa chỉ giao hàng"
+            description="Quản lý địa chỉ nhận hàng và chọn địa chỉ mặc định cho lần thanh toán tiếp theo."
+            count={`${addresses.length} địa chỉ`}
+            actions={
+                <Button leftIcon={Plus} asChild>
+                    <Link href="/user/addresses/create">Thêm địa chỉ</Link>
+                </Button>
+            }
+        >
+            <Head title="Địa chỉ giao hàng" />
 
-                    <hr className="address-divider" />
-
-                    <div className="address-list-container">
-                        <div className="address-list">
-                            {addresses && addresses.length > 0 ? (
-                                addresses.map((address) => (
-                                    <div key={address.id} className={`address-card${address.is_default ? 'is-default' : ''}`}>
-                                        <div className="address-info">
-                                            <div className="address-name-row">
-                                                <h3 className="address-name">{address.name}</h3>
-                                                {address.is_default && <span className="address-default-badge">Mặc định</span>}
-                                            </div>
-                                            <p className="address-phone">{address.phone}</p>
-                                            <p className="address-details">
-                                                {address.address}, {address.ward}, {address.province}, {address.country}
-                                            </p>
-                                        </div>
-
-                                        <div className="address-actions">
-                                            <div className="address-action-links">
-                                                <button type="button" className="address-action-btn edit" onClick={() => handleEdit(address.id)}>
-                                                    Sửa
-                                                </button>
-                                                <span className="address-action-separator">|</span>
-                                                <button
-                                                    type="button"
-                                                    className="address-action-btn delete"
-                                                    onClick={() => handleDelete(address.id)}
-                                                    disabled={isDeleting === address.id}
-                                                >
-                                                    {isDeleting === address.id ? 'Đang xóa...' : 'Xóa'}
-                                                </button>
-                                            </div>
-                                            {!address.is_default && (
-                                                <button
-                                                    type="button"
-                                                    className="address-set-default-btn"
-                                                    onClick={() => handleSetDefault(address.id)}
-                                                >
-                                                    Thiết lập mặc định
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="py-12 text-center">
-                                    <p className="text-gray-500 dark:text-gray-400">Bạn chưa có địa chỉ nào.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+            {addresses.length === 0 ? (
+                <EmptyState
+                    icon={MapPin}
+                    title="Chưa có địa chỉ nào"
+                    description="Thêm địa chỉ đầu tiên để đặt hàng nhanh hơn ở lần mua tiếp theo."
+                    actions={
+                        <Button leftIcon={Plus} asChild>
+                            <Link href="/user/addresses/create">Thêm địa chỉ</Link>
+                        </Button>
+                    }
+                />
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                    {addresses.map((address) => (
+                        <AddressCard
+                            key={address.id}
+                            address={address}
+                            busy={busyId === address.id || deleting}
+                            onEdit={() => router.visit(`/user/addresses/${address.id}/edit`)}
+                            onSetDefault={() => handleSetDefault(address)}
+                            onDelete={() => setPendingDelete(address)}
+                        />
+                    ))}
                 </div>
-                {showCreateModal && (
-                    <Create
-                        provinces={provinces}
-                        errors={createErrors}
-                        onClose={handleCloseCreateModal}
-                        onSuccess={handleCreateSuccess}
-                        onError={setCreateErrors}
-                    />
-                )}
-            </CustomerLayout>
-        </>
+            )}
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setPendingDelete(null);
+                    }
+                }}
+                title="Xoá địa chỉ này?"
+                description={
+                    pendingDelete
+                        ? `${pendingDelete.name} — ${pendingDelete.address}, ${pendingDelete.ward}, ${pendingDelete.province}. Địa chỉ đã xoá không thể khôi phục.`
+                        : ''
+                }
+                confirmLabel="Xoá địa chỉ"
+                loading={deleting}
+                onConfirm={handleDelete}
+            />
+        </AccountLayout>
     );
 }

@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Broadcast;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -867,5 +868,24 @@ class ChatControllerTest extends TestCase
         $this->assertEquals($this->user->username, $message['sender']['username']);
         $this->assertEquals($this->user->first_name, $message['sender']['first_name']);
         $this->assertEquals($this->user->last_name, $message['sender']['last_name']);
+    }
+
+    #[Test]
+    public function chat_workspace_page_renders_for_authenticated_customer()
+    {
+        $this->actingAs($this->user);
+
+        $response = $this->get('/customer/chat');
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page->component('Customer/Chat/Index'));
+    }
+
+    #[Test]
+    public function chat_redirect_sends_guest_to_customer_chat()
+    {
+        $this->actingAs($this->user);
+
+        $this->get('/chat')->assertRedirect('/customer/chat');
     }
 }

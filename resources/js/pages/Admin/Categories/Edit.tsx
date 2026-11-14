@@ -2,7 +2,7 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
 import CategoryForm from '../../../components/admin/categories/CategoryForm';
 import Toast from '../../../components/admin/users/Toast';
-import Header from '../../../components/ui/Header';
+import Header from '../../../components/ui/header';
 import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 

@@ -8,6 +8,7 @@ import {
     LogOut,
     MapPin,
     Menu,
+    MessageCircle,
     Package,
     Search,
     Settings,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-import Avatar from '@/components/ui/Avatar';
+import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, type DropdownMenuItemConfig } from '@/components/ui/dropdown-menu';
 import { SearchInput } from '@/components/ui/search-input';
@@ -84,6 +85,11 @@ const accountItems = (unreadCount: number): DropdownMenuItemConfig[] => [
         icon: Bell,
     },
     {
+        label: 'Tin nhắn',
+        href: '/customer/chat',
+        icon: MessageCircle,
+    },
+    {
         label: 'Cài đặt',
         href: '/settings/profile',
         icon: Settings,
@@ -136,6 +142,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                       icon: Bell,
                       badge: resolvedUnreadCount > 0 ? resolvedUnreadCount : undefined,
                   },
+                  { label: 'Tin nhắn', href: '/customer/chat', icon: MessageCircle },
               ]
             : [
                   { label: 'Đăng nhập', href: '/login', icon: User },

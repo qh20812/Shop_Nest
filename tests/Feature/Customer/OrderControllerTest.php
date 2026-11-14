@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class OrderControllerTest extends TestCase
@@ -169,5 +170,36 @@ class OrderControllerTest extends TestCase
         $this->assertDatabaseMissing('order_reviews', [
             'order_id' => $order->order_id,
         ]);
+    }
+
+    public function test_user_can_view_order_detail_with_frontend_props(): void
+    {
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'customer_id' => $user->id,
+            'status' => OrderStatus::DELIVERED->value,
+        ]);
+
+        $variant = ProductVariant::factory()->create();
+        OrderItem::factory()->create([
+            'order_id' => $order->order_id,
+            'variant_id' => $variant->variant_id,
+            'quantity' => 2,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('user.orders.show', $order->order_id));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Customer/Orders/Show')
+            ->where('order.id', $order->order_id)
+            ->where('order.code', $order->order_number)
+            ->where('order.status', OrderStatus::DELIVERED->value)
+            ->where('order.can_review', true)
+            ->has('order.items', 1)
+            ->has('order.reviews', 0)
+            ->has('order.created_at')
+            ->has('order.shipping_address')
+        );
     }
 }

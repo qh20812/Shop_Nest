@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import Pagination from '../../../components/ui/Pagination';
+import Pagination from '../../../components/ui/pagination';
 import AppLayout from '../../../layouts/app/AppLayout';
 
 interface User {

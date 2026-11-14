@@ -1,5 +1,5 @@
-import ActionButton from '@/components/ui/ActionButton';
-import PrimaryInput from '@/components/ui/PrimaryInput';
+import ActionButton from '@/components/ui/action-button';
+import PrimaryInput from '@/components/ui/primary-input';
 import { useTranslation } from '@/lib/i18n';
 import { router, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';

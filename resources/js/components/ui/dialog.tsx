@@ -32,10 +32,11 @@ const DialogContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
         size?: keyof typeof contentSizes;
         showClose?: boolean;
+        showOverlay?: boolean;
     }
->(({ className, children, size = 'md', showClose = true, ...props }, ref) => (
+>(({ className, children, size = 'md', showClose = true, showOverlay = true, ...props }, ref) => (
     <DialogPortal>
-        <DialogOverlay />
+        {showOverlay && <DialogOverlay />}
         <DialogPrimitive.Content
             ref={ref}
             className={cn(

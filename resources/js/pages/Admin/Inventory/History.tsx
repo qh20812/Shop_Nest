@@ -1,6 +1,6 @@
 import '@/../css/Page.css';
-import DataTable from '@/components/ui/DataTable';
-import Pagination from '@/components/ui/Pagination';
+import DataTable from '@/components/ui/data-table';
+import Pagination from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, usePage } from '@inertiajs/react';

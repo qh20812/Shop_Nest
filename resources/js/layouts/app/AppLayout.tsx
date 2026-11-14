@@ -1,6 +1,5 @@
-import Chatbot from '@/components/Chatbot';
-import Navbar from '@/components/ui/Navbar';
-import Sidebar from '@/components/ui/Sidebar';
+import Navbar from '@/components/ui/navbar';
+import Sidebar from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../../lib/i18n';
@@ -204,7 +203,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="content">
                 <Navbar onToggleSidebar={toggleSidebar} />
                 <main>{children}</main>
-                <Chatbot user={user} />
             </div>
         </>
     );

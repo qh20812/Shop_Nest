@@ -1,8 +1,8 @@
 import '@/../css/Page.css';
-import ActionButton from '@/components/ui/ActionButton';
-import Header from '@/components/ui/Header';
-import PrimaryInput from '@/components/ui/PrimaryInput';
-import RichTextEditor from '@/components/ui/RichTextEditor';
+import ActionButton from '@/components/ui/action-button';
+import Header from '@/components/ui/header';
+import PrimaryInput from '@/components/ui/primary-input';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/Contexts/ToastContext';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';

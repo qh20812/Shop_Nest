@@ -1,10 +1,10 @@
 import '@/../css/Page.css';
-import AnalyticsCard from '@/components/Analytics/AnalyticsCard';
-import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/Analytics/AnalyticsChart';
-import AnalyticsChart from '@/components/Analytics/AnalyticsChart';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/Analytics/AnalyticsFilters';
-import type { AnalyticsTableColumn } from '@/components/Analytics/AnalyticsTable';
-import AnalyticsTable from '@/components/Analytics/AnalyticsTable';
+import AnalyticsCard from '@/components/admin/analytics/AnalyticsCard';
+import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/analytics/AnalyticsChart';
+import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
+import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';

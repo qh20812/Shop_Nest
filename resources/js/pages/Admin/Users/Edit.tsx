@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import UserEditForm from '../../../components/admin/users/UserEditForm';
-import Header from '../../../components/ui/Header';
+import Header from '../../../components/ui/header';
 import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 

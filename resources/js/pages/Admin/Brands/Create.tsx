@@ -2,7 +2,7 @@ import '@/../css/Page.css';
 import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
 import BrandForm from '../../../components/admin/brands/BrandForm';
-import Header from '../../../components/ui/Header';
+import Header from '../../../components/ui/header';
 import AppLayout from '../../../layouts/app/AppLayout';
 import { useTranslation } from '../../../lib/i18n';
 

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Route::get('/test', function(){
-//     return Inertia::render('Home/search-page');
+//     return Inertia::render('Home/Search');
 // });
 
 // Search route
@@ -64,20 +64,12 @@ Route::middleware(['auth', 'verified.optional'])->group(function () {
         ->name('chatbot.message');
 
     // Notification routes
-    Route::get('/notifications', function () {
-        // For now, render with empty data - will be populated via API
-        return Inertia::render('Notifications/Index', [
-            'notifications' => [
-                'data' => [],
-                'current_page' => 1,
-                'last_page' => 1,
-                'per_page' => 20,
-                'total' => 0,
-            ],
-            'unreadCount' => 0,
-            'filters' => [],
-        ]);
-    })->name('notifications.index');
+    // Legacy demo page retained until Phase 6; the canonical page is /user/notifications.
+    Route::redirect('/notifications', '/user/notifications')->name('notifications.index');
+
+    // Chat workspace (C08). The JSON endpoints live in routes/chat.php.
+    Route::get('/customer/chat', fn () => Inertia::render('Customer/Chat/Index'))->name('customer.chat.index');
+    Route::redirect('/chat', '/customer/chat')->name('chat.index');
 
     require __DIR__ . '/seller.php';
 });

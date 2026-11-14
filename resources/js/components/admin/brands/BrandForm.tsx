@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../../../lib/i18n';
-import ActionButton from '../../ui/ActionButton';
-import PrimaryInput from '../../ui/PrimaryInput';
-import RichTextEditor from '../../ui/RichTextEditor';
+import ActionButton from '../../ui/action-button';
+import PrimaryInput from '../../ui/primary-input';
+import RichTextEditor from '../../ui/rich-text-editor';
 
 interface BrandFormData {
     _method?: string;

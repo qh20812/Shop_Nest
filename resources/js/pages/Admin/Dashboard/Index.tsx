@@ -1,6 +1,6 @@
-import Avatar from '@/components/ui/Avatar';
-import Header from '@/components/ui/Header';
-import Insights from '@/components/ui/Insights';
+import Avatar from '@/components/ui/avatar';
+import Header from '@/components/ui/header';
+import Insights from '@/components/ui/insights';
 import AppLayout from '@/layouts/app/AppLayout';
 import { formatCurrency, resolveCurrencyCode } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';

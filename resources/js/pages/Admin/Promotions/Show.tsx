@@ -1,7 +1,7 @@
 import '@/../css/Page.css';
-import ActionButton from '@/components/ui/ActionButton';
-import Header from '@/components/ui/Header';
-import StatusBadge from '@/components/ui/StatusBadge';
+import ActionButton from '@/components/ui/action-button';
+import Header from '@/components/ui/header';
+import StatusBadge from '@/components/ui/status-badge';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AppLayout from '../../../layouts/app/AppLayout';

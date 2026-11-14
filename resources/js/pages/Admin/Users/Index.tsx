@@ -1,11 +1,11 @@
 import '@/../css/Page.css';
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/ActionButtons';
-import Avatar from '@/components/ui/Avatar';
-import ConfirmationModal from '@/components/ui/ConfirmationModal';
-import DataTable from '@/components/ui/DataTable';
-import FilterPanel from '@/components/ui/FilterPanel';
-import Pagination from '@/components/ui/Pagination';
+import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import Avatar from '@/components/ui/avatar';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import AppLayout from '../../../layouts/app/AppLayout';

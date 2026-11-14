@@ -2,9 +2,9 @@ import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import React from 'react';
-import ActionDropdown from '../../ui/ActionDropdown';
-import DataTable from '../../ui/DataTable';
-import StatusBadge from '../../ui/StatusBadge';
+import ActionDropdown from '../../ui/action-dropdown';
+import DataTable from '../../ui/data-table';
+import StatusBadge from '../../ui/status-badge';
 
 interface Customer {
     first_name: string;

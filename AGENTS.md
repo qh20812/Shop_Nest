@@ -1,16 +1,17 @@
 # AGENTS.md
 
-ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, seller, customer, shipper). The README is Vietnamese and partly aspirational — it mentions Sanctum/JWT, Swagger and Ant/MUI, none of which are used. Trust `composer.json`, `package.json`, `routes/` and `bootstrap/app.php`.
+ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, seller, customer, shipper). The README is Vietnamese and broader than the implementation (invoice/tracking/returns flows are partial); its UI table still lists Font Awesome, but the bundle uses Lucide and keeps Boxicons only for legacy workspace pages. Trust `composer.json`, `package.json`, `routes/` and `bootstrap/app.php` over README prose.
 
 ## Run & verify
 
 - Full local stack: `composer run dev` — PHP dev server on `http://127.0.0.1:9999` (matches `APP_URL`), queue listener, and Vite. `npm run dev` starts only Vite.
 - Realtime needs a separate `php artisan reverb:start` (port 8080); `composer run dev` does not start Reverb.
 - Tests: `php artisan test` (or `composer test`, which runs `config:clear` first). Single test: `php artisan test tests/Feature/Seller/ProductControllerTest.php --filter=test_name`.
-- PHP formatting: `vendor/bin/pint`. Frontend: `npm run format` (Prettier, only `resources/`), `npm run lint` (ESLint **with `--fix`**, not a check), `npm run types` (`tsc --noEmit`).
-- CI (`.github/workflows/`) targets `develop`/`main`, uses PHP 8.4 + Node 22. Lint job: `pint` → `npm run format` → `npm run lint`. Test job: installs → `npm run build` → `phpunit`.
+- PHP formatting: `vendor/bin/pint`. Frontend: `npm run format` (Prettier write, `resources/` only), `npm run format:check`, `npm run lint` (ESLint **with `--fix`**, not a check), `npm run types` (`tsc --noEmit`).
+- `npm run check:tokens` enforces tokens/Lucide/no legacy CSS. `scripts/token-allowlist.json` still allowlists ~63 workspace files; never add storefront/auth/account/chat files to it. Use `check:tokens:all` to see remaining violations.
+- CI (`.github/workflows/`) targets `develop`/`main`, uses PHP 8.4 + Node 22. Lint job runs write-mode `pint` → `npm run format` → `npm run lint` (not a formatting gate). Test job: `npm ci` → `composer install` → `npm run build` → `phpunit`. CI does **not** run `npm run types` or `check:tokens`; run them locally.
 - Dusk browser tests live in `tests/Browser` and are not in `phpunit.xml`; run them with `php artisan dusk`.
-- Docker: `docker compose up --build -d` serves the app on `http://localhost:8080` with MySQL on `localhost:3307`. The image builds assets in a Node 22 stage and runs PHP 8.3 + nginx.
+- Docker: `docker compose up --build -d` serves the app on `http://localhost:8080` with MySQL on `localhost:3307`. The image builds assets in a PHP 8.3 + Node 22 stage and runs PHP 8.3 + nginx.
 
 ## Architecture
 
@@ -20,6 +21,11 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 - Naming: page folders/files PascalCase (`pages/Auth/Login.tsx`); component folders lowercase (`components/chat`, `components/commerce`); component files PascalCase except `components/ui/**` kebab-case; hook/lib files camelCase/lowercase; shared type modules stay `types.ts`.
 - `@` → `resources/js` (Vite and tsconfig). Import the folder as lowercase `@/components/...`; mixed-case variants like `@/Components/...` resolve on Windows but break tsc and Linux builds.
 - Wayfinder generates `resources/js/{actions,routes,wayfinder}` (gitignored) during `vite` dev/build. Regenerate with `php artisan wayfinder:generate`; never edit generated files.
+- Frontend migration status: Storefront/Auth/Account/Chat use the Nếp system; Seller/Admin/Shipper still use `layouts/app/AppLayout`, `Page.css`, Boxicons and the legacy tokens. Do **not** delete `legacy-tokens.css`, `.dark`, `Page.css` or the Boxicons CDN until the workspace is migrated. Workspace legacy components (`action-button`, `primary-input`, `data-table`, `confirmation-modal`, `status-badge`, …) are rename-only; don't merge their APIs as drive-by cleanup.
+- Reserved components that are intentionally unused: `components/ui/{table,switch,error-state}.tsx`, `components/commerce/{ReturnItemPicker,RefundOption,PreferenceRow}.tsx`, `components/feedback/LoadingOverlay.tsx`. Don't delete them as dead code.
+- `ChatDock` is mounted once in `StorefrontLayout` (AccountLayout inherits it); it hides itself on auth, checkout, payments, chat and workspace routes. Don't mount another bubble or a second chatbot.
+- Some Inertia renders still target missing workspace pages (`Admin/CustomerSegments/*`, `Admin/Orders/Show`, `Admin/Returns/Show`, `Seller/Promotions/Edit|Show`, `Seller/Reports/*`, `Seller/Wallet/*`, `Product/Index|Show`, `Auth/ConfirmPassword`). Treat those as known backlog, not a frontend regression.
+- Only `app.css`, `base.css`, `tokens.css`, `legacy-tokens.css` and `Page.css` remain in `resources/css`. `app.css` imports the first four; `Page.css` is workspace-only. Don't import per-page legacy CSS in new pages.
 - Auth is session-based. Google login uses Socialite. Roles are in the `role_user` pivot with Spatie-translatable names: query `where('name->en', 'Seller')`, not `where('name', ...)`.
 - Middleware aliases are `is_admin`, `isSeller`, `isShipper`, and `verified`/`verified.optional` (both point to `EnsureEmailIsVerifiedIfProvided`; users without an email count as verified). `routes/shipper.php` currently references an unregistered `shipper` alias — use `isShipper` or register it.
 - CSRF is disabled for `login`, `product/*/buy-now`, `buy-now/checkout/*`, and `webhooks/*` in `bootstrap/app.php`. Webhooks verify signatures themselves; don't widen this list for normal forms.
@@ -27,14 +33,14 @@ ShopNest is a Laravel + Inertia/React e-commerce app with four roles (admin, sel
 - Stock changes go through `App\Services\InventoryService` (`adjustStock`, `setStock`, ...) so `InventoryLog` and caches stay consistent. Don't update `stock_quantity` directly.
 - Payments: `App\Services\PaymentService::make($provider)` supports only `stripe` and `cod`, implemented in `app/Payments/Gateways/`; webhook/return handling is in `PaymentWebhookController`/`PaymentReturnController`. PayPal/VNPay/MoMo were removed — don't reintroduce them without the matching migrations/UI.
 - Frontend i18n: keys are flat English strings in `lang/vi.json` and `lang/en.json`, shared as `translations` prop. Add new keys to both files; use `useTranslation()` from `@/lib/i18n`, not react-i18next.
-- Tailwind v4 is configured in `resources/css/app.css`, which imports `tokens.css` (the single source for colour, type, spacing, size, radius, shadow and motion), `base.css`, and the temporary `legacy-tokens.css`. `tailwind.config.ts` is not loaded; add tokens to `tokens.css`, not the JS config. shadcn-style UI primitives are in `resources/js/components/ui`.
-- The redesign direction and tokens live in `DESIGN.md`; component rules live in `COMPONENTS.md`; the 7-phase migration plan is `PLAN.md`. Per-screen Google Stitch prompts live in `PROMPT.md`. Run `npm run check:tokens` after UI changes.
+- Tailwind v4 is configured in `resources/css/app.css`, which imports `tokens.css` (the single source for colour, type, spacing, size, radius, shadow and motion), `base.css`, and `legacy-tokens.css` (kept for workspace). `tailwind.config.ts` is not loaded; add tokens to `tokens.css`, not the JS config. shadcn-style UI primitives are in `resources/js/components/ui`; `components/ui/table.tsx` is the target primitive, `data-table.tsx` is legacy workspace.
+- The redesign direction and tokens live in `DESIGN.md`; component rules live in `COMPONENTS.md`; the 7-phase migration plan is `PLAN.md` (Phase 6 complete; Seller/Admin/Shipper workspace migration remains deferred). Per-screen Google Stitch prompts live in `PROMPT.md`. Run `npm run check:tokens` after UI changes.
 
 ## Data & tests
 
 - The local `.env` points at a shared remote MySQL (Aiven), not localhost. Treat `migrate:fresh`, `db:wipe`, and seeders as destructive; ask before running them. Tests use in-memory SQLite via `phpunit.xml`, so they don't touch it.
 - Feature tests use `RefreshDatabase`. Roles must be seeded first (`$this->seed(RoleSeeder::class)`); then attach with `$user->roles()->attach(Role::where('name->en', 'Seller')->first())`. Inertia assertions use `Inertia\Testing\AssertableInertia`.
-- Chatbot unit tests may make real Groq/OpenAI HTTP calls; without valid keys they fail. Run targeted tests when working outside that area.
+- Chatbot tests fake OpenAI/Groq with `Http::fake`; if you add providers, fake them too. The full suite is slow and deprecation-noisy on PHP 8.5 (`PDO::MYSQL_ATTR_SSL_CA`). Run targeted tests when working outside the changed area.
 
 ## Dependency notes
 

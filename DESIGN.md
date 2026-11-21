@@ -7,7 +7,7 @@ Version 1.0 · Light-first · Google Stitch ready
 This file is the single source of truth for every ShopNest screen generated in Google Stitch.
 
 - Use the palette, type, spacing, radii, and component rules below exactly. Do not invent a second accent, a new shadow style, or a new icon family.
-- There are two visual modes: **Storefront** (public, customer-facing) and **Workspace** (seller, admin, shipper). Storefront may use the editorial serif; Workspace is sans-serif only.
+- There are two visual modes: **Storefront** (public, customer-facing) and **Workspace** (seller, admin, shipper). Both use Be Vietnam Pro; the modes differ in density and layout, not in typeface.
 - Generate **desktop 1440×1024** and **mobile 390×844** for every customer/storefront screen. Generate desktop and tablet for Workspace screens; mobile is required for the customer account, seller orders, and shipper screens.
 - Put real Vietnamese copy in the screens. Never translate the provided copy to English.
 - Stitch generates static screens. Motion notes below describe the intended implementation, not what Stitch should animate.
@@ -88,9 +88,9 @@ Dark mode is phase 2 and is not generated in the first Stitch pass. When impleme
 
 ### Families
 
-- **Display: Fraunces** — variable serif, optical sizing on, weights 500–700. Use only on Storefront hero/campaign modules, Auth, and Legal pages. Search, category, product detail, cart, checkout, and account pages use Be Vietnam Pro headings so the catalog stays scannable. Fraunces supports Vietnamese; keep diacritics intact.
-- **Body and UI: Be Vietnam Pro** — weights 400, 500, 600, 700. Use for all body copy, labels, navigation, forms, and Workspace headings.
-- **Numbers and metadata: JetBrains Mono** — weights 500, 600. Use for prices, SKUs, order codes, IDs, timestamps, table numbers, and KPI values. Currency symbols may fall back to Be Vietnam Pro.
+- **One family: Be Vietnam Pro** — weights 300–800, loaded from Google Fonts. It covers display, body, UI, and numbers, and renders Vietnamese diacritics correctly. There is no second family and no serif anywhere in the product.
+- **Display role** (`--font-display`, `Heading serif`) — the same family at weight 600 with tight tracking. The name is kept because headings, hero headlines, and campaign modules use it; it no longer loads a serif.
+- **Numbers and metadata role** (`--font-mono`) — the same family with `font-variant-numeric: tabular-nums`, so prices, SKUs, order codes, timestamps, and table columns stay aligned. The name is kept because it marks numeric content; it no longer loads a monospace face.
 
 ### Scale
 
@@ -109,9 +109,9 @@ Dark mode is phase 2 and is not generated in the first Stitch pass. When impleme
 ### Typography rules
 
 - Body copy max width: `65ch`. Never stretch a paragraph across a full 1440px canvas.
-- Storefront hero and campaign headings use Fraunces with tight tracking and weight-driven hierarchy. Search, category, product, cart, checkout, and account headings use Be Vietnam Pro 600/700. Do not use oversized type just to fill space.
-- Workspace headings use Be Vietnam Pro 600/700. **Serif is banned in all dashboards and software UIs.**
-- Prices and numeric columns use JetBrains Mono with tabular figures. Align numbers to the right in tables.
+- Storefront hero and campaign headings use Be Vietnam Pro 600 with tight tracking and weight-driven hierarchy. Search, category, product, cart, checkout, and account headings use the same family at 600/700. Do not use oversized type just to fill space.
+- Workspace headings use Be Vietnam Pro 600/700. **Serif is banned everywhere.**
+- Prices and numeric columns use the `font-mono` role, which is Be Vietnam Pro with tabular figures. Align numbers to the right in tables.
 - Uppercase micro labels always use Be Vietnam Pro 600 with `0.12em` tracking. Do not use uppercase for long sentences.
 - Vietnamese diacritics must render correctly. Never use a font that drops or flattens diacritics.
 - No gradient text, no outlined display text, no letter-spacing on body copy.
@@ -129,7 +129,7 @@ Dark mode is phase 2 and is not generated in the first Stitch pass. When impleme
 ### Product cards
 
 - Image 4:5, 20px radius, Warm Porcelain frame, no heavy shadow.
-- Content: product name (2 lines max), shop name (micro), price (JetBrains Mono), rating (small), optional badge.
+- Content: product name (2 lines max), shop name (micro), price (tabular figures), rating (small), optional badge.
 - Category-specific metadata: tech shows chip/SKU/warranty; home appliances show capacity/wattage; kids shows age/safety; fashion shows size/color; beauty shows skin type/volume. Keep metadata to one line plus one badge.
 - No card drop shadow at rest. Use a 1px Border and a border-top metadata row. Hover: image scale 1.02, name underline in Lacquer Red, 180ms ease-out.
 - Product grids may be 4-up on desktop; this is commerce inventory, not a three-equal-card feature row.
@@ -185,7 +185,7 @@ Dark mode is phase 2 and is not generated in the first Stitch pass. When impleme
 ### Charts
 
 - Minimal axes, 1px grid `#E8DFD0`, no drop shadows, no gradients.
-- Primary series Lacquer Red; secondary Jade/Turmeric; labels in Be Vietnam Pro; values in JetBrains Mono.
+- Primary series Lacquer Red; secondary Jade/Turmeric; labels and values in Be Vietnam Pro, values with tabular figures.
 - Tooltips use Warm Porcelain, 12px radius, 1px Border. No dark tooltip panels.
 
 ### Chat and chatbot
@@ -199,7 +199,7 @@ Dark mode is phase 2 and is not generated in the first Stitch pass. When impleme
 The hero exists only on the Storefront home. It must feel editorial, warm, and specific to Vietnamese homes.
 
 - Asymmetric split: text 7 columns, visual 5 columns on desktop. Left-aligned; never centered.
-- Headline uses Fraunces with **inline image typography**: small, contextual images sit between words at type height, rounded 16px, with clean spacing. Images never overlap text.
+- Headline uses Be Vietnam Pro 600 with **inline image typography**: small, contextual images sit between words at type height, rounded 16px, with clean spacing. Images never overlap text.
 - Example headline: “Chọn [ảnh laptop] đồ thật kỹ, [ảnh bàn ăn] sống thật êm.”
 - Eyebrow: “Mọi thứ cho tổ ấm Việt” in micro uppercase.
 - Subcopy: one or two lines, max 46ch, Ink Muted. Example: “Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt.”
@@ -330,12 +330,12 @@ CTA examples:
 
 | Mode | Typography | Density | Navigation | Notes |
 |---|---|---|---|---|
-| Storefront | Fraunces (hero/campaign) + Be Vietnam Pro | Airy | Top bar | Multi-category marketplace; editorial hero, search-first shelves |
-| Auth | Fraunces + Be Vietnam Pro | Airy | Minimal top bar | Split screen, no centered card |
-| Customer account | Be Vietnam Pro only | Balanced | Top bar + account tabs | Sans-only; no serif in account panels |
-| Seller workspace | Be Vietnam Pro + JetBrains Mono | Dense | 240px sidebar | Orders, products, promotions, wallet |
-| Admin workspace | Be Vietnam Pro + JetBrains Mono | Denser | 240px sidebar | Tables, filters, moderation |
-| Shipper workspace | Be Vietnam Pro + JetBrains Mono | Balanced | 240px sidebar | Deliveries, status, route facts |
+| Storefront | Be Vietnam Pro | Airy | Top bar | Multi-category marketplace; editorial hero, search-first shelves |
+| Auth | Be Vietnam Pro | Airy | Minimal top bar | Split screen, no centered card |
+| Customer account | Be Vietnam Pro | Balanced | Top bar + account tabs | Calm, practical; no serif anywhere |
+| Seller workspace | Be Vietnam Pro | Dense | 240px sidebar | Orders, products, promotions, wallet |
+| Admin workspace | Be Vietnam Pro | Denser | 240px sidebar | Tables, filters, moderation |
+| Shipper workspace | Be Vietnam Pro | Balanced | 240px sidebar | Deliveries, status, route facts |
 
 Role identity comes from labels, navigation, and content, not from different accent colors. Do not give each role its own primary color.
 
@@ -343,6 +343,7 @@ Role identity comes from labels, navigation, and content, not from different acc
 
 - No emojis anywhere.
 - No `Inter`, `Poppins`, `Montserrat`, generic system serif, Times New Roman, Georgia, Garamond, or Palatino.
+- No second font family and no monospace face: Be Vietnam Pro is the only family.
 - No pure black `#000000`; use Ink `#1D1B17`.
 - No purple, violet, neon blue, or magenta UI accents.
 - No gradient text, gradient buttons, neon outer glows, or glassmorphism.
@@ -370,9 +371,7 @@ Role identity comes from labels, navigation, and content, not from different acc
 - Existing logo: `public/image/ShopnestLogoSVG.svg`. Use it as a small full-color mark on a Rice Paper or Warm Porcelain chip. Do not redraw or recolor it.
 - UI icons: Lucide, 1.75px stroke, 20px/24px.
 - Fonts via Google Fonts:
-  - Fraunces: `opsz,wght@9..144,500..700`
-  - Be Vietnam Pro: `wght@400;500;600;700`
-  - JetBrains Mono: `wght@500;600`
+  - Be Vietnam Pro: `wght@300;400;500;600;700;800` (the only family)
 - Image seeds for placeholders:
   - `https://picsum.photos/seed/shopnest-laptop/800/1000`
   - `https://picsum.photos/seed/shopnest-audio/800/1000`

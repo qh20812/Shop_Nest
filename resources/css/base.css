@@ -66,6 +66,12 @@
         z-index: 40;
     }
 
+    /* Be Vietnam Pro has no monospace face, so the numeric role keeps its
+       column alignment through tabular figures instead. */
+    .font-mono {
+        font-variant-numeric: tabular-nums;
+    }
+
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;

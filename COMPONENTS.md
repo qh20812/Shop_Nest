@@ -324,11 +324,11 @@ import { Eyebrow, Heading, MetaText, Text } from '@/components/ui/typography';
 <MetaText>#SN-24817</MetaText>
 ```
 
-`serif` chỉ dùng cho hero/campaign/Auth:
+`serif` chỉ chuyển sang `--font-display` (nay cũng là Be Vietnam Pro 600), giữ prop để API không đổi:
 
 ```tsx
 <Heading level={1} size="display-lg" serif>
-  Chọn đồ thật kỹ, sống thật êm.
+  Chọn đồ kỹ, sống êm.
 </Heading>
 ```
 
@@ -592,7 +592,7 @@ import { SectionHeader } from '@/components/layout/SectionHeader';
 ```tsx
 <HeroEditorial
   eyebrow="Mọi thứ cho tổ ấm Việt"
-  title={<>Chọn <HeroInlineImage src={laptop} alt="Laptop" /> đồ thật kỹ,<br />sống <HeroInlineImage src={table} alt="Bàn ăn" /> thật êm.</>}
+  title={<>Chọn <HeroInlineImage src={laptop} alt="Laptop" /> đồ kỹ,<br />sống <HeroInlineImage src={table} alt="Bàn ăn" /> êm.</>}
   subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
   cta={{ label: 'Xem chợ hôm nay', href: '/search' }}
   images={[{ src: laptop, alt: 'Laptop' }, { src: airfryer, alt: 'Nồi chiên' }, { src: stroller, alt: 'Xe đẩy' }]}

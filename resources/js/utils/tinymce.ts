@@ -30,7 +30,7 @@ export const TINYMCE_CONFIG = {
             'bold italic underline | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | code | help',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; line-height:1.5; }',
+        content_style: "body { font-family:'Be Vietnam Pro',sans-serif; font-size:14px; line-height:1.5; }",
         skin: 'oxide',
         content_css: 'default',
         branding: false,

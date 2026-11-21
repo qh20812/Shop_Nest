@@ -29,7 +29,7 @@ export function FlashSaleModule({ endsAt, name, products, onAddToCart, onToggleW
                     <div className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-center md:justify-between">
                         <div className="flex flex-col gap-2">
                             <Badge tone="accent" icon={Flame} size="md" className="w-fit">
-                                Giờ Vàng Tuyển Chọn
+                                Giờ vàng tuyển chọn
                             </Badge>
                             <Heading level={2} size="headline-2">
                                 {name ?? 'Flash sale hôm nay'}

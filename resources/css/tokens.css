@@ -40,9 +40,13 @@
     /* ---------------------------------------------------------------
      * Typography
      * ------------------------------------------------------------- */
-    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+    /* One family for the whole UI: Be Vietnam Pro. The display/mono names stay
+       as semantic aliases so components keep their roles (headlines, numbers)
+       without loading extra font files. Numbers stay aligned via
+       font-variant-numeric in base.css. */
+    --font-display: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
     --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
 
     --text-display-xl: clamp(3.5rem, 7vw, 6.5rem);
     --text-display-xl--line-height: 0.92;

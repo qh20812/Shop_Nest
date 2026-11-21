@@ -53,7 +53,7 @@ export function CategoryShelf({ categories = [], title = 'Danh mục chủ lực
         <section id="danh-muc" className={cn('py-10 md:py-14', className)}>
             <PageContainer>
                 <SectionHeader
-                    eyebrow="Hệ thống sản phẩm"
+                    eyebrow="Sáu nhóm ngành"
                     title={title}
                     action={
                         action ?? (

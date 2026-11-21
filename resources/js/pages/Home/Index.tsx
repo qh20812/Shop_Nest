@@ -69,17 +69,17 @@ interface PageProps extends Record<string, unknown> {
 const fallbackHeroImages = [
     {
         src: 'https://picsum.photos/seed/shopnest-laptop/1000/800',
-        alt: 'Laptop trên bàn làm việc ấm',
+        alt: 'Laptop trên bàn làm việc',
         label: 'Điện tử',
     },
     {
         src: 'https://picsum.photos/seed/shopnest-airfryer/800/700',
-        alt: 'Nồi chiên trong bếp ấm',
+        alt: 'Nồi chiên trong bếp',
         label: 'Gia dụng',
     },
     {
         src: 'https://picsum.photos/seed/shopnest-stroller/800/700',
-        alt: 'Xe đẩy em bé gọn nhẹ',
+        alt: 'Xe đẩy em bé',
         label: 'Mẹ & bé',
     },
 ];
@@ -94,7 +94,7 @@ const anchorCategoryNames = [
 ];
 
 const utilityItems = [
-    { icon: Truck, label: 'Freeship từ 299.000 ₫', description: 'Trợ phí vận chuyển toàn quốc' },
+    { icon: Truck, label: 'Miễn phí vận chuyển', description: 'Đơn từ 299.000 ₫, giao toàn quốc' },
     { icon: CreditCard, label: 'Trả góp 0%', description: 'Duyệt online trong 3 phút' },
     { icon: Store, label: 'Shop Việt', description: 'Nhà bán đã kiểm duyệt' },
     { icon: Zap, label: 'Giao nhanh 2h', description: 'Nội thành Hà Nội & TP.HCM' },
@@ -109,12 +109,12 @@ const trustItems = [
     {
         icon: RotateCcw,
         title: 'Đổi trả 7 ngày',
-        description: 'An tâm đổi hoặc hoàn khi sản phẩm sai cam kết.',
+        description: 'Đổi hoặc hoàn khi sản phẩm sai cam kết.',
     },
     {
         icon: Truck,
         title: 'Giao toàn quốc',
-        description: 'Đóng gói chống sốc và theo dõi đơn trên mọi chặng.',
+        description: 'Đóng gói chống sốc, có mã theo dõi đơn.',
     },
     {
         icon: Lock,
@@ -127,7 +127,7 @@ const pillars = [
     {
         eyebrow: 'Tuyển chọn',
         title: 'Mỗi món đều có lý do',
-        description: 'Sáu nhóm ngành thiết yếu, chọn lọc theo nhu cầu thật của tổ ấm Việt.',
+        description: 'Sáu nhóm ngành thiết yếu, chọn theo nhu cầu của tổ ấm Việt.',
         image: 'https://picsum.photos/seed/shopnest-curation/900/700',
     },
     {
@@ -139,7 +139,7 @@ const pillars = [
     {
         eyebrow: 'Đồng hành',
         title: 'Hỗ trợ đến khi nhận',
-        description: 'Từ lúc chọn món đến khi kiện hàng tới tay, luôn có người trả lời.',
+        description: 'Từ lúc chọn món đến khi nhận hàng, đội hỗ trợ trả lời trong chat.',
         image: 'https://picsum.photos/seed/shopnest-support/900/700',
     },
 ];
@@ -235,16 +235,15 @@ export default function Index() {
 
     return (
         <StorefrontLayout>
-            <Head title="ShopNest — Mọi thứ cho tổ ấm Việt" />
+            <Head title="ShopNest. Mọi thứ cho tổ ấm Việt" />
 
             <HeroEditorial
                 eyebrow="Mọi thứ cho tổ ấm Việt"
                 title={
                     <>
-                        Chọn <HeroInlineImage src={heroImages[0]?.src ?? fallbackHeroImages[0].src} alt={heroImages[0]?.alt ?? 'Laptop'} /> đồ thật
-                        kỹ,
+                        Chọn <HeroInlineImage src={heroImages[0]?.src ?? fallbackHeroImages[0].src} alt={heroImages[0]?.alt ?? 'Laptop'} /> đồ kỹ,
                         <br />
-                        sống <HeroInlineImage src={heroImages[1]?.src ?? fallbackHeroImages[1].src} alt={heroImages[1]?.alt ?? 'Bàn ăn'} /> thật êm.
+                        sống <HeroInlineImage src={heroImages[1]?.src ?? fallbackHeroImages[1].src} alt={heroImages[1]?.alt ?? 'Bàn ăn'} /> êm.
                     </>
                 }
                 subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
@@ -271,12 +270,12 @@ export default function Index() {
                 id="ban-chay"
                 eyebrow="Được chọn nhiều"
                 title="Sản phẩm bán chạy"
-                description="Những món được khách hàng ShopNest tin dùng trong tuần này."
+                description="Xếp theo số lượng đã bán trên các đơn không huỷ."
                 products={bestSellerCards}
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
                 emptyTitle="Chưa có sản phẩm bán chạy"
-                emptyDescription="Khi có sản phẩm nổi bật, chúng sẽ xuất hiện ở đây."
+                emptyDescription="Chưa có đơn nào để tính xếp hạng."
             />
 
             <ProductShelf
@@ -288,7 +287,7 @@ export default function Index() {
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
                 emptyTitle="Chưa có gợi ý"
-                emptyDescription="Hãy quay lại sau để xem các món được tuyển chọn."
+                emptyDescription="Thêm danh mục và thương hiệu bạn thích trong tài khoản để gợi ý sát hơn."
             />
 
             <BrandSpotlight />

@@ -2656,12 +2656,12 @@
           <span class="inline-block align-middle mx-1">
 <img alt="Laptop tối giản" class="h-11 w-20 rounded-xl object-cover border border-border inline-block" data-alt="Editorial close-up of a sleek ultra-thin graphite grey laptop resting quietly on a warm oak timber desk with soft morning daylight, fine craft aesthetic, warm porcelain and rice paper tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsyW1bsBg0xzD3K06aru5soOwDjgABqPn-RkqiOtgLqqYnJXsVG7Pjx03LZa8WFvp0iRoGFNWKEjePoCgar1z01HWKA2CxzC3aOizT7xAkguV-L25a9asBybACWyk-4Z9F6Ht9RD2rVa-ObmfYhyhCNfNKNZG6z5Z9rDt7TBc6i43qy97UL4KIIGhQkXQ2Wf5ysRMImhErdRgAAvVONKrqDNjksE8B7-NQWh9HcQ"/>
 </span>
-          đồ thật kỹ,<br/>
+          đồ kỹ,<br/>
           sống 
           <span class="inline-block align-middle mx-1">
 <img alt="Gốm mộc nếp nhà" class="h-11 w-20 rounded-xl object-cover border border-border inline-block" data-alt="Warm artisanal dining table scene featuring glazed ceramic earthy bowls, woven natural bamboo placemats, and soft morning steam, muted natural lighting in traditional modern Vietnamese home." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVMcvCqF04Jz7V91a1EifemD_REeZxkUScY4RTrAGfGEeahL5k-x1jX-mlA-LWEbRckSOt1v07VFSd6LOgnAJFvNocF1wHcH-eMKspOEi1sreQuUNmsvjuOdAFkNsdvkTqtC05lYVr44m-Ar6OnenjsjynYFD-vOBwO_Ns5aiMmCNnK5F3hdCAwbTP9UGrM22zLi2GVCGx442PuO7c7C9znFw9cOUT5dCR6qT7xw"/>
 </span>
-          thật êm.
+          êm.
         </h1>
 <!-- Subcopy constrained to 52ch -->
 <p class="font-body-lg text-body-lg text-ink-muted max-w-[52ch] mb-8 leading-relaxed">
@@ -2749,8 +2749,8 @@
 <div class="flex items-center gap-3 pt-2 md:pt-0">
 <span class="material-symbols-outlined text-lacquer-red text-[22px] shrink-0">local_shipping</span>
 <div class="flex flex-col">
-<span class="font-body-sm text-body-sm font-semibold text-ink leading-tight">Freeship từ 299.000 ₫</span>
-<span class="font-label-micro text-label-micro text-ink-muted mt-0.5">Trợ phí vận chuyển toàn quốc</span>
+<span class="font-body-sm text-body-sm font-semibold text-ink leading-tight">Miễn phí vận chuyển</span>
+<span class="font-label-micro text-label-micro text-ink-muted mt-0.5">Đơn từ 299.000 ₫, giao toàn quốc</span>
 </div>
 </div>
 <div class="flex items-center gap-3 pt-2 md:pt-0 md:pl-6">
@@ -2780,7 +2780,7 @@
 <section class="w-full px-gutter lg:px-margin mt-12">
 <div class="flex items-end justify-between pb-4 border-b border-border mb-6">
 <div>
-<span class="font-label-micro text-label-micro uppercase text-lacquer-red tracking-wider block mb-1">Hệ thống sản phẩm</span>
+<span class="font-label-micro text-label-micro uppercase text-lacquer-red tracking-wider block mb-1">Sáu nhóm ngành</span>
 <h2 class="font-headline-1 text-headline-1 text-ink">Danh mục chủ lực</h2>
 </div>
 <a class="font-body-sm text-body-sm text-ink-muted hover:text-lacquer-red flex items-center gap-1 transition-colors pb-1" href="#">
@@ -2863,7 +2863,7 @@
 </a>
 </div>
 </section>
-<!-- Section 4: Flash Sale (Giờ Vàng Tuyển Chọn - Asymmetric 2-column Rail) -->
+<!-- Section 4: Flash Sale (Giờ vàng tuyển chọn - Asymmetric 2-column Rail) -->
 <section class="w-full px-gutter lg:px-margin mt-14">
 <div class="bg-rice-paper border border-border rounded-[24px] p-6 lg:p-8">
 <!-- Flash Sale Header Row -->
@@ -2871,7 +2871,7 @@
 <div class="flex items-center gap-3">
 <span class="px-2.5 py-1 rounded-md bg-lacquer-red text-warm-porcelain font-label-micro text-label-micro tracking-wider uppercase font-semibold flex items-center gap-1">
 <span class="material-symbols-outlined text-[16px]">local_fire_department</span>
-            Giờ Vàng Tuyển Chọn
+            Giờ vàng tuyển chọn
           </span>
 <span class="text-ink-muted font-body-sm text-body-sm hidden sm:inline">Số lượng giới hạn trong ngày</span>
 </div>

@@ -23,7 +23,7 @@ export function EditorialPillars({ pillars, className }: EditorialPillarsProps) 
                 <div className="mb-8 flex flex-col gap-2">
                     <Eyebrow tone="accent">Cách chợ vận hành</Eyebrow>
                     <Heading level={2} size="headline-2">
-                        Tuyển chọn kỹ, sống thật êm
+                        Tuyển chọn kỹ, sống êm
                     </Heading>
                 </div>
                 <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">

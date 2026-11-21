@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark'=> ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{-- Inline script to detect system dark mode preference and apply it immediately --}}
-    {{-- <script>
-            (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
-
-    if (appearance === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (prefersDark) {
-    document.documentElement.classList.add('dark');
-    }
-    }
-    })();
-    </script> --}}
+    {{-- Set the resolved theme before paint; `.dark` is a legacy mirror until Phase 11. --}}
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme') || 'system';
+                var dark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                var root = document.documentElement;
+                root.dataset.theme = dark ? 'dark' : 'light';
+                root.classList.toggle('dark', dark);
+                root.style.colorScheme = dark ? 'dark' : 'light';
+            } catch (error) {
+                document.documentElement.dataset.theme = 'light';
+            }
+        })();
+    </script>
 
     {{-- Inline style to set the HTML background color based on our theme in app.css --}}
     <style>
@@ -39,9 +40,6 @@
     <link rel="icon" href="/image/ShopnestLogoSVG.svg" type="image/svg+xml">
     <link rel="shopnest-icon" href="/image/ShopnestLogo.png">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     @routes
     @viteReactRefresh

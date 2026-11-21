@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import './legacy-tokens.css';
 @import './tokens.css';
+@import './tokens/primitive.css';
+@import './tokens/semantic.css';
+@import './tokens/scale.css';
+@import './fonts.css';
 @import './base.css';
 
 @custom-variant dark (&:is(.dark *));

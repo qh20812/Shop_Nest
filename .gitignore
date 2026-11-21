@@ -26,6 +26,7 @@ yarn-error.log
 /.vscode
 /.zed
 /public/docs
+/docs/ui/baseline/
 cacert.pem
 ANALYTICS_DATABASE_DESIGN.md
 DATATABLE_HTML_TO_PLAINTEXT_FIX.md

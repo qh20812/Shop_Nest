@@ -1,0 +1,84 @@
+/*
+ * Bảng Hiệu — element typography.
+ * Prose width is opt-in via .sn-prose; do not clamp every paragraph globally.
+ */
+
+@layer sn-base {
+    body {
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-base);
+        line-height: var(--sn-leading-normal);
+        color: var(--sn-color-text);
+    }
+
+    h1 {
+        font-size: var(--sn-text-3xl);
+        font-weight: var(--sn-weight-semibold);
+        line-height: var(--sn-leading-tight);
+        letter-spacing: var(--sn-tracking-tight);
+    }
+
+    h2 {
+        font-size: var(--sn-text-2xl);
+        font-weight: var(--sn-weight-semibold);
+        line-height: var(--sn-leading-snug);
+        letter-spacing: var(--sn-tracking-tight);
+    }
+
+    h3 {
+        font-size: var(--sn-text-xl);
+        font-weight: var(--sn-weight-semibold);
+        line-height: var(--sn-leading-snug);
+        letter-spacing: var(--sn-tracking-snug);
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-size: var(--sn-text-md);
+        font-weight: var(--sn-weight-semibold);
+        line-height: var(--sn-leading-snug);
+    }
+
+    a {
+        color: var(--sn-color-accent-text);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+    }
+
+    a:hover {
+        color: var(--sn-color-accent-hover);
+    }
+
+    strong {
+        font-weight: var(--sn-weight-semibold);
+    }
+
+    small {
+        font-size: var(--sn-text-xs);
+        color: var(--sn-color-text-muted);
+    }
+
+    code,
+    kbd,
+    samp,
+    pre {
+        font-family: var(--sn-font-sans);
+        font-variant-numeric: tabular-nums;
+    }
+
+    abbr[title] {
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid var(--sn-color-border);
+    }
+
+    ::selection {
+        background: var(--sn-color-selection);
+        color: var(--sn-color-text);
+    }
+}

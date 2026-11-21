@@ -1,0 +1,90 @@
+/*
+ * Bảng Hiệu — primitive palette.
+ *
+ * Only file allowed to contain raw colour values. Components must use
+ * semantic tokens from semantic.css.
+ */
+
+:root {
+    /* Neutral — giấy lạnh, dùng cho light mode */
+    --sn-neutral-0: #ffffff;
+    --sn-neutral-25: #fcfcfa;
+    --sn-neutral-50: #f7f7f4;
+    --sn-neutral-100: #f2f2ee;
+    --sn-neutral-150: #ecece7;
+    --sn-neutral-200: #e3e3dd;
+    --sn-neutral-300: #d2d2ca;
+    --sn-neutral-400: #a9aaa0;
+    --sn-neutral-500: #8e9086;
+    --sn-neutral-600: #6b6e62;
+    --sn-neutral-700: #53564b;
+    --sn-neutral-800: #3a3d34;
+    --sn-neutral-900: #262923;
+    --sn-neutral-950: #15160f;
+    --sn-neutral-1000: #0b0c0a;
+
+    /* Graphite — than, dùng cho dark mode */
+    --sn-graphite-50: #f1f2ea;
+    --sn-graphite-100: #d6d9cf;
+    --sn-graphite-200: #b4b8aa;
+    --sn-graphite-300: #8d9184;
+    --sn-graphite-350: #6e7466;
+    --sn-graphite-400: #5a5f54;
+    --sn-graphite-500: #3a4036;
+    --sn-graphite-600: #2b3028;
+    --sn-graphite-700: #242922;
+    --sn-graphite-800: #1c201a;
+    --sn-graphite-850: #151814;
+    --sn-graphite-900: #101210;
+    --sn-graphite-950: #0d0f0c;
+
+    /* Accent — cam đất (bảng hiệu) */
+    --sn-accent-50: #fdf1ec;
+    --sn-accent-100: #fae0d5;
+    --sn-accent-200: #f4c2ae;
+    --sn-accent-300: #ec9d7f;
+    --sn-accent-400: #e1744e;
+    --sn-accent-500: #d0552b;
+    --sn-accent-600: #c2410c;
+    --sn-accent-700: #9a3208;
+    --sn-accent-800: #7a2a0b;
+    --sn-accent-900: #61240c;
+
+    /* Success — xanh rêu */
+    --sn-success-50: #e9f4ee;
+    --sn-success-100: #d2e9dd;
+    --sn-success-200: #a6d3bd;
+    --sn-success-300: #6fb596;
+    --sn-success-400: #3f9573;
+    --sn-success-500: #1f6f4a;
+    --sn-success-600: #1a5c3d;
+    --sn-success-700: #154a32;
+    --sn-success-800: #103a27;
+
+    /* Warning — hổ phách tối */
+    --sn-warning-50: #fbf2de;
+    --sn-warning-100: #f6e3bb;
+    --sn-warning-200: #ecc97f;
+    --sn-warning-300: #dca93f;
+    --sn-warning-400: #bc8a12;
+    --sn-warning-500: #9a6200;
+    --sn-warning-600: #7a4e00;
+    --sn-warning-700: #5e3c00;
+
+    /* Danger — đỏ gạch */
+    --sn-danger-50: #fbeae8;
+    --sn-danger-100: #f7d2ce;
+    --sn-danger-200: #eea7a0;
+    --sn-danger-300: #e0786e;
+    --sn-danger-400: #cd4a3f;
+    --sn-danger-500: #b3261e;
+    --sn-danger-600: #8c1d18;
+    --sn-danger-700: #711713;
+
+    /* Dark-mode signal (đủ tương phản trên nền than) */
+    --sn-signal-success: #5fc79b;
+    --sn-signal-warning: #f0b44c;
+    --sn-signal-danger: #f08a80;
+    --sn-signal-accent: #ff8a5b;
+    --sn-signal-accent-hover: #ffa277;
+}

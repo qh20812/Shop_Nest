@@ -1,0 +1,144 @@
+/*
+ * Bảng Hiệu — typography, spacing, sizing, radius, shadow, motion, z-index.
+ * Geometry tokens are theme-independent; shadows get a dark override.
+ */
+
+:root {
+    /* Family — Be Vietnam Pro là duy nhất, self-host woff2 trong fonts.css */
+    --sn-font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --sn-font-numeric: var(--sn-font-sans);
+
+    /* Weight */
+    --sn-weight-regular: 400;
+    --sn-weight-medium: 500;
+    --sn-weight-semibold: 600;
+    --sn-weight-bold: 700;
+
+    /* Size */
+    --sn-text-2xs: 0.6875rem;
+    --sn-text-xs: 0.75rem;
+    --sn-text-sm: 0.8125rem;
+    --sn-text-base: 0.9375rem;
+    --sn-text-md: 1rem;
+    --sn-text-lg: 1.125rem;
+    --sn-text-xl: 1.375rem;
+    --sn-text-2xl: 1.75rem;
+    --sn-text-3xl: 2.25rem;
+    --sn-text-4xl: clamp(2.75rem, 3.5vw, 3.5rem);
+    --sn-text-display: clamp(3rem, 5.5vw, 4.75rem);
+
+    /* Line height */
+    --sn-leading-none: 1;
+    --sn-leading-tight: 1.08;
+    --sn-leading-snug: 1.22;
+    --sn-leading-normal: 1.5;
+    --sn-leading-relaxed: 1.65;
+
+    /* Tracking */
+    --sn-tracking-tight: -0.02em;
+    --sn-tracking-snug: -0.01em;
+    --sn-tracking-normal: 0;
+    --sn-tracking-wide: 0.06em;
+    --sn-tracking-wider: 0.1em;
+
+    /* Measure */
+    --sn-measure-prose: 65ch;
+    --sn-measure-lead: 46ch;
+
+    /* Spacing — cơ số 4px */
+    --sn-space-0: 0;
+    --sn-space-1: 0.25rem;
+    --sn-space-2: 0.5rem;
+    --sn-space-3: 0.75rem;
+    --sn-space-4: 1rem;
+    --sn-space-5: 1.25rem;
+    --sn-space-6: 1.5rem;
+    --sn-space-7: 1.75rem;
+    --sn-space-8: 2rem;
+    --sn-space-10: 2.5rem;
+    --sn-space-12: 3rem;
+    --sn-space-14: 3.5rem;
+    --sn-space-16: 4rem;
+    --sn-space-20: 5rem;
+    --sn-space-24: 6rem;
+    --sn-space-32: 8rem;
+
+    /* Rhythm */
+    --sn-gutter: clamp(1rem, 2.5vw, 2rem);
+    --sn-section: clamp(2.5rem, 5vw, 4.5rem);
+    --sn-section-tight: clamp(1.5rem, 3vw, 2.5rem);
+    --sn-container: 90rem;
+    --sn-container-narrow: 65rem;
+    --sn-container-form: 26.25rem;
+
+    /* Control */
+    --sn-control-sm: 2rem;
+    --sn-control-md: 2.5rem;
+    --sn-control-lg: 3rem;
+    --sn-tap: 2.75rem;
+
+    /* Icon */
+    --sn-icon-xs: 0.875rem;
+    --sn-icon-sm: 1rem;
+    --sn-icon-md: 1.25rem;
+    --sn-icon-lg: 1.5rem;
+
+    /* Shell */
+    --sn-header: 3.5rem;
+    --sn-topbar: 3.5rem;
+    --sn-sidebar: 14.5rem;
+    --sn-account-rail: 13.75rem;
+    --sn-filter-rail: 16.5rem;
+
+    /* Chat */
+    --sn-chat-launcher: 3.5rem;
+    --sn-chat-panel: 23.75rem;
+    --sn-chat-panel-height: min(40rem, calc(100dvh - 3rem));
+    --sn-chat-sheet-height: 85dvh;
+
+    /* Avatar */
+    --sn-avatar-sm: 1.75rem;
+    --sn-avatar-md: 2.25rem;
+    --sn-avatar-lg: 3rem;
+
+    /* Radius */
+    --sn-radius-none: 0;
+    --sn-radius-xs: 0.125rem;
+    --sn-radius-sm: 0.25rem;
+    --sn-radius-md: 0.375rem;
+    --sn-radius-lg: 0.5rem;
+    --sn-radius-xl: 0.75rem;
+    --sn-radius-pill: 9999px;
+
+    /* Shadow — chỉ cho lớp nổi */
+    --sn-shadow-popover: 0 10px 30px -18px rgb(21 22 15 / 0.28);
+    --sn-shadow-overlay: 0 24px 64px -32px rgb(21 22 15 / 0.42);
+
+    /* Motion */
+    --sn-dur-instant: 90ms;
+    --sn-dur-fast: 150ms;
+    --sn-dur-base: 180ms;
+    --sn-dur-slow: 240ms;
+    --sn-dur-reveal: 320ms;
+    --sn-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --sn-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --sn-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --sn-stagger: 40ms;
+
+    /* Z-index */
+    --sn-z-base: 0;
+    --sn-z-raised: 10;
+    --sn-z-sticky: 20;
+    --sn-z-header: 30;
+    --sn-z-dropdown: 40;
+    --sn-z-chat: 45;
+    --sn-z-overlay: 50;
+    --sn-z-modal: 60;
+    --sn-z-toast: 70;
+    --sn-z-tooltip: 80;
+}
+
+[data-theme='dark'] {
+    --sn-shadow-popover: 0 10px 30px -18px rgb(0 0 0 / 0.6);
+    --sn-shadow-overlay: 0 24px 64px -32px rgb(0 0 0 / 0.75);
+}

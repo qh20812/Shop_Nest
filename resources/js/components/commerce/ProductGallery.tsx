@@ -2,7 +2,9 @@ import { Heart } from 'lucide-react';
 import * as React from 'react';
 
 import { IconButton } from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type GalleryImage = {
     id?: number | string;
@@ -30,35 +32,29 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
     }, [activeImage?.url]);
 
     return (
-        <div className={cn('flex flex-col gap-3', className)}>
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-surface border border-border bg-warm-porcelain p-2">
+        <div className={cx(styles.gallery, className)}>
+            <div className={styles.galleryMain}>
                 {imageUrl ? (
-                    <img
-                        src={imageUrl}
-                        alt={activeImage?.alt ?? productName}
-                        onError={() => setImageError(true)}
-                        className="size-full rounded-card object-cover"
-                    />
+                    <img src={imageUrl} alt={activeImage?.alt ?? productName} onError={() => setImageError(true)} className={styles.galleryImage} />
                 ) : (
-                    <div className="flex size-full items-center justify-center rounded-card bg-raw-linen text-body-sm text-ink-muted">
-                        Chưa có ảnh sản phẩm
-                    </div>
+                    <div className={styles.galleryEmpty}>Chưa có ảnh sản phẩm</div>
                 )}
+
                 {onToggleWishlist && (
                     <IconButton
                         label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
                         variant="secondary"
                         size="md"
-                        className="absolute top-4 right-4"
+                        className={styles.galleryWishlist}
                         onClick={onToggleWishlist}
                     >
-                        <Heart aria-hidden="true" className={wishlisted ? 'fill-lacquer-red text-lacquer-red' : undefined} />
+                        <Heart aria-hidden="true" className={cx(styles.icon, wishlisted && styles.wishlisted)} />
                     </IconButton>
                 )}
             </div>
 
             {images.length > 1 && (
-                <div className="grid grid-cols-5 gap-2">
+                <div className={styles.galleryThumbs}>
                     {images.slice(0, 5).map((image, index) => (
                         <button
                             key={image.id ?? image.url}
@@ -66,12 +62,10 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
                             aria-label={`Xem ảnh ${index + 1}`}
                             aria-pressed={index === activeIndex}
                             onClick={() => onChange(index)}
-                            className={cn(
-                                'focus-ring aspect-square overflow-hidden rounded-control border bg-warm-porcelain p-0.5 transition-colors',
-                                index === activeIndex ? 'border-lacquer-red' : 'border-border hover:border-ink-muted',
-                            )}
+                            className={styles.galleryThumb}
+                            data-active={index === activeIndex ? 'true' : undefined}
                         >
-                            <img src={image.url} alt={image.alt ?? `${productName} ${index + 1}`} className="size-full rounded-chip object-cover" />
+                            <img src={image.url} alt={image.alt ?? `${productName} ${index + 1}`} className={styles.galleryThumbImage} />
                         </button>
                     ))}
                 </div>

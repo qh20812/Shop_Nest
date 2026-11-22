@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CreditCard, Lock, RotateCcw, ShieldCheck, Store, Truck, Zap } from 'lucide-react';
+import { Lock, RotateCcw, ShieldCheck, Truck } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
@@ -7,14 +7,15 @@ import { BrandSpotlight } from '@/components/storefront/BrandSpotlight';
 import { CategoryShelf, type CategoryItem } from '@/components/storefront/CategoryShelf';
 import { EditorialPillars } from '@/components/storefront/EditorialPillars';
 import { FlashSaleModule } from '@/components/storefront/FlashSaleModule';
-import { HeroEditorial, HeroInlineImage } from '@/components/storefront/HeroEditorial';
+import { HeroEditorial } from '@/components/storefront/HeroEditorial';
 import { ProductShelf } from '@/components/storefront/ProductShelf';
 import { TrustStrip } from '@/components/storefront/TrustStrip';
-import { UtilityStrip } from '@/components/storefront/UtilityStrip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { usePageLoading } from '@/hooks/usePageLoading';
 import type { ProductCardModel } from '@/types/commerce';
+
+import styles from './Home.module.css';
 
 interface Category {
     id: number;
@@ -93,13 +94,6 @@ const anchorCategoryNames = [
     'Làm đẹp & chăm sóc',
 ];
 
-const utilityItems = [
-    { icon: Truck, label: 'Miễn phí vận chuyển', description: 'Đơn từ 299.000 ₫, giao toàn quốc' },
-    { icon: CreditCard, label: 'Trả góp 0%', description: 'Duyệt online trong 3 phút' },
-    { icon: Store, label: 'Shop Việt', description: 'Nhà bán đã kiểm duyệt' },
-    { icon: Zap, label: 'Giao nhanh 2h', description: 'Nội thành Hà Nội & TP.HCM' },
-];
-
 const trustItems = [
     {
         icon: ShieldCheck,
@@ -125,19 +119,16 @@ const trustItems = [
 
 const pillars = [
     {
-        eyebrow: 'Tuyển chọn',
         title: 'Mỗi món đều có lý do',
         description: 'Sáu nhóm ngành thiết yếu, chọn theo nhu cầu của tổ ấm Việt.',
         image: 'https://picsum.photos/seed/shopnest-curation/900/700',
     },
     {
-        eyebrow: 'Minh bạch',
         title: 'Thông tin rõ ràng',
         description: 'Nguồn gốc, bảo hành và chính sách đổi trả hiển thị trước khi mua.',
         image: 'https://picsum.photos/seed/shopnest-trust/700/700',
     },
     {
-        eyebrow: 'Đồng hành',
         title: 'Hỗ trợ đến khi nhận',
         description: 'Từ lúc chọn món đến khi nhận hàng, đội hỗ trợ trả lời trong chat.',
         image: 'https://picsum.photos/seed/shopnest-support/900/700',
@@ -163,8 +154,7 @@ function toProductCard(product: Product): ProductCardModel {
         name: product.name,
         image: normalizeImage(product.image),
         imageAlt: product.name,
-        shopName: product.brand ?? 'Shop Việt',
-        shopBadge: 'shop-viet',
+        shopName: '',
         price: product.price,
         compareAt: product.oldPrice,
         rating: product.rating ?? undefined,
@@ -227,32 +217,29 @@ export default function Index() {
 
     if (isLoading) {
         return (
-            <StorefrontLayout>
+            <StorefrontLayout pinLight={false}>
                 <HomeSkeleton />
             </StorefrontLayout>
         );
     }
 
     return (
-        <StorefrontLayout>
+        <StorefrontLayout pinLight={false}>
             <Head title="ShopNest. Mọi thứ cho tổ ấm Việt" />
 
             <HeroEditorial
                 eyebrow="Mọi thứ cho tổ ấm Việt"
                 title={
                     <>
-                        Chọn <HeroInlineImage src={heroImages[0]?.src ?? fallbackHeroImages[0].src} alt={heroImages[0]?.alt ?? 'Laptop'} /> đồ kỹ,
+                        Chọn đồ kỹ,
                         <br />
-                        sống <HeroInlineImage src={heroImages[1]?.src ?? fallbackHeroImages[1].src} alt={heroImages[1]?.alt ?? 'Bàn ăn'} /> êm.
+                        sống êm.
                     </>
                 }
                 subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
-                cta={{ label: 'Xem chợ hôm nay', href: '/search' }}
+                cta={{ label: 'Xem chợ', href: '/search' }}
                 images={heroImages}
-                trust={['1.200+ Shop Việt', '100% kiểm định nguồn gốc']}
             />
-
-            <UtilityStrip items={utilityItems} />
 
             <CategoryShelf categories={filledCategories} />
 
@@ -268,7 +255,6 @@ export default function Index() {
 
             <ProductShelf
                 id="ban-chay"
-                eyebrow="Được chọn nhiều"
                 title="Sản phẩm bán chạy"
                 description="Xếp theo số lượng đã bán trên các đơn không huỷ."
                 products={bestSellerCards}
@@ -280,7 +266,6 @@ export default function Index() {
 
             <ProductShelf
                 id="goi-y"
-                eyebrow="Dành cho bạn"
                 title="Gợi ý cho tổ ấm"
                 description="Chọn theo nhu cầu hôm nay: làm việc, nấu ăn, chăm bé hay chăm mình."
                 products={suggestedCards}
@@ -301,29 +286,29 @@ export default function Index() {
 
 function HomeSkeleton() {
     return (
-        <PageContainer className="py-8 md:py-12">
-            <div className="grid gap-8 lg:grid-cols-12">
-                <div className="flex flex-col gap-4 lg:col-span-7">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-16 w-4/5" />
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-12 w-48" />
+        <PageContainer className={styles.skeletonPage}>
+            <div className={styles.skeletonGrid}>
+                <div className={styles.skeletonCopy}>
+                    <Skeleton className={styles.skeletonLineShort} />
+                    <Skeleton className={styles.skeletonLine} />
+                    <Skeleton className={styles.skeletonLineHalf} />
+                    <Skeleton className={styles.skeletonLine} />
+                    <Skeleton className={styles.skeletonCta} />
                 </div>
-                <div className="grid grid-cols-2 gap-3 lg:col-span-5">
-                    <Skeleton className="col-span-2 aspect-[16/9] h-auto" />
-                    <Skeleton className="aspect-[4/3] h-auto" />
-                    <Skeleton className="aspect-[4/3] h-auto" />
+                <div className={styles.skeletonMedia}>
+                    <Skeleton className={styles.skeletonLead} />
+                    <Skeleton className={styles.skeletonThumb} />
+                    <Skeleton className={styles.skeletonThumb} />
                 </div>
             </div>
-            <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <div className={styles.skeletonCategoryGrid}>
                 {Array.from({ length: 6 }).map((_, index) => (
-                    <Skeleton key={index} className="aspect-square h-auto" />
+                    <Skeleton key={index} className={styles.skeletonCategory} />
                 ))}
             </div>
-            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={styles.skeletonProductGrid}>
                 {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className="aspect-[4/5] h-auto" />
+                    <Skeleton key={index} className={styles.skeletonProduct} />
                 ))}
             </div>
         </PageContainer>

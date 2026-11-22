@@ -1,6 +1,8 @@
 import { X } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type ActiveFilter = {
     key: string;
@@ -21,28 +23,25 @@ export function ActiveFilters({ filters, onRemove, onClear, className }: ActiveF
     }
 
     return (
-        <div className={cn('flex flex-wrap items-center gap-2', className)}>
-            <span className="text-label-micro font-semibold tracking-[0.12em] text-ink-faint uppercase">Đang lọc</span>
+        <div className={cx(styles.activeFilters, className)}>
+            <span className={styles.activeLabel}>Đang lọc</span>
             {filters.map((filter) => (
-                <span
-                    key={filter.key}
-                    className="inline-flex items-center gap-1 rounded-chip border border-border bg-warm-porcelain px-2.5 py-1 text-body-sm text-ink"
-                >
+                <span key={filter.key} className={styles.activeChip}>
                     <span>
                         {filter.label}
-                        {filter.value && <span className="ml-1 font-semibold text-lacquer-red">{filter.value}</span>}
+                        {filter.value && <span className={styles.activeChipValue}>{filter.value}</span>}
                     </span>
                     <button
                         type="button"
                         aria-label={`Bỏ lọc ${filter.label}`}
-                        className="focus-ring rounded-chip p-0.5 text-ink-muted transition-colors hover:text-lacquer-red"
+                        className={styles.activeChipButton}
                         onClick={() => onRemove(filter.key)}
                     >
-                        <X aria-hidden="true" className="size-3.5" />
+                        <X aria-hidden="true" className={styles.activeChipIcon} />
                     </button>
                 </span>
             ))}
-            <button type="button" className="text-body-sm text-ink-muted underline-offset-4 hover:text-lacquer-red hover:underline" onClick={onClear}>
+            <button type="button" className={styles.activeClear} onClick={onClear}>
                 Xoá tất cả
             </button>
         </div>

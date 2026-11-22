@@ -1,0 +1,103 @@
+.skeletonPage {
+    padding-block: var(--sn-space-8) var(--sn-space-12);
+}
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-8);
+}
+
+.skeletonCopy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+}
+
+.skeletonMedia {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sn-space-3);
+}
+
+.skeletonLead {
+    grid-column: span 2;
+    aspect-ratio: 16 / 9;
+    height: auto;
+}
+
+.skeletonCategoryGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sn-space-4);
+    margin-top: var(--sn-space-14);
+}
+
+.skeletonProductGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-5);
+    margin-top: var(--sn-space-14);
+}
+
+.skeletonLine,
+.skeletonLineShort,
+.skeletonLineHalf {
+    height: 1rem;
+}
+
+.skeletonLine {
+    width: 100%;
+}
+
+.skeletonLineShort {
+    width: 40%;
+}
+
+.skeletonLineHalf {
+    width: 70%;
+}
+
+.skeletonCta {
+    width: 10rem;
+    height: 3rem;
+}
+
+.skeletonThumb {
+    aspect-ratio: 4 / 3;
+    height: auto;
+}
+
+.skeletonCategory {
+    aspect-ratio: 1;
+    height: auto;
+}
+
+.skeletonProduct {
+    aspect-ratio: 4 / 5;
+    height: auto;
+}
+
+@media (min-width: 640px) {
+    .skeletonCategoryGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .skeletonProductGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .skeletonGrid {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+
+    .skeletonCategoryGrid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .skeletonProductGrid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

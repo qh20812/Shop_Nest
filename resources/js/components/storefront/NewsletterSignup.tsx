@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './storefront.module.css';
 
 type NewsletterSignupProps = {
     onSubmit?: (email: string) => void | Promise<void>;
@@ -26,7 +28,7 @@ export function NewsletterSignup({ onSubmit, loading = false, className }: Newsl
     };
 
     return (
-        <form onSubmit={handleSubmit} className={cn('flex w-full flex-col gap-2 sm:flex-row', className)}>
+        <form onSubmit={handleSubmit} className={cx(styles.newsletterForm, className)}>
             <Input
                 type="email"
                 value={email}
@@ -36,7 +38,7 @@ export function NewsletterSignup({ onSubmit, loading = false, className }: Newsl
                 autoComplete="email"
                 required
             />
-            <Button type="submit" loading={loading} rightIcon={Send} className="shrink-0">
+            <Button type="submit" loading={loading} rightIcon={Send} className={styles.newsletterButton}>
                 Đăng ký
             </Button>
         </form>

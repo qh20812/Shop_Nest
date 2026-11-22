@@ -2,13 +2,13 @@ import { Link } from '@inertiajs/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import * as React from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { IconButton } from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 import type { ProductCardModel } from '@/types/commerce';
 
 import { Price } from './Price';
 import { Rating } from './Rating';
+import styles from './commerce.module.css';
 
 type ProductCardProps = {
     product: ProductCardModel;
@@ -21,12 +21,11 @@ type ProductCardProps = {
 };
 
 const badgeLabels = {
-    sale: 'Giảm giá',
     new: 'Mới',
     'fast-ship': 'Giao nhanh',
     official: 'Chính hãng',
     'low-stock': 'Sắp hết',
-};
+} as const;
 
 export function ProductCard({
     product,
@@ -40,126 +39,83 @@ export function ProductCard({
     const href = `/product/${product.id}`;
     const [imageSrc, setImageSrc] = React.useState(product.image);
     const isOutOfStock = product.stock === 'out';
+    const badgeItems = (product.badges ?? []).filter((badge) => badge !== 'sale');
 
     React.useEffect(() => {
         setImageSrc(product.image);
     }, [product.image]);
-    const discount = product.compareAt && product.compareAt > product.price ? Math.round((1 - product.price / product.compareAt) * 100) : null;
 
     return (
-        <article
-            className={cn(
-                'group flex w-full flex-col rounded-card border border-border bg-warm-porcelain p-3 transition-colors duration-150 ease-nep hover:border-lacquer-red/40',
-                variant === 'wishlist' && 'overflow-hidden p-0',
-                className,
-            )}
-        >
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-card bg-raw-linen">
-                <Link href={href} aria-label={product.name}>
-                    <img
-                        src={imageSrc}
-                        alt={product.imageAlt ?? product.name}
-                        loading={priority ? 'eager' : 'lazy'}
-                        onError={() => setImageSrc('/image/default-product.png')}
-                        className="size-full object-cover transition-transform duration-300 ease-nep group-hover:scale-[1.02]"
-                    />
+        <article className={cx(styles.productCard, className)} data-variant={variant}>
+            <Link href={href} className={styles.productMedia} aria-label={product.name}>
+                <img
+                    src={imageSrc}
+                    alt={product.imageAlt ?? product.name}
+                    loading={priority ? 'eager' : 'lazy'}
+                    onError={() => setImageSrc('/image/default-product.png')}
+                    className={styles.productImage}
+                />
+            </Link>
+
+            <div className={styles.productBody}>
+                {product.shopName ? <span className={styles.productShop}>{product.shopName}</span> : null}
+
+                <Link href={href}>
+                    <h3 className={styles.productTitle}>{product.name}</h3>
                 </Link>
 
-                <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1.5">
-                    {discount !== null && discount > 0 && (
-                        <Badge tone="accent" size="sm">
-                            -{discount}%
-                        </Badge>
-                    )}
-                    {product.badges
-                        ?.filter((badge) => badge !== 'sale')
-                        .slice(0, 2)
-                        .map((badge) => (
-                            <Badge key={badge} tone={badge === 'low-stock' ? 'warning' : 'neutral'} size="sm">
-                                {badgeLabels[badge]}
-                            </Badge>
+                {(badgeItems.length > 0 || product.stock === 'low') && (
+                    <div className={styles.productBadgeList}>
+                        {badgeItems.map((badge) => (
+                            <span key={badge}>{badgeLabels[badge as keyof typeof badgeLabels]}</span>
                         ))}
-                    {product.stock === 'low' && !product.badges?.includes('low-stock') && (
-                        <Badge tone="warning" size="sm">
-                            Sắp hết
-                        </Badge>
-                    )}
-                </div>
-
-                {onToggleWishlist && (
-                    <IconButton
-                        label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
-                        size="sm"
-                        variant="secondary"
-                        className="absolute top-2.5 right-2.5"
-                        onClick={() => onToggleWishlist(product)}
-                    >
-                        <Heart aria-hidden="true" className={wishlisted ? 'fill-lacquer-red text-lacquer-red' : undefined} />
-                    </IconButton>
-                )}
-
-                {isOutOfStock && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-ink/35">
-                        <Badge tone="ink" size="md">
-                            Hết hàng
-                        </Badge>
+                        {product.stock === 'low' && !badgeItems.includes('low-stock') && <span>Sắp hết</span>}
                     </div>
                 )}
-            </div>
 
-            <div className={cn('flex flex-1 flex-col pt-3', variant === 'wishlist' && 'px-3 pb-3')}>
-                <div className="mb-1 flex items-center gap-1.5">
-                    <Badge tone="accent" size="sm">
-                        {product.shopBadge === 'official' ? 'Chính hãng' : product.shopBadge === 'verified' ? 'Đã duyệt' : 'Shop Việt'}
-                    </Badge>
-                    <span className="truncate text-body-sm text-ink-muted">{product.shopName}</span>
-                </div>
+                {variant !== 'compact' && product.metadata ? <span className={styles.productMeta}>{product.metadata}</span> : null}
 
-                <Link href={href} className="focus-ring rounded-chip">
-                    <h3
-                        className={cn(
-                            'line-clamp-2 text-body-sm leading-snug font-semibold text-ink transition-colors group-hover:text-lacquer-red',
-                            variant === 'compact' && 'text-body-sm',
+                {typeof product.rating === 'number' ? (
+                    <div>
+                        <Rating value={product.rating} count={product.reviewCount} compact />
+                    </div>
+                ) : null}
+
+                <div className={styles.productFooter}>
+                    <Price value={product.price} compareAt={product.compareAt} size={variant === 'compact' ? 'sm' : 'md'} />
+
+                    <div className={styles.productActions}>
+                        {onToggleWishlist ? (
+                            <IconButton
+                                label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => onToggleWishlist(product)}
+                            >
+                                <Heart aria-hidden="true" className={cx(styles.icon, wishlisted && styles.wishlisted)} />
+                            </IconButton>
+                        ) : null}
+
+                        {variant === 'wishlist' ? (
+                            <button type="button" disabled={isOutOfStock} onClick={() => onAddToCart?.(product)} className={styles.productAdd}>
+                                <ShoppingCart aria-hidden="true" className={styles.productAddIcon} />
+                                Thêm vào giỏ
+                            </button>
+                        ) : (
+                            <IconButton
+                                label={isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+                                size="sm"
+                                variant="secondary"
+                                disabled={isOutOfStock}
+                                onClick={() => onAddToCart?.(product)}
+                            >
+                                <ShoppingCart aria-hidden="true" className={styles.icon} />
+                            </IconButton>
                         )}
-                    >
-                        {product.name}
-                    </h3>
-                </Link>
-
-                {variant !== 'compact' && product.metadata && (
-                    <p className="mt-1.5 line-clamp-1 rounded-chip bg-raw-linen/60 p-1.5 font-mono text-label-code text-ink-muted">
-                        {product.metadata}
-                    </p>
-                )}
-
-                <div className="mt-2 flex items-center gap-2 text-body-sm text-ink-muted">
-                    {typeof product.rating === 'number' && <Rating value={product.rating} count={product.reviewCount} compact />}
+                    </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2.5">
-                    <Price value={product.price} compareAt={product.compareAt} size={variant === 'compact' ? 'sm' : 'md'} showDiscount={false} />
-                    {variant === 'wishlist' ? (
-                        <button
-                            type="button"
-                            disabled={isOutOfStock}
-                            onClick={() => onAddToCart?.(product)}
-                            className="inline-flex h-control-sm items-center justify-center gap-1.5 rounded-control border border-border bg-transparent px-3 text-body-sm font-medium text-ink transition-colors hover:bg-lacquer-wash disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <ShoppingCart aria-hidden="true" className="size-4" />
-                            Thêm vào giỏ
-                        </button>
-                    ) : (
-                        <IconButton
-                            label={isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
-                            size="sm"
-                            variant="secondary"
-                            disabled={isOutOfStock}
-                            onClick={() => onAddToCart?.(product)}
-                        >
-                            <ShoppingCart aria-hidden="true" />
-                        </IconButton>
-                    )}
-                </div>
+                {isOutOfStock ? <span className={styles.productOut}>Hết hàng</span> : null}
             </div>
         </article>
     );

@@ -13,12 +13,16 @@ import Textarea from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Heading, Text } from '@/components/ui/typography';
 
+import styles from './Contact.module.css';
+
 const contactItems = [
     { icon: MapPin, title: 'Địa chỉ', value: 'Số 18, Ngõ 42, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội' },
     { icon: Phone, title: 'Điện thoại', value: '1900 6886', href: 'tel:19006886' },
     { icon: Mail, title: 'Email', value: 'hotro@shopnest.vn', href: 'mailto:hotro@shopnest.vn' },
-    { icon: Clock, title: 'Giờ làm việc', value: 'Thứ 2 – Thứ 6: 8:00 – 18:00 · Thứ 7 – CN: 9:00 – 17:00' },
+    { icon: Clock, title: 'Giờ làm việc', value: 'Thứ 2 - Thứ 6: 8:00 - 18:00, Thứ 7 - CN: 9:00 - 17:00' },
 ];
+
+const insetCardVariant = 'inset' as const;
 
 export default function Contact() {
     const { success } = useToast();
@@ -36,27 +40,27 @@ export default function Contact() {
     };
 
     return (
-        <StorefrontLayout compactFooter>
+        <StorefrontLayout compactFooter pinLight={false}>
             <Head title="Liên hệ ShopNest" />
 
-            <PageContainer className="py-section">
+            <PageContainer className={styles.page}>
                 <PageHeader
                     eyebrow="Liên hệ"
                     title="Cần hỏi một điều rõ ràng?"
                     description="Gửi tin nhắn hoặc gọi tổng đài. Chúng tôi trả lời trong giờ làm việc."
                 />
 
-                <div className="mt-8 grid gap-8 lg:grid-cols-12">
-                    <Card className="lg:col-span-7" padding="lg">
+                <div className={styles.grid}>
+                    <Card className={styles.formCard} padding="lg">
                         <Heading level={2} size="headline-2">
                             Gửi tin nhắn
                         </Heading>
-                        <Text size="body-sm" tone="muted" className="mt-1">
+                        <Text size="body-sm" tone="muted">
                             Càng cụ thể càng dễ hỗ trợ.
                         </Text>
 
-                        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <form onSubmit={handleSubmit} className={styles.form}>
+                            <div className={styles.formGrid}>
                                 <FormField label="Họ và tên" required>
                                     <Input placeholder="Nguyễn Thu Hà" autoComplete="name" required />
                                 </FormField>
@@ -70,30 +74,32 @@ export default function Contact() {
                             <FormField label="Nội dung" required>
                                 <Textarea rows={5} placeholder="Bạn cần ShopNest hỗ trợ điều gì?" required />
                             </FormField>
-                            <Button type="submit" loading={submitting} rightIcon={Send} className="w-full sm:w-fit">
-                                Gửi tin nhắn
-                            </Button>
+                            <div className={styles.formActions}>
+                                <Button type="submit" loading={submitting} rightIcon={Send}>
+                                    Gửi tin nhắn
+                                </Button>
+                            </div>
                         </form>
                     </Card>
 
-                    <div className="flex flex-col gap-4 lg:col-span-5">
+                    <div className={styles.infoList}>
                         {contactItems.map((item) => {
                             const Icon = item.icon;
 
                             return (
-                                <Card key={item.title} variant="inset" padding="md">
-                                    <div className="flex items-start gap-3">
-                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-warm-porcelain text-lacquer-red">
-                                            <Icon aria-hidden="true" className="size-4" />
+                                <Card key={item.title} variant={insetCardVariant} padding="md" className={styles.infoCard}>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.infoIcon}>
+                                            <Icon aria-hidden="true" />
                                         </span>
-                                        <div>
-                                            <h3 className="text-body-sm font-semibold text-ink">{item.title}</h3>
+                                        <div className={styles.infoText}>
+                                            <h3 className={styles.infoTitle}>{item.title}</h3>
                                             {item.href ? (
-                                                <a href={item.href} className="text-body-sm text-ink-muted transition-colors hover:text-lacquer-red">
+                                                <a href={item.href} className={styles.infoValue}>
                                                     {item.value}
                                                 </a>
                                             ) : (
-                                                <p className="text-body-sm text-ink-muted">{item.value}</p>
+                                                <p className={styles.infoValue}>{item.value}</p>
                                             )}
                                         </div>
                                     </div>

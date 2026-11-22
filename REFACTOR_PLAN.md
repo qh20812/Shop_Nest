@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, **3 hoàn tất kỹ thuật** (2026-11-23); Phase 4 **chưa build**. Còn review thủ công 5 ảnh legacy + dialog workspace khi có phiên đăng nhập; 4/5 trang legacy đã có feature test render pass.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3 hoàn tất; **Phase 4 hoàn tất** (2026-11-23) — 8 page storefront/auth-free migrated, 7/8 page đã verify runtime, `ProductDetail` chờ dữ liệu sản phẩm để chụp; Phase 5 chưa build.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -158,7 +158,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; **143 sau Phase 3**        | Giữ làm ratchet đến Phase 11                              |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; **112 sau Phase 4**        | Giữ làm ratchet đến Phase 11                              |
 | `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
@@ -1540,6 +1540,9 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 **DoD:** 8 trang hợp lệ ở 375/390/768/1024/1440; ảnh không nhảy layout (đặt `width/height` hoặc `aspect-ratio`); dark mode đạt; không còn class Tailwind/Nếp trong file đã migrate; mỗi page có `*.module.css`; allowlist giảm tương ứng; `types` + `build` + `check:css` sạch.
 
+> **Trạng thái 2026-11-23:** 8 page đã migrate; `Price` bỏ `cva`; thêm `Countdown`; `ProductCard`/`ShopIdentity` bỏ badge xác thực giả, badge ra khỏi ảnh; Home bỏ UtilityStrip/voucher/hero trust/số liệu giả/01-02-03, còn 7 section + 2 eyebrow; Search rail 264px sticky, mobile sheet, filter group rỗng bị ẩn; Legal viết lại tiếng Việt prose 65ch; copy en-dash đã xoá.
+> Allowlist 143 → **112**; `check:css` pass (167 file checked); `types`/`format:check`/`build` pass; CSS bundle **130,77 kB**. Runtime: 7 trang guest verify light/dark, không tràn ngang ở 375/390/768/1024/1440; `ProductDetail` chưa có product trong DB để chụp, cần review khi có dữ liệu mẫu.
+
 ---
 
 ### Phase 5 — Auth (7 page)
@@ -2004,6 +2007,25 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-23 — Phase 4 hoàn tất (Storefront):**
+
+- Migrate 8 page: `Home/Index`, `Home/Search`, `Customer/ProductDetail`, `Home/About`, `Home/Contact`, `Legal/{Terms,PrivacyPolicy,SellingPolicy}`.
+- Tạo CSS Modules: `Home/Home.module.css`, `Home/Search.module.css`, `Customer/ProductDetail.module.css`, `Home/About.module.css`, `Home/Contact.module.css`, `components/storefront/storefront.module.css`, `components/commerce/commerce.module.css`.
+- Home: bỏ `UtilityStrip` + voucher band + trust strip trong hero; bỏ số liệu `1.200+`/`100%`/`299k`/`3 phút`/`2h`; bỏ `01/02/03`; CTA đổi thành “Xem chợ” (2 từ); còn 7 section, 2 eyebrow; editorial media cao đều 13rem; giữ BrandSpotlight + EditorialPillars đã redesign.
+- Search: rail 264px sticky dưới header, mobile bottom sheet, ẩn filter group rỗng, bỏ en-dash trong khoảng giá; page grid `264px + 1fr`.
+- ProductDetail: 7/5 gallery/buy box, buy box sticky, tab bar sticky, content 8/4; bỏ `verified: true` giả, bỏ badge “Shop Việt” luôn hiện; mô tả dùng `.description` thay arbitrary utilities; trust còn policy thật.
+- Commerce: `Price` bỏ `cva`; `ProductCard` bỏ badge/pill trên ảnh và hover scale, badge chuyển thành text; `ShopIdentity` bỏ badge xác thực; `Countdown` vào scope; `FilterRail` có variant sheet; `Pagination` giữ `div role=navigation`.
+- Legal: viết lại toàn bộ nội dung tiếng Việt, prose 65ch, bỏ card bao ngoài.
+- Copy: xoá en-dash/em-dash khỏi page/component Phase 4; giữ hyphen.
+- Allowlist 143 → **112** (31 entry Phase 4). `check:css` pass: 167 file checked, 112 allowlisted.
+- `types`, `format:check`, `build` pass; CSS bundle `app.css` **130,77 kB** (từ 186,57 kB).
+- Runtime verify bằng CDP/Edge:
+  - Light: `/`, `/search`, `/about`, `/contact`, `/terms` screenshot; Home hero 2 dòng, 7 section, 2 eyebrow; Search rail 264px; Contact form 2 cột; Legal prose đọc tốt.
+  - Dark: 7 trang guest có main bg `rgb(13,15,12)`, text `rgb(241,242,234)`; không còn chữ tối trên nền tối.
+  - Responsive: 375/390/768/1024/1440 cho 7 page, `scrollWidth === innerWidth`, không tràn ngang.
+  - Mobile filter sheet mở đúng (dialog count 1, scrim, nút đóng).
+- Chưa verify runtime `ProductDetail` vì DB hiện không có product (`/product/1` 404); cần dữ liệu mẫu để chụp/so visual. Code/types/build đã pass.
 
 **2026-11-23 — Phase 3 hotfix hoàn tất:**
 

@@ -6,8 +6,10 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TextLink } from '@/components/ui/text-link';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 import type { ProductCardModel } from '@/types/commerce';
+
+import styles from './storefront.module.css';
 
 type ProductShelfProps = {
     title: React.ReactNode;
@@ -41,18 +43,18 @@ export function ProductShelf({
     const fallbackAction = (
         <TextLink href="/search" tone="muted" underline={false}>
             Xem tất cả
-            <ArrowRight aria-hidden="true" className="size-4" />
+            <ArrowRight aria-hidden="true" className={styles.inlineIcon} />
         </TextLink>
     );
 
     return (
-        <section id={id} className={cn('py-10 md:py-14', className)}>
+        <section id={id} className={cx(styles.productShelf, className)}>
             <PageContainer>
                 <SectionHeader eyebrow={eyebrow} title={title} description={description} action={action ?? fallbackAction} />
                 {products.length === 0 ? (
                     <EmptyState icon={Package} title={emptyTitle} description={emptyDescription} />
                 ) : variant === 'rail' ? (
-                    <div className="scrollbar-hide -mx-1 flex gap-5 overflow-x-auto px-1 pb-2">
+                    <div className={styles.shelfRail}>
                         {products.map((product, index) => (
                             <ProductCard
                                 key={product.id}
@@ -60,12 +62,12 @@ export function ProductShelf({
                                 priority={index < 2}
                                 onAddToCart={onAddToCart}
                                 onToggleWishlist={onToggleWishlist}
-                                className="w-64 shrink-0"
+                                className={styles.shelfRailCard}
                             />
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className={styles.shelfGrid}>
                         {products.map((product, index) => (
                             <ProductCard
                                 key={product.id}

@@ -19,6 +19,8 @@ import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 import { formatNumber } from '@/lib/format';
 
+import styles from './ProductDetail.module.css';
+
 interface AttributeValue {
     attribute_value_id: number;
     attribute_id: number;
@@ -311,15 +313,15 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
         rating: review.rating,
         comment: review.comment,
         createdAt: review.created_at,
-        verified: true,
     }));
 
     return (
-        <StorefrontLayout>
+        <StorefrontLayout pinLight={false}>
             <Head title={product.name} />
 
-            <PageContainer className="py-6 md:py-8">
+            <PageContainer className={styles.page}>
                 <Breadcrumbs
+                    className={styles.breadcrumbs}
                     items={[
                         { label: 'Chợ', href: '/' },
                         ...(product.category ? [{ label: product.category.name, href: `/search?category_ids[]=${product.category.id}` }] : []),
@@ -327,8 +329,8 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                     ]}
                 />
 
-                <div className="mt-5 grid gap-6 lg:grid-cols-12">
-                    <div className="lg:col-span-7">
+                <div className={styles.topGrid}>
+                    <div className={styles.galleryCol}>
                         <ProductGallery
                             images={product.images.map((image) => ({ id: image.image_id, url: image.url, alt: image.alt || product.name }))}
                             activeIndex={selectedImageIndex}
@@ -339,7 +341,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                         />
                     </div>
 
-                    <div className="lg:col-span-5">
+                    <div className={styles.buyCol}>
                         <BuyBox
                             title={product.name}
                             shop={shopInfo}
@@ -356,7 +358,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                             onBuyNow={handleBuyNow}
                             adding={isAddingToCart}
                             buying={isBuyingNow}
-                            trust={['Shop đã kiểm duyệt', 'Đổi trả 7 ngày', 'Bảo hành theo shop']}
+                            trust={['Đổi trả 7 ngày', 'Bảo hành theo shop']}
                         >
                             <VariantSelector
                                 groups={product.attributes.map((attribute) => ({
@@ -375,7 +377,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                     </div>
                 </div>
 
-                <div className="sticky top-header z-20 mt-8 border-y border-border bg-warm-porcelain">
+                <div className={styles.tabsBar}>
                     <Tabs
                         value={activeTab}
                         onValueChange={(value) => setActiveTab(value as DetailTab)}
@@ -389,10 +391,10 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                     />
                 </div>
 
-                <div className="mt-8 grid gap-8 lg:grid-cols-12">
-                    <div className="lg:col-span-8">
+                <div className={styles.contentGrid}>
+                    <div className={styles.mainCol}>
                         {activeTab === 'description' && (
-                            <div className="max-w-prose text-body-md leading-relaxed text-ink-muted [&_p]:mb-4 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-5">
+                            <div className={styles.description}>
                                 <div dangerouslySetInnerHTML={{ __html: product.description }} />
                             </div>
                         )}
@@ -400,7 +402,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                         {activeTab === 'specs' && <SpecTable rows={specRows} />}
 
                         {activeTab === 'reviews' && (
-                            <div className="flex flex-col gap-6">
+                            <div className={styles.reviews}>
                                 <ReviewSummary
                                     rating={rating.average}
                                     count={rating.count}
@@ -416,7 +418,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                                         description="Sản phẩm này chưa có đánh giá từ khách hàng."
                                     />
                                 ) : (
-                                    <div className="flex flex-col">
+                                    <div>
                                         {reviewItems.map((review) => (
                                             <ReviewCard key={review.id} review={review} />
                                         ))}
@@ -426,25 +428,21 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                         )}
                     </div>
 
-                    <aside className="lg:col-span-4">
+                    <aside className={styles.asideCol}>
                         {product.shop && (
-                            <Card padding="lg" className="flex flex-col gap-4">
+                            <Card padding="lg" className={styles.shopCard}>
                                 <ShopIdentity shop={shopInfo!} />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="rounded-control bg-rice-paper p-3">
-                                        <span className="block font-mono text-headline-3 font-semibold text-ink">
-                                            {product.shop.rating.toFixed(1)}
-                                        </span>
-                                        <span className="text-body-sm text-ink-muted">Đánh giá shop</span>
+                                <div className={styles.shopStats}>
+                                    <div className={styles.shopStat}>
+                                        <span className={styles.shopStatValue}>{product.shop.rating.toFixed(1)}</span>
+                                        <span className={styles.shopStatLabel}>Đánh giá shop</span>
                                     </div>
-                                    <div className="rounded-control bg-rice-paper p-3">
-                                        <span className="block font-mono text-headline-3 font-semibold text-ink">
-                                            {formatNumber(product.shop.total_products)}
-                                        </span>
-                                        <span className="text-body-sm text-ink-muted">Sản phẩm</span>
+                                    <div className={styles.shopStat}>
+                                        <span className={styles.shopStatValue}>{formatNumber(product.shop.total_products)}</span>
+                                        <span className={styles.shopStatLabel}>Sản phẩm</span>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-2">
+                                <div className={styles.shopActions}>
                                     <Button
                                         variant="secondary"
                                         size="sm"
@@ -457,8 +455,8 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                                         Xem thêm sản phẩm
                                     </Button>
                                 </div>
-                                <div className="flex items-center gap-2 text-body-sm text-ink-muted">
-                                    <Package aria-hidden="true" className="size-4 text-jade" />
+                                <div className={styles.shopNote}>
+                                    <Package aria-hidden="true" className={styles.shopNoteIcon} />
                                     Shop giao hàng toàn quốc
                                 </div>
                             </Card>

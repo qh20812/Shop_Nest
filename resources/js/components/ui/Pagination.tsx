@@ -2,8 +2,8 @@ import { router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import * as React from 'react';
 
+import { cx } from '@/lib/cx';
 import { formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 type LegacyLink = {
     url: string | null;
@@ -86,14 +86,10 @@ function PaginationButton({
             type="button"
             aria-label={label}
             aria-current={active ? 'page' : undefined}
+            data-active={active ? 'true' : undefined}
             disabled={disabled}
             onClick={onClick}
-            className={cn(
-                'inline-flex size-control-md items-center justify-center rounded-control border font-mono text-label-code transition-colors duration-150 ease-nep focus-ring disabled:cursor-not-allowed',
-                active
-                    ? 'border-lacquer-red bg-lacquer-red text-warm-porcelain'
-                    : 'border-border bg-warm-porcelain text-ink hover:bg-rice-paper disabled:text-ink-faint',
-            )}
+            className="sn-pagination__page"
         >
             {children}
         </button>
@@ -120,9 +116,7 @@ export default function Pagination({
             return;
         }
 
-        const cleanFilters = Object.fromEntries(
-            Object.entries(filters).filter(([, value]) => value !== undefined && value !== ''),
-        );
+        const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined && value !== ''));
 
         router.get(url, cleanFilters, { preserveState, preserveScroll });
     };
@@ -133,7 +127,7 @@ export default function Pagination({
         }
 
         return (
-            <nav aria-label="Phân trang" className={cn('flex items-center justify-center gap-1', className)}>
+            <nav aria-label="Phân trang" className={cx('sn-pagination', 'sn-pagination--centered', className)}>
                 {links.map((link, index) => {
                     const label = cleanLabel(link.label);
                     const previous = isPreviousLabel(link.label);
@@ -142,11 +136,8 @@ export default function Pagination({
 
                     if (isEllipsis) {
                         return (
-                            <span
-                                key={`ellipsis-${index}`}
-                                className="inline-flex size-control-md items-center justify-center text-ink-faint"
-                            >
-                                <MoreHorizontal aria-hidden="true" className="size-4" />
+                            <span key={`ellipsis-${index}`} className="sn-pagination__gap">
+                                <MoreHorizontal aria-hidden="true" />
                             </span>
                         );
                     }
@@ -159,13 +150,7 @@ export default function Pagination({
                             label={previous ? 'Trang trước' : next ? 'Trang sau' : `Trang ${label}`}
                             onClick={() => handleLegacyChange(link.url)}
                         >
-                            {previous ? (
-                                <ChevronLeft aria-hidden="true" className="size-4" />
-                            ) : next ? (
-                                <ChevronRight aria-hidden="true" className="size-4" />
-                            ) : (
-                                label
-                            )}
+                            {previous ? <ChevronLeft aria-hidden="true" /> : next ? <ChevronRight aria-hidden="true" /> : label}
                         </PaginationButton>
                     );
                 })}
@@ -182,49 +167,33 @@ export default function Pagination({
     const to = pageSize ? Math.min(page * pageSize, total ?? page * pageSize) : null;
 
     return (
-        <div className={cn('flex flex-col items-center justify-between gap-3 sm:flex-row', className)}>
+        <div className={cx('sn-pagination--split', className)}>
             {total && from && to ? (
-                <span className="font-mono text-label-code text-ink-muted">
-                    Hiển thị {formatNumber(from)}–{formatNumber(to)} trong {formatNumber(total)} sản phẩm
+                <span className="sn-pagination__meta">
+                    Hiển thị {formatNumber(from)} - {formatNumber(to)} trong {formatNumber(total)} sản phẩm
                 </span>
             ) : (
                 <span />
             )}
-            <nav aria-label="Phân trang" className="flex items-center gap-1">
-                <PaginationButton
-                    label="Trang trước"
-                    disabled={page <= 1}
-                    onClick={() => onPageChange?.(page - 1)}
-                >
-                    <ChevronLeft aria-hidden="true" className="size-4" />
+            <nav aria-label="Phân trang" className="sn-pagination">
+                <PaginationButton label="Trang trước" disabled={page <= 1} onClick={() => onPageChange?.(page - 1)}>
+                    <ChevronLeft aria-hidden="true" />
                 </PaginationButton>
 
                 {items.map((item, index) =>
                     item === 'ellipsis' ? (
-                        <span
-                            key={`ellipsis-${index}`}
-                            className="inline-flex size-control-md items-center justify-center text-ink-faint"
-                        >
-                            <MoreHorizontal aria-hidden="true" className="size-4" />
+                        <span key={`ellipsis-${index}`} className="sn-pagination__gap">
+                            <MoreHorizontal aria-hidden="true" />
                         </span>
                     ) : (
-                        <PaginationButton
-                            key={item}
-                            active={item === page}
-                            label={`Trang ${item}`}
-                            onClick={() => onPageChange?.(item)}
-                        >
+                        <PaginationButton key={item} active={item === page} label={`Trang ${item}`} onClick={() => onPageChange?.(item)}>
                             {item}
                         </PaginationButton>
                     ),
                 )}
 
-                <PaginationButton
-                    label="Trang sau"
-                    disabled={page >= pageCount}
-                    onClick={() => onPageChange?.(page + 1)}
-                >
-                    <ChevronRight aria-hidden="true" className="size-4" />
+                <PaginationButton label="Trang sau" disabled={page >= pageCount} onClick={() => onPageChange?.(page + 1)}>
+                    <ChevronRight aria-hidden="true" />
                 </PaginationButton>
             </nav>
         </div>

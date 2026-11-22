@@ -1,7 +1,7 @@
 import { Loader2, Search, X } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 import Input from './input';
 
@@ -21,7 +21,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         return (
             <form
                 role="search"
-                className={cn('w-full', className)}
+                className={cx('sn-search', className)}
                 onSubmit={(event) => {
                     event.preventDefault();
                     onSubmit?.(String(value ?? ''));
@@ -36,17 +36,10 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                     leadingIcon={Search}
                     trailing={
                         loading ? (
-                            <Loader2 aria-hidden="true" className="size-4 animate-spin text-ink-muted" />
+                            <Loader2 aria-hidden="true" className="sn-search__spinner" />
                         ) : clearable && hasValue ? (
-                            <button
-                                type="button"
-                                aria-label="Xoá tìm kiếm"
-                                className="flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink focus-ring"
-                                onClick={() => {
-                                    onClear?.();
-                                }}
-                            >
-                                <X aria-hidden="true" className="size-4" />
+                            <button type="button" aria-label="Xoá tìm kiếm" className="sn-search__clear" onClick={() => onClear?.()}>
+                                <X aria-hidden="true" className="sn-search__icon" />
                             </button>
                         ) : null
                     }

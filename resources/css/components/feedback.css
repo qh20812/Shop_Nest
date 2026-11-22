@@ -1,0 +1,171 @@
+/*
+ * Bảng Hiệu — feedback: toast stack and toast card.
+ * Tone is expressed with `data-tone`, mapped to success / danger / warning / accent.
+ */
+
+@layer sn-components {
+    .sn-toaster {
+        position: fixed;
+        right: var(--sn-space-4);
+        bottom: var(--sn-space-4);
+        left: var(--sn-space-4);
+        z-index: var(--sn-z-toast);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sn-space-3);
+    }
+
+    .sn-toast {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        gap: var(--sn-space-3);
+        padding: var(--sn-space-4);
+        border: 1px solid var(--sn-color-border);
+        border-radius: var(--sn-radius-lg);
+        background: var(--sn-color-surface);
+        color: var(--sn-color-text);
+        box-shadow: var(--sn-shadow-overlay);
+        animation: sn-toast-in var(--sn-dur-base) var(--sn-ease-out);
+    }
+
+    .sn-toast__icon {
+        display: flex;
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--sn-radius-md);
+    }
+
+    .sn-toast__icon[data-tone='success'] {
+        background: var(--sn-color-success-wash);
+        color: var(--sn-color-success-text);
+    }
+
+    .sn-toast__icon[data-tone='error'] {
+        background: var(--sn-color-danger-wash);
+        color: var(--sn-color-danger-text);
+    }
+
+    .sn-toast__icon[data-tone='warning'] {
+        background: var(--sn-color-warning-wash);
+        color: var(--sn-color-warning-text);
+    }
+
+    .sn-toast__icon[data-tone='info'] {
+        background: var(--sn-color-accent-wash);
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-toast__icon svg {
+        width: var(--sn-icon-md);
+        height: var(--sn-icon-md);
+    }
+
+    .sn-toast__body {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: var(--sn-space-1);
+    }
+
+    .sn-toast__title {
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-semibold);
+        line-height: var(--sn-leading-snug);
+        color: var(--sn-color-text);
+    }
+
+    .sn-toast__description {
+        font-size: var(--sn-text-sm);
+        line-height: var(--sn-leading-normal);
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-toast__action {
+        width: fit-content;
+        margin-top: var(--sn-space-1);
+        padding: 0;
+        border: 0;
+        background: transparent;
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-medium);
+        color: var(--sn-color-accent-text);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        cursor: pointer;
+    }
+
+    .sn-toast__action:hover {
+        color: var(--sn-color-accent-hover);
+    }
+
+    .sn-toast__action:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
+    }
+
+    .sn-toast__close {
+        display: flex;
+        width: var(--sn-control-sm);
+        height: var(--sn-control-sm);
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        border-radius: var(--sn-radius-sm);
+        background: transparent;
+        color: var(--sn-color-text-muted);
+        cursor: pointer;
+        transition:
+            background-color var(--sn-dur-fast) var(--sn-ease-standard),
+            color var(--sn-dur-fast) var(--sn-ease-standard);
+    }
+
+    .sn-toast__close:hover {
+        background: var(--sn-color-surface-sunken);
+        color: var(--sn-color-text);
+    }
+
+    .sn-toast__close:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
+    }
+
+    .sn-toast__close svg {
+        width: var(--sn-icon-sm);
+        height: var(--sn-icon-sm);
+    }
+
+    @media (min-width: 40rem) {
+        .sn-toaster {
+            right: var(--sn-space-6);
+            bottom: var(--sn-space-6);
+            left: auto;
+            width: var(--sn-chat-panel);
+        }
+    }
+
+    @keyframes sn-toast-in {
+        from {
+            opacity: 0;
+            transform: translateY(var(--sn-space-3));
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sn-toast {
+            animation: none;
+        }
+    }
+}

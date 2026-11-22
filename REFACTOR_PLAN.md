@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0 và Phase 1 hoàn tất (2026-11-22); Phase 2 chưa bắt đầu
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C hoàn tất (2026-11-22); Phase 3 đã chốt 9 quyết định thi công, **chưa build** (2026-11-23)
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -23,16 +23,16 @@
 
 ### 0.2 Kết quả bàn giao
 
-| Hạng mục | Kết quả |
-|---|---|
-| CSS runtime | 1 entry `resources/css/app.css`, không Tailwind, không `@apply`, không `@theme` |
-| Token | `--sn-*` 2 tầng, đầy đủ trong `resources/css/tokens/` |
-| Component | 47 primitive toàn cục dùng class `sn-*`, variant qua `data-*` |
-| Page | 78 page dùng `*.module.css`, không còn class Tailwind |
-| Dark mode | `[data-theme='dark']`, đủ token, không FOUC |
-| Workspace | `WorkspaceLayout` mới thay `layouts/app/AppLayout`, icon Lucide |
-| Tooling | `scripts/check-tokens.mjs` viết lại thành guardrail CSS thuần |
-| Docs | `DESIGN.md`, `COMPONENTS.md` viết lại; tài liệu cũ lỗi thời được xoá/archived |
+| Hạng mục    | Kết quả                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| CSS runtime | 1 entry `resources/css/app.css`, không Tailwind, không `@apply`, không `@theme`                 |
+| Token       | `--sn-*` 2 tầng, đầy đủ trong `resources/css/tokens/`                                           |
+| Component   | 47 primitive toàn cục (37 ở Phase 2 + 10 legacy defer), dùng class `sn-*`, variant qua `data-*` |
+| Page        | 78 page dùng `*.module.css`, không còn class Tailwind                                           |
+| Dark mode   | `[data-theme='dark']`, đủ token, không FOUC                                                     |
+| Workspace   | `WorkspaceLayout` mới thay `layouts/app/AppLayout`, icon Lucide                                 |
+| Tooling     | `scripts/check-tokens.mjs` viết lại thành guardrail CSS thuần                                   |
+| Docs        | `DESIGN.md`, `COMPONENTS.md` viết lại; tài liệu cũ lỗi thời được xoá/archived                   |
 
 ### 0.3 Nguyên tắc bất biến
 
@@ -46,21 +46,21 @@
 
 ### 0.4 Độ phức tạp
 
-| Phase | Nội dung | Cỡ | File chạm |
-|---|---|---:|---:|
-| 0 | Baseline + đóng băng + guardrail | S | ~10 |
-| 1 | Token + reset + dark mode | L | ~14 |
-| 2 | 47 primitive | XL | ~60 |
-| 3 | 4 shell/layout | L | ~20 |
-| 4 | Storefront | L | ~35 |
-| 5 | Auth | M | ~12 |
-| 6 | Customer + Settings | XL | ~30 |
-| 7 | Seller | L | ~20 |
-| 8 | Admin | XL | ~55 |
-| 9 | Shipper | S | ~4 |
-| 10 | Email, error pages, PDF | M | ~12 |
-| 11 | Gỡ Tailwind + dọn nợ | M | ~15 |
-| 12 | QA sweep | L | toàn bộ |
+| Phase | Nội dung                                  |  Cỡ | File chạm |
+| ----- | ----------------------------------------- | --: | --------: |
+| 0     | Baseline + đóng băng + guardrail          |   S |       ~10 |
+| 1     | Token + reset + dark mode                 |   L |       ~14 |
+| 2     | 37 primitive dùng chung + 10 legacy defer |  XL |       ~56 |
+| 3     | 4 shell/layout + tách reset Page.css      |   L |       ~26 |
+| 4     | Storefront                                |   L |       ~35 |
+| 5     | Auth                                      |   M |       ~12 |
+| 6     | Customer + Settings                       |  XL |       ~30 |
+| 7     | Seller                                    |   L |       ~20 |
+| 8     | Admin                                     |  XL |       ~55 |
+| 9     | Shipper                                   |   S |        ~4 |
+| 10    | Email, error pages, PDF                   |   M |       ~12 |
+| 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~15 |
+| 12    | QA sweep                                  |   L |   toàn bộ |
 
 ### 0.5 Design read & dials
 
@@ -68,14 +68,14 @@
 
 **Dials** (theo `design-taste-frontend`, đã hạ motion vì đây là UI giao dịch, không phải landing page):
 
-| Khu vực | `DESIGN_VARIANCE` | `MOTION_INTENSITY` | `VISUAL_DENSITY` | Lý do |
-|---|---:|---:|---:|---|
-| Storefront | 8 | 5 | 4 | Catalogue bất đối xứng, ảnh dẫn dắt; motion chỉ hover/reveal |
-| Auth | 6 | 4 | 3 | Split 6/6, form là trung tâm; không cần chuyển động |
-| Customer account | 5 | 4 | 5 | Rail + bảng đơn; ưu tiên rõ hơn đẹp |
-| Seller | 4 | 3 | 7 | Bảng, form, KPI; gần như tĩnh |
-| Admin | 3 | 3 | 8 | Ledger dày nhất; không card soup, số tabular |
-| Shipper | 4 | 3 | 6 | Mobile-first, tap target lớn |
+| Khu vực          | `DESIGN_VARIANCE` | `MOTION_INTENSITY` | `VISUAL_DENSITY` | Lý do                                                        |
+| ---------------- | ----------------: | -----------------: | ---------------: | ------------------------------------------------------------ |
+| Storefront       |                 8 |                  5 |                4 | Catalogue bất đối xứng, ảnh dẫn dắt; motion chỉ hover/reveal |
+| Auth             |                 6 |                  4 |                3 | Split 6/6, form là trung tâm; không cần chuyển động          |
+| Customer account |                 5 |                  4 |                5 | Rail + bảng đơn; ưu tiên rõ hơn đẹp                          |
+| Seller           |                 4 |                  3 |                7 | Bảng, form, KPI; gần như tĩnh                                |
+| Admin            |                 3 |                  3 |                8 | Ledger dày nhất; không card soup, số tabular                 |
+| Shipper          |                 4 |                  3 |                6 | Mobile-first, tap target lớn                                 |
 
 Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** vì mỗi animation phải có lý do (feedback hoặc state transition), và **density cao hơn** ở workspace vì đó là công cụ làm việc, không phải trang giới thiệu.
 
@@ -83,19 +83,28 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 
 ## 1. Quyết định đã chốt
 
-| # | Quyết định | Giá trị |
-|---|---|---|
-| 1 | Hướng thẩm mỹ | **A — BẢNG HIỆU**, hướng mới hoàn toàn |
-| 2 | Kiến trúc CSS | **Hybrid**: primitive global + CSS Modules cho page/domain layout |
-| 3 | Token | **2 tầng**: primitive → semantic, prefix `--sn-` |
-| 4 | Thứ tự | Nền tảng → Storefront → Auth → Customer → Seller → Admin → Shipper |
-| 5 | Dark mode | **Giữ**, làm bằng token override ngay từ Phase 1 |
-| 6 | Workspace cũ | **Rebuild sạch**, xoá `Page.css` + Boxicons |
-| 7 | Gỡ Tailwind | **Đóng băng → gỡ ở Phase 11** |
-| 8 | Dependency | Bỏ `tailwindcss`, `@tailwindcss/*`, `tailwind-merge`, `tailwindcss-animate`, `cva`, `clsx` |
-| 9 | Kiểm chứng | `build` + `types` + `lint` + `check:tokens` + review thủ công |
-| 10 | Quyền thay đổi | Toàn quyền bố cục, section, nhãn điều hướng, copy tiếng Việt trong UI |
-| 11 | Phạm vi file | React UI + email + error pages + PDF (tạo mới nếu bật) |
+| #   | Quyết định     | Giá trị                                                                                                                                                                                       |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Hướng thẩm mỹ  | **A — BẢNG HIỆU**, hướng mới hoàn toàn                                                                                                                                                        |
+| 2   | Kiến trúc CSS  | **Hybrid**: primitive global + CSS Modules cho page/domain layout                                                                                                                             |
+| 3   | Token          | **2 tầng**: primitive → semantic, prefix `--sn-`                                                                                                                                              |
+| 4   | Thứ tự         | Nền tảng → Storefront → Auth → Customer → Seller → Admin → Shipper                                                                                                                            |
+| 5   | Dark mode      | **Giữ**, làm bằng token override ngay từ Phase 1                                                                                                                                              |
+| 6   | Workspace cũ   | **Rebuild sạch**, xoá `Page.css` + Boxicons                                                                                                                                                   |
+| 7   | Gỡ Tailwind    | **Đóng băng → gỡ ở Phase 11**                                                                                                                                                                 |
+| 8   | Dependency     | Bỏ `tailwindcss`, `@tailwindcss/*`, `tailwind-merge`, `tailwindcss-animate`, `cva`, `clsx`                                                                                                    |
+| 9   | Kiểm chứng     | `build` + `types` + `lint` + `check:tokens` + review thủ công                                                                                                                                 |
+| 10  | Quyền thay đổi | Toàn quyền bố cục, section, nhãn điều hướng, copy tiếng Việt trong UI                                                                                                                         |
+| 11  | Phạm vi file   | React UI + email + error pages + PDF (tạo mới nếu bật)                                                                                                                                        |
+| 12  | Page.css reset | **Gói 6 block toàn cục** (`*`, `a`, `li`, `html`, `body`, `body.dark`) vào `@layer sn-legacy-reset` đứng **đầu** danh sách layer; phần còn lại của Page.css vẫn unlayered. Xoá hẳn ở Phase 11 |
+| 13  | `base/*.css`   | **Scope `.sn-shell`** cho rule element-level (`body`, `a`, `label`) đến Phase 11; class/primitive vẫn dùng toàn cục                                                                           |
+| 14  | Workspace DOM  | Giữ `<div class="content"><main>` cho 66 selector của Page.css; **sidebar 230px**; sidebar mới dùng class riêng, z-index thấp hơn `--sn-z-modal`                                              |
+| 15  | Topbar         | Giữ **đủ** chức năng của `navbar.tsx`: breadcrumb, search, chuông + polling, LanguageSwitcher, avatar menu, logout, theme toggle                                                              |
+| 16  | Nav shipper    | **Rút còn Dashboard + Cài đặt**; 6 href chưa có route ghi backlog. Alias `shipper` vẫn sửa ở Phase 9                                                                                          |
+| 17  | Auth panel     | **Bỏ "số liệu thật" + ảnh picsum**; panel là editorial: logo, eyebrow, headline, mô tả, 3 trust point, hotline/email                                                                          |
+| 18  | Breakpoints    | **Thêm mốc 640** (`sm`), dồn thang: `xs 480 / sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1440`                                                                                                 |
+| 19  | `UtilityStrip` | **Bỏ khỏi Phase 3**, ghi backlog; header đã có locale/currency                                                                                                                                |
+| 20  | Git            | Commit riêng 2A/2B/2C trước Phase 3; `git mv` 7 file `components/ui` về chữ thường để CI Linux không fail                                                                                     |
 
 ---
 
@@ -103,55 +112,72 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 
 ### 2.1 Số liệu
 
-| Chỉ số | Giá trị |
-|---|---:|
-| File page | 79 (78 component + 1 `types.ts`) |
-| File component | 139 |
-| Primitive `components/ui` | 47 |
-| Chỗ dùng `className=` | 2.096 |
-| File import `Page.css` | 41 |
-| `Page.css` | 62.838 bytes |
-| `legacy-tokens.css` | 4.455 bytes |
-| `tokens.css` (Tailwind `@theme`) | 5.042 bytes |
-| Page file lớn nhất | `Seller/Promotions/Create.tsx` (82 chỗ `className`) |
+| Chỉ số                           |                                             Giá trị |
+| -------------------------------- | --------------------------------------------------: |
+| File page                        |                    79 (78 component + 1 `types.ts`) |
+| File component                   |                                                 139 |
+| Primitive `components/ui`        |                                                  47 |
+| Chỗ dùng `className=`            |                                               2.096 |
+| File import `Page.css`           |                                                  41 |
+| `Page.css`                       |                                        62.838 bytes |
+| `legacy-tokens.css`              |                                         4.455 bytes |
+| `tokens.css` (Tailwind `@theme`) |                                         5.042 bytes |
+| Page file lớn nhất               | `Seller/Promotions/Create.tsx` (82 chỗ `className`) |
 
 ### 2.2 Hai hệ thống song song
 
-| Khu vực | Layout | CSS | Font | Icon | Palette |
-|---|---|---|---|---|---|
-| Storefront/Auth/Account/Chat | `StorefrontLayout`, `AuthLayout`, `AccountLayout` | Tailwind + `tokens.css` | Be Vietnam Pro | Lucide | Rice paper + lacquer red |
-| Seller/Admin (Shipper hiện là stub) | `layouts/app/AppLayout` | `Page.css` + `legacy-tokens.css` | Be Vietnam Pro | Boxicons | `#1976d2`, `#9c27b0`, `#ff9800` |
+| Khu vực                             | Layout                                            | CSS                              | Font           | Icon     | Palette                         |
+| ----------------------------------- | ------------------------------------------------- | -------------------------------- | -------------- | -------- | ------------------------------- |
+| Storefront/Auth/Account/Chat        | `StorefrontLayout`, `AuthLayout`, `AccountLayout` | Tailwind + `tokens.css`          | Be Vietnam Pro | Lucide   | Rice paper + lacquer red        |
+| Seller/Admin (Shipper hiện là stub) | `layouts/app/AppLayout`                           | `Page.css` + `legacy-tokens.css` | Be Vietnam Pro | Boxicons | `#1976d2`, `#9c27b0`, `#ff9800` |
 
 Đây là nguyên nhân gốc khiến giao diện "không đúng ý": hai ngôn ngữ thị giác, hai bảng màu, hai thang mật độ, hai bộ icon.
 
 ### 2.3 Nợ kỹ thuật cụ thể
 
-| File / nhóm | Vấn đề | Xử lý |
-|---|---|---|
-| `resources/css/Page.css` | `:root` riêng, `* { margin:0; padding:0 }` toàn cục, palette xanh/tím/cam, `.bx` 1.7rem | Xoá Phase 11 |
-| `resources/css/legacy-tokens.css` | Alias shadcn trên palette `#2563eb`/`#cf52d0`, `.dark` | Xoá Phase 11 |
-| `resources/css/tokens.css` | Token khai trong `@theme` (Tailwind-specific) | Giữ đến Phase 11 |
-| `resources/css/base.css` | Dùng `@apply` | Giữ đến Phase 11, thay bằng `base/` |
-| `tailwind.config.ts` | Không được load nhưng gây hiểu nhầm | Xoá Phase 11 |
-| `components.json` | Trỏ `tailwind.config.js` không tồn tại | Xoá Phase 11 |
-| `postcss.config.js` | Chỉ có plugin Tailwind | Xoá Phase 11 |
-| `.prettierrc` | `prettier-plugin-tailwindcss`, `tailwindStylesheet` | Sửa Phase 11 |
-| `eslint.config.js` | Ignore `tailwind.config.js` | Sửa Phase 11 |
-| `scripts/check-tokens.mjs` | Regex token + allowlist file-level | Viết lại Phase 0, giữ ratchet |
-| `scripts/token-allowlist.json` | 65 file trước Phase 0; 187 sau baseline; **186 sau Phase 1** | Giữ làm ratchet đến Phase 11 |
-| `app.blade.php` | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800 | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11 |
-| `app.css` | `@import 'tailwindcss'`, `@custom-variant`, `@source` | Sửa Phase 1 |
-| `DESIGN-02.md` | Fraunces + JetBrains Mono (trái quyết định) | Xoá/archived Phase 11 |
-| `STITCH-DESIGN.md` | 11.325 dòng HTML dùng Tailwind CDN | Archived Phase 11 |
-| `PROMPT.md`, `PLAN.md` | Kế hoạch Nếp cũ | Archived Phase 11 |
-| `useTheme.ts` | Dùng `.dark` class | Sửa Phase 1 |
-| `AppLayout.tsx` | Sidebar Boxicons hardcode | Thay Phase 3 |
+| File / nhóm                       | Vấn đề                                                                                                               | Xử lý                                                     |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `resources/css/Page.css`          | `:root` riêng, `* { margin:0; padding:0 }` **unlayered** (đè mọi `sn-*`/utility), palette xanh/tím/cam, `.bx` 1.7rem | Tách reset toàn cục vào layer yếu ở Phase 3; xoá Phase 11 |
+| `resources/css/legacy-tokens.css` | Alias shadcn trên palette `#2563eb`/`#cf52d0`, `.dark`                                                               | Xoá Phase 11                                              |
+| `resources/css/tokens.css`        | Token khai trong `@theme` (Tailwind-specific)                                                                        | Giữ đến Phase 11                                          |
+| `resources/css/base.css`          | Dùng `@apply`                                                                                                        | Giữ đến Phase 11, thay bằng `base/`                       |
+| `tailwind.config.ts`              | Không được load nhưng gây hiểu nhầm                                                                                  | Xoá Phase 11                                              |
+| `components.json`                 | Trỏ `tailwind.config.js` không tồn tại                                                                               | Xoá Phase 11                                              |
+| `postcss.config.js`               | Chỉ có plugin Tailwind                                                                                               | Xoá Phase 11                                              |
+| `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
+| `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
+| `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; **156 sau Phase 2C**        | Giữ làm ratchet đến Phase 11                              |
+| `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
+| `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
+| `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
+| `STITCH-DESIGN.md`                | 11.325 dòng HTML dùng Tailwind CDN                                                                                   | Archived Phase 11                                         |
+| `PROMPT.md`, `PLAN.md`            | Kế hoạch Nếp cũ                                                                                                      | Archived Phase 11                                         |
+| `useTheme.ts`                     | Dùng `.dark` class                                                                                                   | Sửa Phase 1                                               |
+| `AppLayout.tsx`                   | Sidebar Boxicons hardcode                                                                                            | Thay Phase 3                                              |
 
 ### 2.4 Trang thiếu (backlog, không tạo trong refactor)
 
 `Admin/CustomerSegments/*` (4), `Admin/Inventory/Report`, `Admin/Orders/Show`, `Admin/Returns/Show`, `Seller/Promotions/Edit|Show`, `Seller/Reports/*` (2), `Seller/Wallet/*` (3), `Product/Index|Show` (2), `Auth/ConfirmPassword` — **17 render target**.
 
 Các `Inertia::render` này đang trỏ file không tồn tại. **Không sửa trong refactor UI**; ghi nhận để không bị hiểu là regression.
+
+### 2.5 Phát hiện khi rà soát trước Phase 3 (2026-11-23)
+
+Các số liệu dưới đây đo trực tiếp trên code + Edge headless/CDP, dùng để chốt Phase 3:
+
+| Phát hiện                                                               | Bằng chứng                                                                                                                                                  | Ảnh hưởng                                                                                                              |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Page.css` unlayered đè `sn-*`                                          | Nạp `AppLayout-*.css` vào `/login`: `.sn-btn` padding-left 24px → **0px**, `.sn-input` 40px → **0px**; test cô lập `@layer` 20px vs unlayered 0px → **0px** | Mọi padding/margin của primitive mất trên 41 page workspace, gồm StatusBadge (2C)                                      |
+| Tailwind utilities trong workspace đã chết từ trước                     | `form.mt-7` margin-top 28px → **0px** khi có `Page.css`                                                                                                     | Nợ có sẵn từ lúc lên Tailwind v4, không do refactor                                                                    |
+| `Page.css` phụ thuộc DOM `.content`                                     | **66 selector** bắt đầu bằng `.content`; `.content { width: calc(100% - 230px); left: 230px }`; `.sidebar { z-index: 2000 }`                                | Layout mới phải giữ `.content`/`<main>`; sidebar 230px; modal (z 60) sẽ nằm dưới sidebar nếu dùng lại class `.sidebar` |
+| `base/*.css` chưa từng chạy                                             | `body 15px`, `a { color: accent }`, `label 12px`                                                                                                            | Nếu import toàn cục sẽ restyle 41 trang; 10/12 `<Link>` ở Admin/Seller không có `text-*`                               |
+| `routes/shipper.php` chỉ có `/dashboard` + alias `shipper` chưa đăng ký | Nav shipper có 8 href, 6 href không tồn tại; cả nhóm route 500                                                                                              | Phase 3 phải rút nav, không "giữ nguyên href"                                                                          |
+| Shared props không có số liệu                                           | `HandleInertiaRequests::share()` chỉ có `name/quote/auth/sidebarOpen/locale/translations/currency/csrfToken`                                                | AuthBrandPanel không thể có "số liệu thật"                                                                             |
+| i18n thiếu key                                                          | `auth.logout`, `Search...`, `Shops` thiếu ở **cả** `vi.json` và `en.json`; 43 key chỉ có ở `en`                                                             | Navbar đang render literal `auth.logout`                                                                               |
+| Breakpoint 640 chưa có trong tài liệu                                   | `@media (min-width: 40rem)` ở overlay/feedback/navigation                                                                                                   | Phase 3 dùng breakpoint dày đặc, cần chốt trước                                                                        |
+| Git casing                                                              | 7 file `components/ui` track chữ hoa nhưng đĩa chữ thường (`Avatar`, `Header`, `Insights`, `Navbar`, `Pagination`, `Sidebar`, `Tooltip`)                    | Checkout Linux/CI có thể fail                                                                                          |
+| `@fortawesome/fontawesome-free`                                         | 0 chỗ dùng trong `resources/js`                                                                                                                             | Ghi backlog, xoá ở Phase 11                                                                                            |
 
 ---
 
@@ -174,37 +200,39 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 ### 3.3 Tư thế theo khu vực
 
-| Khu vực | Grid | Mật độ | Nhịp dọc | Đặc trưng |
-|---|---|---|---|---|
-| Storefront | 12 cột, hero 7/5, shelf 4-up | Thoáng vừa | `--sn-section` | Catalogue in, tiêu đề lớn, ảnh 4:5, metadata 1 dòng |
-| Auth | 6/6 split, form 420 px | Thoáng | 32 px | Không card giữa màn hình; panel trái là brand ledger |
-| Customer account | 220 px rail + content | Vừa | 24–32 px | Bảng đơn, timeline, form dọc |
-| Seller | 232 px sidebar | Dày | 20–24 px | KPI strip, bảng, form 2 cột |
-| Admin | 232 px sidebar | Dày nhất | 16–20 px | Bảng ledger, filter bar, bulk action |
-| Shipper | 232 px sidebar | Vừa | 20 px | Shell + empty state; danh sách chuyến chỉ khi backend có dữ liệu, tap target 44 px |
+| Khu vực          | Grid                         | Mật độ     | Nhịp dọc       | Đặc trưng                                                                          |
+| ---------------- | ---------------------------- | ---------- | -------------- | ---------------------------------------------------------------------------------- |
+| Storefront       | 12 cột, hero 7/5, shelf 4-up | Thoáng vừa | `--sn-section` | Catalogue in, tiêu đề lớn, ảnh 4:5, metadata 1 dòng                                |
+| Auth             | 6/6 split, form 420 px       | Thoáng     | 32 px          | Không card giữa màn hình; panel trái là brand ledger                               |
+| Customer account | 220 px rail + content        | Vừa        | 24–32 px       | Bảng đơn, timeline, form dọc                                                       |
+| Seller           | 232 px sidebar               | Dày        | 20–24 px       | KPI strip, bảng, form 2 cột                                                        |
+| Admin            | 232 px sidebar               | Dày nhất   | 16–20 px       | Bảng ledger, filter bar, bulk action                                               |
+| Shipper          | 232 px sidebar               | Vừa        | 20 px          | Shell + empty state; danh sách chuyến chỉ khi backend có dữ liệu, tap target 44 px |
+
+> **Sidebar 230 vs 232:** `--sn-sidebar` = 232px là giá trị đích. Trong giai đoạn chuyển đổi, `Page.css` hard-code `.content { width: calc(100% - 230px); left: 230px }` ở unlayered nên Phase 3 dùng **230px** cho khớp; đổi về 232 khi xoá `Page.css` (Phase 11).
 
 ### 3.4 Anatomy component
 
-| Component | Đặc tả |
-|---|---|
-| Button | Cao 32/40/48; padding ngang 12/16/20; radius 4 px (sm) / 6 px (md, lg); border 1 px; weight 500; icon 16/20 |
-| Button primary | Fill `--sn-color-accent`, chữ `--sn-color-on-accent`, hover `--sn-color-accent-hover`, active `translateY(1px)` |
-| Button secondary | Nền surface, border `--sn-color-border-strong`, chữ ink, hover `--sn-color-surface-sunken` |
-| Button ghost | Không border, hover `--sn-color-surface-sunken` |
-| Button tertiary | Chữ accent, gạch chân 1 px offset 3 px |
-| Button destructive | Fill `--sn-color-danger`, chữ `--sn-color-on-danger` |
-| Input | Cao 40; radius 6; border 1 px `--sn-color-border-strong`; nền surface; focus ring 2 px accent offset 2 |
-| Label | 12 px, weight 500, margin-bottom 6 px; helper 12 px muted; error 12 px danger-text |
-| Card | Nền surface, border 1 px `--sn-color-border`, radius 8, padding 16/20; **không shadow** |
-| Table | Header 11 px uppercase, row 48 px, divider 1 px, hover `--sn-color-surface-sunken`; số căn phải |
-| Badge | Cao 20/22, radius pill, padding 4/8, 12 px weight 500, nền wash + chữ text tương ứng |
-| Dialog | Nền surface, radius 12, border 1, shadow overlay, max-width 480/640 |
-| Toast | Radius 8, border-left 3 px theo tone, shadow popover, không glow |
-| Tabs | Gạch chân 2 px accent cho active, không pill |
-| Pagination | Nút 32 px vuông, số hiện tại fill ink, không dãy số dài |
-| Skeleton | Nền `--sn-color-surface-sunken`, shimmer 1.4 s, đúng kích thước thật |
-| Empty state | 1 dòng giải thích + 1 action, không minh hoạ vector tự vẽ |
-| Chart | Lưới 1 px `--sn-color-border`, series accent + success + warning, không gradient |
+| Component          | Đặc tả                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Button             | Cao 32/40/48; padding ngang 12/16/20; radius 4 px (sm) / 6 px (md, lg); border 1 px; weight 500; icon 16/20     |
+| Button primary     | Fill `--sn-color-accent`, chữ `--sn-color-on-accent`, hover `--sn-color-accent-hover`, active `translateY(1px)` |
+| Button secondary   | Nền surface, border `--sn-color-border-strong`, chữ ink, hover `--sn-color-surface-sunken`                      |
+| Button ghost       | Không border, hover `--sn-color-surface-sunken`                                                                 |
+| Button tertiary    | Chữ accent, gạch chân 1 px offset 3 px                                                                          |
+| Button destructive | Fill `--sn-color-danger`, chữ `--sn-color-on-danger`                                                            |
+| Input              | Cao 40; radius 6; border 1 px `--sn-color-border-strong`; nền surface; focus ring 2 px accent offset 2          |
+| Label              | 12 px, weight 500, margin-bottom 6 px; helper 12 px muted; error 12 px danger-text                              |
+| Card               | Nền surface, border 1 px `--sn-color-border`, radius 8, padding 16/20; **không shadow**                         |
+| Table              | Header 11 px uppercase, row 48 px, divider 1 px, hover `--sn-color-surface-sunken`; số căn phải                 |
+| Badge              | Cao 20/22, radius pill, padding 4/8, 12 px weight 500, nền wash + chữ text tương ứng                            |
+| Dialog             | Nền surface, radius 12, border 1, shadow overlay, max-width 480/640                                             |
+| Toast              | Radius 8, border-left 3 px theo tone, shadow popover, không glow                                                |
+| Tabs               | Gạch chân 2 px accent cho active, không pill                                                                    |
+| Pagination         | Nút 32 px vuông, số hiện tại fill ink, không dãy số dài                                                         |
+| Skeleton           | Nền `--sn-color-surface-sunken`, shimmer 1.4 s, đúng kích thước thật                                            |
+| Empty state        | 1 dòng giải thích + 1 action, không minh hoạ vector tự vẽ                                                       |
+| Chart              | Lưới 1 px `--sn-color-border`, series accent + success + warning, không gradient                                |
 
 ### 3.5 Icon và ảnh
 
@@ -337,49 +365,49 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
     color-scheme: light;
 
     /* Surface */
-    --sn-color-canvas: var(--sn-neutral-100);          /* #f2f2ee */
-    --sn-color-canvas-alt: var(--sn-neutral-50);       /* #f7f7f4 */
-    --sn-color-surface: var(--sn-neutral-0);           /* #ffffff */
-    --sn-color-surface-sunken: var(--sn-neutral-150);  /* #ecece7 */
-    --sn-color-surface-strong: var(--sn-neutral-900);  /* #262923 */
+    --sn-color-canvas: var(--sn-neutral-100); /* #f2f2ee */
+    --sn-color-canvas-alt: var(--sn-neutral-50); /* #f7f7f4 */
+    --sn-color-surface: var(--sn-neutral-0); /* #ffffff */
+    --sn-color-surface-sunken: var(--sn-neutral-150); /* #ecece7 */
+    --sn-color-surface-strong: var(--sn-neutral-900); /* #262923 */
     --sn-color-surface-inverse: var(--sn-neutral-950);
 
     /* Text */
-    --sn-color-text: var(--sn-neutral-950);            /* #15160f */
-    --sn-color-text-muted: var(--sn-neutral-700);      /* #53564b */
-    --sn-color-text-faint: var(--sn-neutral-600);      /* #6b6e62 */
-    --sn-color-text-inverse: var(--sn-neutral-25);     /* #fcfcfa */
+    --sn-color-text: var(--sn-neutral-950); /* #15160f */
+    --sn-color-text-muted: var(--sn-neutral-700); /* #53564b */
+    --sn-color-text-faint: var(--sn-neutral-600); /* #6b6e62 */
+    --sn-color-text-inverse: var(--sn-neutral-25); /* #fcfcfa */
     --sn-color-text-on-strong: var(--sn-neutral-25);
 
     /* Line */
-    --sn-color-border: var(--sn-neutral-300);          /* #d2d2ca */
-    --sn-color-border-strong: var(--sn-neutral-500);   /* #8e9086 */
+    --sn-color-border: var(--sn-neutral-300); /* #d2d2ca */
+    --sn-color-border-strong: var(--sn-neutral-500); /* #8e9086 */
     --sn-color-border-inverse: var(--sn-neutral-700);
 
     /* Accent */
-    --sn-color-accent: var(--sn-accent-600);           /* #c2410c */
-    --sn-color-accent-hover: var(--sn-accent-700);     /* #9a3208 */
-    --sn-color-accent-text: var(--sn-accent-700);      /* #9a3208 */
-    --sn-color-accent-wash: var(--sn-accent-50);       /* #fdf1ec */
-    --sn-color-on-accent: var(--sn-neutral-0);         /* #ffffff */
+    --sn-color-accent: var(--sn-accent-600); /* #c2410c */
+    --sn-color-accent-hover: var(--sn-accent-700); /* #9a3208 */
+    --sn-color-accent-text: var(--sn-accent-700); /* #9a3208 */
+    --sn-color-accent-wash: var(--sn-accent-50); /* #fdf1ec */
+    --sn-color-on-accent: var(--sn-neutral-0); /* #ffffff */
     --sn-color-focus: var(--sn-accent-600);
 
     /* Success */
-    --sn-color-success: var(--sn-success-500);         /* #1f6f4a */
-    --sn-color-success-text: var(--sn-success-700);    /* #154a32 */
-    --sn-color-success-wash: var(--sn-success-50);     /* #e9f4ee */
+    --sn-color-success: var(--sn-success-500); /* #1f6f4a */
+    --sn-color-success-text: var(--sn-success-700); /* #154a32 */
+    --sn-color-success-wash: var(--sn-success-50); /* #e9f4ee */
     --sn-color-on-success: var(--sn-neutral-0);
 
     /* Warning */
-    --sn-color-warning: var(--sn-warning-500);         /* #9a6200 */
-    --sn-color-warning-text: var(--sn-warning-600);    /* #7a4e00 */
-    --sn-color-warning-wash: var(--sn-warning-50);     /* #fbf2de */
+    --sn-color-warning: var(--sn-warning-500); /* #9a6200 */
+    --sn-color-warning-text: var(--sn-warning-600); /* #7a4e00 */
+    --sn-color-warning-wash: var(--sn-warning-50); /* #fbf2de */
     --sn-color-on-warning: var(--sn-neutral-0);
 
     /* Danger */
-    --sn-color-danger: var(--sn-danger-500);           /* #b3261e */
-    --sn-color-danger-text: var(--sn-danger-600);      /* #8c1d18 */
-    --sn-color-danger-wash: var(--sn-danger-50);       /* #fbeae8 */
+    --sn-color-danger: var(--sn-danger-500); /* #b3261e */
+    --sn-color-danger-text: var(--sn-danger-600); /* #8c1d18 */
+    --sn-color-danger-wash: var(--sn-danger-50); /* #fbeae8 */
     --sn-color-on-danger: var(--sn-neutral-0);
 
     /* Neutral badge */
@@ -396,17 +424,17 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 **Kiểm tra tương phản light (WCAG 2.2):**
 
-| Cặp | Tỷ lệ | Kết luận |
-|---|---:|---|
-| `text` on `canvas` (`#15160f` / `#f2f2ee`) | 16,2:1 | AAA |
-| `text-muted` on `canvas` (`#53564b` / `#f2f2ee`) | 6,7:1 | AA |
-| `text-faint` on `canvas` (`#6b6e62` / `#f2f2ee`) | 4,6:1 | AA |
-| `on-accent` on `accent` (`#ffffff` / `#c2410c`) | 5,2:1 | AA |
-| `accent-text` on `canvas` (`#9a3208` / `#f2f2ee`) | 6,6:1 | AA |
-| `on-success` on `success` (`#ffffff` / `#1f6f4a`) | 6,1:1 | AA |
-| `on-warning` on `warning` (`#ffffff` / `#9a6200`) | 5,1:1 | AA |
-| `on-danger` on `danger` (`#ffffff` / `#b3261e`) | 6,6:1 | AA |
-| `border-strong` / `surface` (`#8e9086` / `#ffffff`) | 3,2:1 | AA (UI) |
+| Cặp                                                 |  Tỷ lệ | Kết luận |
+| --------------------------------------------------- | -----: | -------- |
+| `text` on `canvas` (`#15160f` / `#f2f2ee`)          | 16,2:1 | AAA      |
+| `text-muted` on `canvas` (`#53564b` / `#f2f2ee`)    |  6,7:1 | AA       |
+| `text-faint` on `canvas` (`#6b6e62` / `#f2f2ee`)    |  4,6:1 | AA       |
+| `on-accent` on `accent` (`#ffffff` / `#c2410c`)     |  5,2:1 | AA       |
+| `accent-text` on `canvas` (`#9a3208` / `#f2f2ee`)   |  6,6:1 | AA       |
+| `on-success` on `success` (`#ffffff` / `#1f6f4a`)   |  6,1:1 | AA       |
+| `on-warning` on `warning` (`#ffffff` / `#9a6200`)   |  5,1:1 | AA       |
+| `on-danger` on `danger` (`#ffffff` / `#b3261e`)     |  6,6:1 | AA       |
+| `border-strong` / `surface` (`#8e9086` / `#ffffff`) |  3,2:1 | AA (UI)  |
 
 ### 4.4 `tokens/semantic.css` — dark mode
 
@@ -415,29 +443,29 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
     color-scheme: dark;
 
     /* Surface */
-    --sn-color-canvas: var(--sn-graphite-950);         /* #0d0f0c */
-    --sn-color-canvas-alt: var(--sn-graphite-900);     /* #101210 */
-    --sn-color-surface: var(--sn-graphite-850);        /* #151814 */
+    --sn-color-canvas: var(--sn-graphite-950); /* #0d0f0c */
+    --sn-color-canvas-alt: var(--sn-graphite-900); /* #101210 */
+    --sn-color-surface: var(--sn-graphite-850); /* #151814 */
     --sn-color-surface-sunken: var(--sn-graphite-900); /* #101210 */
-    --sn-color-surface-strong: var(--sn-graphite-50);  /* #f1f2ea */
+    --sn-color-surface-strong: var(--sn-graphite-50); /* #f1f2ea */
     --sn-color-surface-inverse: var(--sn-graphite-50);
 
     /* Text */
-    --sn-color-text: var(--sn-graphite-50);            /* #f1f2ea */
-    --sn-color-text-muted: var(--sn-graphite-200);     /* #b4b8aa */
-    --sn-color-text-faint: var(--sn-graphite-300);     /* #8d9184 */
+    --sn-color-text: var(--sn-graphite-50); /* #f1f2ea */
+    --sn-color-text-muted: var(--sn-graphite-200); /* #b4b8aa */
+    --sn-color-text-faint: var(--sn-graphite-300); /* #8d9184 */
     --sn-color-text-inverse: var(--sn-graphite-950);
     --sn-color-text-on-strong: var(--sn-graphite-950);
 
     /* Line */
-    --sn-color-border: var(--sn-graphite-600);         /* #2b3028 */
-    --sn-color-border-strong: var(--sn-graphite-350);  /* #6e7466 */
+    --sn-color-border: var(--sn-graphite-600); /* #2b3028 */
+    --sn-color-border-strong: var(--sn-graphite-350); /* #6e7466 */
     --sn-color-border-inverse: var(--sn-graphite-300);
 
     /* Accent */
-    --sn-color-accent: var(--sn-signal-accent);        /* #ff8a5b */
+    --sn-color-accent: var(--sn-signal-accent); /* #ff8a5b */
     --sn-color-accent-hover: var(--sn-signal-accent-hover); /* #ffa277 */
-    --sn-color-accent-text: var(--sn-signal-accent);   /* #ff8a5b */
+    --sn-color-accent-text: var(--sn-signal-accent); /* #ff8a5b */
     --sn-color-accent-wash: #3a241c;
     --sn-color-on-accent: #1a0e08;
     --sn-color-focus: var(--sn-signal-accent);
@@ -519,17 +547,17 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 **Kiểm tra tương phản dark:**
 
-| Cặp | Tỷ lệ | Kết luận |
-|---|---:|---|
-| `text` on `canvas` (`#f1f2ea` / `#0d0f0c`) | 17,1:1 | AAA |
-| `text-muted` on `canvas` (`#b4b8aa` / `#0d0f0c`) | 9,5:1 | AAA |
-| `text-faint` on `surface` (`#8d9184` / `#151814`) | 5,6:1 | AA |
-| `accent` on `canvas` (`#ff8a5b` / `#0d0f0c`) | 8,3:1 | AAA |
-| `on-accent` on `accent` (`#1a0e08` / `#ff8a5b`) | 8,1:1 | AAA |
-| `success-text` on `success-wash` (`#5fc79b` / `#12291f`) | 7,6:1 | AAA |
-| `warning-text` on `warning-wash` (`#f0b44c` / `#2e2413`) | 7,4:1 | AAA |
-| `danger-text` on `danger-wash` (`#f08a80` / `#2e1714`) | 5,9:1 | AA |
-| `border-strong` / `surface` (`#6e7466` / `#151814`) | 3,6:1 | AA (UI) |
+| Cặp                                                      |  Tỷ lệ | Kết luận |
+| -------------------------------------------------------- | -----: | -------- |
+| `text` on `canvas` (`#f1f2ea` / `#0d0f0c`)               | 17,1:1 | AAA      |
+| `text-muted` on `canvas` (`#b4b8aa` / `#0d0f0c`)         |  9,5:1 | AAA      |
+| `text-faint` on `surface` (`#8d9184` / `#151814`)        |  5,6:1 | AA       |
+| `accent` on `canvas` (`#ff8a5b` / `#0d0f0c`)             |  8,3:1 | AAA      |
+| `on-accent` on `accent` (`#1a0e08` / `#ff8a5b`)          |  8,1:1 | AAA      |
+| `success-text` on `success-wash` (`#5fc79b` / `#12291f`) |  7,6:1 | AAA      |
+| `warning-text` on `warning-wash` (`#f0b44c` / `#2e2413`) |  7,4:1 | AAA      |
+| `danger-text` on `danger-wash` (`#f08a80` / `#2e1714`)   |  5,9:1 | AA       |
+| `border-strong` / `surface` (`#6e7466` / `#151814`)      |  3,6:1 | AA (UI)  |
 
 ### 4.5 `tokens/scale.css` — typography
 
@@ -546,16 +574,16 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
     --sn-weight-bold: 700;
 
     /* Size */
-    --sn-text-2xs: 0.6875rem;   /* 11px — nhãn in hoa */
-    --sn-text-xs: 0.75rem;      /* 12px — metadata, helper */
-    --sn-text-sm: 0.8125rem;    /* 13px — bảng dày */
-    --sn-text-base: 0.9375rem;  /* 15px — body UI */
-    --sn-text-md: 1rem;         /* 16px — body đọc */
-    --sn-text-lg: 1.125rem;     /* 18px — lead */
-    --sn-text-xl: 1.375rem;     /* 22px — H3 */
-    --sn-text-2xl: 1.75rem;     /* 28px — H2 */
-    --sn-text-3xl: 2.25rem;     /* 36px — H1 */
-    --sn-text-4xl: clamp(2.75rem, 3.5vw, 3.5rem);   /* 44–56px — page display */
+    --sn-text-2xs: 0.6875rem; /* 11px — nhãn in hoa */
+    --sn-text-xs: 0.75rem; /* 12px — metadata, helper */
+    --sn-text-sm: 0.8125rem; /* 13px — bảng dày */
+    --sn-text-base: 0.9375rem; /* 15px — body UI */
+    --sn-text-md: 1rem; /* 16px — body đọc */
+    --sn-text-lg: 1.125rem; /* 18px — lead */
+    --sn-text-xl: 1.375rem; /* 22px — H3 */
+    --sn-text-2xl: 1.75rem; /* 28px — H2 */
+    --sn-text-3xl: 2.25rem; /* 36px — H1 */
+    --sn-text-4xl: clamp(2.75rem, 3.5vw, 3.5rem); /* 44–56px — page display */
     --sn-text-display: clamp(3rem, 5.5vw, 4.75rem); /* 48–76px — hero only */
 
     /* Line height */
@@ -584,59 +612,59 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 :root {
     /* Spacing — cơ số 4px */
     --sn-space-0: 0;
-    --sn-space-1: 0.25rem;  /* 4 */
-    --sn-space-2: 0.5rem;   /* 8 */
-    --sn-space-3: 0.75rem;  /* 12 */
-    --sn-space-4: 1rem;     /* 16 */
-    --sn-space-5: 1.25rem;  /* 20 */
-    --sn-space-6: 1.5rem;   /* 24 */
-    --sn-space-7: 1.75rem;  /* 28 */
-    --sn-space-8: 2rem;     /* 32 */
-    --sn-space-10: 2.5rem;  /* 40 */
-    --sn-space-12: 3rem;    /* 48 */
-    --sn-space-14: 3.5rem;  /* 56 */
-    --sn-space-16: 4rem;    /* 64 */
-    --sn-space-20: 5rem;    /* 80 */
-    --sn-space-24: 6rem;    /* 96 */
-    --sn-space-32: 8rem;    /* 128 */
+    --sn-space-1: 0.25rem; /* 4 */
+    --sn-space-2: 0.5rem; /* 8 */
+    --sn-space-3: 0.75rem; /* 12 */
+    --sn-space-4: 1rem; /* 16 */
+    --sn-space-5: 1.25rem; /* 20 */
+    --sn-space-6: 1.5rem; /* 24 */
+    --sn-space-7: 1.75rem; /* 28 */
+    --sn-space-8: 2rem; /* 32 */
+    --sn-space-10: 2.5rem; /* 40 */
+    --sn-space-12: 3rem; /* 48 */
+    --sn-space-14: 3.5rem; /* 56 */
+    --sn-space-16: 4rem; /* 64 */
+    --sn-space-20: 5rem; /* 80 */
+    --sn-space-24: 6rem; /* 96 */
+    --sn-space-32: 8rem; /* 128 */
 
     /* Rhythm */
-    --sn-gutter: clamp(1rem, 2.5vw, 2rem);        /* 16–32 */
-    --sn-section: clamp(2.5rem, 5vw, 4.5rem);     /* 40–72 */
+    --sn-gutter: clamp(1rem, 2.5vw, 2rem); /* 16–32 */
+    --sn-section: clamp(2.5rem, 5vw, 4.5rem); /* 40–72 */
     --sn-section-tight: clamp(1.5rem, 3vw, 2.5rem);
-    --sn-container: 90rem;          /* 1440 */
-    --sn-container-narrow: 65rem;   /* 1040 */
-    --sn-container-form: 26.25rem;  /* 420 */
+    --sn-container: 90rem; /* 1440 */
+    --sn-container-narrow: 65rem; /* 1040 */
+    --sn-container-form: 26.25rem; /* 420 */
 
     /* Control */
-    --sn-control-sm: 2rem;      /* 32 */
-    --sn-control-md: 2.5rem;    /* 40 */
-    --sn-control-lg: 3rem;      /* 48 */
-    --sn-tap: 2.75rem;          /* 44 — touch target tối thiểu */
+    --sn-control-sm: 2rem; /* 32 */
+    --sn-control-md: 2.5rem; /* 40 */
+    --sn-control-lg: 3rem; /* 48 */
+    --sn-tap: 2.75rem; /* 44 — touch target tối thiểu */
 
     /* Icon */
-    --sn-icon-xs: 0.875rem;     /* 14 */
-    --sn-icon-sm: 1rem;         /* 16 */
-    --sn-icon-md: 1.25rem;      /* 20 */
-    --sn-icon-lg: 1.5rem;       /* 24 */
+    --sn-icon-xs: 0.875rem; /* 14 */
+    --sn-icon-sm: 1rem; /* 16 */
+    --sn-icon-md: 1.25rem; /* 20 */
+    --sn-icon-lg: 1.5rem; /* 24 */
 
     /* Shell */
-    --sn-header: 3.5rem;        /* 56 */
+    --sn-header: 3.5rem; /* 56 */
     --sn-topbar: 3.5rem;
-    --sn-sidebar: 14.5rem;      /* 232 */
-    --sn-account-rail: 13.75rem;/* 220 */
-    --sn-filter-rail: 16.5rem;  /* 264 */
+    --sn-sidebar: 14.5rem; /* 232 */
+    --sn-account-rail: 13.75rem; /* 220 */
+    --sn-filter-rail: 16.5rem; /* 264 */
 
     /* Chat */
     --sn-chat-launcher: 3.5rem;
-    --sn-chat-panel: 23.75rem;  /* 380 */
+    --sn-chat-panel: 23.75rem; /* 380 */
     --sn-chat-panel-height: min(40rem, calc(100dvh - 3rem));
     --sn-chat-sheet-height: 85dvh;
 
     /* Avatar */
-    --sn-avatar-sm: 1.75rem;    /* 28 */
-    --sn-avatar-md: 2.25rem;    /* 36 */
-    --sn-avatar-lg: 3rem;       /* 48 */
+    --sn-avatar-sm: 1.75rem; /* 28 */
+    --sn-avatar-md: 2.25rem; /* 36 */
+    --sn-avatar-lg: 3rem; /* 48 */
 }
 ```
 
@@ -646,11 +674,11 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 :root {
     /* Radius — nhỏ, đều */
     --sn-radius-none: 0;
-    --sn-radius-xs: 0.125rem;   /* 2 — ảnh, media */
-    --sn-radius-sm: 0.25rem;    /* 4 — control nhỏ, badge vuông */
-    --sn-radius-md: 0.375rem;   /* 6 — input, button */
-    --sn-radius-lg: 0.5rem;     /* 8 — card, toast */
-    --sn-radius-xl: 0.75rem;    /* 12 — dialog, sheet */
+    --sn-radius-xs: 0.125rem; /* 2 — ảnh, media */
+    --sn-radius-sm: 0.25rem; /* 4 — control nhỏ, badge vuông */
+    --sn-radius-md: 0.375rem; /* 6 — input, button */
+    --sn-radius-lg: 0.5rem; /* 8 — card, toast */
+    --sn-radius-xl: 0.75rem; /* 12 — dialog, sheet */
     --sn-radius-pill: 9999px;
 
     /* Shadow — chỉ cho lớp nổi */
@@ -691,15 +719,18 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 CSS custom property không dùng được trong `@media`, nên breakpoint là hằng số ghi trong tài liệu và dùng literal:
 
-| Tên | Giá trị | Dùng cho |
-|---|---:|---|
-| `xs` | 480px | điện thoại lớn |
-| `sm` | 768px | tablet dọc, ranh giới 1 cột |
-| `md` | 1024px | tablet ngang, sidebar mở |
-| `lg` | 1280px | desktop |
-| `xl` | 1440px | container tối đa |
+| Tên   | Giá trị | Dùng cho                                                 |
+| ----- | ------: | -------------------------------------------------------- |
+| `xs`  |   480px | điện thoại lớn                                           |
+| `sm`  |   640px | mốc chuyển layout hẹp (dialog footer, toast, pagination) |
+| `md`  |   768px | tablet dọc, ranh giới 1 cột                              |
+| `lg`  |  1024px | tablet ngang, sidebar mở                                 |
+| `xl`  |  1280px | desktop                                                  |
+| `2xl` |  1440px | container tối đa                                         |
 
 Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width: …)`.
+
+> `sm = 640px` là mốc kế thừa từ Tailwind (`sm:` cũ) và đang được dùng ở `overlay.css`, `feedback.css`, `navigation.css`. Không đổi các media query này sang 768; mọi layout mới dùng đúng bảng trên.
 
 ### 4.9 Dark mode mechanics
 
@@ -726,11 +757,11 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
 
 - Script phải nằm **trước** `@vite` và trước mọi stylesheet trong `<head>`.
 - `useTheme.ts` đổi sang `data-theme` **và** giữ mirror:
-  - `root.dataset.theme = isDark ? 'dark' : 'light'`
-  - `root.classList.toggle('dark', isDark)`
-  - `root.style.colorScheme = isDark ? 'dark' : 'light'` (nếu không, inline `color-scheme` từ script sẽ thắng CSS `[data-theme='dark']`).
-  - Giữ API `theme / resolvedTheme / changeTheme`.
-  - **SSR-safe:** `config/inertia.php` đang bật SSR; không đọc `localStorage` khi `typeof window === 'undefined'`, và bọc try/catch.
+    - `root.dataset.theme = isDark ? 'dark' : 'light'`
+    - `root.classList.toggle('dark', isDark)`
+    - `root.style.colorScheme = isDark ? 'dark' : 'light'` (nếu không, inline `color-scheme` từ script sẽ thắng CSS `[data-theme='dark']`).
+    - Giữ API `theme / resolvedTheme / changeTheme`.
+    - **SSR-safe:** `config/inertia.php` đang bật SSR; không đọc `localStorage` khi `typeof window === 'undefined'`, và bọc try/catch.
 - `Settings/Appearance` giữ 3 lựa chọn; lưu localStorage. Nếu backend đã có cột appearance thì đồng bộ thêm, nhưng **không** đổi schema trong refactor.
 - `HandleAppearance` đọc cookie `appearance`, nhưng hiện **không có nơi nào set cookie này**; `$appearance` luôn là `system`. Phase 1 bỏ `@class` trên `<html>` và để inline script set cả `data-theme` lẫn `.dark`; middleware giữ nguyên.
 - Không dùng `@media (prefers-color-scheme)` trong component; chỉ fallback ở token.
@@ -741,6 +772,10 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
 resources/css/
 ├── app.css                     # entry: layer order + import
 ├── fonts.css                   # @font-face self-host Be Vietnam Pro
+├── base.css                    # legacy Nếp, @apply — xoá Phase 11
+├── legacy-tokens.css           # legacy shadcn alias — xoá Phase 11
+├── tokens.css                  # legacy Tailwind @theme — xoá Phase 11
+├── Page.css                    # legacy workspace; 6 block toàn cục nằm trong @layer sn-legacy-reset
 ├── tokens/
 │   ├── primitive.css           # màu gốc
 │   ├── semantic.css            # light + dark + fallback
@@ -751,23 +786,16 @@ resources/css/
 │   ├── forms.css
 │   └── a11y.css
 ├── components/                 # global primitive, @layer sn-components
-│   ├── button.css
-│   ├── field.css               # input, textarea, select, checkbox, radio, switch
-│   ├── card.css
-│   ├── badge.css
-│   ├── table.css
-│   ├── tabs.css
-│   ├── dialog.css
-│   ├── menu.css                # dropdown, select popover
-│   ├── toast.css
-│   ├── alert.css
-│   ├── pagination.css
-│   ├── skeleton.css
-│   ├── breadcrumbs.css
-│   ├── avatar.css
-│   ├── progress.css
-│   ├── tooltip.css
-│   └── file-dropzone.css
+│   ├── button.css              # button, icon-button
+│   ├── field.css               # input, textarea, select, checkbox, switch, radio-card, form-field,
+│   │                           # search-input, password-strength, rich-text-editor
+│   ├── file-dropzone.css
+│   ├── overlay.css             # scrim, dialog, sheet, dropdown, tooltip
+│   ├── feedback.css            # toaster, toast
+│   ├── navigation.css          # tabs, pagination, breadcrumbs, language switcher
+│   ├── data.css                # card, table, badge, avatar, skeleton, progress
+│   ├── status.css              # alert, empty state, error state
+│   └── typography.css          # heading, text, eyebrow, meta, text link
 ├── layouts/
 │   ├── storefront.css
 │   ├── auth.css
@@ -776,10 +804,12 @@ resources/css/
 └── utilities.css               # .sn-container, .sn-numeric, .sn-visually-hidden, .sn-stack
 ```
 
+> Danh sách trên là **hiện trạng sau Phase 2** (9 file `components/*`, không phải 18 file như bản kế hoạch ban đầu). Phase 3 thêm `layouts/*.css`; không tách lại các file `components/*` đã gộp.
+
 `app.css`:
 
 ```css
-@layer sn-reset, sn-base, sn-components, sn-layouts, sn-utilities;
+@layer sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;
 
 @import 'tailwindcss';
 @import './legacy-tokens.css';
@@ -807,13 +837,19 @@ resources/css/
 
 > **Layer naming:** dùng `sn-*` để không trùng `base/components/utilities` của Tailwind v4 trong giai đoạn chuyển đổi. Mỗi file CSS tự khai layer bên trong (`@layer sn-base { … }`, `@layer sn-components { … }`, `@layer sn-layouts { … }`, `@layer sn-utilities { … }`); **không** dùng `layer()` trong `@import` để tránh layer lồng nhau.
 >
+> **Thứ tự bắt buộc:** `sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities`. Phải chen `sn-components` **sau** Tailwind `base`/`components` (nếu không preflight reset input/button) và **trước** Tailwind `utilities` (để `className` utility của page vẫn thắng). Đây là lỗi đã gặp ở 2A và đã sửa.
+>
+> **`sn-legacy-reset` (thêm ở Phase 3):** layer **yếu nhất**, chỉ để chứa 6 block toàn cục của `Page.css` (`*`, `a`, `li`, `html`, `body`, `body.dark`). Vì CSS xếp layer thấp hơn specificity, `Page.css` unlayered hiện đang thắng cả `sn-*` lẫn Tailwind utilities; đưa 6 block đó vào layer yếu làm `sn-*` và utility hoạt động trở lại mà **không** đổi phần còn lại của Page.css. Layer này khai báo **đầu tiên** trong `app.css` để `app.css` (load trước) quyết định thứ tự; nếu chỉ khai trong `Page.css` (load sau) nó sẽ bị chèn vào cuối và mạnh hơn `sn-*`.
+>
 > **Giai đoạn chuyển đổi (Phase 1–10):** giữ thêm `@import 'tailwindcss';` và `@import './tokens.css';` để các trang chưa migrate không vỡ. Hai dòng này bị xoá ở Phase 11, cùng lúc với `Page.css`.
 >
-> **Thứ tự kích hoạt:** Phase 1 chỉ import 3 file token và `fonts.css`, chưa thêm `@layer sn-*`/`base/*`/`components/*`. Phase 2 import dần `components/*.css`. Phase 3 mới thêm khai báo `@layer sn-*` và import `base/*.css` + `layouts/*.css` + `utilities.css`. Không import trước, tránh đổi giao diện toàn cục khi trang cũ còn chạy.
+> **Thứ tự kích hoạt:** Phase 1 chỉ import 3 file token và `fonts.css`. Phase 2 thêm khai báo layer (lúc đó chưa có `sn-legacy-reset`) và import từng `components/*.css` khi primitive xong; **chưa** import `base/*`, `layouts/*`, `utilities.css`. Phase 3 thêm `sn-legacy-reset`, tách reset của `Page.css`, rồi import `base/*.css`, `layouts/*.css`, `utilities.css`. Không import trước, tránh đổi giao diện toàn cục khi trang cũ còn chạy.
 
 ### 4.11 Utilities tối thiểu
 
 Chỉ được tồn tại 8 utility sau trong `utilities.css`. Không thêm utility mới; nếu cần, tạo class trong module hoặc primitive.
+
+**Phase 2 không import `utilities.css`:** primitive phải tự chứa style (kể cả visually-hidden nếu cần). File này chỉ được import ở Phase 3.
 
 ```css
 @layer sn-utilities {
@@ -841,7 +877,9 @@ Chỉ được tồn tại 8 utility sau trong `utilities.css`. Không thêm uti
 
     .sn-numeric {
         font-variant-numeric: tabular-nums slashed-zero;
-        font-feature-settings: 'tnum' 1, 'zero' 1;
+        font-feature-settings:
+            'tnum' 1,
+            'zero' 1;
     }
 
     .sn-label {
@@ -881,14 +919,14 @@ Chỉ được tồn tại 8 utility sau trong `utilities.css`. Không thêm uti
 
 ### 4.12 Quy ước đặt class
 
-| Loại | Pattern | Ví dụ |
-|---|---|---|
-| Global primitive | `.sn-<block>` + `[data-variant]` + `[data-size]` | `.sn-btn[data-variant='primary']` |
-| Global element | `.sn-<block>__<element>` | `.sn-table__head`, `.sn-card__meta` |
-| State | thuộc tính | `[data-state='open']`, `[aria-current='page']`, `:disabled` |
-| CSS Module | camelCase | `.heroSplit`, `.rail`, `.kpiStrip` |
-| Ghép primitive trong module | `composes` | `.cta { composes: sn-btn from global; }` |
-| Layer | `sn-*` | `sn-reset`, `sn-base`, `sn-components`, `sn-layouts`, `sn-utilities` |
+| Loại                        | Pattern                                          | Ví dụ                                                                                                             |
+| --------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Global primitive            | `.sn-<block>` + `[data-variant]` + `[data-size]` | `.sn-btn[data-variant='primary']`                                                                                 |
+| Global element              | `.sn-<block>__<element>`                         | `.sn-table__head`, `.sn-card__meta`                                                                               |
+| State                       | thuộc tính                                       | `[data-state='open']`, `[aria-current='page']`, `:disabled`                                                       |
+| CSS Module                  | camelCase                                        | `.heroSplit`, `.rail`, `.kpiStrip`                                                                                |
+| Ghép primitive trong module | `composes`                                       | `.cta { composes: sn-btn from global; }`                                                                          |
+| Layer                       | `sn-*` chen Tailwind                             | `sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities` |
 
 Không: `.btn-primary`, `.is-primary`, `.mt-4`, `.text-red`, `.p-2`.
 
@@ -912,14 +950,17 @@ export function cx(...values: ClassValue[]): string {
 }
 ```
 
-- `cn()` → `cx()` (đổi import toàn bộ).
-- `buttonVariants` bỏ; `Button` map props sang `data-variant` / `data-size`.
+- `cn()` → `cx()` **chỉ trong primitive Phase 2**; pages giữ `cn` đến phase của chúng.
+- Bỏ `cva` khỏi 7 primitive UI; giữ export `buttonVariants`/`iconButtonVariants`/`badgeVariants`/`cardVariants`/`inputVariants` dưới dạng helper class string để không phá import cũ.
+- `Button` map props sang `sn-btn` + `data-variant` / `data-size`; `className` nối bằng `cx`.
 - Không cần merge class vì không còn utility xung đột.
 
 ### 5.3 API component
 
 ```tsx
-<Button variant="primary" size="md" leftIcon={Plus}>Thêm sản phẩm</Button>
+<Button variant="primary" size="md" leftIcon={Plus}>
+    Thêm sản phẩm
+</Button>
 ```
 
 render:
@@ -930,9 +971,15 @@ render:
 
 Quy ước:
 
-- `variant`: `primary | secondary | ghost | tertiary | destructive | link`
-- `size`: `sm | md | lg | icon | icon-sm | icon-lg`
-- `tone` (Badge/Alert/Toast): `neutral | accent | success | warning | danger`
+- `variant` (Button): `default | primary | secondary | outline | ghost | tertiary | destructive | link`
+- `size` (Button/IconButton): `default | sm | md | lg | icon | icon-sm | icon-lg`
+- `size` (Input/Select): `sm | md | lg`
+- `tone` (Badge): `neutral | accent | success | warning | danger | outline | ink`
+- `tone` (Alert): `info | success | warning | danger` (`info` map về accent)
+- `tone` (Toast): `info | success | warning | error` (`error` map về danger)
+- `variant` (Card): `flat | raised | inset | ghost`; `padding`: `none | sm | md | lg`
+- `variant` (Tabs): `underline | pill | filter`
+- Typography: giữ size `display-xl/display-lg/headline-1/2/3/body-lg/md/sm/label-code`, tone `ink/muted/faint/accent/success/warning/danger`, prop `serif`.
 - Prop `className` được nối bằng `cx(...)`, không ghi đè.
 
 ### 5.4 Mẫu triển khai
@@ -1043,8 +1090,10 @@ Quy ước:
 import styles from './Home.module.css';
 
 <section className={styles.hero}>
-    <button className={styles.cta} data-variant="primary">Xem chợ hôm nay</button>
-</section>
+    <button className={styles.cta} data-variant="primary">
+        Xem chợ hôm nay
+    </button>
+</section>;
 ```
 
 ### 5.5 Accessibility
@@ -1073,11 +1122,11 @@ Không: `style={{ color: '#b23a2f' }}`, `style={{ marginTop: 16 }}`.
 
 Mapping skill → vai trò:
 
-| Skill | Vai trò trong refactor |
-|---|---|
-| `design-taste-frontend` ("taste kill") | Audit trước khi vẽ, luật bố cục/typography/màu, chống giao diện template |
-| `kill-ai-slop` ("unslop") | Danh mục dấu hiệu AI và cách xoá; soi cả copy lẫn CSS |
-| `hallmark` | Tiêu chuẩn "được thiết kế, không phải được sinh ra"; kiểm tra độ hoàn thiện |
+| Skill                                  | Vai trò trong refactor                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `design-taste-frontend` ("taste kill") | Audit trước khi vẽ, luật bố cục/typography/màu, chống giao diện template    |
+| `kill-ai-slop` ("unslop")              | Danh mục dấu hiệu AI và cách xoá; soi cả copy lẫn CSS                       |
+| `hallmark`                             | Tiêu chuẩn "được thiết kế, không phải được sinh ra"; kiểm tra độ hoàn thiện |
 
 Mỗi page/phase phải qua checklist này. Không đạt = chưa xong.
 
@@ -1085,11 +1134,11 @@ Mỗi page/phase phải qua checklist này. Không đạt = chưa xong.
 
 `design-taste-frontend` khai báo **không dành cho** dashboard, dense product UI, data table, multi-step form. Vì vậy:
 
-| Bề mặt | Áp dụng |
-|---|---|
-| Storefront, Auth, About/Contact/Legal | Đầy đủ landing rules + Audit-first + anti-slop + hallmark |
-| Customer account | Audit-first, typography, color/shape lock, state coverage; **bỏ** luật hero/eyebrow/bento/marquee |
-| Seller / Admin / Shipper | Audit-first, color/shape lock, form contrast, state coverage, anti-slop copy; **bỏ** toàn bộ luật landing page |
+| Bề mặt                                | Áp dụng                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Storefront, Auth, About/Contact/Legal | Đầy đủ landing rules + Audit-first + anti-slop + hallmark                                                      |
+| Customer account                      | Audit-first, typography, color/shape lock, state coverage; **bỏ** luật hero/eyebrow/bento/marquee              |
+| Seller / Admin / Shipper              | Audit-first, color/shape lock, form contrast, state coverage, anti-slop copy; **bỏ** toàn bộ luật landing page |
 
 Ba override có chủ đích, ghi để không ai "sửa" ngược:
 
@@ -1140,7 +1189,7 @@ Ba override có chủ đích, ghi để không ai "sửa" ngược:
 - [ ] Không class Tailwind mới.
 - [ ] Không hex/rgb trong `.tsx` hoặc component CSS.
 - [ ] Không `@apply`, không `!important` ngoài `utilities.css` và `base/a11y.css` (reduced motion).
-- [ ] Không Boxicons/FontAwesome.
+- [ ] Không Boxicons/FontAwesome trong file đã migrate; file legacy defer vẫn nằm trong allowlist.
 - [ ] `npm run types` sạch.
 - [ ] `npm run build` sạch.
 - [ ] `node scripts/check-tokens.mjs` sạch.
@@ -1201,11 +1250,11 @@ Chỉ áp cho bề mặt public. Workspace bỏ qua mục này.
 1. Tạo `docs/ui/BASELINE.md`: inventory 78 page + 47 primitive + **41 file** `Page.css`, mapping page → layout hiện tại, **kèm props chính, các trạng thái dữ liệu, trạng thái rỗng/lỗi và hành động chính của từng page**. Ghi rõ 17 render target thiếu (gồm `Admin/Inventory/Report`).
 2. Ghi quy tắc đóng băng vào `AGENTS.md` (mục Frontend): "Không thêm class Tailwind; UI mới dùng token + `sn-*`; file đã migrate phải bỏ khỏi `scripts/token-allowlist.json`".
 3. Viết lại `scripts/check-tokens.mjs` theo hướng **ratchet**:
-   - Giữ nguyên cơ chế `--write-baseline` ghi file-level allowlist (65 file trước Phase 0; baseline mới 187 file sau khi mở rộng rule).
-   - `raw-hex` trong `resources/js/**/*.{ts,tsx}`. Baseline sẽ chứa `resources/js/app.tsx` vì còn `#4B5563`.
-   - `tailwind-utility` **chỉ quét class string** (`className=`, `cn(`, `cx(`, `clsx(`), không quét toàn dòng để tránh false positive với comment/chuỗi tiếng Việt.
-   - `legacy-icon`, `arbitrary-value`, `apply-directive`, `css-hardcoded-color` trong `components/**` và `layouts/**` (cho phép trong `tokens/`).
-   - Output `file:line:rule:match`; exit 1 nếu có vi phạm **ngoài allowlist**.
+    - Giữ nguyên cơ chế `--write-baseline` ghi file-level allowlist (65 file trước Phase 0; baseline mới 187 file sau khi mở rộng rule).
+    - `raw-hex` trong `resources/js/**/*.{ts,tsx}`. Baseline sẽ chứa `resources/js/app.tsx` vì còn `#4B5563`.
+    - `tailwind-utility` **chỉ quét class string** (`className=`, `cn(`, `cx(`, `clsx(`), không quét toàn dòng để tránh false positive với comment/chuỗi tiếng Việt.
+    - `legacy-icon`, `arbitrary-value`, `apply-directive`, `css-hardcoded-color` trong `components/**` và `layouts/**` (cho phép trong `tokens/`).
+    - Output `file:line:rule:match`; exit 1 nếu có vi phạm **ngoài allowlist**.
 4. **Giữ** `scripts/token-allowlist.json` đến Phase 11 làm ratchet. Sau khi thêm rule mới, chạy `npm run check:tokens:baseline` để ghi baseline. Không xoá file này ở Phase 0.
 5. Giữ các script hiện có (`check:tokens`, `check:tokens:all`, `check:tokens:baseline`); thêm `check:css` như alias. Không đổi tên cũ để không phá CI/AGENTS.
 6. Chụp 12 ảnh baseline thủ công (không cài Playwright) ở 1440 + 390, lưu `docs/ui/baseline/`; thêm `docs/ui/baseline/` vào `.gitignore`.
@@ -1234,35 +1283,35 @@ Chỉ áp cho bề mặt public. Workspace bỏ qua mục này.
 **Sửa**
 
 - `resources/css/app.css`: **chỉ thêm**, không xoá gì ở phase này.
-  - Giữ nguyên `@import 'tailwindcss'`, `@custom-variant dark`, `@source`, `tokens.css`, `base.css` để trang chưa migrate không vỡ.
-  - Thêm `@import './tokens/primitive.css'`, `semantic.css`, `scale.css` ngay sau `@import 'tailwindcss'`.
-  - Thêm `@import './fonts.css'` ngay sau khối token để font local có hiệu lực từ Phase 1.
-  - **Chưa** import `base/*` (trừ `fonts.css`) và `components/*`; các file này được tạo nhưng chỉ kích hoạt từ Phase 3, tránh đổi giao diện toàn cục khi trang cũ còn chạy.
+    - Giữ nguyên `@import 'tailwindcss'`, `@custom-variant dark`, `@source`, `tokens.css`, `base.css` để trang chưa migrate không vỡ.
+    - Thêm `@import './tokens/primitive.css'`, `semantic.css`, `scale.css` ngay sau `@import 'tailwindcss'`.
+    - Thêm `@import './fonts.css'` ngay sau khối token để font local có hiệu lực từ Phase 1.
+    - **Chưa** import `base/*` (trừ `fonts.css`) và `components/*`; các file này được tạo nhưng chỉ kích hoạt từ Phase 3, tránh đổi giao diện toàn cục khi trang cũ còn chạy.
 - `resources/css/base.css`: giữ nguyên đến Phase 11. Nội dung mới nằm ở `base/`, không ghi đè file cũ.
 - `resources/css/tokens.css`: giữ nguyên đến Phase 11 (class Tailwind cũ như `bg-rice-paper`, `text-ink` vẫn cần `@theme`). Token mới sống song song, prefix `--sn-` nên không xung đột.
 - **Font: self-host Be Vietnam Pro** (bắt buộc theo `design-taste-frontend`; không link Google Fonts ở production).
-  - `public/fonts/be-vietnam-pro/` đã có 8 `woff2` từ Phase 0 (400/500/600/700, latin + vietnamese).
-  - Copy `public/fonts/be-vietnam-pro/font-faces.css` vào `resources/css/fonts.css` (chỉ `@font-face`; giữ `font-display: swap`, `unicode-range`).
-  - Weight 400–700 là đủ: codebase chỉ dùng `font-normal/medium/semibold/bold`; không có 300/800.
+    - `public/fonts/be-vietnam-pro/` đã có 8 `woff2` từ Phase 0 (400/500/600/700, latin + vietnamese).
+    - Copy `public/fonts/be-vietnam-pro/font-faces.css` vào `resources/css/fonts.css` (chỉ `@font-face`; giữ `font-display: swap`, `unicode-range`).
+    - Weight 400–700 là đủ: codebase chỉ dùng `font-normal/medium/semibold/bold`; không có 300/800.
 - `resources/views/app.blade.php`:
-  - Thêm inline script set **cả** `data-theme` và mirror `.dark` trước paint; đặt trước `<style>` và `@vite`.
-  - Bỏ `@class(['dark' => ...])` trên `<html>`; script set cả `data-theme` và `.dark`.
-  - **Giữ** `<style> html { background-color: #f6f1e6; }` và `html.dark { ... }` đến Phase 11 (mirror legacy).
-  - Xác nhận `fonts.css` đã được import qua `app.css` (không khai `@font-face` trực tiếp trong Blade).
-  - Bỏ `<link>` Google Fonts **và** 2 `<link rel="preconnect">` sau khi font local chạy đúng.
-  - **Chưa** xoá Boxicons (Phase 11).
-  - **Chưa** bỏ `class="font-sans antialiased"` trên `<body>` (Phase 11).
+    - Thêm inline script set **cả** `data-theme` và mirror `.dark` trước paint; đặt trước `<style>` và `@vite`.
+    - Bỏ `@class(['dark' => ...])` trên `<html>`; script set cả `data-theme` và `.dark`.
+    - **Giữ** `<style> html { background-color: #f6f1e6; }` và `html.dark { ... }` đến Phase 11 (mirror legacy).
+    - Xác nhận `fonts.css` đã được import qua `app.css` (không khai `@font-face` trực tiếp trong Blade).
+    - Bỏ `<link>` Google Fonts **và** 2 `<link rel="preconnect">` sau khi font local chạy đúng.
+    - **Chưa** xoá Boxicons (Phase 11).
+    - **Chưa** bỏ `class="font-sans antialiased"` trên `<body>` (Phase 11).
 - `resources/js/app.tsx`: đổi `progress.color` từ `#4B5563` sang `var(--sn-color-accent)`.
 - `resources/js/hooks/useTheme.ts`:
-  - Set `root.dataset.theme`, mirror `root.classList.toggle('dark', isDark)`, và `root.style.colorScheme`.
-  - **SSR-safe:** `config/inertia.php` đang bật SSR; không đọc `localStorage` khi `typeof window === 'undefined'`; bọc try/catch.
-  - Giữ nguyên API `theme / resolvedTheme / changeTheme`.
+    - Set `root.dataset.theme`, mirror `root.classList.toggle('dark', isDark)`, và `root.style.colorScheme`.
+    - **SSR-safe:** `config/inertia.php` đang bật SSR; không đọc `localStorage` khi `typeof window === 'undefined'`; bọc try/catch.
+    - Giữ nguyên API `theme / resolvedTheme / changeTheme`.
 - **Exception `!important`:** chỉ `resources/css/base/a11y.css` được dùng `!important` cho block `prefers-reduced-motion`; cập nhật `scripts/check-tokens.mjs` cho phép path này, **không** thêm file vào allowlist.
-- `resources/css/app.css` Phase 1 **chưa** thêm khai báo `@layer sn-*`; chỉ import token + fonts. Khai báo layer và import `base/*`/`components/*`/`layouts/*`/`utilities.css` để Phase 3.
+- `resources/css/app.css` Phase 1 **chưa** thêm khai báo `@layer sn-*`; chỉ import token + fonts. Khai báo layer + import `components/*` làm ở Phase 2; `base/*`/`layouts/*`/`utilities.css` ở Phase 3.
 
 **Quy ước "chưa kích hoạt toàn cục"**
 
-- `base/*.css` (trừ `fonts.css`) và `components/*.css` chỉ được import từ Phase 3 trở đi.
+- `base/*.css` (trừ `fonts.css`) chỉ import từ Phase 3; `components/*.css` import từ Phase 2.
 - Trong giai đoạn chuyển đổi, nền trang do class `.sn-shell` trên root của từng layout đặt (`background: var(--sn-color-canvas)`), **không** đặt trên `body`. Phase 11 mới chuyển về `body`.
 
 **Reset phải xử lý**
@@ -1274,104 +1323,154 @@ Chỉ áp cho bề mặt public. Workspace bỏ qua mục này.
 
 ---
 
-### Phase 2 — 47 primitive toàn cục
+### Phase 2 — 37 primitive dùng chung (10 legacy defer)
 
-**Mục tiêu:** thay toàn bộ `components/ui` bằng primitive CSS thuần.
+**Mục tiêu:** thay các primitive dùng chung bằng CSS thuần, giữ nguyên API public. Nhóm workspace legacy được defer để tránh map 64 Boxicon và tránh double work với Phase 3.
 
-Chia 3 đợt để review được:
+**Phạm vi:** 37 file. **Defer sang Phase 3/7/8:** `action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `filter-panel`, `header`, `insights`, `navbar`, `sidebar`.
 
-**2.1 Form controls (15)**
+**2A — Form controls (15) — DONE 2026-11-22**
 
-`button`, `icon-button`, `input`, `textarea`, `select`, `checkbox`, `switch`, `radio-card`, `form-field`, `input-error`, `search-input`, `password-strength`, `file-dropzone`, `rich-text-editor`, `primary-input` (legacy, chuyển thành alias của `Input`).
+`button`, `icon-button`, `input`, `textarea`, `select`, `checkbox`, `switch`, `radio-card`, `form-field`, `input-error`, `search-input`, `password-strength`, `file-dropzone`, `rich-text-editor`, `primary-input` (legacy wrapper của `Input`).
 
-**2.2 Overlay và navigation (15)**
+**2B — Overlay + feedback (9) — DONE 2026-11-22**
 
-`dialog`, `sheet`, `dropdown-menu`, `action-dropdown`, `tooltip`, `toast`, `toaster`, `confirmation-modal` (wrapper của `feedback/ConfirmDialog`, giữ export cũ), `tabs`, `breadcrumbs`, `pagination`, `navbar`, `sidebar`, `header`, `filter-panel`.
+`dialog`, `sheet`, `dropdown-menu`, `tooltip`, `toast`, `toaster`, `tabs`, `pagination`, `breadcrumbs`.
 
-**2.3 Data display và feedback (17)**
+CSS: `components/overlay.css` (scrim, dialog, sheet, dropdown, tooltip), `components/feedback.css` (toaster, toast), `components/navigation.css` (tabs, pagination, breadcrumbs).
 
-`card`, `table`, `data-table`, `badge`, `status-badge`, `avatar`, `alert`, `empty-state`, `error-state`, `skeleton`, `progress`, `insights`, `typography`, `text-link`, `action-button`, `action-buttons`, `language-switcher`.
+**2C — Data display (13) — DONE 2026-11-22**
 
-`quantity` (thực chất là `commerce/QuantityStepper`), `mobile-nav` (layout) không nằm trong 47 file này; chúng được xử lý ở Phase 3 và Phase 4. `feedback/ConfirmDialog` là canonical của luồng xác nhận và được dùng từ Phase 2.
+`card`, `table`, `badge`, `status-badge`, `avatar`, `alert`, `empty-state`, `error-state`, `skeleton`, `progress`, `typography`, `text-link`, `language-switcher`.
+
+CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `components/status.css` (alert, empty state, error state), `components/typography.css` (heading, text, eyebrow, meta, text link), `sn-lang*` trong `components/navigation.css`.
+
+`quantity` (`commerce/QuantityStepper`) và `mobile-nav` (layout) không thuộc 37 file này; xử lý ở Phase 3/4.
+
+**Phase 2 hoàn tất: 37/37 primitive.**
 
 **Quy tắc**
 
-- Mỗi primitive: 1 file `.tsx` + CSS global tương ứng trong `components/*.css`.
-- Xoá `cva` khỏi primitive; dùng `data-*`. `commerce/Price.tsx` cũng dùng `cva` nên xử lý ở Phase 4.
-- **Giữ nguyên từng file legacy tại đúng đường dẫn** làm wrapper mỏng (không gom vào một `legacy.ts`), vì import trong dự án là path-based. Xoá từng wrapper khi page cuối dùng nó đã migrate (cuối Phase 8/9).
+- Tạo `resources/js/lib/cx.ts`; primitive mới dùng `cx`, pages vẫn dùng `cn` đến phase của chúng.
+- Thêm `@layer sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;` vào `app.css` **trước** import, rồi import từng `components/*.css` khi primitive xong. (Phase 3 chèn thêm `sn-legacy-reset` lên **đầu** danh sách — xem §4.10.)
+- Không import `base/*`, `layouts/*`, `utilities.css` trong Phase 2.
+- Không `@apply`, không `!important`, không hex trong component CSS; dùng `--sn-*`.
+- Bỏ `cva` khỏi 7 file UI (`button`, `icon-button`, `badge`, `card`, `input`, `skeleton`, `typography`). `commerce/Price.tsx` để Phase 4; dependency `class-variance-authority` giữ đến Phase 11.
+- Giữ export tương thích `buttonVariants`, `iconButtonVariants`, `badgeVariants`, `cardVariants`, `inputVariants`, `skeletonVariants` dưới dạng helper class string nếu đang export.
+- **Giữ nguyên API/variant đang dùng**, không chỉ danh sách trong plan:
 
-| Wrapper giữ nguyên path | Hành vi | Số file đang import |
-|---|---|---:|
-| `action-button.tsx` | wrap `Button` | 8 |
-| `action-buttons.tsx` | wrap `ButtonGroup`, giữ type `ActionConfig` | 10 |
-| `action-dropdown.tsx` | wrap `DropdownMenu` | 1 |
-| `confirmation-modal.tsx` | wrap `feedback/ConfirmDialog` | 8 |
-| `data-table.tsx` | wrap `Table` | 13 |
-| `filter-panel.tsx` | wrap `FilterPanel` | 12 |
-| `status-badge.tsx` | map class `Page.css` sang `Badge tone` | 11 |
-| `header.tsx` | alias `PageHeader` / `WorkspaceTopbar` | 15 |
-| `primary-input.tsx` | wrap `Input` | 3 |
-| `insights.tsx` | wrap `StatCard` | 2 |
+| Component    | Giá trị phải hỗ trợ                                                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Button       | `default`, `primary`, `secondary`, `outline`, `ghost`, `tertiary`, `destructive`, `link`; size `default/sm/md/lg/icon/icon-sm/icon-lg`               |
+| Badge        | tone `neutral`, `accent`, `success`, `warning`, `danger`, `outline`, `ink`; size `sm/md`                                                             |
+| Alert        | tone `info`, `success`, `warning`, `danger` (map `info` → accent)                                                                                    |
+| Toast        | tone `info`, `success`, `warning`, `error` (map `info` → accent, `error` → danger)                                                                   |
+| Card         | variant `flat`, `raised`, `inset`, `ghost`; padding `none/sm/md/lg`                                                                                  |
+| Tabs         | variant `underline`, `pill`, `filter`                                                                                                                |
+| Typography   | size `display-xl`, `display-lg`, `headline-1/2/3`, `body-lg/md/sm`, `label-code`; tone `ink/muted/faint/accent/success/warning/danger`; prop `serif` |
+| Input/Select | size `sm/md/lg`; `invalid`; `aria-invalid`                                                                                                           |
 
-- `components/ui/table.tsx` là primitive chuẩn; `data-table.tsx` chỉ còn wrapper mỏng (sort/select) dùng `Table`.
-- `components/ui/*` đang bị ignore trong `.prettierignore` (không phải `.prettierrc`) — bỏ ignore ở Phase 11.
-- Xoá entry của từng file `components/ui/*` khỏi `scripts/token-allowlist.json` ngay khi file đó đã sạch, để ratchet không bị trôi.
+- `typography` **giữ component** `Heading/Text/Eyebrow/MetaText` (19 file dùng); đổi ruột sang `sn-*` + `cx`; thêm `resources/css/components/typography.css`. Xoá component ở Phase 11 nếu đã migrate hết.
+- `className` của consumer phải được nối bằng `cx`, không ghi đè.
+- `.prettierignore` đang ignore `components/ui`; format thủ công các file đã sửa, `format:check` sẽ không bắt.
+- Xoá entry `components/ui/*` khỏi `scripts/token-allowlist.json` ngay khi file sạch. File defer vẫn nằm trong allowlist.
+- **Không** rewrite `data-table` theo giả định sort/select: API thực tế là `columns, data, headerTitle, headerIcon: string`; xử lý ở Phase 7/8.
+- **Không** map 64 Boxicon string trong Phase 2; các page legacy giữ icon string đến phase tương ứng.
 
-**DoD:** mọi primitive render đúng ở light/dark; keyboard + focus; không hex; `check:css` sạch cho `components/ui`.
+**Checkpoint từng đợt**
+
+1. Rewrite + CSS + xoá allowlist của đợt.
+2. `npm run check:css`, `npm run types`, `npm run build`.
+3. Render thử 2 page đang dùng primitive (login + một page customer).
+4. Chỉ sang đợt tiếp theo khi pass.
+
+**DoD:** 37 primitive render đúng light/dark; API/variant không đổi; `check:css` sạch cho các file đã rewrite (file defer vẫn allowlist); `types` + `build` pass. Ghi nhận đây là **thay đổi visual toàn cục có chủ đích** trên các page chưa migrate (Button 39 file, Input 16, Card 14, Badge 16, Pagination 15).
 
 ---
 
 ### Phase 3 — Shell và layout
 
-**Mục tiêu:** 4 khung trang mới, thay `AppLayout`.
+**Mục tiêu:** 4 khung trang mới, thay `AppLayout`. Đây là phase mở workspace nên phải xử lý nợ layer/Page.css trước khi vẽ.
+
+**3.0 — Chuẩn bị (làm trước, không vẽ gì)**
+
+1. **Commit 2A/2B/2C** thành 3 commit riêng theo §13; sau đó `git mv` 7 file `components/ui` về chữ thường (`avatar`, `header`, `insights`, `navbar`, `pagination`, `sidebar`, `tooltip`) để checkout Linux không fail.
+2. **`sn-legacy-reset`:** thêm layer này **đầu tiên** trong câu `@layer` của `app.css`, rồi bọc 6 block toàn cục của `Page.css` vào `@layer sn-legacy-reset { … }`:
+    - `*` (margin/padding/box-sizing/font-family), `a`, `li`, `html`, `body`, `body.dark`.
+    - **Không** đụng phần còn lại của `Page.css` (`.sidebar`, `.content`, `.orders`, `.header`…).
+    - Lý do: `Page.css` unlayered đang thắng mọi `sn-*` và Tailwind utility (đo được: `.sn-btn` 24px → 0px). Nếu không sửa, mọi shell đặt trên `sn-*` sẽ mất padding.
+3. **Scope `base/*.css`:** đổi `body`, `a`, `label` trong `base/typography.css` + `base/forms.css` thành `.sn-shell` / `.sn-shell a` / `.sn-shell label` (và `.sn-shell` cho font-size/color). Rule reset + `a11y` giữ toàn cục. Phase 11 bỏ scope.
+4. **Baseline 5 trang legacy:** chụp ảnh 1440 + 390 trước khi bật CSS, lưu `docs/ui/baseline/` (đã gitignore). Dùng để so sau bước 5.
 
 **Storefront**
 
-- `StorefrontLayout`, `StorefrontHeader`, `StorefrontFooter`, `MobileNav`, `UtilityStrip`, `PageContainer`, `PageHeader`, `SectionHeader`.
-- Header 56 px, sticky, border-bottom; search ở giữa; account/cart phải.
-- Footer 4 cột trên nền `canvas-alt`.
+- `StorefrontLayout`, `StorefrontHeader`, `StorefrontFooter`, `MobileNav`, `PageContainer`, `PageHeader`, `SectionHeader`.
+- **Không** làm `UtilityStrip` (đã bỏ khỏi phase, ghi backlog); locale/currency tiếp tục nằm trong header.
+- Header 56 px (`--sn-header`), sticky, border-bottom; search ở giữa; account/cart phải. Giữ nguyên hành vi: search `router.get('/search', { search })`, dropdown locale/currency `POST /language` + `/currency`, badge giỏ/thông báo, menu mobile qua `MobileNav`.
+- Footer 4 cột trên nền `canvas-alt`; giữ `NewsletterSignup`, `PaymentMarks`, social row.
+- `PageContainer` giữ đủ 4 size `page | prose | narrow | full`; `page` dùng `.sn-container`, `prose` dùng `--sn-measure-prose`, `narrow` giữ ~48rem.
 - Giữ nguyên `ChatDock` mount một lần trong `StorefrontLayout` qua prop `showChatDock` và logic ẩn ở auth/checkout/chat/workspace. Không mount bubble thứ hai.
 
 **Auth**
 
-- `AuthLayout`, `AuthBrandPanel`: split 6/6, panel trái là "ledger" chữ + số liệu thật (không ảnh stock), form 420 px.
+- `AuthLayout`, `AuthBrandPanel`: split **6/6**, form rộng `--sn-container-form` (420 px).
+- Panel trái là editorial: logo, eyebrow, headline, mô tả, 3 trust point, hotline/email. **Bỏ ảnh picsum và bỏ ý "số liệu thật"** (shared props không có số, backend ngoài phạm vi).
+- Giữ `variant="centered"` cho các trang không dùng split.
 
 **Account**
 
-- `AccountLayout`: rail 220 px + content; tab dọc; mobile thành select/scroll tabs.
+- `AccountLayout`: rail 220 px (`--sn-account-rail`) + content; tab dọc; mobile thành scroll tabs (không dựng `<select>` mới).
 - Tiếp tục wrap `StorefrontLayout` để thừa hưởng `ChatDock` và footer; không tự mount chat.
+- Giữ nguyên 7 mục nav và `resolveActiveKey`.
 
 **Workspace**
 
-- `WorkspaceLayout` thay `layouts/app/AppLayout`.
-- `WorkspaceSidebar` 232 px, icon Lucide, active = nền `accent-wash` + thanh 2 px accent bên trái.
-- `WorkspaceTopbar` 56 px: breadcrumb, search (nếu có), theme toggle, avatar menu.
-- Map role → nav giữ nguyên href/label hiện tại.
-- Giữ file `layouts/app/AppLayout.tsx` làm re-export tạm đến Phase 11.
+- `WorkspaceLayout` thay `layouts/app/AppLayout`; giữ `<div className="content"><main>{children}</main></div>` vì **66 selector** của `Page.css` bám vào `.content`.
+- `WorkspaceSidebar`: **230 px** (khớp `calc(100% - 230px)` của Page.css, không dùng 232), icon Lucide, active = `accent-wash` + thanh 2 px accent trái. Dùng class riêng (`sn-workspace__sidebar`), **không** dùng `.sidebar` để tránh `z-index: 2000` đè modal.
+- `WorkspaceTopbar` 56 px, **giữ đủ** chức năng `navbar.tsx`:
+    - toggle sidebar, search (placeholder `t('Search...')`)
+    - chuông + `unreadCount` + polling `/api/notifications/unread-count` mỗi 30 s
+    - `LanguageSwitcher`
+    - avatar menu: Hồ sơ, Đổi mật khẩu, Cài đặt, Đăng xuất
+    - theme toggle (mới, dùng `useTheme`)
+- Nav role **giữ nguyên label + href** cho admin/seller; **shipper rút còn Dashboard + Cài đặt** (6 href còn lại chưa có route; ghi backlog).
+- Giữ file `layouts/app/AppLayout.tsx` làm re-export tạm đến Phase 11 (39 page import default).
+- Xử lý wrapper legacy defer từ Phase 2: `header`, `navbar`, `sidebar`, `filter-panel`. `action-*`, `data-table`, `insights`, `confirmation-modal` để Phase 7/8.
+    - `header.tsx`: map `title/breadcrumbs/reportButton` sang `PageHeader` + `Breadcrumbs` (`active` → `current`), giữ `icon: string` (Boxicons) cho `reportButton`.
+    - `filter-panel.tsx`: giữ API `searchConfig/filterConfigs/buttonConfigs/reportButtonConfig`, giữ `icon: string`; bỏ inline style `var(--light)`; dùng `Input` + `Select` + `Button`.
+    - `navbar.tsx`/`sidebar.tsx`: chỉ còn dùng bởi `AppLayout`; sau khi re-export thì để nguyên (vẫn allowlist) và xoá Phase 11.
 
 **Kích hoạt CSS toàn cục**
 
-- Thêm khai báo `@layer sn-reset, sn-base, sn-components, sn-layouts, sn-utilities;` và import `base/*.css`, `layouts/*.css`, `utilities.css` **không dùng `layer()`**; layer nằm trong từng file.
-- Import `base/*.css` và `layouts/*.css` vào `app.css` ở phase này.
+- `app.css` thêm `@import './base/reset.css'`, `typography.css`, `forms.css`, `a11y.css`, `./layouts/{storefront,auth,account,workspace}.css`, `./utilities.css`; **không** dùng `layer()` trong `@import`.
 - Mỗi layout root thêm `className="sn-shell"`; nền `var(--sn-color-canvas)` đặt ở `.sn-shell`, chưa đặt lên `body`.
-- Kiểm tra 5 trang legacy đại diện (Admin/Products, Admin/Users, Admin/Promotions/Index, Seller/Dashboard, Seller/Products) sau khi bật base để phát hiện reset làm lệch layout.
+- `layouts/*.css` đặt dưới `@layer sn-layouts`.
 
-**DoD:** 4 layout render với 1 page giả mỗi loại; nav đúng role; mobile không tràn; dark mode đúng.
+**Kiểm chứng bắt buộc**
+
+1. **Regression `sn-*`:** trên một trang workspace, `.sn-btn` padding-left phải > 0 và `.sn-input` padding-left > 0 (đây là bài test bắt được lỗi unlayered; trước Phase 3 cả hai bằng 0).
+2. **5 trang legacy** (Admin/Products, Admin/Users, Admin/Promotions/Index, Seller/Dashboard, Seller/Products) so ảnh trước/sau ở 1440; chấp nhận thay đổi spacing do Tailwind utility bắt đầu có hiệu lực, nhưng không được vỡ bố cục.
+3. Header/sidebar/topbar ở 375, 390, 768, 1024, 1440; không tràn ngang.
+4. Light + dark; dialog/sheet mở trên workspace phải nằm **trên** sidebar.
+5. Thêm key i18n còn thiếu vào **cả** `lang/vi.json` và `lang/en.json`: `auth.logout`, `Search...`, `Shops`.
+6. `npm run check:css`, `npm run types`, `npm run build`.
+
+**DoD:** 4 layout render với 1 page giả mỗi loại; `.sn-*` giữ padding trên workspace; 5 trang legacy không vỡ; nav đúng role (shipper 2 mục); modal nằm trên sidebar; mobile không tràn; dark mode đúng; allowlist giảm 2 entry (`header`, `filter-panel`); `navbar`/`sidebar` thành dead code nhưng vẫn để nguyên + allowlist đến Phase 11.
 
 ---
 
 ### Phase 4 — Storefront (8 page)
 
-| # | Page | Ghi chú |
-|---:|---|---|
-| 1 | `Home/Index` | Hero 7/5, 6 category tile, shelf 4-up, trust strip 4 fact, voucher band 1 dòng |
-| 2 | `Home/Search` | Filter rail 264 px, sticky, mobile bottom sheet |
-| 3 | `Customer/ProductDetail` | Gallery 7/5, buy box sticky, spec table, review |
-| 4 | `Home/About` | Editorial + số liệu thật |
-| 5 | `Home/Contact` | Form + thông tin |
-| 6 | `Legal/Terms` | Prose 65ch |
-| 7 | `Legal/PrivacyPolicy` | Prose 65ch |
-| 8 | `Legal/SellingPolicy` | Prose 65ch |
+|   # | Page                     | Ghi chú                                                                        |
+| --: | ------------------------ | ------------------------------------------------------------------------------ |
+|   1 | `Home/Index`             | Hero 7/5, 6 category tile, shelf 4-up, trust strip 4 fact, voucher band 1 dòng |
+|   2 | `Home/Search`            | Filter rail 264 px, sticky, mobile bottom sheet                                |
+|   3 | `Customer/ProductDetail` | Gallery 7/5, buy box sticky, spec table, review                                |
+|   4 | `Home/About`             | Editorial; **không có prop/số liệu** — không bịa số (xem ghi chú dưới)         |
+|   5 | `Home/Contact`           | Form + thông tin                                                               |
+|   6 | `Legal/Terms`            | Prose 65ch                                                                     |
+|   7 | `Legal/PrivacyPolicy`    | Prose 65ch                                                                     |
+|   8 | `Legal/SellingPolicy`    | Prose 65ch                                                                     |
 
 **Component trọng tâm:** `storefront/*` (10 file), `commerce/{ProductCard, ProductGrid, ProductGallery, BuyBox, VariantSelector, QuantityStepper, Price, Rating, ReviewCard, ReviewSummary, SpecTable, ShopIdentity, CategoryPills, ActiveFilters, FilterGroup, FilterRail}`.
 
@@ -1384,6 +1483,7 @@ Chia 3 đợt để review được:
 - Product card: ảnh 4:5, không shadow, hover chỉ border + gạch chân tên.
 - Trust strip: 4 mục ngăn bằng divider, không 4 card.
 - Không section "3 card bằng nhau".
+- `Home/About` và `Home/Contact` render bằng closure trong `routes/web.php`, **không truyền prop nào**; không dựng bảng số liệu/KPI. Muốn có số thật phải bổ sung controller/props — ghi backlog, không làm trong refactor.
 
 **DoD:** 8 trang hợp lệ ở 375/390/768/1440; ảnh không nhảy layout (đặt `width/height` hoặc `aspect-ratio`); dark mode đạt.
 
@@ -1405,13 +1505,13 @@ Chia 3 đợt để review được:
 
 ### Phase 6 — Customer + Settings (18 page)
 
-| Nhóm | Page |
-|---|---|
-| Giỏ/thanh toán | `Cart`, `Checkout`, `PaymentResult` |
-| Đơn hàng | `Orders/Index`, `Orders/Show` |
-| Địa chỉ | `Address/Index`, `Create`, `Edit`, `Show`, `AddressForm` |
-| Tài khoản | `Profile/Index`, `ChangePassword/Index`, `Notification/Index`, `Chat/Index` |
-| Settings | `Settings/Profile`, `Password`, `Appearance`, `SettingsTabs` |
+| Nhóm           | Page                                                                        |
+| -------------- | --------------------------------------------------------------------------- |
+| Giỏ/thanh toán | `Cart`, `Checkout`, `PaymentResult`                                         |
+| Đơn hàng       | `Orders/Index`, `Orders/Show`                                               |
+| Địa chỉ        | `Address/Index`, `Create`, `Edit`, `Show`, `AddressForm`                    |
+| Tài khoản      | `Profile/Index`, `ChangePassword/Index`, `Notification/Index`, `Chat/Index` |
+| Settings       | `Settings/Profile`, `Password`, `Appearance`, `SettingsTabs`                |
 
 **Component:** `commerce/{CartLine, OrderSummary, OrderItemRow, OrderTable, OrderStatusBadge, OrderTimeline, CheckoutStepper, CheckoutAddressForm, PaymentOption, PaymentMarks, PromoField, AddressCard, NotificationRow, OrderAnnouncementCard, OrderContextRail}`, `chat/*` (13 file).
 
@@ -1436,6 +1536,7 @@ Chia 3 đợt để review được:
 - Orders: status tabs + bảng; detail 2 cột.
 - Promotions: form điều kiện, date range, preview.
 - Shop: form + preview card.
+- Xử lý wrapper defer từ Phase 2: `action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `insights`; bỏ Boxicons khỏi các page Seller.
 
 **DoD:** `Page.css` không còn cần cho các page này; icon Lucide; bảng đúng 48 px row; số căn phải.
 
@@ -1443,20 +1544,20 @@ Chia 3 đợt để review được:
 
 ### Phase 8 — Admin (34 page)
 
-| Nhóm | Page |
-|---|---|
-| Dashboard | `Dashboard/Index` |
-| Users | `Users/Index`, `Users/Edit` |
-| Products | `Products/Index`, `Products/Show` |
-| Inventory | `Inventory/Index`, `Show`, `History` |
-| Orders | `Orders/Index` |
-| Promotions | `Promotions/{Index,Create,Edit,Show}` |
-| Categories | `Categories/{Index,Create,Edit}` |
-| Brands | `Brands/{Index,Create,Edit}` |
-| Shops | `Shops/{Index,Pending,Show,Dashboard,Statistics,Violations}` |
-| Shippers | `Shippers/Index`, `Show` |
-| Returns | `Returns/Index` |
-| Analytics | `Analytics/{Index,Orders,Products,Reports,Revenue,Users}` |
+| Nhóm       | Page                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Dashboard  | `Dashboard/Index`                                            |
+| Users      | `Users/Index`, `Users/Edit`                                  |
+| Products   | `Products/Index`, `Products/Show`                            |
+| Inventory  | `Inventory/Index`, `Show`, `History`                         |
+| Orders     | `Orders/Index`                                               |
+| Promotions | `Promotions/{Index,Create,Edit,Show}`                        |
+| Categories | `Categories/{Index,Create,Edit}`                             |
+| Brands     | `Brands/{Index,Create,Edit}`                                 |
+| Shops      | `Shops/{Index,Pending,Show,Dashboard,Statistics,Violations}` |
+| Shippers   | `Shippers/Index`, `Show`                                     |
+| Returns    | `Returns/Index`                                              |
+| Analytics  | `Analytics/{Index,Orders,Products,Reports,Revenue,Users}`    |
 
 **Component:** `admin/*` (18 file) + `AnalyticsChart` (recharts) dùng token màu qua `var(...)`.
 
@@ -1467,6 +1568,7 @@ Chia 3 đợt để review được:
 - Chart: lưới 1 px, không gradient, tooltip surface.
 - Bulk action hiện khi có selection, không chiếm chỗ thường trực.
 - Số liệu KPI: 1 hàng 4 ô, không icon tile màu.
+- Dọn nốt wrapper legacy còn lại sau Phase 7; xoá entry allowlist tương ứng.
 
 **DoD:** không còn page Admin/Seller nào import `Page.css`; các wrapper legacy và `AppLayout` vẫn còn import (sẽ xoá ở Phase 11). `Page.css` chỉ bị xoá ở Phase 11.
 
@@ -1479,6 +1581,7 @@ Chia 3 đợt để review được:
 **Việc làm**
 
 - Sửa middleware: đăng ký alias `shipper` trong `bootstrap/app.php` trỏ `IsShipper`, hoặc đổi route sang `isShipper`. Không đổi URL, controller hay props.
+- Nav shipper đã rút còn Dashboard + Cài đặt từ Phase 3; khi backend bổ sung route thật thì mở lại mục tương ứng.
 - Dựng `Shipper/Dashboard/Index` trên `WorkspaceLayout`.
 - Vì controller chỉ trả `title`, page gồm: header, empty state "Chưa có chuyến được giao", 1 CTA tải lại. **Không** bịa danh sách chuyến, trạng thái hay thu nhập.
 - Khi backend bổ sung props chuyến, ghi backlog để làm danh sách thật.
@@ -1523,30 +1626,30 @@ Chia 3 đợt để review được:
 
 **Checklist xoá**
 
-| File / mục | Hành động |
-|---|---|
-| `package.json` | Xoá `tailwindcss`, `@tailwindcss/vite`, `@tailwindcss/postcss`, `@tailwindcss/forms`, `@tailwindcss/container-queries`, `@tailwindcss/oxide-linux-x64-gnu`, `tailwind-merge`, `tailwindcss-animate`, `class-variance-authority`, `clsx`, `prettier-plugin-tailwindcss` |
-| `vite.config.ts` | Bỏ `import tailwindcss` + `tailwindcss()` |
-| `postcss.config.js` | Xoá |
-| `tailwind.config.ts` | Xoá |
-| `components.json` | Xoá |
-| `resources/css/app.css` | Bỏ `@import 'tailwindcss'`, `@custom-variant`, `@source` |
-| `resources/css/tokens.css` | Xoá |
-| `resources/css/legacy-tokens.css` | Xoá |
-| `resources/css/Page.css` | Xoá **sau khi** wrapper legacy + `AppLayout` đã bị xoá (Phase 11) |
-| `resources/css/base.css` | Xoá (Phase 1 giữ nguyên, không xoá sớm) |
-| `resources/views/app.blade.php` | Bỏ Boxicons link, bỏ `class="font-sans antialiased"`, bỏ `@class(['dark' => ...])` nếu còn, xác nhận không còn link Google Fonts |
-| `resources/js/app.tsx` | Xác nhận `progress.color` đã là token, không còn `#4B5563` |
-| `.prettierrc` | Bỏ plugin + `tailwindFunctions` + `tailwindStylesheet` |
-| `eslint.config.js` | Bỏ `tailwind.config.js` khỏi ignores |
-| `scripts/token-allowlist.json` | Chạy strict lần cuối (không `--all`), xác nhận 0 vi phạm rồi xoá file |
-| `resources/js/components/ui/*` wrapper legacy | Xoá `action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `filter-panel`, `header`, `insights`, `primary-input`, `status-badge` sau khi page cuối migrate |
-| `layouts/app/AppLayout.tsx` | Xoá sau khi mọi page dùng `WorkspaceLayout` |
-| `@/lib/utils.ts` | Chỉ xoá `cn` + `twMerge`; giữ `formatCurrency` và các helper khác, chuyển sang `cx` |
-| `.dark` selectors | Xoá toàn bộ |
-| `DESIGN-02.md`, `STITCH-DESIGN.md`, `PROMPT.md`, `PLAN.md` | Chuyển `docs/archive/` hoặc xoá |
-| `README.md`, `AGENTS.md` | Cập nhật mô tả stack, bỏ Tailwind/Boxicons |
-| `docs/ui/BASELINE.md` | Giữ làm lịch sử |
+| File / mục                                                 | Hành động                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`                                             | Xoá `tailwindcss`, `@tailwindcss/vite`, `@tailwindcss/postcss`, `@tailwindcss/forms`, `@tailwindcss/container-queries`, `@tailwindcss/oxide-linux-x64-gnu`, `tailwind-merge`, `tailwindcss-animate`, `class-variance-authority`, `clsx`, `prettier-plugin-tailwindcss` |
+| `vite.config.ts`                                           | Bỏ `import tailwindcss` + `tailwindcss()`                                                                                                                                                                                                                              |
+| `postcss.config.js`                                        | Xoá                                                                                                                                                                                                                                                                    |
+| `tailwind.config.ts`                                       | Xoá                                                                                                                                                                                                                                                                    |
+| `components.json`                                          | Xoá                                                                                                                                                                                                                                                                    |
+| `resources/css/app.css`                                    | Bỏ `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                                                                                                                                                               |
+| `resources/css/tokens.css`                                 | Xoá                                                                                                                                                                                                                                                                    |
+| `resources/css/legacy-tokens.css`                          | Xoá                                                                                                                                                                                                                                                                    |
+| `resources/css/Page.css`                                   | Xoá **sau khi** wrapper legacy + `AppLayout` đã bị xoá (Phase 11)                                                                                                                                                                                                      |
+| `resources/css/base.css`                                   | Xoá (Phase 1 giữ nguyên, không xoá sớm)                                                                                                                                                                                                                                |
+| `resources/views/app.blade.php`                            | Bỏ Boxicons link, bỏ `class="font-sans antialiased"`, bỏ `@class(['dark' => ...])` nếu còn, xác nhận không còn link Google Fonts                                                                                                                                       |
+| `resources/js/app.tsx`                                     | Xác nhận `progress.color` đã là token, không còn `#4B5563`                                                                                                                                                                                                             |
+| `.prettierrc`                                              | Bỏ plugin + `tailwindFunctions` + `tailwindStylesheet`                                                                                                                                                                                                                 |
+| `eslint.config.js`                                         | Bỏ `tailwind.config.js` khỏi ignores                                                                                                                                                                                                                                   |
+| `scripts/token-allowlist.json`                             | Chạy strict lần cuối (không `--all`), xác nhận 0 vi phạm rồi xoá file                                                                                                                                                                                                  |
+| `resources/js/components/ui/*` wrapper legacy              | Xoá `action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `filter-panel`, `header`, `insights`, `primary-input`, `status-badge` sau khi page cuối migrate                                                                          |
+| `layouts/app/AppLayout.tsx`                                | Xoá sau khi mọi page dùng `WorkspaceLayout`                                                                                                                                                                                                                            |
+| `@/lib/utils.ts`                                           | Chỉ xoá `cn` + `twMerge`; giữ `formatCurrency` và các helper khác, chuyển sang `cx`                                                                                                                                                                                    |
+| `.dark` selectors                                          | Xoá toàn bộ                                                                                                                                                                                                                                                            |
+| `DESIGN-02.md`, `STITCH-DESIGN.md`, `PROMPT.md`, `PLAN.md` | Chuyển `docs/archive/` hoặc xoá                                                                                                                                                                                                                                        |
+| `README.md`, `AGENTS.md`                                   | Cập nhật mô tả stack, bỏ Tailwind/Boxicons                                                                                                                                                                                                                             |
+| `docs/ui/BASELINE.md`                                      | Giữ làm lịch sử                                                                                                                                                                                                                                                        |
 
 **Thứ tự thực hiện trong Phase 11:** xoá wrapper legacy và `AppLayout` trước → xoá `Page.css` → xoá `legacy-tokens.css`/`tokens.css` → gỡ Tailwind khỏi build → chạy strict check → xoá allowlist.
 
@@ -1580,86 +1683,86 @@ Chia 3 đợt để review được:
 
 ## 8. Thứ tự trang chi tiết
 
-| Phase | # | Page |
-|---|---:|---|
-| 4 | 1 | `Home/Index` |
-| 4 | 2 | `Home/Search` |
-| 4 | 3 | `Customer/ProductDetail` |
-| 4 | 4 | `Home/About` |
-| 4 | 5 | `Home/Contact` |
-| 4 | 6 | `Legal/Terms` |
-| 4 | 7 | `Legal/PrivacyPolicy` |
-| 4 | 8 | `Legal/SellingPolicy` |
-| 5 | 9 | `Auth/Login` |
-| 5 | 10 | `Auth/Register` |
-| 5 | 11 | `Auth/ForgotPassword` |
-| 5 | 12 | `Auth/ResetPassword` |
-| 5 | 13 | `Auth/VerifyEmail` |
-| 5 | 14 | `Auth/SellerRegister` |
-| 5 | 15 | `Auth/ShipperRegister` |
-| 6 | 16 | `Customer/Cart` |
-| 6 | 17 | `Customer/Checkout` |
-| 6 | 18 | `Customer/PaymentResult` |
-| 6 | 19 | `Customer/Orders/Index` |
-| 6 | 20 | `Customer/Orders/Show` |
-| 6 | 21 | `Customer/Address/Index` |
-| 6 | 22 | `Customer/Address/Create` |
-| 6 | 23 | `Customer/Address/Edit` |
-| 6 | 24 | `Customer/Address/Show` |
-| 6 | 25 | `Customer/Address/AddressForm` |
-| 6 | 26 | `Customer/Profile/Index` |
-| 6 | 27 | `Customer/ChangePassword/Index` |
-| 6 | 28 | `Customer/Notification/Index` |
-| 6 | 29 | `Customer/Chat/Index` |
-| 6 | 30 | `Settings/Profile` |
-| 6 | 31 | `Settings/Password` |
-| 6 | 32 | `Settings/Appearance` |
-| 6 | 33 | `Settings/SettingsTabs` |
-| 7 | 34 | `Seller/Dashboard/Index` |
-| 7 | 35 | `Seller/Products/Index` |
-| 7 | 36 | `Seller/Products/Create` |
-| 7 | 37 | `Seller/Products/Edit` |
-| 7 | 38 | `Seller/Products/Show` |
-| 7 | 39 | `Seller/Orders/Index` |
-| 7 | 40 | `Seller/Orders/Show` |
-| 7 | 41 | `Seller/Promotions/Index` |
-| 7 | 42 | `Seller/Promotions/Create` |
-| 7 | 43 | `Seller/Shop/Edit` |
-| 8 | 44 | `Admin/Dashboard/Index` |
-| 8 | 45 | `Admin/Users/Index` |
-| 8 | 46 | `Admin/Users/Edit` |
-| 8 | 47 | `Admin/Products/Index` |
-| 8 | 48 | `Admin/Products/Show` |
-| 8 | 49 | `Admin/Inventory/Index` |
-| 8 | 50 | `Admin/Inventory/Show` |
-| 8 | 51 | `Admin/Inventory/History` |
-| 8 | 52 | `Admin/Orders/Index` |
-| 8 | 53 | `Admin/Promotions/Index` |
-| 8 | 54 | `Admin/Promotions/Create` |
-| 8 | 55 | `Admin/Promotions/Edit` |
-| 8 | 56 | `Admin/Promotions/Show` |
-| 8 | 57 | `Admin/Categories/Index` |
-| 8 | 58 | `Admin/Categories/Create` |
-| 8 | 59 | `Admin/Categories/Edit` |
-| 8 | 60 | `Admin/Brands/Index` |
-| 8 | 61 | `Admin/Brands/Create` |
-| 8 | 62 | `Admin/Brands/Edit` |
-| 8 | 63 | `Admin/Shops/Index` |
-| 8 | 64 | `Admin/Shops/Pending` |
-| 8 | 65 | `Admin/Shops/Show` |
-| 8 | 66 | `Admin/Shops/Dashboard` |
-| 8 | 67 | `Admin/Shops/Statistics` |
-| 8 | 68 | `Admin/Shops/Violations` |
-| 8 | 69 | `Admin/Shippers/Index` |
-| 8 | 70 | `Admin/Shippers/Show` |
-| 8 | 71 | `Admin/Returns/Index` |
-| 8 | 72 | `Admin/Analytics/Index` |
-| 8 | 73 | `Admin/Analytics/Orders` |
-| 8 | 74 | `Admin/Analytics/Products` |
-| 8 | 75 | `Admin/Analytics/Reports` |
-| 8 | 76 | `Admin/Analytics/Revenue` |
-| 8 | 77 | `Admin/Analytics/Users` |
-| 9 | 78 | `Shipper/Dashboard/Index` |
+| Phase |   # | Page                            |
+| ----- | --: | ------------------------------- |
+| 4     |   1 | `Home/Index`                    |
+| 4     |   2 | `Home/Search`                   |
+| 4     |   3 | `Customer/ProductDetail`        |
+| 4     |   4 | `Home/About`                    |
+| 4     |   5 | `Home/Contact`                  |
+| 4     |   6 | `Legal/Terms`                   |
+| 4     |   7 | `Legal/PrivacyPolicy`           |
+| 4     |   8 | `Legal/SellingPolicy`           |
+| 5     |   9 | `Auth/Login`                    |
+| 5     |  10 | `Auth/Register`                 |
+| 5     |  11 | `Auth/ForgotPassword`           |
+| 5     |  12 | `Auth/ResetPassword`            |
+| 5     |  13 | `Auth/VerifyEmail`              |
+| 5     |  14 | `Auth/SellerRegister`           |
+| 5     |  15 | `Auth/ShipperRegister`          |
+| 6     |  16 | `Customer/Cart`                 |
+| 6     |  17 | `Customer/Checkout`             |
+| 6     |  18 | `Customer/PaymentResult`        |
+| 6     |  19 | `Customer/Orders/Index`         |
+| 6     |  20 | `Customer/Orders/Show`          |
+| 6     |  21 | `Customer/Address/Index`        |
+| 6     |  22 | `Customer/Address/Create`       |
+| 6     |  23 | `Customer/Address/Edit`         |
+| 6     |  24 | `Customer/Address/Show`         |
+| 6     |  25 | `Customer/Address/AddressForm`  |
+| 6     |  26 | `Customer/Profile/Index`        |
+| 6     |  27 | `Customer/ChangePassword/Index` |
+| 6     |  28 | `Customer/Notification/Index`   |
+| 6     |  29 | `Customer/Chat/Index`           |
+| 6     |  30 | `Settings/Profile`              |
+| 6     |  31 | `Settings/Password`             |
+| 6     |  32 | `Settings/Appearance`           |
+| 6     |  33 | `Settings/SettingsTabs`         |
+| 7     |  34 | `Seller/Dashboard/Index`        |
+| 7     |  35 | `Seller/Products/Index`         |
+| 7     |  36 | `Seller/Products/Create`        |
+| 7     |  37 | `Seller/Products/Edit`          |
+| 7     |  38 | `Seller/Products/Show`          |
+| 7     |  39 | `Seller/Orders/Index`           |
+| 7     |  40 | `Seller/Orders/Show`            |
+| 7     |  41 | `Seller/Promotions/Index`       |
+| 7     |  42 | `Seller/Promotions/Create`      |
+| 7     |  43 | `Seller/Shop/Edit`              |
+| 8     |  44 | `Admin/Dashboard/Index`         |
+| 8     |  45 | `Admin/Users/Index`             |
+| 8     |  46 | `Admin/Users/Edit`              |
+| 8     |  47 | `Admin/Products/Index`          |
+| 8     |  48 | `Admin/Products/Show`           |
+| 8     |  49 | `Admin/Inventory/Index`         |
+| 8     |  50 | `Admin/Inventory/Show`          |
+| 8     |  51 | `Admin/Inventory/History`       |
+| 8     |  52 | `Admin/Orders/Index`            |
+| 8     |  53 | `Admin/Promotions/Index`        |
+| 8     |  54 | `Admin/Promotions/Create`       |
+| 8     |  55 | `Admin/Promotions/Edit`         |
+| 8     |  56 | `Admin/Promotions/Show`         |
+| 8     |  57 | `Admin/Categories/Index`        |
+| 8     |  58 | `Admin/Categories/Create`       |
+| 8     |  59 | `Admin/Categories/Edit`         |
+| 8     |  60 | `Admin/Brands/Index`            |
+| 8     |  61 | `Admin/Brands/Create`           |
+| 8     |  62 | `Admin/Brands/Edit`             |
+| 8     |  63 | `Admin/Shops/Index`             |
+| 8     |  64 | `Admin/Shops/Pending`           |
+| 8     |  65 | `Admin/Shops/Show`              |
+| 8     |  66 | `Admin/Shops/Dashboard`         |
+| 8     |  67 | `Admin/Shops/Statistics`        |
+| 8     |  68 | `Admin/Shops/Violations`        |
+| 8     |  69 | `Admin/Shippers/Index`          |
+| 8     |  70 | `Admin/Shippers/Show`           |
+| 8     |  71 | `Admin/Returns/Index`           |
+| 8     |  72 | `Admin/Analytics/Index`         |
+| 8     |  73 | `Admin/Analytics/Orders`        |
+| 8     |  74 | `Admin/Analytics/Products`      |
+| 8     |  75 | `Admin/Analytics/Reports`       |
+| 8     |  76 | `Admin/Analytics/Revenue`       |
+| 8     |  77 | `Admin/Analytics/Users`         |
+| 9     |  78 | `Shipper/Dashboard/Index`       |
 
 Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộc trước; trang nhiều state sau**. Với Admin, thứ tự nội bộ: Dashboard → Users → Categories/Brands → Products → Inventory → Orders → Promotions → Shops → Shippers → Returns → Analytics.
 
@@ -1667,24 +1770,24 @@ Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộ
 
 ## 9. Mapping primitive cũ → mới
 
-| Cũ | Mới | Ghi chú |
-|---|---|---|
-| `action-button`, `action-buttons` | `Button` + `ButtonGroup` | Giữ type `ActionConfig` trong wrapper đến Phase 8 |
-| `action-dropdown` | `DropdownMenu` | |
-| `primary-input` | `Input` / `FormField` | |
-| `data-table` | `DataTable` (wrap `Table`) | Giữ sort/select |
-| `confirmation-modal` | wrapper của `feedback/ConfirmDialog` | `feedback/ConfirmDialog` là canonical |
-| `status-badge` | `Badge` với `tone` | Wrapper map class `Page.css` sang tone |
-| `filter-panel` | `FilterPanel` | Dùng chung admin/seller |
-| `header` | `PageHeader` / `WorkspaceTopbar` | Tách vai trò |
-| `navbar` | `WorkspaceTopbar` | |
-| `sidebar` | `WorkspaceSidebar` | |
-| `insights` | `StatCard` | |
-| `search-input` | `SearchInput` | |
-| `toast` + `toaster` | `Toast` + `Toaster` | Một hệ duy nhất |
-| `typography` | class `.sn-prose` + element | Bỏ component |
-| `skeleton` | giữ, CSS thuần | |
-| `rich-text-editor` | giữ, style trong `field.css` | TinyMCE skin giữ mặc định |
+| Cũ                                | Mới                                  | Ghi chú                                                                                      |
+| --------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `action-button`, `action-buttons` | `Button` + `ButtonGroup`             | **Defer Phase 7/8**; giữ type `ActionConfig` và icon string đến khi page migrate             |
+| `action-dropdown`                 | `DropdownMenu`                       | **Defer Phase 7/8**                                                                          |
+| `primary-input`                   | `Input` / `FormField`                | Wrapper giữ path, Phase 2                                                                    |
+| `data-table`                      | `DataTable` (wrap `Table`)           | **Defer Phase 7/8**; API thực tế `columns/data/headerTitle/headerIcon`, không có sort/select |
+| `confirmation-modal`              | wrapper của `feedback/ConfirmDialog` | **Defer Phase 7/8** cùng `action-button`                                                     |
+| `status-badge`                    | `Badge` với `tone`                   | Phase 2; map status → tone, bỏ class `Page.css`                                              |
+| `filter-panel`                    | `FilterPanel`                        | **Defer Phase 3/7**                                                                          |
+| `header`                          | `PageHeader` / `WorkspaceTopbar`     | **Defer Phase 3**                                                                            |
+| `navbar`                          | `WorkspaceTopbar`                    | **Defer Phase 3**; giữ đủ chuông + polling, LanguageSwitcher, avatar menu, logout            |
+| `sidebar`                         | `WorkspaceSidebar`                   | **Defer Phase 3**                                                                            |
+| `insights`                        | `StatCard`                           | **Defer Phase 7/8**; icon string Boxicons                                                    |
+| `search-input`                    | `SearchInput`                        | Phase 2                                                                                      |
+| `toast` + `toaster`               | `Toast` + `Toaster`                  | Phase 2; giữ API hiện tại                                                                    |
+| `typography`                      | Giữ component, đổi ruột sang `sn-*`  | Phase 2; xoá component ở Phase 11 khi pages đã migrate                                       |
+| `skeleton`                        | giữ, CSS thuần                       |                                                                                              |
+| `rich-text-editor`                | giữ, style trong `field.css`         | TinyMCE skin giữ mặc định                                                                    |
 
 ---
 
@@ -1724,33 +1827,44 @@ php artisan test --filter=<area>
 - [ ] Copy đã rà, không slop, không em-dash.
 - [ ] `types` + `build` + `check:css` sạch.
 - [ ] Route + props không đổi.
+- [ ] Trên workspace: `.sn-btn`, `.sn-input`, `.sn-badge`, `.sn-card` còn padding (không bị `Page.css` reset về 0).
 
 ---
 
 ## 11. Rủi ro và cách giảm
 
-| Rủi ro | Mức | Giảm thiểu |
-|---|---|---|
-| Xung đột reset giữa `Page.css` (unlayered) và reset mới (layered) | Cao | Không xoá reset cũ ở Phase 1; chỉ xoá `Page.css` ở Phase 11 sau khi wrapper/AppLayout bị xoá và test lại toàn workspace |
-| Bỏ Tailwind preflight làm lệch heading/list/img ở trang chưa migrate | Cao | `base/reset.css` phải phủ đủ; test 5 trang legacy mỗi phase |
-| Guardrail ratchet bị "trôi" (file migrate xong vẫn nằm trong allowlist) | Cao | Phase nào xong phải xoá entry tương ứng; Phase 11 chạy strict, xác nhận 0 vi phạm rồi mới xoá allowlist |
-| Shipper route 500 do alias `shipper` chưa đăng ký | Cao | Xử lý ở Phase 9: đăng ký alias hoặc đổi sang `isShipper`; ghi rõ là ngoại lệ config duy nhất |
-| Thiếu file font `woff2` khi bắt đầu Phase 1 | Trung bình | Chuẩn bị `public/fonts/be-vietnam-pro/` từ Phase 0; kiểm tra dấu tiếng Việt trước khi bỏ Google Fonts |
-| Class global `sn-*` trùng `Page.css` | Trung bình | Prefix `sn-`; rà `Page.css` trước Phase 2 |
-| CSS Modules + `composes` gây khó đọc | Thấp | Chỉ compose primitive, không compose chéo module |
-| Bỏ `.dark` quá sớm làm hỏng `Page.css`/`base.css`/`legacy-tokens` | Cao | Giữ mirror `.dark` đến Phase 11; inline script + `useTheme` set cả `data-theme` và class |
-| `useTheme` đọc `localStorage` khi SSR | Cao | Guard `typeof window`; `config/inertia.php` đang bật SSR |
-| `!important` cho reduced-motion bị guardrail chặn | Trung bình | Path exception cho `resources/css/base/a11y.css`; không thêm file vào allowlist |
-| Layer `base/components/utilities` trùng Tailwind v4 | Trung bình | Dùng `sn-*` layers; import không dùng `layer()` |
-| Dark mode FOUC | Trung bình | Inline script trong `<head>` trước `@vite` |
-| Radix portal render ngoài root | Thấp | Style global cho `[data-radix-popper-content-wrapper]` trong `menu.css` |
-| Dompdf không hỗ trợ CSS var | Trung bình | Hex literal trong PDF |
-| Email client cắt `<style>` | Trung bình | Inline style cho layout, `<style>` chỉ cho media query |
-| Google Fonts bị chặn trong Docker/offline | Trung bình | Self-host `woff2` ngay Phase 1; giữ fallback system; kiểm tra dấu tiếng Việt |
-| `npm run lint` tự sửa file gây diff lớn | Trung bình | Chạy theo phase, commit riêng |
-| 17 render target thiếu (gồm `Admin/Inventory/Report`) bị báo regression | Thấp | Ghi rõ trong baseline và PR description |
-| Tailwind còn trong `node_modules` sau khi xoá | Thấp | `npm ci` + kiểm tra `package-lock.json` |
-| Bundle CSS phình do module trùng lặp | Trung bình | Primitive dùng global; module chỉ layout; đo ở Phase 12 |
+| Rủi ro                                                                  | Mức        | Giảm thiểu                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Xung đột reset giữa `Page.css` (unlayered) và reset mới (layered)       | Cao        | **Phase 3:** đưa 5 block toàn cục của `Page.css` vào `@layer sn-legacy-reset` khai báo **đầu tiên** trong `app.css`; giữ phần còn lại của Page.css unlayered; chỉ xoá `Page.css` ở Phase 11. Không sửa thì mọi `sn-*` mất padding trên 41 page workspace (đo được `.sn-btn` 24px → 0px) |
+| `base/*.css` restyle 41 trang chưa migrate                              | Cao        | **Phase 3:** scope `body`/`a`/`label` vào `.sn-shell`; reset + a11y giữ toàn cục; bỏ scope ở Phase 11                                                                                                                                                                                   |
+| Layout workspace mới phá scope `.content` của Page.css                  | Cao        | Giữ `<div class="content"><main>`; sidebar 230px khớp `calc(100% - 230px)`; 66 selector `.content` vẫn khớp                                                                                                                                                                             |
+| Sidebar cũ `z-index: 2000` đè dialog/sheet (`--sn-z-modal: 60`)         | Cao        | Sidebar mới dùng class riêng, không dùng `.sidebar`; kiểm dialog mở trên workspace                                                                                                                                                                                                      |
+| Shipper nav trỏ route không tồn tại                                     | Trung bình | Phase 3 rút nav còn Dashboard + Cài đặt; alias `shipper` vẫn sửa ở Phase 9                                                                                                                                                                                                              |
+| i18n thiếu key dùng ở topbar                                            | Thấp       | Thêm `auth.logout`, `Search...`, `Shops` vào cả `vi.json` và `en.json` trong Phase 3                                                                                                                                                                                                    |
+| 7 file `components/ui` track chữ hoa                                    | Trung bình | `git mv` về chữ thường trước Phase 3 để checkout Linux/CI không fail                                                                                                                                                                                                                    |
+| Bỏ Tailwind preflight làm lệch heading/list/img ở trang chưa migrate    | Cao        | `base/reset.css` phải phủ đủ; test 5 trang legacy mỗi phase                                                                                                                                                                                                                             |
+| Guardrail ratchet bị "trôi" (file migrate xong vẫn nằm trong allowlist) | Cao        | Phase nào xong phải xoá entry tương ứng; Phase 11 chạy strict, xác nhận 0 vi phạm rồi mới xoá allowlist                                                                                                                                                                                 |
+| Shipper route 500 do alias `shipper` chưa đăng ký                       | Cao        | Xử lý ở Phase 9: đăng ký alias hoặc đổi sang `isShipper`; ghi rõ là ngoại lệ config duy nhất                                                                                                                                                                                            |
+| Thiếu file font `woff2` khi bắt đầu Phase 1                             | Trung bình | Chuẩn bị `public/fonts/be-vietnam-pro/` từ Phase 0; kiểm tra dấu tiếng Việt trước khi bỏ Google Fonts                                                                                                                                                                                   |
+| Class global `sn-*` trùng `Page.css`                                    | Trung bình | Prefix `sn-`; rà `Page.css` trước Phase 2                                                                                                                                                                                                                                               |
+| Phase 2 đổi primitive dùng chung làm page chưa migrate đổi giao diện    | Cao        | Chấp nhận có chủ đích; verify login + customer sau mỗi đợt; page migration ở Phase 4–8                                                                                                                                                                                                  |
+| Dark mode trộn token mới với layout sáng cũ                             | Cao        | Surface chưa migrate vẫn dùng nền sáng; tạm chấp nhận hoặc force `data-theme="light"` trên layout cũ đến Phase 3/5/6                                                                                                                                                                    |
+| Mất variant cũ khi rewrite primitive                                    | Cao        | Giữ `default/outline`, `ink/outline`, `info`, `inset/ghost`, `pill/filter`; bảng tương thích trong Phase 2                                                                                                                                                                              |
+| Wrapper legacy defer vẫn dùng Boxicons/Page.css                         | Trung bình | Giữ trong allowlist đến Phase 7/8; không map 64 icon ở Phase 2                                                                                                                                                                                                                          |
+| CSS Modules + `composes` gây khó đọc                                    | Thấp       | Chỉ compose primitive, không compose chéo module                                                                                                                                                                                                                                        |
+| Bỏ `.dark` quá sớm làm hỏng `Page.css`/`base.css`/`legacy-tokens`       | Cao        | Giữ mirror `.dark` đến Phase 11; inline script + `useTheme` set cả `data-theme` và class                                                                                                                                                                                                |
+| `useTheme` đọc `localStorage` khi SSR                                   | Cao        | Guard `typeof window`; `config/inertia.php` đang bật SSR                                                                                                                                                                                                                                |
+| `!important` cho reduced-motion bị guardrail chặn                       | Trung bình | Path exception cho `resources/css/base/a11y.css`; không thêm file vào allowlist                                                                                                                                                                                                         |
+| Layer `base/components/utilities` trùng Tailwind v4                     | Cao        | Dùng `sn-*` và chen đúng thứ tự `sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities`; import không dùng `layer()`                                                                                                          |
+| Dark mode FOUC                                                          | Trung bình | Inline script trong `<head>` trước `@vite`                                                                                                                                                                                                                                              |
+| Radix portal render ngoài root                                          | Thấp       | Style global cho `[data-radix-popper-content-wrapper]` trong `menu.css`                                                                                                                                                                                                                 |
+| Dompdf không hỗ trợ CSS var                                             | Trung bình | Hex literal trong PDF                                                                                                                                                                                                                                                                   |
+| Email client cắt `<style>`                                              | Trung bình | Inline style cho layout, `<style>` chỉ cho media query                                                                                                                                                                                                                                  |
+| Google Fonts bị chặn trong Docker/offline                               | Trung bình | Self-host `woff2` ngay Phase 1; giữ fallback system; kiểm tra dấu tiếng Việt                                                                                                                                                                                                            |
+| `npm run lint` tự sửa file gây diff lớn                                 | Trung bình | Chạy theo phase, commit riêng                                                                                                                                                                                                                                                           |
+| 17 render target thiếu (gồm `Admin/Inventory/Report`) bị báo regression | Thấp       | Ghi rõ trong baseline và PR description                                                                                                                                                                                                                                                 |
+| Tailwind còn trong `node_modules` sau khi xoá                           | Thấp       | `npm ci` + kiểm tra `package-lock.json`                                                                                                                                                                                                                                                 |
+| Bundle CSS phình do module trùng lặp                                    | Trung bình | Primitive dùng global; module chỉ layout; đo ở Phase 12                                                                                                                                                                                                                                 |
 
 ---
 
@@ -1767,6 +1881,7 @@ php artisan test --filter=<area>
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code.
 - Không xoá wrapper legacy (`action-button`, `action-buttons`, `confirmation-modal`, `data-table`, `filter-panel`, `status-badge`, …) trước khi page cuối cùng dùng nó đã migrate.
 - Không sửa email/PDF logic nghiệp vụ, chỉ trình bày.
+- **Ngoại lệ thứ hai (Phase 3):** được sửa `resources/css/Page.css` **đúng 6 block toàn cục** (`*`, `a`, `li`, `html`, `body`, `body.dark`) để bọc vào `@layer sn-legacy-reset`. Không sửa bất kỳ selector component nào trong file này; không xoá file trước Phase 11.
 
 ---
 
@@ -1778,6 +1893,7 @@ feat(ui): add Bảng Hiệu token system and dark mode
 refactor(ui): replace ui primitives with plain CSS (1/3 form controls)
 refactor(ui): replace ui primitives with plain CSS (2/3 overlays)
 refactor(ui): replace ui primitives with plain CSS (3/3 data display)
+fix(ui): move legacy global reset under sn-legacy-reset
 refactor(ui): rebuild storefront, auth and workspace shells
 refactor(storefront): migrate home, search, product and legal pages
 refactor(auth): migrate login and registration pages
@@ -1826,10 +1942,70 @@ docs(ui): rewrite design system and component rules
 
 ## 15. Nhật ký cập nhật
 
+**2026-11-23 — chốt 9 quyết định trước Phase 3 (chưa build):**
+
+- Rà soát code + đo bằng Edge headless/CDP phát hiện: `Page.css` unlayered đè toàn bộ padding/margin của `sn-*` (`.sn-btn` 24px → 0px, `.sn-input` 40px → 0px) và Tailwind utilities trong workspace cũng đã chết từ khi lên Tailwind v4 (`form.mt-7` 28px → 0px). Đã ghi thành §2.5.
+- **Quyết định:** thêm layer `sn-legacy-reset` (yếu nhất, khai báo đầu tiên trong `app.css`) và bọc 6 block toàn cục của `Page.css`; phần còn lại giữ unlayered.
+- **Quyết định:** scope `body`/`a`/`label` của `base/*.css` vào `.sn-shell` đến Phase 11 để không restyle 41 trang chưa migrate.
+- **Quyết định:** WorkspaceLayout giữ `<div class="content"><main>` và sidebar **230px** (khớp Page.css); sidebar dùng class riêng, không dùng `.sidebar` để tránh `z-index: 2000`.
+- **Quyết định:** `WorkspaceTopbar` giữ đủ chức năng `navbar.tsx` (chuông + polling, LanguageSwitcher, avatar menu, logout) và thêm theme toggle.
+- **Quyết định:** nav shipper rút còn Dashboard + Cài đặt; 6 href chưa có route ghi backlog. Alias `shipper` vẫn sửa ở Phase 9.
+- **Quyết định:** `AuthBrandPanel` bỏ "số liệu thật" và ảnh picsum; panel là editorial + 3 trust point + hotline/email.
+- **Quyết định:** bảng breakpoint thêm mốc `sm = 640px` (xs 480 / sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1440); không đổi 3 media query đã viết ở 2B.
+- **Quyết định:** bỏ `UtilityStrip` khỏi Phase 3 (ghi backlog).
+- **Quyết định:** commit riêng 2A/2B/2C trước Phase 3 và `git mv` 7 file `components/ui` về chữ thường; thêm commit `fix(ui): move legacy global reset under sn-legacy-reset` vào §13.
+- Cập nhật §2.3, §2.5, §4.8, §4.10 (cây file thật: 9 `components/*.css` + `Page.css`), §4.10 layer note, §7 Phase 3 (viết lại đầy đủ), §9, §10.3, §11, §12, §13.
+
+**2026-11-22 — Phase 2C hoàn tất (hết Phase 2):**
+
+- Thêm 4 file CSS dưới `@layer sn-components`: `data.css` (card, table, badge, avatar, skeleton, progress), `status.css` (alert, empty state, error state), `typography.css` (heading, text, eyebrow, meta, text link) và khối `sn-lang*` trong `navigation.css`.
+- Rewrite 13 primitive: `card`, `table`, `badge`, `status-badge`, `avatar`, `alert`, `empty-state`, `error-state`, `skeleton`, `progress`, `typography`, `text-link`, `language-switcher`.
+- Bỏ `cva` khỏi `card`, `badge`, `skeleton`, `typography` (đủ 7/7 file theo kế hoạch, cùng `button`, `icon-button`, `input` ở 2A). Helper `cardVariants`/`badgeVariants`/`skeletonVariants`/`headingVariants`/`textVariants` giữ nguyên chữ ký, trả class `sn-*`.
+- Chuyển variant sang `data-*`: `data-variant`/`data-padding` (Card), `data-tone`/`data-size` (Badge), `data-align`/`data-density`/`data-sticky`/`data-clickable`/`data-empty` (Table), `data-size`/`data-status` (Avatar), `data-variant`/`data-width` (Skeleton), `data-tone` (Progress, Alert), `data-size`/`data-tone`/`data-serif` (Heading, Text, Eyebrow, Meta), `data-tone`/`data-underline` (TextLink).
+- `status-badge` bỏ hẳn class `status pending|process|completed` của `Page.css`; map sang tone `warning|accent|success` qua bảng tra, giữ nguyên toàn bộ nhánh `status`/`type` và chuỗi `t(...)`.
+- `language-switcher` bỏ toàn bộ inline style và 3 giá trị hex (`#ffffff`), chuyển sang `.sn-lang*`; thay tam giác CSS bằng `ChevronDown`, bỏ state `isHovering` (hover do CSS đảm nhiệm).
+- `Table` composite giữ API `columns/data/rowKey/density/stickyHeader/loading/empty/onRowClick`; ô loading dùng `<Skeleton />`, ô rỗng dùng `data-empty`.
+- Lint: `_props` trong các helper `*Variants` bị `@typescript-eslint/no-unused-vars` bắt; đổi sang kiểu hàm `(props?: …) => string` với implementation không tham số ở cả 7 file (gồm 3 file của 2A).
+- Allowlist 168 → **156** (12 entry; `status-badge` vốn không nằm trong danh sách).
+- `check:css` pass (109 file checked, 156 allowlisted); `types`, `format:check`, `eslint ui/`, `build` pass; CSS bundle 168,49 kB.
+- Verify bằng Edge headless + CDP: light và dark đều đúng token cho card (surface/inset/sunken), table (header 11 px in hoa, số căn phải, tabular), badge (accent/neutral/ink/success), avatar, alert, empty/error, skeleton (shimmer 1,4 s), progress, heading/text/eyebrow/meta/text-link, language switcher; `/`, `/search`, `/contact`, `/about`, `/login` không có console error.
+
+**2026-11-22 — Phase 2B hoàn tất:**
+
+- Thêm 3 file CSS dưới `@layer sn-components`: `overlay.css` (scrim, dialog, sheet, dropdown, tooltip), `feedback.css` (toaster, toast), `navigation.css` (tabs, pagination, breadcrumbs).
+- Rewrite 7 primitive: `dialog`, `sheet`, `dropdown-menu`, `toast`, `tabs`, `pagination`, `breadcrumbs`. `tooltip` và `toaster` vốn đã sạch (tooltip không nằm trong allowlist từ trước).
+- Chuyển variant/trạng thái sang `data-*`: `data-size` (dialog), `data-side` (sheet), `data-variant`/`data-active` (tab, tab count), `data-active` (pagination), `data-tone` (toast icon), `data-inset`/`data-destructive` (dropdown item), `data-current` (breadcrumb).
+- Giữ nguyên API public: `Dialog`/`DialogContent` (`size`, `showClose`, `showOverlay`), `Sheet` (`side`), `DropdownMenu` (`items`, `align`), `Tabs` (`variant`), `Pagination` (cả chế độ `links` legacy lẫn `page`/`pageCount`), `Breadcrumbs` (`maxItems`), `toast`/`useToast`/`Toaster` và toàn bộ type export.
+- Pagination: chuỗi "Hiển thị 1 – 12" đổi sang dấu gạch ngang thường để đúng luật copy (không en-dash).
+- Breadcrumbs: tách nhánh rút gọn thành `VisibleCrumb` nội bộ thay vì nhét icon ellipsis vào `label`, để `BreadcrumbItem` giữ nguyên shape.
+- Allowlist 175 → **168**.
+- `check:css` pass (94 file checked, 168 allowlisted); `types`, `format:check`, `build` pass; CSS bundle 152,11 kB.
+- Verify bằng Edge headless + CDP ở light và dark: mọi selector (`sn-dialog`, `sn-sheet`, `sn-dropdown`, `sn-tooltip`, `sn-tab`, `sn-tabs`, `sn-pagination*`, `sn-breadcrumbs*`, `sn-toast*`, `sn-toaster`) nhận đúng token; `/`, `/login`, `/search` không có console error; sheet mobile 390 mở đúng `data-side="bottom"`, có scrim và nút đóng.
+
+**2026-11-22 — Phase 2A hoàn tất:**
+
+- Tạo `resources/js/lib/cx.ts`; `button.css`, `field.css`, `file-dropzone.css` dưới `@layer sn-components`.
+- Rewrite 15 form primitive: button, icon-button, input, textarea, select, checkbox, switch, radio-card, form-field, input-error, search-input, password-strength, file-dropzone, rich-text-editor, primary-input.
+- Giữ API/variant: Button `default/outline`, size `default/icon-*`; Input/Select size `sm/md/lg`; Checkbox/Switch/Radio giữ nguyên.
+- **Sửa lỗi layer:** `sn-components` phải nằm sau Tailwind `base/components` và trước `utilities`; thứ tự mới `sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities`. Trước khi sửa, preflight reset input/button (ô nhập trong suốt, button mất nền).
+- Allowlist 186 → **175** (11 entry UI có trong danh sách; 4 file vốn đã sạch).
+- `check:css` pass (84 file checked, 175 allowlisted); `types`, `format:check`, `build` pass; CSS bundle 138,83 kB.
+- Verify `/login` ở 1440: label/input/button/checkbox nhận đúng token; screenshot light mode OK.
+
+**2026-11-22 — chốt kế hoạch Phase 2:**
+
+- Phạm vi **37 primitive dùng chung**; defer 10 file legacy (`action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `filter-panel`, `header`, `insights`, `navbar`, `sidebar`) sang Phase 3/7/8.
+- Chia 3 đợt: **2A** form controls (15), **2B** overlay/feedback (9), **2C** data display (13).
+- Kích hoạt `@layer sn-*` và import `components/*.css` trong Phase 2; **không** import `utilities.css`/`base/*`/`layouts/*`.
+- Giữ component `typography` + API (19 file dùng), chỉ đổi ruột; thêm `components/typography.css`.
+- Giữ tương thích variant: Button `default/outline`; Badge `ink/outline`; Alert/Toast `info`; Card `inset/ghost`; Tabs `pill/filter`; Typography size/tone/serif.
+- `cva` bỏ khỏi 7 primitive UI; `Price.tsx` để Phase 4. `cn` chỉ đổi trong primitive; pages giữ `cn`.
+- Xoá allowlist từng file sau rewrite; file defer vẫn allowlist.
+
 **2026-11-22 — Phase 1 hoàn tất:**
 
 - Tạo `resources/css/tokens/{primitive,semantic,scale}.css`, `resources/css/fonts.css` (8 `@font-face`), `resources/css/base/{reset,typography,forms,a11y}.css`, `resources/css/utilities.css`.
-- `app.css` chỉ thêm import token + `fonts.css`; chưa import `base/*`, `components/*`, `layouts/*`, `utilities.css` hay khai báo `@layer sn-*` (để Phase 3).
+- `app.css` chỉ thêm import token + `fonts.css`; chưa import `base/*`, `components/*`, `layouts/*`, `utilities.css` hay khai báo `@layer sn-*` (để Phase 2).
 - `app.blade.php`: inline script set `data-theme` + mirror `.dark` + `colorScheme` trước paint; bỏ `@class`, bỏ Google Fonts và 2 preconnect; giữ Boxicons + body class.
 - `useTheme`: SSR-safe, set `data-theme`, mirror `.dark`, cập nhật `colorScheme`.
 - `app.tsx`: `progress.color` dùng `var(--sn-color-accent)`; bỏ `app.tsx` khỏi allowlist (187 → 186).
@@ -1868,4 +2044,4 @@ docs(ui): rewrite design system and component rules
 
 ---
 
-*Hết kế hoạch. Mọi thay đổi ngoài phạm vi ghi vào backlog, không đưa vào refactor.*
+_Hết kế hoạch. Mọi thay đổi ngoài phạm vi ghi vào backlog, không đưa vào refactor._

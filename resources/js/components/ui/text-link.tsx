@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowUpRight } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type TextLinkProps = Omit<React.ComponentProps<'a'>, 'href'> & {
     href: string;
@@ -11,39 +11,21 @@ type TextLinkProps = Omit<React.ComponentProps<'a'>, 'href'> & {
     underline?: boolean;
 };
 
-const tones = {
-    muted: 'text-ink-muted hover:text-ink',
-    accent: 'text-lacquer-red hover:text-lacquer-deep',
-    ink: 'text-ink hover:text-lacquer-red',
-};
-
-export function TextLink({
-    href,
-    external = false,
-    tone = 'accent',
-    underline = true,
-    className,
-    children,
-    ...props
-}: TextLinkProps) {
-    const classes = cn(
-        'inline-flex items-center gap-1 text-body-sm font-medium transition-colors duration-150 ease-nep focus-ring rounded-chip',
-        underline && 'underline decoration-1 underline-offset-4',
-        tones[tone],
-        className,
-    );
+export function TextLink({ href, external = false, tone = 'accent', underline = true, className, children, ...props }: TextLinkProps) {
+    const classes = cx('sn-text-link', className);
+    const dataProps = { 'data-tone': tone, 'data-underline': underline ? 'true' : undefined } as const;
 
     if (external) {
         return (
-            <a href={href} target="_blank" rel="noreferrer noopener" className={classes} {...props}>
+            <a href={href} target="_blank" rel="noreferrer noopener" className={classes} {...dataProps} {...props}>
                 {children}
-                <ArrowUpRight aria-hidden="true" className="size-3.5" />
+                <ArrowUpRight aria-hidden="true" className="sn-text-link__icon" />
             </a>
         );
     }
 
     return (
-        <Link href={href} className={classes} {...(props as unknown as React.ComponentProps<typeof Link>)}>
+        <Link href={href} className={classes} {...dataProps} {...(props as unknown as React.ComponentProps<typeof Link>)}>
             {children}
         </Link>
     );

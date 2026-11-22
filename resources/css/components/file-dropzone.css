@@ -1,0 +1,183 @@
+/*
+ * Bảng Hiệu — file dropzone and selected file rows.
+ */
+
+@layer sn-components {
+    .sn-dropzone {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        gap: var(--sn-space-3);
+    }
+
+    .sn-dropzone__label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--sn-space-2);
+        padding: var(--sn-space-6);
+        border: 1px dashed var(--sn-color-border-strong);
+        border-radius: var(--sn-radius-md);
+        background: var(--sn-color-surface-sunken);
+        text-align: center;
+        cursor: pointer;
+        transition:
+            border-color var(--sn-dur-fast) var(--sn-ease-standard),
+            background-color var(--sn-dur-fast) var(--sn-ease-standard);
+    }
+
+    .sn-dropzone__label:hover {
+        border-color: var(--sn-color-text-faint);
+        background: var(--sn-color-surface);
+    }
+
+    .sn-dropzone__label[data-dragging='true'] {
+        border-color: var(--sn-color-accent);
+        background: var(--sn-color-accent-wash);
+    }
+
+    .sn-dropzone__label[data-disabled='true'] {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .sn-dropzone__input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .sn-dropzone__icon-wrap {
+        display: flex;
+        width: 2.75rem;
+        height: 2.75rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--sn-radius-pill);
+        background: var(--sn-color-surface);
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-dropzone__icon {
+        width: var(--sn-icon-lg);
+        height: var(--sn-icon-lg);
+    }
+
+    .sn-dropzone__text {
+        font-size: var(--sn-text-sm);
+        line-height: var(--sn-leading-normal);
+        color: var(--sn-color-text);
+    }
+
+    .sn-dropzone__action {
+        font-weight: var(--sn-weight-semibold);
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-dropzone__hint {
+        font-size: var(--sn-text-2xs);
+        font-weight: var(--sn-weight-semibold);
+        letter-spacing: var(--sn-tracking-wider);
+        text-transform: uppercase;
+        color: var(--sn-color-text-faint);
+    }
+
+    .sn-dropzone__error {
+        font-size: var(--sn-text-sm);
+        color: var(--sn-color-danger-text);
+    }
+
+    .sn-file-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sn-space-2);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .sn-file-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sn-space-3);
+        padding: var(--sn-space-2);
+        border: 1px solid var(--sn-color-border);
+        border-radius: var(--sn-radius-sm);
+        background: var(--sn-color-surface);
+    }
+
+    .sn-file-row__icon-wrap {
+        display: flex;
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--sn-radius-sm);
+        background: var(--sn-color-surface-sunken);
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-file-row__icon {
+        width: var(--sn-icon-sm);
+        height: var(--sn-icon-sm);
+    }
+
+    .sn-file-row__body {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .sn-file-row__name {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-medium);
+        color: var(--sn-color-text);
+    }
+
+    .sn-file-row__size {
+        display: block;
+        font-size: var(--sn-text-2xs);
+        font-variant-numeric: tabular-nums;
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-file-row__remove {
+        display: flex;
+        width: var(--sn-control-sm);
+        height: var(--sn-control-sm);
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: var(--sn-radius-sm);
+        background: transparent;
+        color: var(--sn-color-text-faint);
+        cursor: pointer;
+    }
+
+    .sn-file-row__remove:hover {
+        background: var(--sn-color-danger-wash);
+        color: var(--sn-color-danger-text);
+    }
+
+    .sn-file-row__remove:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
+    }
+
+    .sn-file-row__remove svg {
+        width: var(--sn-icon-sm);
+        height: var(--sn-icon-sm);
+    }
+}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type SwitchProps = Omit<React.ComponentProps<'button'>, 'onChange'> & {
     checked: boolean;
@@ -33,19 +33,10 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
                         onCheckedChange(!checked);
                     }
                 }}
-                className={cn(
-                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-pill border border-border bg-raw-linen transition-colors duration-150 ease-nep focus-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-lacquer-red data-[state=checked]:bg-lacquer-red',
-                    className,
-                )}
+                className={cx('sn-switch', className)}
                 {...props}
             >
-                <span
-                    aria-hidden="true"
-                    className={cn(
-                        'block size-5 rounded-pill border border-border bg-warm-porcelain transition-transform duration-150 ease-nep',
-                        checked ? 'translate-x-5' : 'translate-x-0.5',
-                    )}
-                />
+                <span aria-hidden="true" className="sn-switch__thumb" />
             </button>
         );
 
@@ -54,15 +45,15 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         }
 
         return (
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
+            <div className="sn-switch-field">
+                <div className="sn-switch-field__copy">
                     {label && (
-                        <label htmlFor={switchId} className="cursor-pointer text-body-sm font-semibold text-ink">
+                        <label htmlFor={switchId} className="sn-switch-field__label">
                             {label}
                         </label>
                     )}
                     {description && (
-                        <span id={descriptionId} className="text-body-sm text-ink-muted">
+                        <span id={descriptionId} className="sn-switch-field__description">
                             {description}
                         </span>
                     )}

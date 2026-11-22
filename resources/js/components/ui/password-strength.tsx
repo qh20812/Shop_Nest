@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type PasswordStrengthProps = {
     value: string;
@@ -25,19 +25,16 @@ function scorePassword(value: string): number {
 export function PasswordStrength({ value, className }: PasswordStrengthProps) {
     const score = scorePassword(value);
     const label = labels[Math.max(0, score - 1)];
-    const tone = score <= 1 ? 'bg-brick' : score === 2 ? 'bg-turmeric' : 'bg-jade';
+    const tone = score <= 1 ? 'danger' : score === 2 ? 'warning' : 'success';
 
     return (
-        <div className={cn('flex flex-col gap-1.5', className)} aria-live="polite">
-            <div className="flex items-center gap-1.5">
+        <div className={cx('sn-password', className)} aria-live="polite">
+            <div className="sn-password__bars">
                 {[1, 2, 3, 4].map((step) => (
-                    <span
-                        key={step}
-                        className={cn('h-1.5 flex-1 rounded-pill transition-colors duration-150', step <= score ? tone : 'bg-raw-linen')}
-                    />
+                    <span key={step} className="sn-password__bar" data-active={step <= score ? 'true' : undefined} data-tone={tone} />
                 ))}
             </div>
-            {value && <span className="text-body-sm text-ink-muted">Độ mạnh mật khẩu: {label}</span>}
+            {value && <span className="sn-password__label">Độ mạnh mật khẩu: {label}</span>}
         </div>
     );
 }

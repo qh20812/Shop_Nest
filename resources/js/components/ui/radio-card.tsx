@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type RadioCardProps = Omit<React.ComponentProps<'input'>, 'type' | 'value' | 'title'> & {
     value: string;
@@ -17,14 +17,7 @@ const RadioCard = React.forwardRef<HTMLInputElement, RadioCardProps>(
         const descriptionId = description ? `${inputId}-description` : undefined;
 
         return (
-            <label
-                htmlFor={inputId}
-                className={cn(
-                    'group relative flex cursor-pointer items-start gap-3 rounded-card border border-border bg-warm-porcelain p-4 transition-[border-color,background-color] duration-150 ease-nep hover:border-ink-muted has-[:checked]:border-lacquer-red has-[:checked]:bg-lacquer-wash/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-lacquer-red has-[:focus-visible]:ring-offset-2',
-                    disabled && 'cursor-not-allowed opacity-50',
-                    className,
-                )}
-            >
+            <label htmlFor={inputId} data-disabled={disabled ? 'true' : undefined} className={cx('sn-radio-card', className)}>
                 <input
                     ref={ref}
                     id={inputId}
@@ -32,20 +25,17 @@ const RadioCard = React.forwardRef<HTMLInputElement, RadioCardProps>(
                     value={value}
                     disabled={disabled}
                     aria-describedby={descriptionId}
-                    className="peer sr-only"
+                    className="sn-radio-card__input"
                     {...props}
                 />
-                <span
-                    aria-hidden="true"
-                    className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-pill border border-border bg-warm-porcelain peer-checked:border-lacquer-red peer-checked:bg-lacquer-red after:size-1.5 after:rounded-pill after:bg-warm-porcelain after:opacity-0 peer-checked:after:opacity-100"
-                />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="flex items-start justify-between gap-3">
-                        <span className="text-body-md font-medium text-ink">{title}</span>
-                        {meta && <span className="shrink-0 text-body-sm text-ink-muted">{meta}</span>}
+                <span aria-hidden="true" className="sn-radio-card__mark" />
+                <span className="sn-radio-card__body">
+                    <span className="sn-radio-card__head">
+                        <span className="sn-radio-card__title">{title}</span>
+                        {meta && <span className="sn-radio-card__meta">{meta}</span>}
                     </span>
                     {description && (
-                        <span id={descriptionId} className="text-body-sm text-ink-muted">
+                        <span id={descriptionId} className="sn-radio-card__description">
                             {description}
                         </span>
                     )}

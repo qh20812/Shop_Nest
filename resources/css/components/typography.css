@@ -1,0 +1,222 @@
+/*
+ * Bảng Hiệu — heading, text, eyebrow, meta and text links.
+ * Size and tone are data attributes; `serif` is kept for API compatibility
+ * and no longer swaps the family (Be Vietnam Pro is the only typeface).
+ */
+
+@layer sn-components {
+    .sn-heading {
+        margin: 0;
+        font-family: var(--sn-font-sans);
+        font-weight: var(--sn-weight-semibold);
+        text-wrap: balance;
+    }
+
+    .sn-heading[data-size='display-xl'] {
+        font-size: var(--sn-text-display);
+        line-height: var(--sn-leading-tight);
+        letter-spacing: var(--sn-tracking-tight);
+    }
+
+    .sn-heading[data-size='display-lg'] {
+        font-size: var(--sn-text-4xl);
+        line-height: var(--sn-leading-tight);
+        letter-spacing: var(--sn-tracking-tight);
+    }
+
+    .sn-heading[data-size='headline-1'] {
+        font-size: var(--sn-text-3xl);
+        line-height: var(--sn-leading-tight);
+        letter-spacing: var(--sn-tracking-tight);
+    }
+
+    .sn-heading[data-size='headline-2'] {
+        font-size: var(--sn-text-2xl);
+        line-height: var(--sn-leading-snug);
+        letter-spacing: var(--sn-tracking-snug);
+    }
+
+    .sn-heading[data-size='headline-3'] {
+        font-size: var(--sn-text-xl);
+        line-height: var(--sn-leading-snug);
+        letter-spacing: var(--sn-tracking-snug);
+    }
+
+    .sn-heading[data-tone='ink'] {
+        color: var(--sn-color-text);
+    }
+
+    .sn-heading[data-tone='muted'] {
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-heading[data-tone='faint'] {
+        color: var(--sn-color-text-faint);
+    }
+
+    .sn-heading[data-tone='accent'] {
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-text {
+        margin: 0;
+        font-family: var(--sn-font-sans);
+        font-weight: var(--sn-weight-regular);
+        text-wrap: pretty;
+    }
+
+    .sn-text[data-size='body-lg'] {
+        font-size: var(--sn-text-lg);
+        line-height: var(--sn-leading-relaxed);
+    }
+
+    .sn-text[data-size='body-md'] {
+        font-size: var(--sn-text-md);
+        line-height: var(--sn-leading-relaxed);
+    }
+
+    .sn-text[data-size='body-sm'] {
+        font-size: var(--sn-text-base);
+        line-height: var(--sn-leading-normal);
+    }
+
+    .sn-text[data-size='label-code'] {
+        font-family: var(--sn-font-numeric);
+        font-size: var(--sn-text-xs);
+        font-weight: var(--sn-weight-medium);
+        font-variant-numeric: tabular-nums;
+        line-height: var(--sn-leading-snug);
+        letter-spacing: var(--sn-tracking-normal);
+    }
+
+    .sn-text[data-tone='ink'] {
+        color: var(--sn-color-text);
+    }
+
+    .sn-text[data-tone='muted'] {
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-text[data-tone='faint'] {
+        color: var(--sn-color-text-faint);
+    }
+
+    .sn-text[data-tone='accent'] {
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-text[data-tone='success'] {
+        color: var(--sn-color-success-text);
+    }
+
+    .sn-text[data-tone='warning'] {
+        color: var(--sn-color-warning-text);
+    }
+
+    .sn-text[data-tone='danger'] {
+        color: var(--sn-color-danger-text);
+    }
+
+    .sn-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--sn-space-2);
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-2xs);
+        font-weight: var(--sn-weight-semibold);
+        letter-spacing: var(--sn-tracking-wider);
+        line-height: var(--sn-leading-snug);
+        text-transform: uppercase;
+    }
+
+    .sn-eyebrow[data-tone='muted'] {
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-eyebrow[data-tone='accent'] {
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-eyebrow[data-tone='faint'] {
+        color: var(--sn-color-text-faint);
+    }
+
+    .sn-meta {
+        font-family: var(--sn-font-numeric);
+        font-size: var(--sn-text-xs);
+        font-weight: var(--sn-weight-medium);
+        font-variant-numeric: tabular-nums;
+        line-height: var(--sn-leading-snug);
+    }
+
+    .sn-meta[data-tone='ink'] {
+        color: var(--sn-color-text);
+    }
+
+    .sn-meta[data-tone='muted'] {
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-meta[data-tone='faint'] {
+        color: var(--sn-color-text-faint);
+    }
+
+    .sn-meta[data-tone='accent'] {
+        color: var(--sn-color-accent-text);
+    }
+
+    /* Text link */
+    .sn-text-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--sn-space-1);
+        border-radius: var(--sn-radius-sm);
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-medium);
+        line-height: var(--sn-leading-snug);
+        text-decoration: none;
+        transition: color var(--sn-dur-fast) var(--sn-ease-standard);
+    }
+
+    .sn-text-link[data-underline='true'] {
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
+    }
+
+    .sn-text-link[data-tone='muted'] {
+        color: var(--sn-color-text-muted);
+    }
+
+    .sn-text-link[data-tone='muted']:hover {
+        color: var(--sn-color-text);
+    }
+
+    .sn-text-link[data-tone='accent'] {
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-text-link[data-tone='accent']:hover {
+        color: var(--sn-color-accent-hover);
+    }
+
+    .sn-text-link[data-tone='ink'] {
+        color: var(--sn-color-text);
+    }
+
+    .sn-text-link[data-tone='ink']:hover {
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-text-link:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
+    }
+
+    .sn-text-link__icon {
+        width: var(--sn-icon-xs);
+        height: var(--sn-icon-xs);
+        flex-shrink: 0;
+    }
+}

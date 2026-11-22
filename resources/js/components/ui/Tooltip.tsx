@@ -1,8 +1,8 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import * as React from 'react';
 
+import { cx } from '@/lib/cx';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 
 const TooltipProvider = TooltipPrimitive.Provider;
 const TooltipRoot = TooltipPrimitive.Root;
@@ -13,15 +13,7 @@ const TooltipContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ className, sideOffset = 6, ...props }, ref) => (
     <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content
-            ref={ref}
-            sideOffset={sideOffset}
-            className={cn(
-                'z-dropdown rounded-control border border-border bg-warm-porcelain px-2.5 py-1.5 text-body-sm text-ink shadow-soft',
-                className,
-            )}
-            {...props}
-        />
+        <TooltipPrimitive.Content ref={ref} sideOffset={sideOffset} data-slot="tooltip" className={cx('sn-tooltip', className)} {...props} />
     </TooltipPrimitive.Portal>
 ));
 

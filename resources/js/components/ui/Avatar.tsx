@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -19,13 +19,6 @@ type AvatarProps = {
     size?: AvatarSize | number;
     status?: 'online' | 'offline' | 'away';
     className?: string;
-};
-
-const sizeClasses: Record<AvatarSize, string> = {
-    sm: 'size-8 text-body-sm',
-    md: 'size-10 text-body-md',
-    lg: 'size-12 text-body-md',
-    xl: 'size-16 text-headline-3',
 };
 
 function getInitials(name?: string): string {
@@ -67,41 +60,15 @@ export function Avatar({ user, src, name, size = 'md', status, className }: Avat
     const textStyle = numericSize ? { fontSize: Math.max(12, numericSize * 0.4) } : undefined;
 
     return (
-        <span
-            className={cn(
-                'relative inline-flex shrink-0 items-center justify-center',
-                typeof size === 'number' ? '' : sizeClasses[size],
-                className,
-            )}
-            style={dimensionStyle}
-        >
+        <span data-slot="avatar" data-size={numericSize ? undefined : size} className={cx('sn-avatar', className)} style={dimensionStyle}>
             {resolvedSrc && !imageError ? (
-                <img
-                    src={resolvedSrc}
-                    alt={resolvedName}
-                    className="size-full rounded-pill border border-border object-cover"
-                    onError={() => setImageError(true)}
-                />
+                <img src={resolvedSrc} alt={resolvedName} className="sn-avatar__image" onError={() => setImageError(true)} />
             ) : (
-                <span
-                    aria-label={resolvedName}
-                    className="flex size-full items-center justify-center rounded-pill border border-border bg-lacquer-wash font-semibold text-lacquer-deep"
-                    style={textStyle}
-                >
+                <span aria-label={resolvedName} className="sn-avatar__fallback" style={textStyle}>
                     {getInitials(resolvedName)}
                 </span>
             )}
-            {status && (
-                <span
-                    aria-label={status}
-                    className={cn(
-                        'absolute bottom-0 right-0 size-2.5 rounded-pill ring-2 ring-warm-porcelain',
-                        status === 'online' && 'bg-jade',
-                        status === 'away' && 'bg-turmeric',
-                        status === 'offline' && 'bg-ink-faint',
-                    )}
-                />
-            )}
+            {status && <span aria-label={status} data-status={status} className="sn-avatar__status" />}
         </span>
     );
 }

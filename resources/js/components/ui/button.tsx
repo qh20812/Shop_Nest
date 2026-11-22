@@ -1,51 +1,28 @@
 import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
-const buttonVariants = cva(
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control border font-sans font-medium transition-[background-color,border-color,color,transform] duration-150 ease-nep focus-ring active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
-    {
-        variants: {
-            variant: {
-                default:
-                    'border-lacquer-red bg-lacquer-red text-warm-porcelain hover:border-lacquer-deep hover:bg-lacquer-deep',
-                primary:
-                    'border-lacquer-red bg-lacquer-red text-warm-porcelain hover:border-lacquer-deep hover:bg-lacquer-deep',
-                secondary: 'border-border bg-transparent text-ink hover:bg-lacquer-wash',
-                outline: 'border-border bg-warm-porcelain text-ink hover:bg-lacquer-wash',
-                ghost: 'border-transparent text-ink hover:bg-lacquer-wash',
-                tertiary:
-                    'border-transparent text-lacquer-red underline decoration-1 underline-offset-4 hover:text-lacquer-deep',
-                destructive: 'border-brick bg-brick text-warm-porcelain hover:border-lacquer-deep hover:bg-lacquer-deep',
-                link: 'border-transparent text-lacquer-red underline-offset-4 hover:underline',
-            },
-            size: {
-                sm: 'h-control-sm px-3 text-body-sm [&_svg]:size-4',
-                default: 'h-control-md px-5 text-body-sm [&_svg]:size-4',
-                md: 'h-control-md px-5 text-body-sm [&_svg]:size-4',
-                lg: 'h-control-lg px-6 text-body-md [&_svg]:size-5',
-                icon: 'size-control-md p-0 [&_svg]:size-4',
-                'icon-sm': 'size-control-sm p-0 [&_svg]:size-4',
-                'icon-lg': 'size-control-lg p-0 [&_svg]:size-5',
-            },
-        },
-        defaultVariants: {
-            variant: 'default',
-            size: 'default',
-        },
-    },
-);
+type ButtonVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'tertiary' | 'destructive' | 'link';
+type ButtonSize = 'default' | 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
 
-type ButtonProps = React.ComponentProps<'button'> &
-    VariantProps<typeof buttonVariants> & {
-        asChild?: boolean;
-        loading?: boolean;
-        leftIcon?: LucideIcon;
-        rightIcon?: LucideIcon;
-    };
+type ButtonVariantProps = { variant?: ButtonVariant; size?: ButtonSize };
+
+/**
+ * Compatibility helper for code that imported `buttonVariants`.
+ * Styling is now driven by `data-variant` / `data-size`, not class names.
+ */
+const buttonVariants: (props?: ButtonVariantProps) => string = () => 'sn-btn';
+
+type ButtonProps = React.ComponentProps<'button'> & {
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    asChild?: boolean;
+    loading?: boolean;
+    leftIcon?: LucideIcon;
+    rightIcon?: LucideIcon;
+};
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     (
@@ -68,11 +45,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             children
         ) : (
             <>
-                {loading ? (
-                    <Loader2 aria-hidden="true" className="animate-spin" />
-                ) : (
-                    LeftIcon && <LeftIcon aria-hidden="true" />
-                )}
+                {loading ? <Loader2 aria-hidden="true" className="sn-btn__spinner" /> : LeftIcon && <LeftIcon aria-hidden="true" />}
                 {children}
                 {!loading && RightIcon && <RightIcon aria-hidden="true" />}
             </>
@@ -82,9 +55,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <Comp
                 ref={ref}
                 data-slot="button"
+                data-variant={variant}
+                data-size={size}
                 aria-busy={loading || undefined}
                 disabled={disabled || loading}
-                className={cn(buttonVariants({ variant, size }), className)}
+                className={cx('sn-btn', className)}
                 {...props}
             >
                 {content}
@@ -96,4 +71,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-export type { ButtonProps };
+export type { ButtonProps, ButtonSize, ButtonVariant };

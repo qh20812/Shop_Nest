@@ -1,7 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type SelectOption = {
     value: string;
@@ -9,32 +9,25 @@ type SelectOption = {
     disabled?: boolean;
 };
 
+type SelectSize = 'sm' | 'md' | 'lg';
+
 type SelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
-    size?: 'sm' | 'md' | 'lg';
+    size?: SelectSize;
     invalid?: boolean;
     options?: SelectOption[];
     placeholder?: string;
 };
 
-const sizeClasses = {
-    sm: 'h-control-sm text-body-sm',
-    md: 'h-control-md text-body-md',
-    lg: 'h-control-lg text-body-md',
-};
-
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     ({ className, size = 'md', invalid, options, placeholder, children, ...props }, ref) => {
         return (
-            <div className="relative w-full">
+            <span className="sn-select-wrap">
                 <select
                     ref={ref}
                     data-slot="select"
+                    data-size={size}
                     aria-invalid={invalid || props['aria-invalid']}
-                    className={cn(
-                        'w-full appearance-none rounded-control border border-border bg-warm-porcelain pl-4 pr-10 font-sans text-ink transition-[border-color,box-shadow] duration-150 ease-nep focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-brick',
-                        sizeClasses[size],
-                        className,
-                    )}
+                    className={cx('sn-select', className)}
                     {...props}
                 >
                     {placeholder && (
@@ -49,11 +42,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                     ))}
                     {children}
                 </select>
-                <ChevronDown
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted"
-                />
-            </div>
+                <ChevronDown aria-hidden="true" className="sn-select__icon" />
+            </span>
         );
     },
 );
@@ -61,5 +51,5 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 Select.displayName = 'Select';
 
 export { Select };
-export type { SelectOption, SelectProps };
+export type { SelectOption, SelectProps, SelectSize };
 export default Select;

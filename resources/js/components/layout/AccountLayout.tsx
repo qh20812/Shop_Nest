@@ -6,7 +6,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import type { BreadcrumbItem } from '@/components/ui/breadcrumbs';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 export type AccountNavKey = 'orders' | 'addresses' | 'profile' | 'password' | 'notifications' | 'messages' | 'settings';
 
@@ -89,9 +89,14 @@ export function AccountLayout({
 
     return (
         <StorefrontLayout compactFooter={compactFooter}>
-            <PageContainer className={cn('py-8 md:py-10', className)}>
+            <PageContainer className={cx('sn-account', className)}>
                 <PageHeader
-                    breadcrumbs={breadcrumbs ?? [{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }]}
+                    breadcrumbs={
+                        breadcrumbs ?? [
+                            { label: 'Chợ', href: '/' },
+                            { label: 'Tài khoản', current: true },
+                        ]
+                    }
                     eyebrow={eyebrow}
                     title={title}
                     description={description}
@@ -99,31 +104,23 @@ export function AccountLayout({
                     actions={actions}
                 />
 
-                <nav aria-label="Khu vực tài khoản" className="scrollbar-hide mt-5 flex items-center gap-2 overflow-x-auto pb-1">
-                    {accountNav.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = item.key === resolvedActive;
+                <div className="sn-account__body">
+                    <nav aria-label="Khu vực tài khoản" className="sn-account__nav">
+                        {accountNav.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = item.key === resolvedActive;
 
-                        return (
-                            <Link
-                                key={item.key}
-                                href={item.href}
-                                aria-current={isActive ? 'page' : undefined}
-                                className={cn(
-                                    'focus-ring inline-flex min-h-control-sm shrink-0 items-center gap-2 rounded-pill border px-3.5 py-2 text-body-sm font-medium transition-colors',
-                                    isActive
-                                        ? 'border-lacquer-red bg-lacquer-wash text-lacquer-red'
-                                        : 'border-border bg-warm-porcelain text-ink-muted hover:border-ink-muted hover:text-ink',
-                                )}
-                            >
-                                <Icon aria-hidden="true" className="size-4" />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
+                            return (
+                                <Link key={item.key} href={item.href} aria-current={isActive ? 'page' : undefined} className="sn-account__tab">
+                                    <Icon aria-hidden="true" className="sn-account__tab-icon" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
 
-                <div className="mt-6">{children}</div>
+                    <div className="sn-account__content">{children}</div>
+                </div>
             </PageContainer>
         </StorefrontLayout>
     );

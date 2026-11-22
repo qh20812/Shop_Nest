@@ -651,5 +651,12 @@
     "login.title": "Đăng nhập tài khoản",
     "homeNavbar":{
         "become_seller": "Trở thành người bán hàng"
+    },
+    "Search": "Tìm kiếm",
+    "Search...": "Tìm kiếm...",
+    "Shops": "Cửa hàng",
+    "navbar": {
+        "profile": "Hồ sơ",
+        "settings": "Cài đặt"
     }
 }

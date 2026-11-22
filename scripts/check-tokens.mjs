@@ -16,6 +16,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const JS_SCAN_ROOT = 'resources/js';
 const CSS_SCAN_ROOT = 'resources/css';
+const MODULE_CSS_SCAN_ROOT = 'resources/js';
 const ALLOWLIST_PATH = 'scripts/token-allowlist.json';
 const JS_EXTENSIONS = new Set(['.ts', '.tsx']);
 const CSS_EXTENSIONS = new Set(['.css']);
@@ -252,7 +253,11 @@ function isGenerated(relativePath) {
 }
 
 function isCssColorScope(relativePath) {
-    return relativePath.startsWith('resources/css/components/') || relativePath.startsWith('resources/css/layouts/');
+    return (
+        relativePath.startsWith('resources/css/components/') ||
+        relativePath.startsWith('resources/css/layouts/') ||
+        (relativePath.startsWith('resources/js/') && relativePath.endsWith('.css'))
+    );
 }
 
 function isTailwindToken(rawToken) {
@@ -467,7 +472,10 @@ async function main() {
     }
 
     const jsFiles = (await collectFiles(path.join(ROOT, JS_SCAN_ROOT), JS_EXTENSIONS)).filter((file) => !isGenerated(relativeToRoot(file)));
-    const cssFiles = await collectFiles(path.join(ROOT, CSS_SCAN_ROOT), CSS_EXTENSIONS);
+    const cssFiles = [
+        ...(await collectFiles(path.join(ROOT, CSS_SCAN_ROOT), CSS_EXTENSIONS)),
+        ...(await collectFiles(path.join(ROOT, MODULE_CSS_SCAN_ROOT), CSS_EXTENSIONS)).filter((file) => !isGenerated(relativeToRoot(file))),
+    ];
     const files = [...jsFiles, ...cssFiles];
 
     if (writeBaseline) {

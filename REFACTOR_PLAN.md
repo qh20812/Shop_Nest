@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C hoàn tất (2026-11-22); Phase 3 đã chốt 9 quyết định thi công, **chưa build** (2026-11-23)
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, **3 hoàn tất kỹ thuật** (2026-11-23); Phase 4 **chưa build**. Còn review thủ công 5 ảnh legacy + dialog workspace khi có phiên đăng nhập; 4/5 trang legacy đã có feature test render pass.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -103,8 +103,19 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 16  | Nav shipper    | **Rút còn Dashboard + Cài đặt**; 6 href chưa có route ghi backlog. Alias `shipper` vẫn sửa ở Phase 9                                                                                          |
 | 17  | Auth panel     | **Bỏ "số liệu thật" + ảnh picsum**; panel là editorial: logo, eyebrow, headline, mô tả, 3 trust point, hotline/email                                                                          |
 | 18  | Breakpoints    | **Thêm mốc 640** (`sm`), dồn thang: `xs 480 / sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1440`                                                                                                 |
-| 19  | `UtilityStrip` | **Bỏ khỏi Phase 3**, ghi backlog; header đã có locale/currency                                                                                                                                |
+| 19  | `UtilityStrip` | **Bỏ khỏi Home Phase 4**, giữ file + allowlist đến Phase 11; header đã có locale/currency, TrustStrip phủ 4 fact                                                                             |
 | 20  | Git            | Commit riêng 2A/2B/2C trước Phase 3; `git mv` 7 file `components/ui` về chữ thường để CI Linux không fail                                                                                     |
+| 21  | Theme pin      | `StorefrontLayout` nhận prop `pinLight` ở **root**; 8 trang Phase 4 truyền `pinLight={false}`; `AccountLayout`, `Cart`, `Checkout`, `PaymentResult` giữ `pinLight` mặc định `true` đến Phase 6. `Settings/Appearance` xử lý riêng để không khoá theme |
+| 22  | Pagination DOM | Đổi 2 nhánh `<nav>` của `Pagination` sang `<div role="navigation" aria-label="Phân trang">` để thoát `.content nav` unlayered của `Page.css`; không sửa thêm `Page.css` |
+| 23  | UtilityStrip   | **Bỏ khỏi Home Phase 4**; giữ file + allowlist như dead code đến Phase 11. Header đã có locale/currency, TrustStrip đã phủ 4 fact |
+| 24  | Voucher band   | **Bỏ khỏi spec Phase 4** vì `Home/Index` không có prop voucher; ghi backlog, không thêm band tĩnh hoặc số liệu giả |
+| 25  | WorkspaceTopbar| **Điều chỉnh plan theo hiện trạng**: breadcrumb nằm ở `PageHeader`; search desktop; toggle sidebar chỉ mobile; desktop collapse để Phase 11. Không coi là thiếu DoD Phase 3 |
+| 26  | Base scope     | Thu hẹp `base/typography.css` + `base/forms.css` về đúng `.sn-shell` / `.sn-shell a` / `.sn-shell label`; heading/form element-level để primitive xử lý. Reset + a11y giữ toàn cục |
+| 27  | Home sections  | Giữ `BrandSpotlight` + `EditorialPillars` nhưng redesign: bỏ `01/02/03`, bỏ badge trùng eyebrow, bỏ câu/số liệu slop. Bỏ `UtilityStrip` khỏi Home |
+| 28  | Data authenticity | Bỏ badge “Shop Việt” / “Đã mua” và mọi số liệu `1.200+`, `100%`, `299.000 ₫`, `3 phút`, `2h` nếu không có prop/DB xác thực. Chỉ giữ claim không số |
+| 29  | Phase 3 hotfix | Trước Phase 4: (1) thêm nền `var(--sn-color-canvas)` cho `.sn-storefront__main` hoặc pin root đúng cách; (2) đổi Pagination sang `div role=navigation`; (3) scope `base/*`; (4) chụp/so 5 trang legacy; (5) smoke 4 layout + modal trên sidebar |
+| 30  | Docs tạm xoá   | Khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md`; chỉ xoá/archived ở Phase 11. Không đưa các xoá này vào commit Phase 3 |
+| 31  | Phase 4 thêm   | Thêm `commerce/Countdown.tsx` vào phạm vi Phase 4 (dependency của `FlashSaleModule`). `check-tokens.mjs` phải quét thêm `resources/js/**/*.module.css` trước khi Phase 4 dùng module CSS |
 
 ---
 
@@ -147,7 +158,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; **156 sau Phase 2C**        | Giữ làm ratchet đến Phase 11                              |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; **143 sau Phase 3**        | Giữ làm ratchet đến Phase 11                              |
 | `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
@@ -174,7 +185,7 @@ Các số liệu dưới đây đo trực tiếp trên code + Edge headless/CDP,
 | `base/*.css` chưa từng chạy                                             | `body 15px`, `a { color: accent }`, `label 12px`                                                                                                            | Nếu import toàn cục sẽ restyle 41 trang; 10/12 `<Link>` ở Admin/Seller không có `text-*`                               |
 | `routes/shipper.php` chỉ có `/dashboard` + alias `shipper` chưa đăng ký | Nav shipper có 8 href, 6 href không tồn tại; cả nhóm route 500                                                                                              | Phase 3 phải rút nav, không "giữ nguyên href"                                                                          |
 | Shared props không có số liệu                                           | `HandleInertiaRequests::share()` chỉ có `name/quote/auth/sidebarOpen/locale/translations/currency/csrfToken`                                                | AuthBrandPanel không thể có "số liệu thật"                                                                             |
-| i18n thiếu key                                                          | `auth.logout`, `Search...`, `Shops` thiếu ở **cả** `vi.json` và `en.json`; 43 key chỉ có ở `en`                                                             | Navbar đang render literal `auth.logout`                                                                               |
+| i18n thiếu key                                                          | `auth.logout` **đã có** trong nested `auth` ở cả hai file; `Search...`, `Shops` thiếu; 43 key chỉ có ở `en`                                          | Navbar từng render literal `auth.logout`; Phase 3 thêm `Search`, `Search...`, `Shops`; dùng flat key, không thêm object `navbar` trùng |
 | Breakpoint 640 chưa có trong tài liệu                                   | `@media (min-width: 40rem)` ở overlay/feedback/navigation                                                                                                   | Phase 3 dùng breakpoint dày đặc, cần chốt trước                                                                        |
 | Git casing                                                              | 7 file `components/ui` track chữ hoa nhưng đĩa chữ thường (`Avatar`, `Header`, `Insights`, `Navbar`, `Pagination`, `Sidebar`, `Tooltip`)                    | Checkout Linux/CI có thể fail                                                                                          |
 | `@fortawesome/fontawesome-free`                                         | 0 chỗ dùng trong `resources/js`                                                                                                                             | Ghi backlog, xoá ở Phase 11                                                                                            |
@@ -731,6 +742,8 @@ CSS custom property không dùng được trong `@media`, nên breakpoint là h�
 Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width: …)`.
 
 > `sm = 640px` là mốc kế thừa từ Tailwind (`sm:` cũ) và đang được dùng ở `overlay.css`, `feedback.css`, `navigation.css`. Không đổi các media query này sang 768; mọi layout mới dùng đúng bảng trên.
+>
+> **Ngoại lệ Phase 3:** `layouts/workspace.css` dùng `@media (min-width: 769px)` để bật sidebar, vì `Page.css` đang có `@media (max-width: 768px)` kéo `.content` sang `left: 200px`. 769 là chủ đích để hai mốc không chồng nhau; xoá ngoại lệ này khi bỏ `Page.css` ở Phase 11.
 
 ### 4.9 Dark mode mechanics
 
@@ -1116,6 +1129,8 @@ Chỉ cho giá trị động:
 
 Không: `style={{ color: '#b23a2f' }}`, `style={{ marginTop: 16 }}`.
 
+**Ngoại lệ Phase 3:** `WorkspaceLayout` dùng inline `style={{ width: '100%', left: 0 }}` ở mobile để vượt `.content { left: 230px }` unlayered của `Page.css`. Đây là geometry động theo viewport, không phải màu/spacing tĩnh; xoá cùng `Page.css` ở Phase 11.
+
 ---
 
 ## 6. Design gate (3 skill hợp nhất)
@@ -1192,7 +1207,7 @@ Ba override có chủ đích, ghi để không ai "sửa" ngược:
 - [ ] Không Boxicons/FontAwesome trong file đã migrate; file legacy defer vẫn nằm trong allowlist.
 - [ ] `npm run types` sạch.
 - [ ] `npm run build` sạch.
-- [ ] `node scripts/check-tokens.mjs` sạch.
+- [ ] `node scripts/check-tokens.mjs` sạch, **bao gồm `resources/js/**/*.module.css`**.
 - [ ] Không lỗi console, không warning React key.
 
 ### 6.5 Pre-flight riêng cho Storefront / Auth / Legal
@@ -1395,17 +1410,42 @@ CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `co
 **3.0 — Chuẩn bị (làm trước, không vẽ gì)**
 
 1. **Commit 2A/2B/2C** thành 3 commit riêng theo §13; sau đó `git mv` 7 file `components/ui` về chữ thường (`avatar`, `header`, `insights`, `navbar`, `pagination`, `sidebar`, `tooltip`) để checkout Linux không fail.
+   - **Thực tế:** 2A/2B/2C đang nằm gộp trong một commit. Không rewrite history; chỉ cần commit Phase 3 (và hotfix) riêng, ghi rõ trong PR.
 2. **`sn-legacy-reset`:** thêm layer này **đầu tiên** trong câu `@layer` của `app.css`, rồi bọc 6 block toàn cục của `Page.css` vào `@layer sn-legacy-reset { … }`:
     - `*` (margin/padding/box-sizing/font-family), `a`, `li`, `html`, `body`, `body.dark`.
     - **Không** đụng phần còn lại của `Page.css` (`.sidebar`, `.content`, `.orders`, `.header`…).
     - Lý do: `Page.css` unlayered đang thắng mọi `sn-*` và Tailwind utility (đo được: `.sn-btn` 24px → 0px). Nếu không sửa, mọi shell đặt trên `sn-*` sẽ mất padding.
 3. **Scope `base/*.css`:** đổi `body`, `a`, `label` trong `base/typography.css` + `base/forms.css` thành `.sn-shell` / `.sn-shell a` / `.sn-shell label` (và `.sn-shell` cho font-size/color). Rule reset + `a11y` giữ toàn cục. Phase 11 bỏ scope.
+   - **Hotfix Phase 3:** bản hiện tại đang scope rộng hơn (h1-h6, strong, small, code, hr, toàn bộ form element). Trước Phase 4 phải thu hẹp về đúng body/a/label để tránh restyle 41 trang legacy.
 4. **Baseline 5 trang legacy:** chụp ảnh 1440 + 390 trước khi bật CSS, lưu `docs/ui/baseline/` (đã gitignore). Dùng để so sau bước 5.
+
+**3.1 — Hotfix bắt buộc trước Phase 4 (đã hoàn tất 2026-11-23)**
+
+Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý trước khi build Phase 4:
+
+1. **Nền storefront:** `StorefrontLayout` đang đặt `data-theme="light"` trên `<main>` nhưng `.sn-storefront__main` không có background; root vẫn tối. Đo CDP: root `rgb(13,15,12)`, main trong suốt, heading `rgb(21,22,15)` → chữ tối trên nền tối ở mọi section không `bg-*`. Thêm `background: var(--sn-color-canvas)` cho `.sn-storefront__main` **và** chuyển pin light sang prop `pinLight` ở root (quyết định #21).
+2. **Pagination:** `Pagination` render `<nav>` nên bị `.content nav` unlayered biến thành topbar (đo được `height:56px`, `position:sticky`, `z-index:1000`). Đổi 2 nhánh sang `<div role="navigation">` (quyết định #22); retest `Admin/Products`, `Admin/Users`, `Admin/Promotions/Index`, `Seller/Products`.
+3. **Base scope:** thu hẹp `base/typography.css` + `base/forms.css` về body/a/label (quyết định #26).
+4. **Kiểm chứng tối thiểu:** chụp/so 5 trang legacy ở 1440; smoke 4 layout; kiểm dialog/sheet trên workspace nằm trên sidebar; kiểm mobile 375/390.
+5. **Tooling:** mở rộng `scripts/check-tokens.mjs` quét `resources/js/**/*.module.css` (quyết định #31) trước khi Phase 4 tạo module CSS.
+6. **Git/docs:** khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md` (quyết định #30); commit Phase 3 riêng, không trộn các xoá tài liệu.
+7. **Cập nhật log:** sửa lại tuyên bố “dark mode render đúng” ở §15; hiện storefront dark mode **chưa đạt** cho đến khi xong mục 1.
+
+**Kết quả hotfix:**
+
+- `StorefrontLayout` nhận `pinLight` (default `true`) và đặt `data-theme` ở root; bỏ pin khỏi `<main>`. `.sn-storefront__main` có `background` + `color` token. CDP: root/main `rgb(242,242,238)`, heading `rgb(21,22,15)`, không còn chữ tối trên nền tối.
+- `Pagination` render `div role="navigation"` ở cả 2 nhánh; harness `app.css + Page.css`: pagination `height:40px`, `static`, `z:auto`; `<nav>` đối chứng vẫn `56px/sticky/1000`.
+- `base/typography.css` + `base/forms.css` chỉ còn `.sn-shell`, `.sn-shell a`, `.sn-shell label`; bundle CSS giảm còn **186,57 kB**.
+- `check-tokens.mjs` quét thêm `resources/js/**/*.css` và đưa module vào `isCssColorScope`.
+- Khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md`.
+- Feature tests: `ProductManagementTest`, `UserControllerTest`, `Seller/ProductControllerTest`, `Seller/DashboardControllerTest` — **40 passed / 200 assertions** (chỉ DEPRECATION PHP 8.5).
+- `format:check`, `check:css` (129 file, 143 allowlisted), `types`, `build` pass.
+- Còn nợ thủ công: 5 ảnh so sánh legacy (đặc biệt Admin/Promotions chưa có test) và dialog/sheet trên workspace; cần phiên đăng nhập/DB phù hợp.
 
 **Storefront**
 
 - `StorefrontLayout`, `StorefrontHeader`, `StorefrontFooter`, `MobileNav`, `PageContainer`, `PageHeader`, `SectionHeader`.
-- **Không** làm `UtilityStrip` (đã bỏ khỏi phase, ghi backlog); locale/currency tiếp tục nằm trong header.
+- **Không** làm `UtilityStrip` trong Phase 3; **Phase 4 bỏ hẳn khỏi Home**, giữ file + allowlist đến Phase 11 (quyết định #23). Header đã có locale/currency, `TrustStrip` phủ 4 fact.
 - Header 56 px (`--sn-header`), sticky, border-bottom; search ở giữa; account/cart phải. Giữ nguyên hành vi: search `router.get('/search', { search })`, dropdown locale/currency `POST /language` + `/currency`, badge giỏ/thông báo, menu mobile qua `MobileNav`.
 - Footer 4 cột trên nền `canvas-alt`; giữ `NewsletterSignup`, `PaymentMarks`, social row.
 - `PageContainer` giữ đủ 4 size `page | prose | narrow | full`; `page` dùng `.sn-container`, `prose` dùng `--sn-measure-prose`, `narrow` giữ ~48rem.
@@ -1427,12 +1467,14 @@ CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `co
 
 - `WorkspaceLayout` thay `layouts/app/AppLayout`; giữ `<div className="content"><main>{children}</main></div>` vì **66 selector** của `Page.css` bám vào `.content`.
 - `WorkspaceSidebar`: **230 px** (khớp `calc(100% - 230px)` của Page.css, không dùng 232), icon Lucide, active = `accent-wash` + thanh 2 px accent trái. Dùng class riêng (`sn-workspace__sidebar`), **không** dùng `.sidebar` để tránh `z-index: 2000` đè modal.
-- `WorkspaceTopbar` 56 px, **giữ đủ** chức năng `navbar.tsx`:
-    - toggle sidebar, search (placeholder `t('Search...')`)
+- `WorkspaceTopbar` 56 px, giữ đủ chức năng đã chốt:
+    - search desktop (placeholder `t('Search...')`), ẩn dưới 768 px; **không** thêm search mobile ở Phase 4
     - chuông + `unreadCount` + polling `/api/notifications/unread-count` mỗi 30 s
     - `LanguageSwitcher`
     - avatar menu: Hồ sơ, Đổi mật khẩu, Cài đặt, Đăng xuất
     - theme toggle (mới, dùng `useTheme`)
+    - toggle sidebar chỉ mobile; **desktop collapse defer Phase 11** (xem quyết định #25)
+    - **breadcrumb nằm ở `PageHeader`**, không lặp trong topbar
 - Nav role **giữ nguyên label + href** cho admin/seller; **shipper rút còn Dashboard + Cài đặt** (6 href còn lại chưa có route; ghi backlog).
 - Giữ file `layouts/app/AppLayout.tsx` làm re-export tạm đến Phase 11 (39 page import default).
 - Xử lý wrapper legacy defer từ Phase 2: `header`, `navbar`, `sidebar`, `filter-panel`. `action-*`, `data-table`, `insights`, `confirmation-modal` để Phase 7/8.
@@ -1449,13 +1491,17 @@ CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `co
 **Kiểm chứng bắt buộc**
 
 1. **Regression `sn-*`:** trên một trang workspace, `.sn-btn` padding-left phải > 0 và `.sn-input` padding-left > 0 (đây là bài test bắt được lỗi unlayered; trước Phase 3 cả hai bằng 0).
-2. **5 trang legacy** (Admin/Products, Admin/Users, Admin/Promotions/Index, Seller/Dashboard, Seller/Products) so ảnh trước/sau ở 1440; chấp nhận thay đổi spacing do Tailwind utility bắt đầu có hiệu lực, nhưng không được vỡ bố cục.
-3. Header/sidebar/topbar ở 375, 390, 768, 1024, 1440; không tràn ngang.
-4. Light + dark; dialog/sheet mở trên workspace phải nằm **trên** sidebar.
-5. Thêm key i18n còn thiếu vào **cả** `lang/vi.json` và `lang/en.json`: `auth.logout`, `Search...`, `Shops`.
-6. `npm run check:css`, `npm run types`, `npm run build`.
+2. **Nền storefront:** sau hotfix, `.sn-storefront__main` phải có background `var(--sn-color-canvas)` (đo computed style > 0 alpha), không còn chữ tối trên nền tối ở dark mode.
+3. **Pagination:** `Pagination` phải render `div role="navigation"`, không phải `<nav>`; computed `height` không còn 56px/sticky/z 1000.
+4. **5 trang legacy** (Admin/Products, Admin/Users, Admin/Promotions/Index, Seller/Dashboard, Seller/Products) so ảnh trước/sau ở 1440; chấp nhận thay đổi spacing do Tailwind utility bắt đầu có hiệu lực, nhưng không được vỡ bố cục.
+5. Header/sidebar/topbar ở 375, 390, 768, 1024, 1440; không tràn ngang.
+6. Light + dark; dialog/sheet mở trên workspace phải nằm **trên** sidebar.
+7. Thêm key i18n còn thiếu vào **cả** `lang/vi.json` và `lang/en.json`: `Search`, `Search...`, `Shops` (`auth.logout` đã có).
+8. `npm run check:css`, `npm run types`, `npm run build`.
 
-**DoD:** 4 layout render với 1 page giả mỗi loại; `.sn-*` giữ padding trên workspace; 5 trang legacy không vỡ; nav đúng role (shipper 2 mục); modal nằm trên sidebar; mobile không tràn; dark mode đúng; allowlist giảm 2 entry (`header`, `filter-panel`); `navbar`/`sidebar` thành dead code nhưng vẫn để nguyên + allowlist đến Phase 11.
+**DoD:** 4 layout render với 1 page giả mỗi loại; `.sn-*` giữ padding trên workspace; 5 trang legacy không vỡ; nav đúng role (shipper 2 mục); modal nằm trên sidebar; mobile không tràn; dark mode đúng; allowlist giảm ít nhất 2 entry (`header`, `filter-panel`); `navbar`/`sidebar` thành dead code nhưng vẫn để nguyên + allowlist đến Phase 11.
+
+> **Trạng thái 2026-11-23:** hotfix §3.1 đã xong; DoD kỹ thuật đạt. Còn review thủ công 5 ảnh legacy + dialog workspace khi có phiên đăng nhập; 4/5 trang legacy đã có test render pass. Phase 4 có thể bắt đầu sau khi commit Phase 3.
 
 ---
 
@@ -1463,7 +1509,7 @@ CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `co
 
 |   # | Page                     | Ghi chú                                                                        |
 | --: | ------------------------ | ------------------------------------------------------------------------------ |
-|   1 | `Home/Index`             | Hero 7/5, 6 category tile, shelf 4-up, trust strip 4 fact, voucher band 1 dòng |
+|   1 | `Home/Index`             | Hero 7/5, 6 category tile, shelf 4-up, trust strip 4 fact; giữ BrandSpotlight + EditorialPillars nhưng bỏ 01/02/03 và badge trùng; **bỏ UtilityStrip + voucher band** |
 |   2 | `Home/Search`            | Filter rail 264 px, sticky, mobile bottom sheet                                |
 |   3 | `Customer/ProductDetail` | Gallery 7/5, buy box sticky, spec table, review                                |
 |   4 | `Home/About`             | Editorial; **không có prop/số liệu** — không bịa số (xem ghi chú dưới)         |
@@ -1472,20 +1518,27 @@ CSS: `components/data.css` (card, table, badge, avatar, skeleton, progress), `co
 |   7 | `Legal/PrivacyPolicy`    | Prose 65ch                                                                     |
 |   8 | `Legal/SellingPolicy`    | Prose 65ch                                                                     |
 
-**Component trọng tâm:** `storefront/*` (10 file), `commerce/{ProductCard, ProductGrid, ProductGallery, BuyBox, VariantSelector, QuantityStepper, Price, Rating, ReviewCard, ReviewSummary, SpecTable, ShopIdentity, CategoryPills, ActiveFilters, FilterGroup, FilterRail}`.
+**Component trọng tâm:** `storefront/*` (10 file, **trừ `UtilityStrip` không migrate**), `commerce/{ProductCard, ProductGrid, ProductGallery, BuyBox, VariantSelector, QuantityStepper, Price, Rating, ReviewCard, ReviewSummary, SpecTable, ShopIdentity, CategoryPills, ActiveFilters, FilterGroup, FilterRail, Countdown}`.
 
-`commerce/Price.tsx` đang dùng `cva`; chuyển sang `data-*` trong phase này, không để sót sang Phase 11.
+`commerce/Price.tsx` đang dùng `cva`; chuyển sang `data-*` trong phase này, không để sót sang Phase 11. `commerce/Countdown.tsx` là dependency của `FlashSaleModule`, đưa vào scope Phase 4.
 
 **Luật riêng**
 
-- Hero chỉ 1 CTA, không carousel, không mũi tên cuộn.
+- Hero chỉ 1 CTA, không carousel, không mũi tên cuộn. **Bỏ trust strip khỏi hero**; trust strip là section riêng.
+- CTA chính ≤ 3 từ, không xuống dòng ở desktop.
 - Category tile: 6, không tô màu riêng.
-- Product card: ảnh 4:5, không shadow, hover chỉ border + gạch chân tên.
+- Product card: ảnh 4:5, không shadow, hover chỉ border + gạch chân tên. **Bỏ badge/pill phủ lên ảnh**; đưa metadata ra ngoài ảnh nếu cần.
 - Trust strip: 4 mục ngăn bằng divider, không 4 card.
-- Không section "3 card bằng nhau".
+- Không section "3 card bằng nhau"; không đánh số `01/02/03`; eyebrow ≤ `ceil(số section / 3)`.
+- `BrandSpotlight` + `EditorialPillars`: giữ nhưng redesign; bỏ badge trùng eyebrow, bỏ nhãn số, bỏ copy slop.
+- **Không số liệu giả:** bỏ `1.200+`, `100%`, `299.000 ₫`, `3 phút`, `2h` nếu không có props/DB.
+- **Không badge xác thực giả:** bỏ “Shop Việt” trên `ProductCard`/`ShopIdentity` và “Đã mua” trên review khi không có cờ xác thực từ backend.
+- **Dark mode:** 8 trang Phase 4 truyền `pinLight={false}`; Account/Cart/Checkout/PaymentResult vẫn pin `true` đến Phase 6.
 - `Home/About` và `Home/Contact` render bằng closure trong `routes/web.php`, **không truyền prop nào**; không dựng bảng số liệu/KPI. Muốn có số thật phải bổ sung controller/props — ghi backlog, không làm trong refactor.
+- Legal: viết lại nội dung tiếng Việt (hiện đang English), prose 65ch; không giữ “Terms of Service/Privacy Policy/Selling Policy”.
+- Copy: xoá toàn bộ en-dash/em-dash trong page/component Phase 4 (`Search`, `Contact`, `BuyBox`, …).
 
-**DoD:** 8 trang hợp lệ ở 375/390/768/1440; ảnh không nhảy layout (đặt `width/height` hoặc `aspect-ratio`); dark mode đạt.
+**DoD:** 8 trang hợp lệ ở 375/390/768/1024/1440; ảnh không nhảy layout (đặt `width/height` hoặc `aspect-ratio`); dark mode đạt; không còn class Tailwind/Nếp trong file đã migrate; mỗi page có `*.module.css`; allowlist giảm tương ứng; `types` + `build` + `check:css` sạch.
 
 ---
 
@@ -1825,6 +1878,8 @@ php artisan test --filter=<area>
 - [ ] Light + dark đạt.
 - [ ] Loading / empty / error / success đủ.
 - [ ] Copy đã rà, không slop, không em-dash.
+- [ ] Không badge/số liệu xác thực giả khi props/DB không có.
+- [ ] Page có `*.module.css` (nếu cần layout) và module đã qua `check:css`.
 - [ ] `types` + `build` + `check:css` sạch.
 - [ ] Route + props không đổi.
 - [ ] Trên workspace: `.sn-btn`, `.sn-input`, `.sn-badge`, `.sn-card` còn padding (không bị `Page.css` reset về 0).
@@ -1848,7 +1903,10 @@ php artisan test --filter=<area>
 | Thiếu file font `woff2` khi bắt đầu Phase 1                             | Trung bình | Chuẩn bị `public/fonts/be-vietnam-pro/` từ Phase 0; kiểm tra dấu tiếng Việt trước khi bỏ Google Fonts                                                                                                                                                                                   |
 | Class global `sn-*` trùng `Page.css`                                    | Trung bình | Prefix `sn-`; rà `Page.css` trước Phase 2                                                                                                                                                                                                                                               |
 | Phase 2 đổi primitive dùng chung làm page chưa migrate đổi giao diện    | Cao        | Chấp nhận có chủ đích; verify login + customer sau mỗi đợt; page migration ở Phase 4–8                                                                                                                                                                                                  |
-| Dark mode trộn token mới với layout sáng cũ                             | Cao        | Surface chưa migrate vẫn dùng nền sáng; tạm chấp nhận hoặc force `data-theme="light"` trên layout cũ đến Phase 3/5/6                                                                                                                                                                    |
+| Dark mode trộn token mới với layout sáng cũ                             | Cao        | **Hotfix Phase 3:** pin light ở **root** qua prop `pinLight`, thêm background canvas cho `<main>`; 8 trang Phase 4 tắt pin, Account/Cart/Checkout/PaymentResult giữ pin đến Phase 6; Settings/Appearance xử lý riêng                                                                       |
+| `Page.css` `.content nav` biến Pagination thành topbar                  | Cao        | **Hotfix Phase 3:** đổi `Pagination` sang `<div role="navigation">`; đo lại computed style; retest 4 trang legacy có phân trang                                                                                                                                                          |
+| Guardrail không quét `resources/js/**/*.module.css`                     | Cao        | **Hotfix Phase 3:** mở rộng `check-tokens.mjs` quét module CSS và thêm vào `isCssColorScope` trước khi Phase 4 tạo module                                                                                                                                                                   |
+| Badge/số liệu bịa (`Shop Việt`, `Đã mua`, `1.200+`, `100%`, `299k`)     | Cao        | **Phase 4:** chỉ render khi có prop/DB xác thực; còn lại bỏ badge/số, dùng claim không số                                                                                                                                                                                               |
 | Mất variant cũ khi rewrite primitive                                    | Cao        | Giữ `default/outline`, `ink/outline`, `info`, `inset/ghost`, `pill/filter`; bảng tương thích trong Phase 2                                                                                                                                                                              |
 | Wrapper legacy defer vẫn dùng Boxicons/Page.css                         | Trung bình | Giữ trong allowlist đến Phase 7/8; không map 64 icon ở Phase 2                                                                                                                                                                                                                          |
 | CSS Modules + `composes` gây khó đọc                                    | Thấp       | Chỉ compose primitive, không compose chéo module                                                                                                                                                                                                                                        |
@@ -1879,6 +1937,9 @@ php artisan test --filter=<area>
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code.
+- Không xoá `storefront/UtilityStrip.tsx` trước Phase 11; Phase 4 chỉ bỏ nó khỏi Home.
+- Không thêm voucher band, số liệu `1.200+`/`100%`/`299k`, badge “Shop Việt”/“Đã mua” nếu không có props/DB xác thực.
+- Không đưa các xoá `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md` vào Phase 3; khôi phục và để Phase 11.
 - Không xoá wrapper legacy (`action-button`, `action-buttons`, `confirmation-modal`, `data-table`, `filter-panel`, `status-badge`, …) trước khi page cuối cùng dùng nó đã migrate.
 - Không sửa email/PDF logic nghiệp vụ, chỉ trình bày.
 - **Ngoại lệ thứ hai (Phase 3):** được sửa `resources/css/Page.css` **đúng 6 block toàn cục** (`*`, `a`, `li`, `html`, `body`, `body.dark`) để bọc vào `@layer sn-legacy-reset`. Không sửa bất kỳ selector component nào trong file này; không xoá file trước Phase 11.
@@ -1895,6 +1956,7 @@ refactor(ui): replace ui primitives with plain CSS (2/3 overlays)
 refactor(ui): replace ui primitives with plain CSS (3/3 data display)
 fix(ui): move legacy global reset under sn-legacy-reset
 refactor(ui): rebuild storefront, auth and workspace shells
+fix(ui): restore storefront surface and workspace pagination
 refactor(storefront): migrate home, search, product and legal pages
 refactor(auth): migrate login and registration pages
 refactor(customer): migrate cart, checkout, orders and account pages
@@ -1934,13 +1996,57 @@ docs(ui): rewrite design system and component rules
 1. Xoá file vừa migrate khỏi `scripts/token-allowlist.json`.
 2. `npm run types`
 3. `npm run build`
-4. `npm run check:css`
+4. `npm run check:css` (đã bao gồm `resources/js/**/*.module.css`)
 5. Toggle dark, tab, 375/390/768/1024/1440.
-6. Commit theo phase.
+6. Rà badge/số liệu: chỉ giữ khi có props/DB xác thực.
+7. Commit theo phase.
 
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-23 — Phase 3 hotfix hoàn tất:**
+
+- `StorefrontLayout`: thêm prop `pinLight` (default `true`), đặt `data-theme` ở **root** thay vì `<main>`; bỏ `data-theme` khỏi `<main>`. Thêm `background`/`color` token cho `.sn-storefront__main`.
+- CDP trên `/`: root/main `rgb(242,242,238)`, heading `rgb(21,22,15)`, HTML vẫn `dark` nhưng shell storefront là một theme sáng hoàn chỉnh; hết chữ tối trên nền tối.
+- `Pagination`: đổi 2 `<nav>` sang `<div role="navigation" aria-label="Phân trang">`. Harness `app.css + Page.css`: pagination `height:40px`, `position:static`, `z-index:auto`; `<nav>` đối chứng vẫn `56px/sticky/1000`.
+- `base/typography.css` + `base/forms.css`: thu hẹp còn `.sn-shell`, `.sn-shell a`, `.sn-shell label`; heading/form element-level để primitive xử lý. CSS bundle `app.css` còn **186,57 kB**.
+- `check-tokens.mjs`: quét thêm `resources/js/**/*.css` (Phase 4 module CSS) và thêm module vào `isCssColorScope`.
+- Khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md`; không đưa các xoá tài liệu vào Phase 3.
+- Feature tests: `Admin/ProductManagementTest`, `Admin/UserControllerTest`, `Seller/ProductControllerTest`, `Seller/DashboardControllerTest` — **40 passed / 200 assertions** (chỉ DEPRECATION `PDO::MYSQL_ATTR_SSL_CA` do PHP 8.5).
+- `format:check`, `check:css` (129 file, 143 allowlisted), `types`, `build` pass; smoke `/`, `/login`, `/about`, `/contact`, `/terms`, `/privacy-policy`, `/selling-policy`, `/search` đều 200.
+- Chưa chụp được 5 ảnh legacy do không có phiên đăng nhập trên DB remote; Admin/Promotions chưa có feature test. Cần review thủ công khi có DB/phiên phù hợp.
+
+**2026-11-23 — chốt quyết định trước Phase 4 (sau rà soát Phase 3):**
+
+- **Theme:** `StorefrontLayout` nhận `pinLight` ở root; 8 trang Phase 4 truyền `false`; Account/Cart/Checkout/PaymentResult giữ `true` đến Phase 6; Settings/Appearance xử lý riêng.
+- **Pagination:** đổi 2 `<nav>` sang `<div role="navigation">` để thoát `.content nav` unlayered; không sửa thêm `Page.css`.
+- **UtilityStrip:** bỏ khỏi Home Phase 4; giữ file + allowlist đến Phase 11.
+- **Voucher band:** bỏ khỏi spec Phase 4 vì không có prop; ghi backlog.
+- **WorkspaceTopbar:** điều chỉnh plan theo hiện trạng (breadcrumb ở PageHeader, search desktop, toggle mobile); desktop collapse defer Phase 11.
+- **Base scope:** thu hẹp về `.sn-shell` / `.sn-shell a` / `.sn-shell label`; heading/form để primitive.
+- **Home sections:** giữ BrandSpotlight + EditorialPillars nhưng redesign; bỏ 01/02/03, badge trùng, copy/số liệu slop.
+- **Data authenticity:** bỏ “Shop Việt”/“Đã mua” và `1.200+`/`100%`/`299k`/`3 phút`/`2h` nếu không có props/DB xác thực.
+- **Phase 3 hotfix:** sửa nền storefront, Pagination, base scope, kiểm chứng legacy, quét module CSS, khôi phục tài liệu; commit Phase 3 riêng trước Phase 4.
+- **Countdown:** thêm `commerce/Countdown.tsx` vào scope Phase 4.
+- **Docs:** khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md`; chỉ xoá/archived ở Phase 11.
+
+**2026-11-23 — Phase 3 hoàn tất phần code (trước hotfix §3.1):**
+
+- `app.css`: chèn `sn-legacy-reset` lên đầu danh sách layer; import `base/reset`, `base/typography`, `base/forms`, `base/a11y`, `layouts/{storefront,auth,account,workspace}` và `utilities.css`.
+- `Page.css`: bọc đúng 6 block toàn cục (`*`, `a`, `li`, `html`, `body`, `body.dark`) vào `@layer sn-legacy-reset`; phần còn lại vẫn unlayered. Kiểm bằng HTML tĩnh nạp `app.css` + `Page.css`: `.sn-btn` padding-left **20px**, `.sn-input` **16px** (trước Phase 3 đều 0).
+- `base/typography.css` + `base/forms.css`: scope element rules vào `.sn-shell`; thêm base `.sn-shell` (canvas, text, font). Reset/a11y giữ toàn cục.
+- Tạo `resources/css/layouts/{storefront,auth,account,workspace}.css`, dùng `--sn-*` và class `sn-*`, không hex/`!important`.
+- Rewrite 10 file `components/layout` sang `sn-*`; `PageContainer` giữ 4 size, `PageHeader`/`SectionHeader`/`Breadcrumbs` không còn Tailwind. `Breadcrumbs` thêm prop `as` để tránh `.content nav` của Page.css.
+- `WorkspaceLayout` + `WorkspaceSidebar` (230px, z 51) + `WorkspaceTopbar` (search, chuông + polling 30s, LanguageSwitcher, avatar menu, logout, theme toggle); giữ `<div class="content"><main>` và override geometry mobile bằng inline style có chú thích. `layouts/app/AppLayout.tsx` thành re-export. Import `Page.css` tại `WorkspaceLayout` để 9 page trước đây hưởng import bắc cầu không mất style.
+- Nav shipper rút còn Dashboard + Cài đặt; admin/seller giữ nguyên label/href. `header.tsx` → `PageHeader` + `Breadcrumbs`; `filter-panel.tsx` → `Input`/`Select`/`Button`, bỏ inline style.
+- `git mv` 7 file `components/ui` về chữ thường (avatar, header, insights, navbar, pagination, sidebar, tooltip).
+- i18n: thêm `Search`, `Search...`, `Shops` vào cả `vi.json` và `en.json`; `auth.logout` và `navbar.profile/settings` đã có flat key từ trước, không thêm object `navbar` trùng.
+- Storefront/account tạm pin `data-theme="light"` trên `<main>` để trang Nếp chưa migrate không bị chữ sáng trên nền sáng ở dark mode. **Bản này chưa đủ:** `<main>` không có background nên root tối lộ qua; quyết định trước Phase 4 là chuyển sang `pinLight` ở root và thêm background canvas (xem §3.1).
+- Allowlist 156 → **143** (10 layout, `header`, `filter-panel`, `AppLayout`; `navbar`/`sidebar` vẫn giữ).
+- `check:css` pass (129 file checked, 143 allowlisted); `types`, `format:check`, `build` pass; CSS bundle `app.css` 188,11 kB (từ 168,49 kB).
+- Verify Edge headless: `/login` (auth split), `/` (storefront shell/header/footer), form width 358px @390, không tràn ngang. **Dark mode storefront chưa đạt:** CDP đo root `rgb(13,15,12)`, main trong suốt, heading `rgb(21,22,15)`; cần hotfix trước Phase 4.
+- Phát hiện thêm sau Phase 3: `Pagination` (`<nav>`) bị `.content nav` unlayered biến thành topbar (computed `height:56px`, `sticky`, `z-index:1000`), ảnh hưởng 4/5 trang legacy; chưa đóng DoD Phase 3.
 
 **2026-11-23 — chốt 9 quyết định trước Phase 3 (chưa build):**
 

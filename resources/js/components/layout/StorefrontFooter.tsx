@@ -5,9 +5,7 @@ import { PaymentMarks } from '@/components/commerce/PaymentMarks';
 import { NewsletterSignup } from '@/components/storefront/NewsletterSignup';
 import { useToast } from '@/components/ui/toast';
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
-import { cn } from '@/lib/utils';
-
-import { PageContainer } from './PageContainer';
+import { cx } from '@/lib/cx';
 
 type StorefrontFooterProps = {
     compact?: boolean;
@@ -49,39 +47,35 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
     };
 
     return (
-        <footer className={cn('mt-section border-t border-border bg-rice-paper', className)}>
-            <PageContainer className={cn('py-12 lg:py-16', compact && 'py-10')}>
-                <div className={cn('grid gap-10', compact ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-2 lg:grid-cols-4')}>
-                    <div className="flex flex-col gap-4">
-                        <Link href="/" className="focus-ring flex w-fit items-center gap-2.5 rounded-chip">
-                            <img src="/image/ShopnestLogo.png" alt="ShopNest" className="size-10 object-contain" />
-                            <span className="text-headline-3 font-semibold text-ink">ShopNest</span>
+        <footer className="sn-storefront__footer">
+            <div className={cx('sn-container sn-footer', className)} data-compact={compact ? 'true' : undefined}>
+                <div className="sn-footer__grid">
+                    <div className="sn-footer__brand">
+                        <Link href="/" className="sn-brand">
+                            <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                            <span className="sn-brand__name">ShopNest</span>
                         </Link>
-                        <Text size="body-sm" tone="muted" className="max-w-sm">
+                        <Text size="body-sm" tone="muted">
                             Sàn thương mại điện tử tuyển chọn cho tổ ấm và đời sống người Việt: điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm
                             đẹp.
                         </Text>
-                        <div className="flex flex-col gap-2 text-body-sm text-ink-muted">
-                            <span className="inline-flex items-center gap-2">
-                                <MapPin aria-hidden="true" className="size-4 text-ink-faint" />
+                        <div className="sn-footer__contact">
+                            <span className="sn-footer__contact-line">
+                                <MapPin aria-hidden="true" className="sn-footer__contact-icon" />
                                 Số 18, Ngõ 42, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội
                             </span>
-                            <a href="tel:19006886" className="inline-flex items-center gap-2 transition-colors hover:text-lacquer-red">
-                                <Phone aria-hidden="true" className="size-4 text-ink-faint" />
+                            <a href="tel:19006886" className="sn-footer__contact-line">
+                                <Phone aria-hidden="true" className="sn-footer__contact-icon" />
                                 1900 6886
                             </a>
-                            <a href="mailto:hotro@shopnest.vn" className="inline-flex items-center gap-2 transition-colors hover:text-lacquer-red">
-                                <Mail aria-hidden="true" className="size-4 text-ink-faint" />
+                            <a href="mailto:hotro@shopnest.vn" className="sn-footer__contact-line">
+                                <Mail aria-hidden="true" className="sn-footer__contact-icon" />
                                 hotro@shopnest.vn
                             </a>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="sn-footer__social">
                             {['Facebook', 'Instagram', 'YouTube'].map((social) => (
-                                <a
-                                    key={social}
-                                    href="#"
-                                    className="focus-ring rounded-pill border border-border px-3 py-1.5 text-body-sm text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-lacquer-red"
-                                >
+                                <a key={social} href="#" className="sn-footer__social-link">
                                     {social}
                                 </a>
                             ))}
@@ -94,50 +88,46 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                 </div>
 
                 {!compact && (
-                    <div className="mt-10 grid gap-6 border-t border-border pt-8 lg:grid-cols-12 lg:items-end">
-                        <div className="lg:col-span-7">
+                    <div className="sn-footer__newsletter">
+                        <div className="sn-footer__newsletter-copy">
                             <Eyebrow tone="accent">Chuyện chợ mỗi tuần</Eyebrow>
-                            <Heading level={3} size="headline-3" className="mt-1">
+                            <Heading level={3} size="headline-3">
                                 Nhận chuyện chợ mỗi tuần
                             </Heading>
-                            <Text size="body-sm" tone="muted" className="mt-1 max-w-lg">
+                            <Text size="body-sm" tone="muted">
                                 Tuyển chọn sản phẩm, câu chuyện nhà bán và ưu đãi dành cho tổ ấm Việt.
                             </Text>
                         </div>
-                        <div className="lg:col-span-5">
+                        <div>
                             <NewsletterSignup onSubmit={handleNewsletter} />
                         </div>
                     </div>
                 )}
 
-                <div className="mt-10 flex flex-col gap-4 border-t border-border pt-6 md:flex-row md:items-center md:justify-between">
-                    <p className="text-body-sm text-ink-faint">© {new Date().getFullYear()} ShopNest. Tất cả quyền được bảo lưu.</p>
-                    <div className="flex flex-wrap items-center gap-3">
+                <div className="sn-footer__bottom">
+                    <p className="sn-footer__copyright">© {new Date().getFullYear()} ShopNest. Tất cả quyền được bảo lưu.</p>
+                    <div className="sn-footer__legal">
                         <PaymentMarks />
-                        <Link href="/terms" className="text-body-sm text-ink-muted transition-colors hover:text-lacquer-red">
+                        <Link href="/terms" className="sn-footer__link">
                             Điều khoản
                         </Link>
-                        <Link href="/privacy-policy" className="text-body-sm text-ink-muted transition-colors hover:text-lacquer-red">
+                        <Link href="/privacy-policy" className="sn-footer__link">
                             Bảo mật
                         </Link>
                     </div>
                 </div>
-            </PageContainer>
+            </div>
         </footer>
     );
 }
 
 function FooterColumn({ title, links }: { title: string; links: Array<{ label: string; href: string }> }) {
     return (
-        <div className="flex flex-col gap-3">
-            <h3 className="text-headline-3 text-ink">{title}</h3>
-            <nav className="flex flex-col gap-2.5" aria-label={title}>
+        <div className="sn-footer__col">
+            <h3 className="sn-footer__col-title">{title}</h3>
+            <nav className="sn-footer__links" aria-label={title}>
                 {links.map((link) => (
-                    <Link
-                        key={`${link.href}-${link.label}`}
-                        href={link.href}
-                        className="focus-ring w-fit text-body-sm text-ink-muted transition-colors hover:text-lacquer-red"
-                    >
+                    <Link key={`${link.href}-${link.label}`} href={link.href} className="sn-footer__link">
                         {link.label}
                     </Link>
                 ))}

@@ -14,6 +14,7 @@ type BreadcrumbsProps = {
     items: BreadcrumbItem[];
     maxItems?: number;
     className?: string;
+    as?: 'nav' | 'div';
 };
 
 type VisibleCrumb = { type: 'item'; item: BreadcrumbItem } | { type: 'ellipsis' };
@@ -30,15 +31,16 @@ function toVisibleCrumbs(items: BreadcrumbItem[], maxItems?: number): VisibleCru
     return [{ type: 'item', item: items[0] }, { type: 'ellipsis' }, ...items.slice(-(maxItems - 2)).map((item) => ({ type: 'item' as const, item }))];
 }
 
-export function Breadcrumbs({ items, maxItems, className }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, maxItems, className, as = 'nav' }: BreadcrumbsProps) {
     if (items.length === 0) {
         return null;
     }
 
     const visibleItems = toVisibleCrumbs(items, maxItems);
+    const Comp = as;
 
     return (
-        <nav aria-label="Breadcrumb" className={cx('sn-breadcrumbs', className)}>
+        <Comp aria-label="Breadcrumb" role={as === 'div' ? 'navigation' : undefined} className={cx('sn-breadcrumbs', className)}>
             <ol className="sn-breadcrumbs__list">
                 {visibleItems.map((crumb, index) => {
                     const isLast = index === visibleItems.length - 1;
@@ -71,7 +73,7 @@ export function Breadcrumbs({ items, maxItems, className }: BreadcrumbsProps) {
                     );
                 })}
             </ol>
-        </nav>
+        </Comp>
     );
 }
 

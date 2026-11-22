@@ -25,11 +25,13 @@
     --common-border-radius: 20px;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Be Vietnam Pro', sans-serif;
+@layer sn-legacy-reset {
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
 }
 
 .bx {
@@ -39,27 +41,29 @@
     font-size: 1.7rem;
 }
 
-a {
-    text-decoration: none;
-}
+@layer sn-legacy-reset {
+    a {
+        text-decoration: none;
+    }
 
-li {
-    list-style: none;
-}
+    li {
+        list-style: none;
+    }
 
-html {
-    overflow-x: hidden;
-}
+    html {
+        overflow-x: hidden;
+    }
 
-body.dark {
-    --light: #181a1e;
-    --grey: #25252c;
-    --dark: #fbfbfb;
-}
+    body.dark {
+        --light: #181a1e;
+        --grey: #25252c;
+        --dark: #fbfbfb;
+    }
 
-body {
-    background: var(--grey);
-    overflow-x: hidden;
+    body {
+        background: var(--grey);
+        overflow-x: hidden;
+    }
 }
 
 /* Toast animations */

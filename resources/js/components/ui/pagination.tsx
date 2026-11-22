@@ -127,7 +127,7 @@ export default function Pagination({
         }
 
         return (
-            <nav aria-label="Phân trang" className={cx('sn-pagination', 'sn-pagination--centered', className)}>
+            <div role="navigation" aria-label="Phân trang" className={cx('sn-pagination', 'sn-pagination--centered', className)}>
                 {links.map((link, index) => {
                     const label = cleanLabel(link.label);
                     const previous = isPreviousLabel(link.label);
@@ -154,7 +154,7 @@ export default function Pagination({
                         </PaginationButton>
                     );
                 })}
-            </nav>
+            </div>
         );
     }
 
@@ -175,7 +175,7 @@ export default function Pagination({
             ) : (
                 <span />
             )}
-            <nav aria-label="Phân trang" className="sn-pagination">
+            <div role="navigation" aria-label="Phân trang" className="sn-pagination">
                 <PaginationButton label="Trang trước" disabled={page <= 1} onClick={() => onPageChange?.(page - 1)}>
                     <ChevronLeft aria-hidden="true" />
                 </PaginationButton>
@@ -195,7 +195,7 @@ export default function Pagination({
                 <PaginationButton label="Trang sau" disabled={page >= pageCount} onClick={() => onPageChange?.(page + 1)}>
                     <ChevronRight aria-hidden="true" />
                 </PaginationButton>
-            </nav>
+            </div>
         </div>
     );
 }

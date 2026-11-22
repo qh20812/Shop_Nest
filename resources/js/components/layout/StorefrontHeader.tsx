@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, type DropdownMenuItemConfig } from '@/components/ui/dropdown-menu';
 import { SearchInput } from '@/components/ui/search-input';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 import { MobileNav, type MobileNavItem } from './MobileNav';
 
@@ -151,103 +151,95 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
     ];
 
     return (
-        <header className={cn('z-header sticky top-0 border-b border-border bg-rice-paper', className)}>
-            <div className="mx-auto w-full max-w-page px-gutter-mobile md:px-gutter-tablet lg:px-gutter">
-                <div className="flex h-header items-center gap-3 lg:gap-5">
-                    <Link href="/" className="focus-ring flex shrink-0 items-center gap-2.5 rounded-chip">
-                        <img src="/image/ShopnestLogo.png" alt="ShopNest" className="size-9 object-contain" />
-                        <span className="hidden text-headline-3 font-semibold tracking-tight text-ink sm:inline">ShopNest</span>
+        <header className={cx('sn-storefront__header', className)}>
+            <div className="sn-storefront__header-inner">
+                <div className="sn-storefront__bar">
+                    <Link href="/" className="sn-brand">
+                        <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                        <span className="sn-brand__name">ShopNest</span>
                     </Link>
 
-                    <nav className="hidden items-center gap-5 lg:flex" aria-label="Điều hướng chính">
+                    <nav className="sn-storefront__nav" aria-label="Điều hướng chính">
                         {navLinks.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className="focus-ring text-body-sm font-medium text-ink-muted transition-colors hover:text-lacquer-red"
-                            >
+                            <Link key={item.href} href={item.href} className="sn-storefront__nav-link">
                                 {item.label}
                             </Link>
                         ))}
                     </nav>
 
-                    <div className="hidden min-w-0 flex-1 justify-center md:flex">
+                    <div className="sn-storefront__search">
                         <SearchInput
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             onSubmit={submitSearch}
                             placeholder="Tìm laptop, nồi chiên, xe đẩy..."
-                            className="max-w-xl"
+                            className="sn-storefront__search-inner"
                         />
                     </div>
 
-                    <div className="ml-auto flex items-center gap-1.5">
-                        <div className="hidden xl:block">
+                    <div className="sn-storefront__actions">
+                        <div className="sn-storefront__locale">
                             <DropdownMenu
                                 align="end"
                                 trigger={
-                                    <Button variant="ghost" size="sm" className="gap-1.5 text-body-sm">
+                                    <Button variant="ghost" size="sm">
                                         <Globe2 aria-hidden="true" />
                                         <span>
                                             {locale} · {currency}
                                         </span>
-                                        <ChevronDown aria-hidden="true" className="size-3.5" />
+                                        <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
                                     </Button>
                                 }
                                 items={[
                                     { label: 'Tiếng Việt', onSelect: () => router.post('/language', { locale: 'vi' }, { preserveScroll: true }) },
                                     { label: 'English', onSelect: () => router.post('/language', { locale: 'en' }, { preserveScroll: true }) },
                                     {
-                                        label: 'VND — Việt Nam đồng',
+                                        label: 'VND - Việt Nam đồng',
                                         separatorBefore: true,
                                         onSelect: () => router.post('/currency', { currency: 'VND' }, { preserveScroll: true }),
                                     },
                                     {
-                                        label: 'USD — US Dollar',
+                                        label: 'USD - US Dollar',
                                         onSelect: () => router.post('/currency', { currency: 'USD' }, { preserveScroll: true }),
                                     },
                                 ]}
                             />
                         </div>
 
-                        <Button asChild variant="ghost" size="icon" className="relative" aria-label="Thông báo">
+                        <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label="Thông báo">
                             <Link href="/user/notifications">
                                 <Bell aria-hidden="true" />
                                 {resolvedUnreadCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 flex min-w-5 items-center justify-center rounded-pill bg-lacquer-red px-1 font-mono text-label-micro text-warm-porcelain">
-                                        {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
-                                    </span>
+                                    <span className="sn-storefront__badge">{resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}</span>
                                 )}
                             </Link>
                         </Button>
 
-                        <Button asChild variant="ghost" size="icon" className="relative" aria-label="Giỏ hàng">
+                        <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label="Giỏ hàng">
                             <Link href="/cart">
                                 <ShoppingBag aria-hidden="true" />
                                 {resolvedCartCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 flex min-w-5 items-center justify-center rounded-pill bg-lacquer-red px-1 font-mono text-label-micro text-warm-porcelain">
-                                        {resolvedCartCount > 9 ? '9+' : resolvedCartCount}
-                                    </span>
+                                    <span className="sn-storefront__badge">{resolvedCartCount > 9 ? '9+' : resolvedCartCount}</span>
                                 )}
                             </Link>
                         </Button>
 
                         {user ? (
-                            <div className="hidden md:block">
+                            <div className="sn-storefront__account">
                                 <DropdownMenu
                                     align="end"
                                     trigger={
-                                        <Button variant="ghost" size="sm" className="gap-2">
+                                        <Button variant="ghost" size="sm">
                                             <Avatar user={user} size="sm" />
-                                            <span className="hidden max-w-28 truncate text-body-sm xl:inline">{displayName}</span>
-                                            <ChevronDown aria-hidden="true" className="size-3.5" />
+                                            <span className="sn-storefront__account-name">{displayName}</span>
+                                            <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
                                         </Button>
                                     }
                                     items={accountItems(resolvedUnreadCount)}
                                 />
                             </div>
                         ) : (
-                            <Button asChild variant="secondary" size="sm" className="hidden md:inline-flex">
+                            <Button asChild variant="secondary" size="sm" className="sn-storefront__login">
                                 <Link href="/login">
                                     <User aria-hidden="true" />
                                     Đăng nhập
@@ -255,18 +247,19 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                             </Button>
                         )}
 
-                        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở menu" onClick={mobileNav.open}>
+                        <Button variant="ghost" size="icon" className="sn-storefront__menu-toggle" aria-label="Mở menu" onClick={mobileNav.open}>
                             <Menu aria-hidden="true" />
                         </Button>
                     </div>
                 </div>
 
-                <div className="pb-3 md:hidden">
+                <div className="sn-storefront__search sn-storefront__search--mobile">
                     <SearchInput
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         onSubmit={submitSearch}
                         placeholder="Tìm món đồ cho tổ ấm..."
+                        className="sn-storefront__search-inner"
                     />
                 </div>
             </div>
@@ -276,7 +269,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                 onOpenChange={mobileNav.setOpen}
                 items={mobileItems}
                 footer={
-                    <div className="flex flex-col gap-2">
+                    <div>
                         <Button asChild variant="secondary" size="sm">
                             <Link href="/search" onClick={mobileNav.close}>
                                 <Search aria-hidden="true" />

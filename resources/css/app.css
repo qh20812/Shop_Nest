@@ -1,4 +1,4 @@
-@layer sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;
+@layer sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;
 
 @import 'tailwindcss';
 @import './legacy-tokens.css';
@@ -8,6 +8,10 @@
 @import './tokens/scale.css';
 @import './fonts.css';
 @import './base.css';
+@import './base/reset.css';
+@import './base/typography.css';
+@import './base/forms.css';
+@import './base/a11y.css';
 @import './components/button.css';
 @import './components/field.css';
 @import './components/file-dropzone.css';
@@ -17,6 +21,11 @@
 @import './components/data.css';
 @import './components/status.css';
 @import './components/typography.css';
+@import './layouts/storefront.css';
+@import './layouts/auth.css';
+@import './layouts/account.css';
+@import './layouts/workspace.css';
+@import './utilities.css';
 
 @custom-variant dark (&:is(.dark *));
 

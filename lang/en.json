@@ -691,5 +691,12 @@
     "login.title": "Login to Your Account",
     "homeNavbar": {
         "become_seller": "Become a Seller"
+    },
+    "Search": "Search",
+    "Search...": "Search...",
+    "Shops": "Shops",
+    "navbar": {
+        "profile": "Profile",
+        "settings": "Settings"
     }
 }

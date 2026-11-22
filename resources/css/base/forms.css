@@ -1,54 +1,15 @@
 /*
  * Bảng Hiệu — form element defaults.
- * Visual states (border, focus, error) belong to primitives in components/.
+ * Only the label baseline is global inside `.sn-shell`; input/button/select
+ * visuals belong to the primitives in components/.
  */
 
 @layer sn-base {
-    fieldset {
-        margin: 0;
-        padding: 0;
-        border: 0;
-    }
-
-    legend {
-        padding: 0;
-    }
-
-    label {
+    .sn-shell label {
         display: inline-block;
         font-size: var(--sn-text-xs);
         font-weight: var(--sn-weight-medium);
         line-height: var(--sn-leading-snug);
         color: var(--sn-color-text);
-    }
-
-    input,
-    button,
-    textarea,
-    select {
-        color: inherit;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-        color: var(--sn-color-text-faint);
-        opacity: 1;
-    }
-
-    input:disabled,
-    button:disabled,
-    textarea:disabled,
-    select:disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
-    textarea {
-        resize: vertical;
-    }
-
-    [type='search'] {
-        -webkit-appearance: none;
-        appearance: none;
     }
 }

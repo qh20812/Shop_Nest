@@ -1,8 +1,12 @@
+import { router } from '@inertiajs/react';
 import { AlertTriangle, Sparkles } from 'lucide-react';
 import * as React from 'react';
 
+import type { ChatProduct } from '@/components/chat/types';
 import { OrderAnnouncementCard, type OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
+import { ProductCard } from '@/components/commerce/ProductCard';
 import { cn } from '@/lib/utils';
+import type { ProductCardModel } from '@/types/commerce';
 
 type ChatMessageVariant = 'incoming' | 'outgoing' | 'system' | 'error';
 
@@ -14,8 +18,26 @@ type ChatMessageProps = {
     assistantName?: string;
     avatar?: React.ReactNode;
     order?: OrderAnnouncementModel | null;
+    products?: ChatProduct[];
     className?: string;
 };
+
+function toProductCard(product: ChatProduct): ProductCardModel {
+    return {
+        id: product.id,
+        slug: String(product.id),
+        name: product.name,
+        image: product.image || '/image/default-product.png',
+        imageAlt: product.name,
+        shopName: product.shop_name ?? '',
+        price: product.price,
+        compareAt: product.compare_at ?? undefined,
+        rating: product.rating ?? undefined,
+        reviewCount: product.review_count ?? 0,
+        badges: (product.badges ?? []) as ProductCardModel['badges'],
+        stock: product.stock ?? 'in',
+    };
+}
 
 const statusLabel: Record<NonNullable<ChatMessageProps['status']>, string> = {
     sending: 'Đang gửi',
@@ -32,6 +54,7 @@ export function ChatMessage({
     assistantName = 'Trợ lý ShopNest',
     avatar,
     order,
+    products,
     className,
 }: ChatMessageProps) {
     const isOutgoing = variant === 'outgoing';
@@ -75,6 +98,20 @@ export function ChatMessage({
                 </div>
 
                 {order && <OrderAnnouncementCard order={order} className="w-full" />}
+
+                {products && products.length > 0 && (
+                    <div className="flex w-full gap-2 overflow-x-auto pb-1">
+                        {products.map((product) => (
+                            <div key={product.id} className="w-36 shrink-0">
+                                <ProductCard
+                                    product={toProductCard(product)}
+                                    variant="compact"
+                                    onAddToCart={() => router.visit(product.url ?? `/product/${product.id}`)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <span className="flex items-center gap-1.5 px-1 font-mono text-label-micro text-ink-faint">
                     {timestamp && <span>{timestamp}</span>}

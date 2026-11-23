@@ -3,8 +3,13 @@
 namespace Tests\Unit\Services;
 
 use App\Models\AnalyticsReport;
+use App\Models\Category;
 use App\Models\ChatMessage;
+use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ProductVariant;
 use App\Models\Role;
+use App\Models\Shop;
 use App\Models\User;
 use App\Services\HybridChatbotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -218,6 +223,100 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertNotNull($chatMessage);
         $this->assertNotNull($chatMessage->context_snapshot);
         $this->assertArrayHasKey('recent_reports', $chatMessage->context_snapshot);
+    }
+
+    #[Test]
+    public function greeting_returns_local_response_without_calling_ai(): void
+    {
+        Http::fake();
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->attachRole($user, 'Customer', 'Khách hàng');
+
+        $service = $this->app->make(HybridChatbotService::class);
+        $result = $service->sendMessage($user, 'hi');
+
+        $this->assertSame('local', $result['provider']);
+        $this->assertSame('customer', $result['role']);
+        $this->assertNotEmpty($result['reply']);
+        Http::assertNothingSent();
+
+        $chatMessage = ChatMessage::find($result['message_id']);
+        $this->assertNotNull($chatMessage);
+        $this->assertSame('local', $chatMessage->assistant_api);
+    }
+
+    #[Test]
+    public function message_containing_hi_is_not_treated_as_greeting(): void
+    {
+        $this->configureProviders();
+
+        Http::fake([
+            'https://api.groq.com/*' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'Quy trình đổi trả gồm 3 bước.']],
+                ],
+                'usage' => ['total_tokens' => 100],
+                'model' => 'qwen/qwen3.8-27b',
+            ], 200),
+        ]);
+
+        /** @var User $user */
+        $user = User::factory()->create();
+        $this->attachRole($user, 'Customer', 'Khách hàng');
+
+        $service = $this->app->make(HybridChatbotService::class);
+        $result = $service->sendMessage($user, 'Tôi không hiểu quy trình đổi trả');
+
+        $this->assertSame('groq', $result['provider']);
+        $this->assertNotEmpty($result['reply']);
+    }
+
+    #[Test]
+    public function customer_query_returns_product_cards_from_database(): void
+    {
+        $this->configureProviders();
+
+        Http::fake([
+            'https://api.groq.com/*' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'Mình gợi ý sản phẩm dưới đây.']],
+                ],
+                'usage' => ['total_tokens' => 100],
+                'model' => 'qwen/qwen3.8-27b',
+            ], 200),
+        ]);
+
+        $shop = Shop::factory()->create(['status' => 'active', 'is_verified' => true]);
+        $category = Category::create([
+            'name' => ['vi' => 'Chăm sóc da', 'en' => 'Skincare'],
+            'is_active' => true,
+        ]);
+        $product = Product::factory()->create([
+            'shop_id' => $shop->id,
+            'seller_id' => $shop->owner_id,
+            'category_id' => $category->category_id,
+            'status' => 'published',
+            'is_active' => true,
+            'name' => ['vi' => 'Kem chống nắng', 'en' => 'Sunscreen'],
+        ]);
+        ProductImage::factory()->create(['product_id' => $product->product_id, 'is_primary' => true]);
+        ProductVariant::factory()->create([
+            'product_id' => $product->product_id,
+            'price' => 300000,
+            'stock_quantity' => 10,
+        ]);
+
+        $user = User::factory()->create();
+        $this->attachRole($user, 'Customer', 'Khách hàng');
+
+        $result = $this->app->make(HybridChatbotService::class)
+            ->sendMessage($user, 'Gợi ý sản phẩm kem chống nắng dưới 500k');
+
+        $this->assertSame('groq', $result['provider']);
+        $this->assertCount(1, $result['products']);
+        $this->assertSame($product->product_id, $result['products'][0]['id']);
     }
 
     private function configureProviders(): void

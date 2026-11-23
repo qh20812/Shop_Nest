@@ -236,13 +236,21 @@ Không commit file `.env` hoặc các khóa bí mật lên repository.
 
 Sau khi chạy `php artisan migrate --seed`:
 
-| Vai trò | Username | Email | Mật khẩu |
-|---|---|---|---|
-| Admin | `superadmin` | `admin@shopnest.com` | `@12345Password` |
-| Seller | `testseller` | `testseller@shopnest.com` | `@12345Password` |
-| Shipper | `testshipper` | `testshipper@shopnest.com` | `@12345Password` |
+| Vai trò | Họ tên | Username | Email | Mật khẩu |
+|---|---|---|---|---|
+| Admin | Nguyễn Minh Quân | `quan.nguyen` | `quan.nguyen@shopnest.vn` | `@12345Password` |
+| Seller — ShopNest Official | Nguyễn Văn Hùng | `hung.nguyen` | `hung.nguyen@shopnest.vn` | `@12345Password` |
+| Seller — TechZone | Trần Hoàng Nam | `nam.tran` | `nam.tran@shopnest.vn` | `@12345Password` |
+| Seller — FashionHub | Lê Thu Hà | `ha.le` | `ha.le@shopnest.vn` | `@12345Password` |
+| Seller — Beauty Corner | Phạm Mai Anh | `anh.pham` | `anh.pham@shopnest.vn` | `@12345Password` |
+| Seller — Home & Living | Võ Đức Huy | `huy.vo` | `huy.vo@shopnest.vn` | `@12345Password` |
+| Seller — BookStation | Đặng Ngọc Linh | `linh.dang` | `linh.dang@shopnest.vn` | `@12345Password` |
+| Seller — SportZone | Đỗ Quang Huy | `huy.do` | `huy.do@shopnest.vn` | `@12345Password` |
+| Seller — AccessoryHub | Nguyễn Thu Trang | `trang.nguyen` | `trang.nguyen@shopnest.vn` | `@12345Password` |
+| Shipper | Bùi Văn Tài | `tai.bui` | `tai.bui@shopnest.vn` | `@12345Password` |
+| Customer | Nguyễn Thị Lan | `lan.nguyen` | `lan.nguyen@gmail.com` | `@12345Password` |
 
-Seeder cũng tạo thêm 20 seller và 100 customer cùng dữ liệu mẫu cho shop, sản phẩm, đơn hàng, khuyến mãi...
+Seeder cũng tạo thêm 3 shop pending (TechWorld, GreenLife, BookHub), 100 khách hàng với tên/email Việt và 60 sản phẩm demo thật.
 
 > Các tài khoản trên chỉ dùng cho môi trường phát triển. Hãy đổi mật khẩu và cấu hình bảo mật trước khi triển khai thật.
 

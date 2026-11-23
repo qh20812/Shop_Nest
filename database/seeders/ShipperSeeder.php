@@ -6,15 +6,13 @@ use App\Models\Role;
 use App\Models\ShipperProfile;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class ShipperSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Get the Shipper role ID
         $shipperRole = Role::where('name->en', 'Shipper')->first();
 
         if (! $shipperRole) {
@@ -23,43 +21,57 @@ class ShipperSeeder extends Seeder
             return;
         }
 
-        if (ShipperProfile::count() >= 10) {
-            $this->command->info('Shipper profiles already seeded, skipping.');
+        $fixed = User::where('email', 'tai.bui@shopnest.vn')->first();
 
-            return;
+        if ($fixed && ! ShipperProfile::where('user_id', $fixed->id)->exists()) {
+            ShipperProfile::factory()->create([
+                'user_id' => $fixed->id,
+                'status' => 'approved',
+            ]);
         }
 
-        // Create 10 shipper users with different statuses
-        $statusDistribution = [
-            'pending' => 4,
-            'approved' => 4,
-            'rejected' => 1,
-            'suspended' => 1,
+        $shippers = [
+            ['first_name' => 'Văn Bình', 'last_name' => 'Nguyễn', 'email' => 'binh.nguyen@shopnest.vn', 'status' => 'pending'],
+            ['first_name' => 'Quốc Cường', 'last_name' => 'Trần', 'email' => 'cuong.tran@shopnest.vn', 'status' => 'approved'],
+            ['first_name' => 'Minh Đức', 'last_name' => 'Lê', 'email' => 'duc.le@shopnest.vn', 'status' => 'pending'],
+            ['first_name' => 'Văn Hòa', 'last_name' => 'Phạm', 'email' => 'hoa.pham@shopnest.vn', 'status' => 'approved'],
+            ['first_name' => 'Trung Kiên', 'last_name' => 'Hoàng', 'email' => 'kien.hoang@shopnest.vn', 'status' => 'pending'],
+            ['first_name' => 'Đình Long', 'last_name' => 'Vũ', 'email' => 'long.vu@shopnest.vn', 'status' => 'approved'],
+            ['first_name' => 'Văn Phong', 'last_name' => 'Đặng', 'email' => 'phong.dang@shopnest.vn', 'status' => 'rejected'],
+            ['first_name' => 'Thị Mai', 'last_name' => 'Bùi', 'email' => 'mai.bui@shopnest.vn', 'status' => 'suspended'],
+            ['first_name' => 'Quốc Việt', 'last_name' => 'Ngô', 'email' => 'viet.ngo@shopnest.vn', 'status' => 'pending'],
         ];
 
-        foreach ($statusDistribution as $status => $count) {
-            for ($i = 0; $i < $count; $i++) {
-                // Create user
-                $user = User::factory()->create([
-                    'username' => fake()->unique()->userName(),
-                    'email' => fake()->unique()->safeEmail(),
-                    'first_name' => fake()->firstName(),
-                    'last_name' => fake()->lastName(),
-                    'phone_number' => fake()->unique()->phoneNumber(),
-                    'is_active' => $status !== 'suspended',
-                ]);
+        foreach ($shippers as $index => $data) {
+            $username = Str::slug($data['first_name'].' '.$data['last_name'], '.');
 
-                // Assign Shipper role
-                $user->roles()->attach($shipperRole->id);
+            $user = User::firstOrCreate(
+                ['email' => $data['email']],
+                [
+                    'username' => $username,
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'phone_number' => '08'.str_pad((string) (20000000 + $index), 8, '0', STR_PAD_LEFT),
+                    'password' => Hash::make('@12345Password'),
+                    'email_verified_at' => now(),
+                    'is_active' => $data['status'] !== 'suspended',
+                ]
+            );
 
-                // Create shipper profile with specific status
+            if (! $user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
+            }
+
+            $user->roles()->syncWithoutDetaching([$shipperRole->id]);
+
+            if (! ShipperProfile::where('user_id', $user->id)->exists()) {
                 ShipperProfile::factory()->create([
                     'user_id' => $user->id,
-                    'status' => $status,
+                    'status' => $data['status'],
                 ]);
             }
         }
 
-        $this->command->info('Created 10 shipper users with profiles.');
+        $this->command->info('Created shipper profiles.');
     }
 }

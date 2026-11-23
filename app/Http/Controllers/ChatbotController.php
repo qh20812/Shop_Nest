@@ -11,9 +11,7 @@ use Throwable;
 
 class ChatbotController extends Controller
 {
-    public function __construct(private readonly HybridChatbotService $chatbotService)
-    {
-    }
+    public function __construct(private readonly HybridChatbotService $chatbotService) {}
 
     public function send(Request $request)
     {
@@ -35,6 +33,7 @@ class ChatbotController extends Controller
                     'message_id' => $result['message_id'],
                     'latency_ms' => $result['latency_ms'],
                     'usage' => $result['usage'],
+                    'products' => $result['products'] ?? [],
                 ]);
             }
 
@@ -47,6 +46,7 @@ class ChatbotController extends Controller
                     'message_id' => $result['message_id'],
                     'latency_ms' => $result['latency_ms'],
                     'usage' => $result['usage'],
+                    'products' => $result['products'] ?? [],
                 ],
             ]);
         } catch (ChatbotApiException $exception) {

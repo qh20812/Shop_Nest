@@ -31,10 +31,13 @@ class UserAddressFactory extends Factory
             ? AdministrativeDivision::where('parent_id', $province->id)->inRandomOrder()->value('id')
             : null;
 
+        $familyNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Phan', 'Vũ', 'Võ', 'Đặng'];
+        $givenNames = ['An', 'Bình', 'Chi', 'Dũng', 'Hà', 'Hải', 'Hoa', 'Hùng', 'Huy', 'Lan', 'Linh', 'Mai', 'Minh', 'Nam', 'Ngọc', 'Phương', 'Quân', 'Thảo', 'Trang', 'Tuấn'];
+
         return [
             'user_id' => User::factory(),
-            'full_name' => fake()->name(),
-            'phone_number' => fake()->numerify('+84-#########'),
+            'full_name' => fake()->randomElement($familyNames).' '.fake()->randomElement($givenNames),
+            'phone_number' => fake()->numerify('09########'),
             'street_address' => fake()->randomElement($streetAddress),
             'country_id' => $province?->country_id ?? Country::where('iso_code_2', 'VN')->value('id'),
             'province_id' => $province?->id,

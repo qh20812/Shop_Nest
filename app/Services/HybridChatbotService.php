@@ -28,7 +28,7 @@ class HybridChatbotService
 
     private array $contextGatherers;
 
-    public function __construct()
+    public function __construct(private readonly ChatbotProductRecommender $productRecommender)
     {
         $this->contextGatherers = [
             'admin' => new AdminContextGatherer,
@@ -84,22 +84,42 @@ class HybridChatbotService
             throw new ChatbotApiException('Tin nhắn không hợp lệ: '.$validator->errors()->first());
         }
 
+        if ($message === '') {
+            throw new ChatbotApiException('Tin nhắn không hợp lệ.');
+        }
+
+        $role = $this->determineRole($user);
+
+        // Greeting thuần: trả lời local ngay, không gọi context gatherer/AI.
+        // Không áp rate limit vì không gọi provider bên ngoài.
+        if ($this->isPureGreeting($message)) {
+            $result = $this->buildLocalGreeting($role, $user);
+            $chatMessage = $this->storeConversation($user, $role, $message, [], $result);
+
+            return $this->buildResponsePayload($role, $chatMessage, $result);
+        }
+
         if (RateLimiter::tooManyAttempts('chatbot:'.$user->getKey(), 10)) {
             throw new ChatbotApiException('Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau.');
         }
 
         RateLimiter::hit('chatbot:'.$user->getKey(), 60); // 10 per minute
 
-        if ($message === '') {
-            throw new ChatbotApiException('Tin nhắn không hợp lệ.');
-        }
-
-        $role = $this->determineRole($user);
         $context = $this->fetchContextData($user, $role);
-        $messages = $this->buildMessages($role, $user, $message, $context);
+        $products = $role === 'customer'
+            ? $this->productRecommender->recommend($user, $message, $context)
+            : [];
+
+        $messages = $this->buildMessages($role, $user, $message, $context, $products);
         $result = $this->callPreferredProviders($role, $messages);
+        $result['products'] = $products;
         $chatMessage = $this->storeConversation($user, $role, $message, $context, $result);
 
+        return $this->buildResponsePayload($role, $chatMessage, $result);
+    }
+
+    private function buildResponsePayload(string $role, ChatMessage $chatMessage, array $result): array
+    {
         return [
             'reply' => $result['content'],
             'provider' => $result['provider'],
@@ -107,6 +127,7 @@ class HybridChatbotService
             'message_id' => $chatMessage->getKey(),
             'latency_ms' => $result['latency_ms'] ?? null,
             'usage' => $result['usage'] ?? [],
+            'products' => $result['products'] ?? [],
         ];
     }
 
@@ -120,23 +141,18 @@ class HybridChatbotService
 
     private function determineRole(User $user): string
     {
-        if ($user->isAdmin()) {
-            return 'admin';
-        }
+        $user->loadMissing('roles');
+        $roleNames = $user->roles
+            ->map(fn ($role) => $role->getTranslation('name', 'en'))
+            ->all();
 
-        if ($user->isSeller()) {
-            return 'seller';
-        }
-
-        if ($user->isShipper()) {
-            return 'shipper';
-        }
-
-        if ($user->isCustomer()) {
-            return 'customer';
-        }
-
-        return 'default';
+        return match (true) {
+            in_array('Admin', $roleNames, true) => 'admin',
+            in_array('Seller', $roleNames, true) => 'seller',
+            in_array('Shipper', $roleNames, true) => 'shipper',
+            in_array('Customer', $roleNames, true) => 'customer',
+            default => 'default',
+        };
     }
 
     private function fetchContextData(User $user, string $role): array
@@ -150,22 +166,26 @@ class HybridChatbotService
         });
     }
 
-    private function buildMessages(string $role, User $user, string $message, array $context): array
+    private function buildMessages(string $role, User $user, string $message, array $context, array $products = []): array
     {
         $system = self::ROLE_SYSTEM_PROMPTS[$role] ?? self::ROLE_SYSTEM_PROMPTS['default'];
-        $isGreeting = $this->isGreeting($message);
-        $contextJson = $isGreeting ? '{}' : $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
+        $contextJson = $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
         $userProfile = json_encode([
             'id' => $user->getKey(),
             'role' => $role,
             'name' => $user->full_name,
         ], JSON_UNESCAPED_UNICODE);
 
+        $productCandidates = $products !== []
+            ? $this->truncateForPrompt(json_encode($products, JSON_UNESCAPED_UNICODE))
+            : 'Không có sản phẩm ứng viên phù hợp.';
+
         $userContent = <<<TEXT
 Tin nhắn người dùng: {$message}
 Thông tin người dùng: {$userProfile}
 Dữ liệu liên quan: {$contextJson}
-Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu nếu cần. Nếu là chào hỏi, hãy chào lại và hỏi hỗ trợ gì.
+Danh sách sản phẩm ứng viên (chỉ được tư vấn trong danh sách này, không bịa thêm sản phẩm/giá): {$productCandidates}
+Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu nếu cần.
 TEXT;
 
         return [
@@ -181,18 +201,42 @@ TEXT;
         return Str::limit($payload, $limit, '...');
     }
 
-    private function isGreeting(string $message): bool
+    private function isPureGreeting(string $message): bool
     {
-        $greetings = ['hi', 'hello', 'chào', 'xin chào', 'hey', 'hi there', 'chào bạn'];
-        $lowerMessage = strtolower(trim($message));
+        $normalized = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $message) ?? $message;
+        $normalized = preg_replace('/\s+/u', ' ', trim($normalized)) ?? '';
+        $normalized = mb_strtolower($normalized);
 
-        foreach ($greetings as $greeting) {
-            if (str_contains($lowerMessage, $greeting)) {
-                return true;
-            }
-        }
+        $greetings = [
+            'hi', 'hi there', 'hello', 'hey', 'alo',
+            'chao', 'xin chao', 'chao ban', 'chao shop', 'chao shopnest',
+            'hi shop', 'hello shop', 'hi shopnest', 'hello shopnest',
+            'shop oi', 'shopnest',
+            'chào', 'xin chào', 'chào bạn', 'chào shop', 'chào shopnest', 'shop ơi',
+        ];
 
-        return strlen($lowerMessage) <= 10; // Short messages are likely greetings
+        return in_array($normalized, $greetings, true);
+    }
+
+    private function buildLocalGreeting(string $role, User $user): array
+    {
+        $name = $user->full_name;
+        $templates = [
+            'admin' => "Xin chào {$name}! Mình có thể hỗ trợ phân tích doanh thu, tồn kho, đơn hàng hoặc vận hành. Bạn muốn xem chỉ số nào?",
+            'seller' => "Xin chào {$name}! Mình có thể hỗ trợ về đơn hàng, tồn kho, sản phẩm và khuyến mãi. Bạn cần tư vấn gì?",
+            'shipper' => "Xin chào {$name}! Mình có thể giúp kiểm tra đơn giao, tuyến đường và trạng thái vận chuyển. Bạn cần hỗ trợ gì?",
+            'customer' => "Xin chào {$name}! Mình có thể gợi ý sản phẩm, kiểm tra đơn hàng hoặc giải đáp về Shop Nest. Bạn đang tìm gì hôm nay?",
+            'default' => "Xin chào {$name}! Mình có thể giúp gì cho bạn hôm nay?",
+        ];
+
+        return [
+            'provider' => 'local',
+            'content' => $templates[$role] ?? $templates['default'],
+            'usage' => ['local' => true],
+            'latency_ms' => 0,
+            'products' => [],
+            'raw' => ['local' => true, 'role' => $role],
+        ];
     }
 
     private function callPreferredProviders(string $role, array $messages): array
@@ -402,28 +446,36 @@ TEXT;
 
     private function storeConversation(User $user, string $role, string $message, array $context, array $result): ChatMessage
     {
-        $room = ChatRoom::firstOrCreate(
-            [
-                'room_name' => sprintf('chatbot:%d:%s', $user->getKey(), $role),
-            ],
-            [
-                'type' => 3,
-                'is_active' => true,
-            ]
-        );
+        $roomId = Cache::remember(
+            sprintf('chatbot:room:%d:%s', $user->getKey(), $role),
+            now()->addDay(),
+            function () use ($user, $role) {
+                $room = ChatRoom::firstOrCreate(
+                    [
+                        'room_name' => sprintf('chatbot:%d:%s', $user->getKey(), $role),
+                    ],
+                    [
+                        'type' => 3,
+                        'is_active' => true,
+                    ]
+                );
 
-        ChatParticipant::firstOrCreate(
-            [
-                'chat_room_id' => $room->getKey(),
-                'user_id' => $user->getKey(),
-            ],
-            [
-                'joined_at' => Carbon::now(),
-            ]
+                ChatParticipant::firstOrCreate(
+                    [
+                        'chat_room_id' => $room->getKey(),
+                        'user_id' => $user->getKey(),
+                    ],
+                    [
+                        'joined_at' => Carbon::now(),
+                    ]
+                );
+
+                return $room->getKey();
+            }
         );
 
         return ChatMessage::create([
-            'chat_room_id' => $room->getKey(),
+            'chat_room_id' => $roomId,
             'sender_id' => $user->getKey(),
             'role_context' => $role,
             'assistant_api' => $result['provider'] ?? null,
@@ -462,6 +514,14 @@ TEXT;
             'usage' => $result['usage'] ?? [],
             'latency_ms' => $result['latency_ms'] ?? null,
             'model' => $result['raw']['model'] ?? null,
+            'products' => collect($result['products'] ?? [])
+                ->map(fn ($product) => [
+                    'id' => $product['id'] ?? null,
+                    'name' => $product['name'] ?? null,
+                    'price' => $product['price'] ?? null,
+                ])
+                ->values()
+                ->all(),
         ];
     }
 }

@@ -72,19 +72,19 @@ interface PageProps extends Record<string, unknown> {
 
 const fallbackHeroImages = [
     {
-        src: 'https://picsum.photos/seed/shopnest-laptop/1000/800',
+        src: '/images/products/macbook-air-m3.jpg',
         alt: 'Laptop trên bàn làm việc',
         label: 'Điện tử',
     },
     {
-        src: 'https://picsum.photos/seed/shopnest-airfryer/800/700',
+        src: '/images/products/noi-chien-khong-dau-philips-hd9200.jpg',
         alt: 'Nồi chiên trong bếp',
         label: 'Gia dụng',
     },
     {
-        src: 'https://picsum.photos/seed/shopnest-stroller/800/700',
-        alt: 'Xe đẩy em bé',
-        label: 'Mẹ & bé',
+        src: '/images/products/vay-hoa-nhi-nu.jpg',
+        alt: 'Thời trang nữ',
+        label: 'Thời trang',
     },
 ];
 
@@ -124,17 +124,17 @@ const pillars = [
     {
         title: 'Mỗi món đều có lý do',
         description: 'Sáu nhóm ngành thiết yếu, chọn theo nhu cầu của tổ ấm Việt.',
-        image: 'https://picsum.photos/seed/shopnest-curation/900/700',
+        image: '/images/shops/shopnest-official.jpg',
     },
     {
         title: 'Thông tin rõ ràng',
         description: 'Nguồn gốc, bảo hành và chính sách đổi trả hiển thị trước khi mua.',
-        image: 'https://picsum.photos/seed/shopnest-trust/700/700',
+        image: '/images/products/samsung-galaxy-s24-ultra.jpg',
     },
     {
         title: 'Hỗ trợ đến khi nhận',
         description: 'Từ lúc chọn món đến khi nhận hàng, đội hỗ trợ trả lời trong chat.',
-        image: 'https://picsum.photos/seed/shopnest-support/900/700',
+        image: '/images/shops/techzone.jpg',
     },
 ];
 

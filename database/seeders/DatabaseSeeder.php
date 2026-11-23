@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
 
                 // 6. Interactions & User Activities
                 ReviewSeeder::class,
+                WishlistSeeder::class,
                 ChatSeeder::class,
                 DisputeSeeder::class,
                 UserActivitySeeder::class,

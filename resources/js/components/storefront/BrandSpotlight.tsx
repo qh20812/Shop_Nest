@@ -21,7 +21,7 @@ export function BrandSpotlight({
     title = 'Người bán thật, nguồn gốc thật.',
     description = 'Mỗi shop trên ShopNest được kiểm duyệt hồ sơ, nguồn hàng và chính sách đổi trả trước khi mở bán.',
     cta = { label: 'Khám phá Shop Việt', href: '/search' },
-    image = 'https://picsum.photos/seed/shopnest-shop-viet/1200/800',
+    image = '/images/shops/shopnest-official.jpg',
     className,
 }: BrandSpotlightProps) {
     return (

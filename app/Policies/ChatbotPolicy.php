@@ -8,9 +8,10 @@ class ChatbotPolicy
 {
     public function access(User $user): bool
     {
-        return $user->isAdmin()
-            || $user->isSeller()
-            || $user->isShipper()
-            || $user->isCustomer();
+        $user->loadMissing('roles');
+
+        return $user->roles->contains(
+            fn ($role) => in_array($role->getTranslation('name', 'en'), ['Admin', 'Seller', 'Shipper', 'Customer'], true)
+        );
     }
 }

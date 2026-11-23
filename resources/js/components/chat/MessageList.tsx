@@ -2,6 +2,7 @@ import { MessagesSquare } from 'lucide-react';
 import * as React from 'react';
 
 import { ChatMessage, type ChatMessageVariant } from '@/components/chat/ChatMessage';
+import type { ChatProduct } from '@/components/chat/types';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import type { OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +16,7 @@ type MessageListItem = {
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     assistantName?: string;
     order?: OrderAnnouncementModel | null;
+    products?: ChatProduct[];
 };
 
 type MessageListProps = {
@@ -76,6 +78,7 @@ export function MessageList({
                         status={message.status}
                         assistantName={message.assistantName}
                         order={message.order}
+                        products={message.products}
                     />
                 ))}
                 {typing && <TypingIndicator label={typingLabel} />}

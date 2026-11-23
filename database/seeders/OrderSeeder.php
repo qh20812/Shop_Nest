@@ -16,7 +16,10 @@ class OrderSeeder extends Seeder
     public function run(): void
     {
         $customers = Role::where('name->en', 'Customer')->first()?->users;
-        $variants = ProductVariant::where('stock_quantity', '>', 0)->get();
+        $variants = ProductVariant::query()
+            ->where('stock_quantity', '>', 0)
+            ->whereHas('product', fn ($query) => $query->where('status', 'published')->where('is_active', true))
+            ->get();
 
         if (! $customers || $customers->isEmpty() || $variants->isEmpty()) {
             $this->command?->info('Không đủ customer/variant để seed đơn hàng.');
@@ -54,6 +57,8 @@ class OrderSeeder extends Seeder
             $address = $customer->addresses()->first()
                 ?? UserAddress::factory()->create([
                     'user_id' => $customer->id,
+                    'full_name' => $customer->full_name,
+                    'phone_number' => $customer->phone_number ?: fake()->numerify('09########'),
                     'is_default' => true,
                 ]);
 

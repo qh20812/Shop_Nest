@@ -14,7 +14,7 @@ class CustomerContextGatherer implements ContextGathererInterface
 {
     public function gather(?User $user = null): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
@@ -71,6 +71,7 @@ class CustomerContextGatherer implements ContextGathererInterface
             })->values()->all(),
             'recommendations' => $recommendations->map(function (Product $product) use ($locale) {
                 return [
+                    'id' => (int) $product->product_id,
                     'product' => $product->getTranslation('name', $locale),
                     'category' => $product->category?->getTranslation('name', $locale),
                     'brand' => $product->brand?->getTranslation('name', $locale),

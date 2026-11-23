@@ -2,22 +2,21 @@
 
 namespace App\Models;
 
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Role;
-use App\Models\SellerPromotionParticipation;
-use App\Models\SellerPromotionWallet;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -76,27 +75,33 @@ class User extends Authenticatable implements MustVerifyEmail
             'shop_settings' => 'array',
         ];
     }
+
     public function role(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user');
     }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(UserAddress::class);
     }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id', 'id');
     }
+
     public function isAdmin(): bool
     {
         return $this->roles()->where('name->en', 'Admin')->exists();
     }
-    public function roles():BelongsToMany
+
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
     }
@@ -139,7 +144,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public static function generateUniqueUsername(): string
     {
         do {
-            $username = 'user_' . \Illuminate\Support\Str::random(8);
+            $username = 'user_'.Str::random(8);
             $exists = static::where('username', $username)->exists();
         } while ($exists);
 
@@ -151,7 +156,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
+        return trim($this->last_name.' '.$this->first_name) ?: $this->username;
     }
 
     /**
@@ -164,18 +169,18 @@ class User extends Authenticatable implements MustVerifyEmail
             if (str_starts_with($this->avatar, 'http')) {
                 return $this->avatar;
             }
-            
+
             // If it's a local file path, return storage URL
-            return asset('storage/' . $this->avatar);
+            return asset('storage/'.$this->avatar);
         }
 
         // Generate avatar from first letter of name or username
         $name = $this->first_name ?: $this->username;
         $initial = strtoupper(substr($name, 0, 1));
-        
+
         // Generate placeholder avatar URL using UI Avatars service
-        return "https://ui-avatars.com/api/?name=" . urlencode($initial) . 
-               "&color=fff&background=1976D2&size=100&rounded=true";
+        return 'https://ui-avatars.com/api/?name='.urlencode($initial).
+               '&color=fff&background=1976D2&size=100&rounded=true';
     }
 
     /**
@@ -356,11 +361,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRoleNameAttribute(): ?string
     {
         $role = $this->role()->first();
-        if (!$role) {
+        if (! $role) {
             return null;
         }
-        
+
         $roleName = $role->name['en'] ?? null;
+
         return $roleName ? strtolower($roleName) : null;
     }
 
@@ -393,11 +399,11 @@ class User extends Authenticatable implements MustVerifyEmail
             $value = str_replace(' ', '', $value);
             // If starts with 0, replace with +84 (assuming Vietnam)
             if (str_starts_with($value, '0')) {
-                $value = '+84' . substr($value, 1);
+                $value = '+84'.substr($value, 1);
             }
             // Ensure it starts with +
-            if (!str_starts_with($value, '+')) {
-                $value = '+' . $value;
+            if (! str_starts_with($value, '+')) {
+                $value = '+'.$value;
             }
         }
         $this->attributes['phone_number'] = $value;
@@ -411,12 +417,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasVerifiedEmail(): bool
     {
         // If no email, consider verified (phone/username registration)
-        if (!$this->email) {
+        if (! $this->email) {
             return true;
         }
-        
+
         // If has email, check if it's verified
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     /**
@@ -430,6 +436,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 'email_verified_at' => $this->freshTimestamp(),
             ])->save();
         }
+
         return true; // Consider verified if no email
     }
 

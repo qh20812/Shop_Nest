@@ -4,16 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\Brand;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class BrandSeeder extends Seeder
 {
     public function run(): void
     {
         $brands = [
-            'Apple', 'Samsung', 'Xiaomi', 'Sony', 'LG', 'Nike', 'Adidas', 'Puma',
-            'Uniqlo', 'H&M', 'Zara', 'Dell', 'HP', 'Asus', 'Lenovo', 'Canon',
-            'Nikon', 'Casio', 'Logitech', 'Anker', 'Simple', 'La Roche-Posay', 'Nhã Nam',
+            'Apple', 'Samsung', 'Xiaomi', 'Sony', 'JBL', 'Dell', 'Asus', 'Casio',
+            'Nike', 'Adidas', 'Puma', 'Uniqlo', "Levi's", 'Zara', 'H&M', 'Simple',
+            'Philips', 'La Roche-Posay', 'Cetaphil', 'The Ordinary', 'MAC', 'Chanel',
+            'Dior', 'Blackmores', 'innisfree', 'Maybelline', 'Nhã Nam', 'Moleskine',
+            'Thiên Long', 'Parker', 'Decathlon',
         ];
 
         foreach ($brands as $brand) {
@@ -28,7 +29,7 @@ class BrandSeeder extends Seeder
             Brand::create([
                 'name' => $brand,
                 'description' => "Thương hiệu {$brand}",
-                'logo_url' => 'https://dummyimage.com/300x300/666266/ffffff&text='.urlencode(Str::limit($brand, 10, '')),
+                'logo_url' => null,
                 'is_active' => true,
             ]);
         }

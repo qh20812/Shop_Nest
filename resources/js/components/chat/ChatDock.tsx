@@ -5,6 +5,7 @@ import * as React from 'react';
 import { ChatbotLauncher } from '@/components/chat/ChatbotLauncher';
 import { ChatbotPanel } from '@/components/chat/ChatbotPanel';
 import type { MessageListItem } from '@/components/chat/MessageList';
+import type { ChatProduct } from '@/components/chat/types';
 import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ type StoredMessage = {
     variant: 'incoming' | 'outgoing' | 'error';
     content: string;
     createdAt: string;
+    products?: ChatProduct[];
 };
 
 type ChatDockProps = {
@@ -84,10 +86,32 @@ function loadStoredMessages(storageKey: string): StoredMessage[] {
                     typeof item.createdAt === 'string' &&
                     ['incoming', 'outgoing', 'error'].includes(item.variant),
             )
+            .map((item) => {
+                const products = sanitizeProducts((item as StoredMessage).products);
+
+                return products ? { ...item, products } : { ...item, products: undefined };
+            })
             .slice(-MAX_STORED_MESSAGES);
     } catch {
         return [greeting];
     }
+}
+
+function sanitizeProducts(value: unknown): ChatProduct[] | undefined {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+
+    const products = value.filter(
+        (product): product is ChatProduct =>
+            typeof product === 'object' &&
+            product !== null &&
+            typeof (product as ChatProduct).id === 'number' &&
+            typeof (product as ChatProduct).name === 'string' &&
+            typeof (product as ChatProduct).price === 'number',
+    );
+
+    return products.length > 0 ? products : undefined;
 }
 
 export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 }: ChatDockProps) {
@@ -162,6 +186,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             }
 
             const reply = payload?.data?.reply ?? payload?.reply;
+            const products = sanitizeProducts(payload?.data?.products);
 
             if (typeof reply !== 'string' || reply.trim() === '') {
                 throw new Error('Trợ lý chưa có câu trả lời.');
@@ -174,6 +199,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                     variant: 'incoming',
                     content: reply,
                     createdAt: new Date().toISOString(),
+                    products,
                 },
             ]);
         } catch (requestError) {
@@ -198,6 +224,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
         variant: message.variant,
         content: message.content,
         timestamp: formatChatTimestamp(message.createdAt),
+        products: message.products,
     }));
 
     return (

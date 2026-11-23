@@ -51,7 +51,6 @@
         "resources/js/components/commerce/ReturnItemPicker.tsx",
         "resources/js/components/feedback/ConfirmDialog.tsx",
         "resources/js/components/feedback/LoadingOverlay.tsx",
-        "resources/js/components/feedback/ResultState.tsx",
         "resources/js/components/storefront/UtilityStrip.tsx",
         "resources/js/components/ui/action-button.tsx",
         "resources/js/components/ui/action-buttons.tsx",

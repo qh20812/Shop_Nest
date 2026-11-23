@@ -70,6 +70,7 @@
     --sn-container: 90rem;
     --sn-container-narrow: 65rem;
     --sn-container-form: 26.25rem;
+    --sn-container-form-wide: 37.5rem; /* 600 — trang đăng ký nhiều section */
 
     /* Control */
     --sn-control-sm: 2rem;

@@ -11,33 +11,28 @@ type AuthBrandPanelProps = {
     eyebrow?: string;
     headline?: string;
     description?: string;
-    imageUrl?: string;
-    imageAlt?: string;
     className?: string;
 };
 
-const roleContent: Record<AuthRole, { label: string; eyebrow: string; headline: string; description: string }> = {
+const roleContent: Record<AuthRole, { eyebrow: string; headline: string; description: string }> = {
     customer: {
-        label: 'Khách hàng',
         eyebrow: 'Chợ nhỏ, tổ ấm',
         headline: 'Đồ thật, người thật, chuyện thật.',
         description: 'Mọi thứ cho tổ ấm Việt: điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop đã kiểm duyệt.',
     },
     seller: {
-        label: 'Người bán',
         eyebrow: 'Dành cho người bán',
         headline: 'Mang gian hàng của bạn đến đúng người.',
         description: 'ShopNest tuyển chọn nhà bán tử tế, minh bạch nguồn gốc và đồng hành từ gian hàng đến đơn hàng đầu tiên.',
     },
     shipper: {
-        label: 'Đối tác giao vận',
         eyebrow: 'Dành cho đối tác giao vận',
         headline: 'Mỗi kiện hàng, một chặng đường êm.',
         description: 'Tham gia mạng lưới giao vận ShopNest, nhận đơn rõ ràng và đồng hành cùng hàng nghìn tổ ấm Việt.',
     },
 };
 
-const trustPoints = ['Shop Việt đã kiểm duyệt', 'Đổi trả 7 ngày', 'Hỗ trợ 24/7'];
+const trustPoints = ['Shop đã kiểm duyệt', 'Đổi trả theo chính sách', 'Hỗ trợ qua hotline'];
 
 export function AuthBrandPanel({ role = 'customer', eyebrow, headline, description, className }: AuthBrandPanelProps) {
     const content = roleContent[role];
@@ -47,20 +42,16 @@ export function AuthBrandPanel({ role = 'customer', eyebrow, headline, descripti
             <div className="sn-auth__panel-copy">
                 <Link href="/" className="sn-brand">
                     <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
-                    <span>
-                        <span className="sn-brand__name">ShopNest</span>
-                        <span className="sn-brand__tagline">Chợ đời sống & tổ ấm Việt</span>
-                    </span>
+                    <span className="sn-brand__name">ShopNest</span>
                 </Link>
 
                 <Eyebrow tone="accent">{eyebrow ?? content.eyebrow}</Eyebrow>
-                <Heading level={1} size="display-lg" serif>
+                <Heading level={1} size="display-lg">
                     {headline ?? content.headline}
                 </Heading>
                 <Text size="body-md" tone="muted">
                     {description ?? content.description}
                 </Text>
-                <span className="sn-label sn-auth__panel-meta">{content.label}</span>
             </div>
 
             <div className="sn-auth__panel-foot">

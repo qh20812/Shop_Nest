@@ -73,6 +73,12 @@
         opacity: 1;
     }
 
+    /* Hide the native password reveal/clear controls; the UI supplies IconButton. */
+    .sn-input::-ms-reveal,
+    .sn-input::-ms-clear {
+        display: none;
+    }
+
     .sn-input:hover,
     .sn-textarea:hover,
     .sn-select:hover {
@@ -97,6 +103,16 @@
     .sn-select:disabled {
         cursor: not-allowed;
         opacity: 0.6;
+    }
+
+    .sn-input[readonly] {
+        background: var(--sn-color-surface-sunken);
+        color: var(--sn-color-text-muted);
+        cursor: default;
+    }
+
+    .sn-input[readonly]:hover {
+        border-color: var(--sn-color-border-strong);
     }
 
     .sn-input[data-size='sm'] {
@@ -516,43 +532,7 @@
         animation: sn-spin 0.8s linear infinite;
     }
 
-    /* Password strength */
-    .sn-password {
-        display: flex;
-        flex-direction: column;
-        gap: var(--sn-space-2);
-    }
-
-    .sn-password__bars {
-        display: flex;
-        align-items: center;
-        gap: var(--sn-space-2);
-    }
-
-    .sn-password__bar {
-        height: 0.375rem;
-        flex: 1;
-        border-radius: var(--sn-radius-pill);
-        background: var(--sn-color-surface-sunken);
-        transition: background-color var(--sn-dur-fast) var(--sn-ease-standard);
-    }
-
-    .sn-password__bar[data-active='true'][data-tone='danger'] {
-        background: var(--sn-color-danger);
-    }
-
-    .sn-password__bar[data-active='true'][data-tone='warning'] {
-        background: var(--sn-color-warning);
-    }
-
-    .sn-password__bar[data-active='true'][data-tone='success'] {
-        background: var(--sn-color-success);
-    }
-
-    .sn-password__label {
-        font-size: var(--sn-text-sm);
-        color: var(--sn-color-text-muted);
-    }
+    /* Password strength now uses the shared Progress primitive (Phase 5). */
 
     /* Rich text */
     .sn-rich-text {

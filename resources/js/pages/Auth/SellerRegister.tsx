@@ -6,7 +6,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export default function SellerRegister() {
     return (
-        <AuthLayout brand={<AuthBrandPanel role="seller" />}>
+        <AuthLayout brand={<AuthBrandPanel role="seller" />} width="wide">
             <Head title="Đăng ký người bán" />
             <SellerRegisterForm />
         </AuthLayout>

@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import * as React from 'react';
 
 import { AuthLayout } from '@/components/layout/AuthLayout';
@@ -27,45 +27,43 @@ export default function ForgotPassword({ status }: ForgotPasswordProps) {
         <AuthLayout variant="centered">
             <Head title="Quên mật khẩu" />
 
-            <div className="flex flex-col gap-2">
-                <Heading level={1} size="headline-1">
-                    Quên mật khẩu?
-                </Heading>
-                <Text size="body-md" tone="muted">
-                    Nhập email để nhận liên kết đặt lại mật khẩu.
-                </Text>
+            <div className="sn-auth-page">
+                <div className="sn-auth-page__intro">
+                    <Heading level={1} size="headline-1">
+                        Quên mật khẩu?
+                    </Heading>
+                    <Text size="body-md" tone="muted">
+                        Nhập email để nhận liên kết đặt lại mật khẩu.
+                    </Text>
+                </div>
+
+                {status && <Alert tone="success" description={status} />}
+
+                <form onSubmit={onSubmit} className="sn-auth-page__form">
+                    <FormField label="Email" required error={errors.email}>
+                        <Input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            onChange={(event) => setData('email', event.target.value)}
+                            placeholder="ban@example.com"
+                            autoComplete="email"
+                            autoFocus
+                            invalid={Boolean(errors.email)}
+                        />
+                    </FormField>
+
+                    <Button type="submit" size="lg" loading={processing} className="sn-auth-page__submit">
+                        Gửi liên kết đặt lại
+                    </Button>
+                </form>
+
+                <Link href="/login" className="sn-auth-page__back">
+                    <ArrowLeft aria-hidden="true" />
+                    Quay lại đăng nhập
+                </Link>
             </div>
-
-            {status && <Alert tone="success" className="mt-5" description={status} />}
-
-            <form onSubmit={onSubmit} className="mt-7 flex flex-col gap-5">
-                <FormField label="Email" required error={errors.email}>
-                    <Input
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        onChange={(event) => setData('email', event.target.value)}
-                        placeholder="ban@example.com"
-                        autoComplete="email"
-                        leadingIcon={Mail}
-                        autoFocus
-                        invalid={Boolean(errors.email)}
-                    />
-                </FormField>
-
-                <Button type="submit" size="lg" loading={processing} className="w-full">
-                    Gửi liên kết đặt lại
-                </Button>
-            </form>
-
-            <Link
-                href="/login"
-                className="focus-ring mt-6 inline-flex items-center gap-2 text-body-sm font-medium text-ink-muted transition-colors hover:text-lacquer-red"
-            >
-                <ArrowLeft aria-hidden="true" className="size-4" />
-                Quay lại đăng nhập
-            </Link>
         </AuthLayout>
     );
 }

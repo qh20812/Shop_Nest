@@ -80,11 +80,14 @@ export default function ShipperRegister() {
     };
 
     const renderDocument = (field: keyof Pick<FormData, 'id_card_front' | 'id_card_back' | 'driver_license_front'>, label: string) => (
-        <div className="flex flex-col gap-2">
-            <span className="text-body-sm font-medium text-ink">
-                {label} <span className="text-lacquer-red">*</span>
+        <div className="sn-auth-page__doc">
+            <span className="sn-auth-page__doc-label">
+                {label}{' '}
+                <span className="sn-auth-page__doc-required" aria-hidden="true">
+                    *
+                </span>
             </span>
-            {previews[field] && <img src={previews[field]} alt={label} className="h-28 w-full rounded-control border border-border object-cover" />}
+            {previews[field] && <img src={previews[field]} alt={label} className="sn-auth-page__preview" />}
             <FileDropzone
                 accept="image/jpeg,image/png"
                 maxSize={MAX_DOCUMENT_SIZE}
@@ -92,9 +95,10 @@ export default function ShipperRegister() {
                 files={data[field] ? [data[field] as File] : []}
                 onFiles={(files) => handleFileChange(field, files[0] ?? null)}
                 onRemove={() => handleFileChange(field, null)}
+                label={label}
             />
             {errors[field] && (
-                <span role="alert" className="text-body-sm text-brick">
+                <span role="alert" className="sn-field__error">
                     {errors[field]}
                 </span>
             )}
@@ -102,152 +106,160 @@ export default function ShipperRegister() {
     );
 
     return (
-        <AuthLayout brand={<AuthBrandPanel role="shipper" />}>
+        <AuthLayout brand={<AuthBrandPanel role="shipper" />} width="wide">
             <Head title="Đăng ký giao vận" />
 
-            <div className="flex flex-col gap-2">
-                <Heading level={1} size="headline-1">
-                    Trở thành đối tác giao vận
-                </Heading>
-                <Text size="body-md" tone="muted">
-                    Tham gia mạng lưới ShopNest và nhận đơn giao rõ ràng mỗi ngày.
-                </Text>
-            </div>
-
-            <form onSubmit={submit} className="mt-7 flex flex-col gap-8">
-                <section className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2 border-b border-border pb-3">
-                        <IdCard aria-hidden="true" className="size-5 text-lacquer-red" />
-                        <h2 className="text-headline-3 text-ink">Thông tin cá nhân</h2>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormField label="Họ" required error={errors.last_name}>
-                            <Input
-                                value={data.last_name}
-                                onChange={(event) => setData('last_name', event.target.value)}
-                                autoComplete="family-name"
-                                invalid={Boolean(errors.last_name)}
-                            />
-                        </FormField>
-                        <FormField label="Tên" required error={errors.first_name}>
-                            <Input
-                                value={data.first_name}
-                                onChange={(event) => setData('first_name', event.target.value)}
-                                autoComplete="given-name"
-                                invalid={Boolean(errors.first_name)}
-                            />
-                        </FormField>
-                        <FormField label="Email" required error={errors.email}>
-                            <Input
-                                type="email"
-                                value={data.email}
-                                onChange={(event) => setData('email', event.target.value)}
-                                autoComplete="email"
-                                invalid={Boolean(errors.email)}
-                            />
-                        </FormField>
-                        <FormField label="Số điện thoại" required error={errors.phone_number}>
-                            <Input
-                                value={data.phone_number}
-                                onChange={(event) => setData('phone_number', event.target.value)}
-                                placeholder="0912 345 678"
-                                autoComplete="tel"
-                                invalid={Boolean(errors.phone_number)}
-                            />
-                        </FormField>
-                        <FormField label="Mật khẩu" required error={errors.password}>
-                            <Input
-                                type="password"
-                                value={data.password}
-                                onChange={(event) => setData('password', event.target.value)}
-                                autoComplete="new-password"
-                                invalid={Boolean(errors.password)}
-                            />
-                        </FormField>
-                        <FormField label="Xác nhận mật khẩu" required error={errors.password_confirmation}>
-                            <Input
-                                type="password"
-                                value={data.password_confirmation}
-                                onChange={(event) => setData('password_confirmation', event.target.value)}
-                                autoComplete="new-password"
-                                invalid={Boolean(errors.password_confirmation)}
-                            />
-                        </FormField>
-                    </div>
-                </section>
-
-                <section className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2 border-b border-border pb-3">
-                        <Truck aria-hidden="true" className="size-5 text-lacquer-red" />
-                        <h2 className="text-headline-3 text-ink">Thông tin giao vận</h2>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormField label="Số CCCD/CMND" required error={errors.id_card_number}>
-                            <Input
-                                value={data.id_card_number}
-                                onChange={(event) => setData('id_card_number', event.target.value)}
-                                placeholder="123456789012"
-                                invalid={Boolean(errors.id_card_number)}
-                            />
-                        </FormField>
-                        <FormField label="Số giấy phép lái xe" required error={errors.driver_license_number}>
-                            <Input
-                                value={data.driver_license_number}
-                                onChange={(event) => setData('driver_license_number', event.target.value)}
-                                placeholder="12-34567890"
-                                invalid={Boolean(errors.driver_license_number)}
-                            />
-                        </FormField>
-                        <FormField label="Loại phương tiện" required error={errors.vehicle_type}>
-                            <Select
-                                value={data.vehicle_type}
-                                onChange={(event) => setData('vehicle_type', event.target.value)}
-                                placeholder="Chọn phương tiện"
-                                options={[
-                                    { value: 'Motorbike', label: 'Xe máy' },
-                                    { value: 'Bicycle', label: 'Xe đạp' },
-                                    { value: 'Car', label: 'Ô tô' },
-                                    { value: 'Van', label: 'Xe van' },
-                                    { value: 'Truck', label: 'Xe tải' },
-                                ]}
-                                invalid={Boolean(errors.vehicle_type)}
-                            />
-                        </FormField>
-                        <FormField label="Biển số xe" required error={errors.license_plate}>
-                            <Input
-                                value={data.license_plate}
-                                onChange={(event) => setData('license_plate', event.target.value)}
-                                placeholder="59A-12345"
-                                invalid={Boolean(errors.license_plate)}
-                            />
-                        </FormField>
-                    </div>
-                </section>
-
-                <section className="flex flex-col gap-4">
-                    <div className="border-b border-border pb-3">
-                        <h2 className="text-headline-3 text-ink">Hồ sơ xác thực</h2>
-                        <p className="mt-1 text-body-sm text-ink-muted">Ảnh rõ nét giúp hồ sơ được duyệt nhanh hơn. Tối đa 2MB mỗi ảnh.</p>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        {renderDocument('id_card_front', 'CCCD mặt trước')}
-                        {renderDocument('id_card_back', 'CCCD mặt sau')}
-                        {renderDocument('driver_license_front', 'Giấy phép lái xe')}
-                    </div>
-                </section>
-
-                <div className="flex flex-col gap-3 border-t border-border pt-6">
-                    <Button type="submit" size="lg" loading={processing} className="w-full">
-                        Gửi hồ sơ
-                    </Button>
-                    <p className="text-center text-body-sm text-ink-muted">
-                        Đã có tài khoản?{' '}
-                        <TextLink href="/login" tone="accent" underline={false}>
-                            Đăng nhập
-                        </TextLink>
-                    </p>
+            <div className="sn-auth-page">
+                <div className="sn-auth-page__intro">
+                    <Heading level={1} size="headline-1">
+                        Trở thành đối tác giao vận
+                    </Heading>
+                    <Text size="body-md" tone="muted">
+                        Tham gia mạng lưới ShopNest và nhận đơn giao rõ ràng mỗi ngày.
+                    </Text>
                 </div>
-            </form>
+
+                <form onSubmit={submit} className="sn-auth-page__form sn-auth-page__form--loose">
+                    <section className="sn-auth-page__section">
+                        <div className="sn-auth-page__section-head">
+                            <IdCard aria-hidden="true" className="sn-auth-page__section-icon" />
+                            <Heading level={2} size="headline-3">
+                                Thông tin cá nhân
+                            </Heading>
+                        </div>
+                        <div className="sn-auth-page__grid">
+                            <FormField label="Họ" required error={errors.last_name}>
+                                <Input
+                                    value={data.last_name}
+                                    onChange={(event) => setData('last_name', event.target.value)}
+                                    autoComplete="family-name"
+                                    invalid={Boolean(errors.last_name)}
+                                />
+                            </FormField>
+                            <FormField label="Tên" required error={errors.first_name}>
+                                <Input
+                                    value={data.first_name}
+                                    onChange={(event) => setData('first_name', event.target.value)}
+                                    autoComplete="given-name"
+                                    invalid={Boolean(errors.first_name)}
+                                />
+                            </FormField>
+                            <FormField label="Email" required error={errors.email}>
+                                <Input
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(event) => setData('email', event.target.value)}
+                                    autoComplete="email"
+                                    invalid={Boolean(errors.email)}
+                                />
+                            </FormField>
+                            <FormField label="Số điện thoại" required error={errors.phone_number}>
+                                <Input
+                                    value={data.phone_number}
+                                    onChange={(event) => setData('phone_number', event.target.value)}
+                                    placeholder="0912 345 678"
+                                    autoComplete="tel"
+                                    invalid={Boolean(errors.phone_number)}
+                                />
+                            </FormField>
+                            <FormField label="Mật khẩu" required error={errors.password}>
+                                <Input
+                                    type="password"
+                                    value={data.password}
+                                    onChange={(event) => setData('password', event.target.value)}
+                                    autoComplete="new-password"
+                                    invalid={Boolean(errors.password)}
+                                />
+                            </FormField>
+                            <FormField label="Xác nhận mật khẩu" required error={errors.password_confirmation}>
+                                <Input
+                                    type="password"
+                                    value={data.password_confirmation}
+                                    onChange={(event) => setData('password_confirmation', event.target.value)}
+                                    autoComplete="new-password"
+                                    invalid={Boolean(errors.password_confirmation)}
+                                />
+                            </FormField>
+                        </div>
+                    </section>
+
+                    <section className="sn-auth-page__section">
+                        <div className="sn-auth-page__section-head">
+                            <Truck aria-hidden="true" className="sn-auth-page__section-icon" />
+                            <Heading level={2} size="headline-3">
+                                Thông tin giao vận
+                            </Heading>
+                        </div>
+                        <div className="sn-auth-page__grid">
+                            <FormField label="Số CCCD/CMND" required error={errors.id_card_number}>
+                                <Input
+                                    value={data.id_card_number}
+                                    onChange={(event) => setData('id_card_number', event.target.value)}
+                                    placeholder="123456789012"
+                                    invalid={Boolean(errors.id_card_number)}
+                                />
+                            </FormField>
+                            <FormField label="Số giấy phép lái xe" required error={errors.driver_license_number}>
+                                <Input
+                                    value={data.driver_license_number}
+                                    onChange={(event) => setData('driver_license_number', event.target.value)}
+                                    placeholder="12-34567890"
+                                    invalid={Boolean(errors.driver_license_number)}
+                                />
+                            </FormField>
+                            <FormField label="Loại phương tiện" required error={errors.vehicle_type}>
+                                <Select
+                                    value={data.vehicle_type}
+                                    onChange={(event) => setData('vehicle_type', event.target.value)}
+                                    placeholder="Chọn phương tiện"
+                                    options={[
+                                        { value: 'Motorbike', label: 'Xe máy' },
+                                        { value: 'Bicycle', label: 'Xe đạp' },
+                                        { value: 'Car', label: 'Ô tô' },
+                                        { value: 'Van', label: 'Xe van' },
+                                        { value: 'Truck', label: 'Xe tải' },
+                                    ]}
+                                    invalid={Boolean(errors.vehicle_type)}
+                                />
+                            </FormField>
+                            <FormField label="Biển số xe" required error={errors.license_plate}>
+                                <Input
+                                    value={data.license_plate}
+                                    onChange={(event) => setData('license_plate', event.target.value)}
+                                    placeholder="59A-12345"
+                                    invalid={Boolean(errors.license_plate)}
+                                />
+                            </FormField>
+                        </div>
+                    </section>
+
+                    <section className="sn-auth-page__section">
+                        <div className="sn-auth-page__section-head sn-auth-page__section-head--stack">
+                            <Heading level={2} size="headline-3">
+                                Hồ sơ xác thực
+                            </Heading>
+                            <p className="sn-auth-page__section-hint">Ảnh rõ nét giúp hồ sơ được duyệt nhanh hơn. Tối đa 2MB mỗi ảnh.</p>
+                        </div>
+                        <div className="sn-auth-page__docs">
+                            {renderDocument('id_card_front', 'CCCD mặt trước')}
+                            {renderDocument('id_card_back', 'CCCD mặt sau')}
+                            {renderDocument('driver_license_front', 'Giấy phép lái xe')}
+                        </div>
+                    </section>
+
+                    <div className="sn-auth-page__actions">
+                        <Button type="submit" size="lg" loading={processing} className="sn-auth-page__submit">
+                            Gửi hồ sơ
+                        </Button>
+                        <p className="sn-auth-page__legal sn-auth-page__legal--center">
+                            Đã có tài khoản?{' '}
+                            <TextLink href="/login" tone="accent" underline={false}>
+                                Đăng nhập
+                            </TextLink>
+                        </p>
+                    </div>
+                </form>
+            </div>
         </AuthLayout>
     );
 }

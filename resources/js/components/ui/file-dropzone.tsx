@@ -11,6 +11,7 @@ type FileDropzoneProps = {
     files?: File[];
     onFiles: (files: File[]) => void;
     onRemove?: (index: number) => void;
+    label?: string;
     className?: string;
 };
 
@@ -30,12 +31,14 @@ export function FileDropzone({
     files = [],
     onFiles,
     onRemove,
+    label,
     className,
 }: FileDropzoneProps) {
     const inputId = React.useId();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const errorId = error ? `${inputId}-error` : undefined;
 
     const handleFiles = (incoming: FileList | null) => {
         if (!incoming || disabled) {
@@ -80,6 +83,9 @@ export function FileDropzone({
                     accept={accept}
                     multiple={multiple}
                     disabled={disabled}
+                    aria-label={label}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={errorId}
                     className="sn-dropzone__input"
                     onChange={(event) => {
                         handleFiles(event.target.files);
@@ -96,7 +102,7 @@ export function FileDropzone({
             </label>
 
             {error && (
-                <span role="alert" className="sn-dropzone__error">
+                <span id={errorId} role="alert" className="sn-dropzone__error">
                     {error}
                 </span>
             )}

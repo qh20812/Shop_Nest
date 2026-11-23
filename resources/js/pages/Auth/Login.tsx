@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 
 import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
@@ -8,18 +8,21 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormField } from '@/components/ui/form-field';
+import { IconButton } from '@/components/ui/icon-button';
 import Input from '@/components/ui/input';
 import { TextLink } from '@/components/ui/text-link';
 import { Heading, Text } from '@/components/ui/typography';
 
 interface LoginPageProps extends Record<string, unknown> {
+    status?: string | null;
+    canResetPassword?: boolean;
     errors?: {
         google?: string;
     };
 }
 
 export default function LoginPage() {
-    const { errors: pageErrors } = usePage<LoginPageProps>().props;
+    const { status, canResetPassword, errors: pageErrors } = usePage<LoginPageProps>().props;
     const googleError = pageErrors?.google;
     const [formData, setFormData] = React.useState({
         identifier: '',
@@ -73,104 +76,108 @@ export default function LoginPage() {
         <AuthLayout brand={<AuthBrandPanel role="customer" />}>
             <Head title="Đăng nhập" />
 
-            <div className="flex flex-col gap-2">
-                <Heading level={1} size="headline-1">
-                    Đăng nhập
-                </Heading>
-                <Text size="body-md" tone="muted">
-                    Tiếp tục với tài khoản của bạn để theo dõi đơn hàng và giỏ hàng.
-                </Text>
-            </div>
-
-            {googleError ? <Alert tone="danger" title="Đăng nhập Google thất bại" description={googleError} className="mt-6" /> : null}
-
-            <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5" noValidate>
-                <FormField label="Email, số điện thoại hoặc tên đăng nhập" required error={errors.identifier}>
-                    <Input
-                        name="identifier"
-                        value={formData.identifier}
-                        onChange={(event) => setFormData((current) => ({ ...current, identifier: event.target.value }))}
-                        placeholder="ban@example.com hoặc 0912 345 678"
-                        autoComplete="username"
-                        leadingIcon={Mail}
-                        invalid={Boolean(errors.identifier)}
-                    />
-                </FormField>
-
-                <FormField label="Mật khẩu" required error={errors.password}>
-                    <Input
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
-                        placeholder="Nhập mật khẩu"
-                        autoComplete="current-password"
-                        invalid={Boolean(errors.password)}
-                        trailing={
-                            <button
-                                type="button"
-                                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                                className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
-                                onClick={() => setShowPassword((value) => !value)}
-                            >
-                                {showPassword ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                            </button>
-                        }
-                    />
-                </FormField>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <Checkbox
-                        checked={formData.remember}
-                        onCheckedChange={(checked) => setFormData((current) => ({ ...current, remember: checked === true }))}
-                        label="Ghi nhớ đăng nhập"
-                    />
-                    <TextLink href="/forgot-password" tone="muted" underline={false}>
-                        Quên mật khẩu?
-                    </TextLink>
+            <div className="sn-auth-page">
+                <div className="sn-auth-page__intro">
+                    <Heading level={1} size="headline-1">
+                        Đăng nhập
+                    </Heading>
+                    <Text size="body-md" tone="muted">
+                        Tiếp tục với tài khoản của bạn để theo dõi đơn hàng và giỏ hàng.
+                    </Text>
                 </div>
 
-                <Button type="submit" size="lg" loading={submitting} className="w-full">
-                    Đăng nhập
-                </Button>
+                {status && <Alert tone="success" description={status} />}
+                {googleError && <Alert tone="danger" title="Đăng nhập Google thất bại" description={googleError} />}
 
-                <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-border" />
-                    <span className="text-label-micro font-semibold tracking-[0.12em] text-ink-faint uppercase">hoặc</span>
-                    <span className="h-px flex-1 bg-border" />
-                </div>
+                <form onSubmit={handleSubmit} className="sn-auth-page__form" noValidate>
+                    <FormField label="Email, số điện thoại hoặc tên đăng nhập" required error={errors.identifier}>
+                        <Input
+                            name="identifier"
+                            value={formData.identifier}
+                            onChange={(event) => setFormData((current) => ({ ...current, identifier: event.target.value }))}
+                            placeholder="ban@example.com hoặc 0912 345 678"
+                            autoComplete="username"
+                            invalid={Boolean(errors.identifier)}
+                        />
+                    </FormField>
 
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="w-full gap-3"
-                    onClick={() => {
-                        window.location.href = '/auth/google';
-                    }}
-                >
-                    <img src="/google-color-svgrepo-com.svg" alt="" className="size-5" />
-                    Tiếp tục với Google
-                </Button>
-            </form>
+                    <FormField label="Mật khẩu" required error={errors.password}>
+                        <Input
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
+                            placeholder="Nhập mật khẩu"
+                            autoComplete="current-password"
+                            invalid={Boolean(errors.password)}
+                            trailing={
+                                <IconButton
+                                    variant="ghost"
+                                    size="sm"
+                                    label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                    onClick={() => setShowPassword((value) => !value)}
+                                >
+                                    {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                                </IconButton>
+                            }
+                        />
+                    </FormField>
 
-            <p className="mt-6 border-t border-border pt-5 text-body-sm text-ink-muted">
-                Chưa có tài khoản?{' '}
-                <TextLink href="/register" tone="accent" underline={false}>
-                    Tạo tài khoản mới
-                </TextLink>
-            </p>
+                    <div className="sn-auth-page__row">
+                        <Checkbox
+                            checked={formData.remember}
+                            onCheckedChange={(checked) => setFormData((current) => ({ ...current, remember: checked === true }))}
+                            label="Ghi nhớ đăng nhập"
+                        />
+                        {canResetPassword !== false && (
+                            <TextLink href="/forgot-password" tone="muted" underline={false}>
+                                Quên mật khẩu?
+                            </TextLink>
+                        )}
+                    </div>
 
-            <div className="mt-5 rounded-control border border-border bg-raw-linen/40 p-3.5 text-center">
-                <p className="mb-2 text-body-sm text-ink-muted">Bạn là đối tác kinh doanh hoặc vận chuyển?</p>
-                <div className="flex flex-wrap items-center justify-center gap-4 text-body-sm font-medium">
-                    <TextLink href="/register/seller" tone="ink" underline={false}>
-                        Bán hàng cùng ShopNest
+                    <Button type="submit" size="lg" loading={submitting} className="sn-auth-page__submit">
+                        Đăng nhập
+                    </Button>
+
+                    <div className="sn-auth-page__divider" aria-hidden="true">
+                        <span>hoặc</span>
+                    </div>
+
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="lg"
+                        className="sn-auth-page__google"
+                        onClick={() => {
+                            window.location.href = '/auth/google';
+                        }}
+                    >
+                        <img src="/google-color-svgrepo-com.svg" alt="" className="sn-auth-page__google-logo" />
+                        Tiếp tục với Google
+                    </Button>
+                </form>
+
+                <p className="sn-auth-page__footnote">
+                    Chưa có tài khoản?{' '}
+                    <TextLink href="/register" tone="accent" underline={false}>
+                        Tạo tài khoản mới
                     </TextLink>
-                    <span className="text-border">|</span>
-                    <TextLink href="/register/shipper" tone="ink" underline={false}>
-                        Giao vận đối tác
-                    </TextLink>
+                </p>
+
+                <div className="sn-auth-page__aside">
+                    <p className="sn-auth-page__aside-text">Bạn là đối tác kinh doanh hoặc vận chuyển?</p>
+                    <div className="sn-auth-page__aside-links">
+                        <TextLink href="/register/seller" tone="ink" underline={false}>
+                            Bán hàng cùng ShopNest
+                        </TextLink>
+                        <span className="sn-auth-page__aside-sep" aria-hidden="true">
+                            |
+                        </span>
+                        <TextLink href="/register/shipper" tone="ink" underline={false}>
+                            Giao vận đối tác
+                        </TextLink>
+                    </div>
                 </div>
             </div>
         </AuthLayout>

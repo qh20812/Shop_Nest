@@ -1,3 +1,4 @@
+import { Progress } from '@/components/ui/progress';
 import { cx } from '@/lib/cx';
 
 type PasswordStrengthProps = {
@@ -23,18 +24,17 @@ function scorePassword(value: string): number {
 }
 
 export function PasswordStrength({ value, className }: PasswordStrengthProps) {
+    if (!value) {
+        return null;
+    }
+
     const score = scorePassword(value);
     const label = labels[Math.max(0, score - 1)];
     const tone = score <= 1 ? 'danger' : score === 2 ? 'warning' : 'success';
 
     return (
-        <div className={cx('sn-password', className)} aria-live="polite">
-            <div className="sn-password__bars">
-                {[1, 2, 3, 4].map((step) => (
-                    <span key={step} className="sn-password__bar" data-active={step <= score ? 'true' : undefined} data-tone={tone} />
-                ))}
-            </div>
-            {value && <span className="sn-password__label">Độ mạnh mật khẩu: {label}</span>}
+        <div className={cx(className)} aria-live="polite">
+            <Progress value={score} max={4} tone={tone} label={`Độ mạnh mật khẩu: ${label}`} />
         </div>
     );
 }

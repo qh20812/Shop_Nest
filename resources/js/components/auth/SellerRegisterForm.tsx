@@ -33,8 +33,8 @@ export default function SellerRegisterForm() {
     };
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-8" aria-labelledby="seller-register-title">
-            <div className="flex flex-col gap-2">
+        <form onSubmit={submit} className="sn-auth-page" aria-labelledby="seller-register-title">
+            <div className="sn-auth-page__intro">
                 <Heading level={1} size="headline-1" id="seller-register-title">
                     Trở thành người bán
                 </Heading>
@@ -43,12 +43,14 @@ export default function SellerRegisterForm() {
                 </Text>
             </div>
 
-            <section className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-border pb-3">
-                    <UserRound aria-hidden="true" className="size-5 text-lacquer-red" />
-                    <h2 className="text-headline-3 text-ink">Thông tin cá nhân</h2>
+            <section className="sn-auth-page__section">
+                <div className="sn-auth-page__section-head">
+                    <UserRound aria-hidden="true" className="sn-auth-page__section-icon" />
+                    <Heading level={2} size="headline-3">
+                        Thông tin cá nhân
+                    </Heading>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sn-auth-page__grid">
                     <FormField label="Họ" required error={errors.last_name}>
                         <Input
                             value={data.last_name}
@@ -94,10 +96,12 @@ export default function SellerRegisterForm() {
                 </div>
             </section>
 
-            <section className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-border pb-3">
-                    <Store aria-hidden="true" className="size-5 text-lacquer-red" />
-                    <h2 className="text-headline-3 text-ink">Thông tin gian hàng</h2>
+            <section className="sn-auth-page__section">
+                <div className="sn-auth-page__section-head">
+                    <Store aria-hidden="true" className="sn-auth-page__section-icon" />
+                    <Heading level={2} size="headline-3">
+                        Thông tin gian hàng
+                    </Heading>
                 </div>
                 <FormField label="Tên gian hàng" required error={errors.shop_name}>
                     <Input
@@ -119,11 +123,13 @@ export default function SellerRegisterForm() {
                 </FormField>
             </section>
 
-            <section className="flex flex-col gap-4">
-                <div className="border-b border-border pb-3">
-                    <h2 className="text-headline-3 text-ink">Bảo mật</h2>
+            <section className="sn-auth-page__section">
+                <div className="sn-auth-page__section-head">
+                    <Heading level={2} size="headline-3">
+                        Bảo mật
+                    </Heading>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sn-auth-page__grid">
                     <FormField label="Mật khẩu" required error={errors.password}>
                         <Input
                             type="password"
@@ -145,11 +151,11 @@ export default function SellerRegisterForm() {
                 </div>
             </section>
 
-            <div className="flex flex-col gap-4 border-t border-border pt-6">
-                <Button type="submit" size="lg" loading={processing} className="w-full">
+            <div className="sn-auth-page__actions">
+                <Button type="submit" size="lg" loading={processing} className="sn-auth-page__submit">
                     Tạo tài khoản người bán
                 </Button>
-                <p className="text-center text-body-sm text-ink-muted">
+                <p className="sn-auth-page__legal sn-auth-page__legal--center">
                     Bằng việc đăng ký, bạn đồng ý với{' '}
                     <TextLink href={route('terms')} tone="accent" underline={false}>
                         Điều khoản Dịch vụ

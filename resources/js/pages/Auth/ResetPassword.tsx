@@ -1,10 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
+import { IconButton } from '@/components/ui/icon-button';
 import Input from '@/components/ui/input';
 import { PasswordStrength } from '@/components/ui/password-strength';
 import { TextLink } from '@/components/ui/text-link';
@@ -36,90 +37,83 @@ export default function ResetPassword({ email, token }: ResetPasswordProps) {
         <AuthLayout variant="centered">
             <Head title="Đặt lại mật khẩu" />
 
-            <div className="flex flex-col gap-2">
-                <Heading level={1} size="headline-1">
-                    Đặt lại mật khẩu
-                </Heading>
-                <Text size="body-md" tone="muted">
-                    Tạo mật khẩu mới cho tài khoản {data.email}.
-                </Text>
-            </div>
+            <div className="sn-auth-page">
+                <div className="sn-auth-page__intro">
+                    <Heading level={1} size="headline-1">
+                        Đặt lại mật khẩu
+                    </Heading>
+                    <Text size="body-md" tone="muted">
+                        Tạo mật khẩu mới cho tài khoản {data.email}.
+                    </Text>
+                </div>
 
-            <form onSubmit={onSubmit} className="mt-7 flex flex-col gap-5">
-                <input type="hidden" name="token" value={data.token} />
-                <input type="hidden" name="email" value={data.email} />
+                <form onSubmit={onSubmit} className="sn-auth-page__form">
+                    <input type="hidden" name="token" value={data.token} />
+                    <input type="hidden" name="email" value={data.email} />
 
-                <FormField label="Email" error={errors.email ?? errors.token}>
-                    <Input
-                        id="email"
-                        type="email"
-                        value={data.email}
-                        readOnly
-                        leadingIcon={Mail}
-                        className="cursor-not-allowed bg-raw-linen/50 text-ink-muted"
-                    />
-                </FormField>
+                    <FormField label="Email" error={errors.email ?? errors.token}>
+                        <Input id="email" type="email" value={data.email} readOnly />
+                    </FormField>
 
-                <div className="flex flex-col gap-1.5">
-                    <FormField label="Mật khẩu mới" required error={errors.password}>
+                    <div className="sn-auth-page__actions">
+                        <FormField label="Mật khẩu mới" required error={errors.password}>
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={data.password}
+                                onChange={(event) => setData('password', event.target.value)}
+                                placeholder="Nhập mật khẩu mới"
+                                autoComplete="new-password"
+                                autoFocus
+                                invalid={Boolean(errors.password)}
+                                trailing={
+                                    <IconButton
+                                        variant="ghost"
+                                        size="sm"
+                                        label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                        onClick={() => setShowPassword((value) => !value)}
+                                    >
+                                        {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                                    </IconButton>
+                                }
+                            />
+                        </FormField>
+                        <PasswordStrength value={data.password} />
+                    </div>
+
+                    <FormField label="Xác nhận mật khẩu mới" required error={errors.password_confirmation}>
                         <Input
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            value={data.password}
-                            onChange={(event) => setData('password', event.target.value)}
-                            placeholder="Nhập mật khẩu mới"
+                            id="password_confirmation"
+                            type={showConfirmation ? 'text' : 'password'}
+                            value={data.password_confirmation}
+                            onChange={(event) => setData('password_confirmation', event.target.value)}
+                            placeholder="Nhập lại mật khẩu mới"
                             autoComplete="new-password"
-                            leadingIcon={KeyRound}
-                            autoFocus
-                            invalid={Boolean(errors.password)}
+                            invalid={Boolean(errors.password_confirmation)}
                             trailing={
-                                <button
-                                    type="button"
-                                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                                    className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
-                                    onClick={() => setShowPassword((value) => !value)}
+                                <IconButton
+                                    variant="ghost"
+                                    size="sm"
+                                    label={showConfirmation ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                    onClick={() => setShowConfirmation((value) => !value)}
                                 >
-                                    {showPassword ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                                </button>
+                                    {showConfirmation ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                                </IconButton>
                             }
                         />
                     </FormField>
-                    <PasswordStrength value={data.password} className="mt-1" />
-                </div>
 
-                <FormField label="Xác nhận mật khẩu mới" required error={errors.password_confirmation}>
-                    <Input
-                        id="password_confirmation"
-                        type={showConfirmation ? 'text' : 'password'}
-                        value={data.password_confirmation}
-                        onChange={(event) => setData('password_confirmation', event.target.value)}
-                        placeholder="Nhập lại mật khẩu mới"
-                        autoComplete="new-password"
-                        leadingIcon={KeyRound}
-                        invalid={Boolean(errors.password_confirmation)}
-                        trailing={
-                            <button
-                                type="button"
-                                aria-label={showConfirmation ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                                className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-lacquer-wash hover:text-ink"
-                                onClick={() => setShowConfirmation((value) => !value)}
-                            >
-                                {showConfirmation ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                            </button>
-                        }
-                    />
-                </FormField>
+                    <Button type="submit" size="lg" loading={processing} className="sn-auth-page__submit">
+                        Đặt lại mật khẩu
+                    </Button>
+                </form>
 
-                <Button type="submit" size="lg" loading={processing} className="w-full">
-                    Đặt lại mật khẩu
-                </Button>
-            </form>
-
-            <p className="mt-6 text-center text-body-sm text-ink-muted">
-                <TextLink href="/login" tone="muted" underline={false}>
-                    Quay lại đăng nhập
-                </TextLink>
-            </p>
+                <p className="sn-auth-page__footnote sn-auth-page__footnote--center">
+                    <TextLink href="/login" tone="muted" underline={false}>
+                        Quay lại đăng nhập
+                    </TextLink>
+                </p>
+            </div>
         </AuthLayout>
     );
 }

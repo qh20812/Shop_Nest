@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\AdministrativeDivisionLevel;
-use App\Models\AdministrativeDivision;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -33,61 +32,90 @@ class AdministrativeDivisionSeeder extends Seeder
         }
 
         // Insert or update Vietnam country
-        $country = DB::table('countries')->updateOrInsert(
-            ['iso_code_2' => 'VN'],
-            [
+        $country = DB::table('countries')->where('iso_code_2', 'VN')->first();
+
+        if (! $country) {
+            DB::table('countries')->insert([
+                'iso_code_2' => 'VN',
                 'name' => json_encode(['vi' => 'Việt Nam', 'en' => 'Vietnam']),
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
 
         $countryId = DB::table('countries')->where('iso_code_2', 'VN')->value('id');
+        $now = now();
+        $provinceLevel = AdministrativeDivisionLevel::PROVINCE->value;
+        $wardLevel = AdministrativeDivisionLevel::WARD->value;
 
-        DB::transaction(function () use ($provinces, $countryId) {
-            foreach ($provinces as $province) {
-                if (! isset($province['code'], $province['name'])) {
+        $provinceRows = [];
+
+        foreach ($provinces as $province) {
+            if (! isset($province['code'], $province['name'])) {
+                continue;
+            }
+
+            $provinceRows[] = [
+                'country_id' => $countryId,
+                'parent_id' => null,
+                'name' => json_encode(['vi' => $province['name']]),
+                'level' => $provinceLevel,
+                'code' => (string) $province['code'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        DB::table('administrative_divisions')->upsert(
+            $provinceRows,
+            ['code', 'level'],
+            ['country_id', 'parent_id', 'name', 'updated_at']
+        );
+
+        $provinceIds = DB::table('administrative_divisions')
+            ->where('level', $provinceLevel)
+            ->pluck('id', 'code')
+            ->all();
+
+        $wardRows = [];
+
+        foreach ($provinces as $province) {
+            if (! isset($province['code'])) {
+                continue;
+            }
+
+            $parentId = $provinceIds[(string) $province['code']] ?? null;
+
+            if (! $parentId) {
+                continue;
+            }
+
+            foreach ($province['wards'] ?? [] as $ward) {
+                $wardName = $ward['name'] ?? null;
+
+                if ($wardName === null) {
                     continue;
                 }
 
-                $provinceCode = (string) $province['code'];
-
-                $provinceModel = AdministrativeDivision::updateOrCreate(
-                    ['code' => $provinceCode, 'level' => AdministrativeDivisionLevel::PROVINCE],
-                    [
-                        'country_id' => $countryId,
-                        'parent_id' => null,
-                        'name' => ['vi' => $province['name']],
-                        'level' => AdministrativeDivisionLevel::PROVINCE,
-                        'code' => $provinceCode,
-                    ]
-                );
-
-                $this->command?->info("Đã seed tỉnh/thành: {$province['name']} ({$provinceCode})");
-
-                // Seed wards as wards (since JSON doesn't have district level)
-                foreach ($province['wards'] ?? [] as $ward) {
-                    $wardName = $ward['name'] ?? null;
-
-                    if ($wardName === null) {
-                        continue;
-                    }
-
-                    $wardCode = (string) ($ward['code'] ?? $wardName);
-
-                    AdministrativeDivision::updateOrCreate(
-                        ['code' => $wardCode, 'level' => AdministrativeDivisionLevel::WARD],
-                        [
-                            'country_id' => $countryId,
-                            'parent_id' => $provinceModel->id,
-                            'name' => ['vi' => $wardName],
-                            'level' => AdministrativeDivisionLevel::WARD,
-                            'code' => $wardCode,
-                        ]
-                    );
-                }
+                $wardRows[] = [
+                    'country_id' => $countryId,
+                    'parent_id' => $parentId,
+                    'name' => json_encode(['vi' => $wardName]),
+                    'level' => $wardLevel,
+                    'code' => (string) ($ward['code'] ?? $wardName),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
-        });
+        }
+
+        foreach (array_chunk($wardRows, 500) as $chunk) {
+            DB::table('administrative_divisions')->upsert(
+                $chunk,
+                ['code', 'level'],
+                ['country_id', 'parent_id', 'name', 'updated_at']
+            );
+        }
 
         $this->command?->info('Hoàn tất seeding bảng administrative_divisions từ provinces.json');
     }

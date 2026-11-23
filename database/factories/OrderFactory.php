@@ -19,7 +19,7 @@ class OrderFactory extends Factory
 
         return [
             'customer_id' => User::factory(),
-            'order_number' => 'ORD-' . fake()->unique()->randomNumber(8),
+            'order_number' => 'ORD-'.fake()->unique()->randomNumber(8),
             'sub_total' => $subTotal,
             'shipping_fee' => $shippingFee,
             'discount_amount' => 0,
@@ -29,7 +29,7 @@ class OrderFactory extends Factory
             'payment_status' => fake()->randomElement(PaymentStatus::cases())->value,
             'shipping_address_id' => UserAddress::factory(),
             'notes' => fake()->sentence(),
-            
+
             // Dữ liệu tiền tệ bây giờ đã đúng
             'currency' => 'USD',
             'exchange_rate' => 1.0,

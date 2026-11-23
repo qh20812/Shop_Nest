@@ -2,23 +2,26 @@
 
 namespace Tests\Feature\Customer;
 
-use Tests\TestCase;
-use App\Models\User;
+use App\Http\Controllers\CartController;
+use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\CartItem;
 use App\Models\Promotion;
 use App\Models\PromotionCode;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class CartControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $user;
+
     protected $product;
+
     protected $variant;
 
     protected function setUp(): void
@@ -38,9 +41,10 @@ class CartControllerTest extends TestCase
 
         // Mock routes để Inertia không crash
         Route::middleware('web')->group(function () {
-            Route::post('/cart/apply-promotion', [\App\Http\Controllers\CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
+            Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
             Route::get('/checkout', function () {
                 session(['checkout_data' => ['mock' => true]]);
+
                 return redirect()->back();
             })->name('cart.checkout');
         });
@@ -60,10 +64,11 @@ class CartControllerTest extends TestCase
     }
 
     #[Test]
-    public function it_allows_guests_to_view_cart_index()
+    public function it_redirects_guests_to_login_when_viewing_cart()
     {
         $response = $this->get('/cart');
-        $this->assertEquals(200, $response->getStatusCode());
+
+        $response->assertRedirect(route('login'));
     }
 
     #[Test]
@@ -88,20 +93,15 @@ class CartControllerTest extends TestCase
     }
 
     #[Test]
-    public function guest_can_add_item_to_cart_session()
+    public function guests_are_redirected_to_login_when_adding_to_cart()
     {
         $response = $this->post('/cart/add', [
             'variant_id' => $this->variant->variant_id,
             'quantity' => 1,
         ]);
 
-        $response->assertStatus(302);
-        $response->assertSessionHas('success', 'Product added to cart!');
-
-        $guestItems = session('cart.guest_items', []);
-        $this->assertCount(1, $guestItems);
-        $this->assertEquals($this->variant->variant_id, $guestItems[0]['variant_id']);
-        $this->assertEquals(1, $guestItems[0]['quantity']);
+        $response->assertRedirect(route('login'));
+        $response->assertSessionMissing('cart.guest_items');
     }
 
     #[Test]
@@ -243,7 +243,7 @@ class CartControllerTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-    $response->assertSessionHas('error', 'The promotion code you entered is not valid.');
+        $response->assertSessionHas('error', 'The promotion code you entered is not valid.');
     }
 
     #[Test]
@@ -259,7 +259,7 @@ class CartControllerTest extends TestCase
 
         $response->assertStatus(302);
         $response->assertSessionHas('success', 'Promotion removed.');
-    $this->assertFalse(session()->has('cart.applied_promotion'));
+        $this->assertFalse(session()->has('cart.applied_promotion'));
     }
 
     #[Test]
@@ -271,9 +271,9 @@ class CartControllerTest extends TestCase
             'quantity' => 2,
         ]);
 
-    $response = $this->actingAs($this->user)->get('/checkout');
+        $response = $this->actingAs($this->user)->get('/checkout');
 
-    $response->assertStatus(302);
-    $this->assertTrue(session()->has('checkout_data'));
+        $response->assertStatus(302);
+        $this->assertTrue(session()->has('checkout_data'));
     }
 }

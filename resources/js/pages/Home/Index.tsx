@@ -65,6 +65,9 @@ interface PageProps extends Record<string, unknown> {
         placement?: string | null;
     }>;
     canRegister?: boolean;
+    auth?: {
+        user: { id: number } | null;
+    } | null;
 }
 
 const fallbackHeroImages = [
@@ -168,7 +171,7 @@ function toProductCard(product: Product): ProductCardModel {
 export default function Index() {
     const isLoading = usePageLoading({ delay: 300, minLoadingTime: 1500 });
     const { success, error: showError, info } = useToast();
-    const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [] } = usePage<PageProps>().props;
+    const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [], auth } = usePage<PageProps>().props;
 
     const heroImages =
         banners.length > 0
@@ -204,6 +207,12 @@ export default function Index() {
     };
 
     const handleWishlist = (product: ProductCardModel) => {
+        if (!auth?.user) {
+            router.visit('/login');
+
+            return;
+        }
+
         router.post(
             `/user/wishlist/items/${product.id}`,
             {},

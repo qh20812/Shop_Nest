@@ -58,7 +58,7 @@ return [
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
-        'default_model' => env('GROQ_MODEL', 'llama-3.1-8b-instant'),
+        'default_model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
         'timeout' => (int) env('GROQ_TIMEOUT', 20),
         'verify_ssl' => env('GROQ_VERIFY_SSL', false),
     ],

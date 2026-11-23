@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Role;
 use App\Models\ShipperProfile;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class ShipperSeeder extends Seeder
 {
@@ -17,9 +16,16 @@ class ShipperSeeder extends Seeder
     {
         // Get the Shipper role ID
         $shipperRole = Role::where('name->en', 'Shipper')->first();
-        
-        if (!$shipperRole) {
+
+        if (! $shipperRole) {
             $this->command->warn('Shipper role not found. Please run RoleSeeder first.');
+
+            return;
+        }
+
+        if (ShipperProfile::count() >= 10) {
+            $this->command->info('Shipper profiles already seeded, skipping.');
+
             return;
         }
 
@@ -39,7 +45,7 @@ class ShipperSeeder extends Seeder
                     'email' => fake()->unique()->safeEmail(),
                     'first_name' => fake()->firstName(),
                     'last_name' => fake()->lastName(),
-                    'phone_number' => fake()->phoneNumber(),
+                    'phone_number' => fake()->unique()->phoneNumber(),
                     'is_active' => $status !== 'suspended',
                 ]);
 

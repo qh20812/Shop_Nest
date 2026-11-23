@@ -4,21 +4,22 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class ShopFactory extends Factory
 {
     public function definition(): array
     {
         $name = fake()->company();
-        $slug = \Illuminate\Support\Str::slug($name . '-' . fake()->unique()->randomNumber(4));
+        $slug = Str::slug($name.'-'.fake()->unique()->randomNumber(4));
 
         return [
             'owner_id' => User::factory(),
             'name' => $name,
             'slug' => $slug,
             'description' => fake()->paragraphs(2, true),
-            'logo' => 'logos/default-shop-logo-' . fake()->numberBetween(1, 10) . '.png',
-            'banner' => 'banners/default-shop-banner-' . fake()->numberBetween(1, 10) . '.jpg',
+            'logo' => 'logos/default-shop-logo-'.fake()->numberBetween(1, 10).'.png',
+            'banner' => 'banners/default-shop-banner-'.fake()->numberBetween(1, 10).'.jpg',
             'phone' => fake()->phoneNumber(),
             'email' => fake()->companyEmail(),
             'website' => fake()->url(),
@@ -31,7 +32,7 @@ class ShopFactory extends Factory
             // Address
             'address' => fake()->streetAddress(),
             'city' => fake()->city(),
-            'state' => 'State ' . fake()->numberBetween(1, 50),
+            'state' => 'State '.fake()->numberBetween(1, 50),
             'postal_code' => fake()->postcode(),
             'country' => fake()->country(),
 
@@ -41,22 +42,22 @@ class ShopFactory extends Factory
             'commission_rate' => fake()->randomFloat(2, 5.00, 15.00),
 
             // Policies
-            'shipping_policies' => json_encode([
+            'shipping_policies' => [
                 'free_shipping_threshold' => fake()->numberBetween(50, 200),
                 'standard_delivery_days' => fake()->numberBetween(3, 7),
                 'express_delivery_days' => fake()->numberBetween(1, 3),
                 'international_shipping' => fake()->boolean(),
-            ]),
-            'return_policy' => json_encode([
+            ],
+            'return_policy' => [
                 'return_window_days' => fake()->numberBetween(7, 30),
                 'free_returns' => fake()->boolean(),
                 'conditions' => fake()->sentence(),
-            ]),
-            'social_media' => json_encode([
+            ],
+            'social_media' => [
                 'facebook' => fake()->url(),
                 'instagram' => fake()->url(),
                 'twitter' => fake()->url(),
-            ]),
+            ],
 
             // Performance metrics
             'rating' => fake()->randomFloat(1, 0.00, 5.00),
@@ -67,7 +68,7 @@ class ShopFactory extends Factory
             // SEO
             'meta_title' => fake()->sentence(8),
             'meta_description' => fake()->paragraph(),
-            'keywords' => json_encode(fake()->words(10)),
+            'keywords' => fake()->words(10),
 
             // Timestamps
             'verified_at' => fake()->optional(0.3)->dateTimeBetween('-1 year', 'now'),

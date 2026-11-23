@@ -64,11 +64,11 @@ class HybridChatbotService
             'default' => 'gpt-4o-mini',
         ],
         'groq' => [
-            'admin' => 'llama-3.1-8b-instant',
-            'seller' => 'llama-3.1-8b-instant',
-            'shipper' => 'llama-3.1-8b-instant',
-            'customer' => 'llama-3.1-8b-instant',
-            'default' => 'llama-3.1-8b-instant',
+            'admin' => 'qwen/qwen3.8-27b',
+            'seller' => 'qwen/qwen3.8-27b',
+            'shipper' => 'qwen/qwen3.8-27b',
+            'customer' => 'qwen/qwen3.8-27b',
+            'default' => 'qwen/qwen3.8-27b',
         ],
     ];
 

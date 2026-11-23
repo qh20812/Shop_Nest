@@ -67,6 +67,9 @@ interface SearchPageProps extends Record<string, unknown> {
         sortOptions: { value: string; label: string }[];
     };
     activeFilters: ActiveFiltersData;
+    auth?: {
+        user: { id: number } | null;
+    } | null;
 }
 
 type FilterValue = string | number | boolean | null | Array<string | number | boolean | null>;
@@ -109,7 +112,7 @@ function toCard(product: ProductCardData): ProductCardModel {
 }
 
 export default function SearchPage() {
-    const { query, products, filters, activeFilters } = usePage<SearchPageProps>().props;
+    const { query, products, filters, activeFilters, auth } = usePage<SearchPageProps>().props;
     const { success, error: showError } = useToast();
     const mobileFilters = useDisclosure();
     const [searchValue, setSearchValue] = React.useState(query ?? '');
@@ -344,6 +347,12 @@ export default function SearchPage() {
                             columns={3}
                             onAddToCart={(product) => router.visit(`/product/${product.id}`)}
                             onToggleWishlist={(product) => {
+                                if (!auth?.user) {
+                                    router.visit('/login');
+
+                                    return;
+                                }
+
                                 router.post(
                                     `/user/wishlist/items/${product.id}`,
                                     {},

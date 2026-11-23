@@ -22,16 +22,23 @@ class ChatSeeder extends Seeder
         })->take(3)->get();
 
         if ($users->isEmpty() || $sellers->isEmpty()) {
-            $this->command->info('Không đủ users (customers) hoặc sellers để seed chat data. Users found: ' . $users->count() . ', Sellers found: ' . $sellers->count());
+            $this->command->info('Không đủ users (customers) hoặc sellers để seed chat data. Users found: '.$users->count().', Sellers found: '.$sellers->count());
+
+            return;
+        }
+
+        if (Message::query()->exists()) {
+            $this->command->info('Chat data already seeded, skipping.');
+
             return;
         }
 
         // Tạo conversations
         foreach ($users as $user) {
             foreach ($sellers as $seller) {
-                    Conversation::firstOrCreate([
-                        'user_id' => $user->id,
-                        'receiver_id' => $seller->id,
+                Conversation::firstOrCreate([
+                    'user_id' => $user->id,
+                    'receiver_id' => $seller->id,
                 ]);
             }
         }
@@ -42,8 +49,8 @@ class ChatSeeder extends Seeder
             for ($i = 0; $i < rand(5, 15); $i++) {
                 Message::create([
                     'conversation_id' => $conversation->id,
-                        'sender_id' => rand(0, 1) ? $conversation->user_id : $conversation->receiver_id,
-                    'content' => 'Tin nhắn mẫu ' . ($i + 1),
+                    'sender_id' => rand(0, 1) ? $conversation->user_id : $conversation->receiver_id,
+                    'content' => 'Tin nhắn mẫu '.($i + 1),
                 ]);
             }
         }

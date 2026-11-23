@@ -17,8 +17,8 @@ class CategorySeeder extends Seeder
                     ['en' => 'Men\'s Pants', 'vi' => 'Quần Nam'],
                     ['en' => 'Women\'s Clothing', 'vi' => 'Áo Nữ'],
                     ['en' => 'Women\'s Dresses', 'vi' => 'Váy Nữ'],
-                    ['en' => 'Accessories', 'vi' => 'Phụ kiện']
-                ]
+                    ['en' => 'Accessories', 'vi' => 'Phụ kiện'],
+                ],
             ],
             [
                 'parent' => ['en' => 'Electronics', 'vi' => 'Điện tử'],
@@ -27,8 +27,8 @@ class CategorySeeder extends Seeder
                     ['en' => 'Tablets', 'vi' => 'Máy tính bảng'],
                     ['en' => 'Laptops', 'vi' => 'Laptop'],
                     ['en' => 'Headphones', 'vi' => 'Tai nghe'],
-                    ['en' => 'Speakers', 'vi' => 'Loa']
-                ]
+                    ['en' => 'Speakers', 'vi' => 'Loa'],
+                ],
             ],
             [
                 'parent' => ['en' => 'Home & Living', 'vi' => 'Nhà cửa & Đời sống'],
@@ -36,8 +36,8 @@ class CategorySeeder extends Seeder
                     ['en' => 'Kitchen Appliances', 'vi' => 'Đồ dùng nhà bếp'],
                     ['en' => 'Home Decor', 'vi' => 'Trang trí nhà cửa'],
                     ['en' => 'Furniture', 'vi' => 'Nội thất'],
-                    ['en' => 'Plants', 'vi' => 'Cây cảnh']
-                ]
+                    ['en' => 'Plants', 'vi' => 'Cây cảnh'],
+                ],
             ],
             [
                 'parent' => ['en' => 'Health & Beauty', 'vi' => 'Sức khỏe & Sắc đẹp'],
@@ -45,8 +45,8 @@ class CategorySeeder extends Seeder
                     ['en' => 'Skincare', 'vi' => 'Chăm sóc da'],
                     ['en' => 'Makeup', 'vi' => 'Trang điểm'],
                     ['en' => 'Perfume', 'vi' => 'Nước hoa'],
-                    ['en' => 'Supplements', 'vi' => 'Thực phẩm chức năng']
-                ]
+                    ['en' => 'Supplements', 'vi' => 'Thực phẩm chức năng'],
+                ],
             ],
             [
                 'parent' => ['en' => 'Books & Stationery', 'vi' => 'Sách & Văn phòng phẩm'],
@@ -54,31 +54,41 @@ class CategorySeeder extends Seeder
                     ['en' => 'Literature', 'vi' => 'Sách văn học'],
                     ['en' => 'Economics', 'vi' => 'Sách kinh tế'],
                     ['en' => 'Notebooks', 'vi' => 'Sổ tay'],
-                    ['en' => 'Pens', 'vi' => 'Bút viết']
-                ]
-            ]
+                    ['en' => 'Pens', 'vi' => 'Bút viết'],
+                ],
+            ],
         ];
 
         foreach ($categories as $categoryData) {
             $parentName = $categoryData['parent'];
             $children = $categoryData['children'];
-            
-            $parent = Category::create([
-                'name' => $parentName,
-                'description' => [
-                    'en' => "Products in {$parentName['en']} category",
-                    'vi' => "Các sản phẩm thuộc danh mục {$parentName['vi']}"
-                ],
-                'image_url' => 'https://dummyimage.com/300x300/666266/ffffff',
-                'is_active' => true,
-            ]);
+
+            $parent = Category::where('name->en', $parentName['en'])->first();
+
+            if (! $parent) {
+                $parent = Category::create([
+                    'name' => $parentName,
+                    'description' => [
+                        'en' => "Products in {$parentName['en']} category",
+                        'vi' => "Các sản phẩm thuộc danh mục {$parentName['vi']}",
+                    ],
+                    'image_url' => 'https://dummyimage.com/300x300/666266/ffffff',
+                    'is_active' => true,
+                ]);
+            }
 
             foreach ($children as $childName) {
+                if (Category::where('name->en', $childName['en'])
+                    ->where('parent_category_id', $parent->category_id)
+                    ->exists()) {
+                    continue;
+                }
+
                 Category::create([
                     'name' => $childName,
                     'description' => [
                         'en' => "Products in {$childName['en']} category",
-                        'vi' => "Các sản phẩm thuộc danh mục {$childName['vi']}"
+                        'vi' => "Các sản phẩm thuộc danh mục {$childName['vi']}",
                     ],
                     'parent_category_id' => $parent->category_id,
                     'image_url' => 'https://dummyimage.com/300x300/666266/ffffff',

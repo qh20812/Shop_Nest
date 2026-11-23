@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -37,5 +38,11 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated(); // User is logged in after registration
         $response->assertRedirect(route('verification.notice'));
         $response->assertSessionHas('status');
+
+        $user = User::where('email', 'ngocquyhuynh4@gmail.com')->firstOrFail();
+        $this->assertTrue(
+            $user->roles()->where('name->en', 'Customer')->exists(),
+            'User mới đăng ký phải được gán role Customer.'
+        );
     }
 }

@@ -1,9 +1,10 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, Mail } from 'lucide-react';
 import * as React from 'react';
 
 import { AuthBrandPanel } from '@/components/layout/AuthBrandPanel';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormField } from '@/components/ui/form-field';
@@ -11,7 +12,15 @@ import Input from '@/components/ui/input';
 import { TextLink } from '@/components/ui/text-link';
 import { Heading, Text } from '@/components/ui/typography';
 
+interface LoginPageProps extends Record<string, unknown> {
+    errors?: {
+        google?: string;
+    };
+}
+
 export default function LoginPage() {
+    const { errors: pageErrors } = usePage<LoginPageProps>().props;
+    const googleError = pageErrors?.google;
     const [formData, setFormData] = React.useState({
         identifier: '',
         password: '',
@@ -72,6 +81,8 @@ export default function LoginPage() {
                     Tiếp tục với tài khoản của bạn để theo dõi đơn hàng và giỏ hàng.
                 </Text>
             </div>
+
+            {googleError ? <Alert tone="danger" title="Đăng nhập Google thất bại" description={googleError} className="mt-6" /> : null}
 
             <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-5" noValidate>
                 <FormField label="Email, số điện thoại hoặc tên đăng nhập" required error={errors.identifier}>

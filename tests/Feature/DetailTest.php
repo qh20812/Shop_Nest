@@ -45,6 +45,22 @@ class DetailTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_guests_are_redirected_to_login_for_product_detail()
+    {
+        $product = Product::factory()->create([
+            'status' => ProductStatus::PUBLISHED,
+            'is_active' => true,
+        ]);
+
+        $response = $this->get("/product/{$product->product_id}");
+
+        $response->assertRedirect(route('login'));
+        $this->assertStringEndsWith(
+            "/product/{$product->product_id}",
+            (string) session('url.intended')
+        );
+    }
+
     public function test_show_product_detail_404_for_nonexistent_product()
     {
         $user = User::factory()->create();

@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\Order;
+use App\Models\ReturnRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ReturnRequest>
+ * @extends Factory<ReturnRequest>
  */
 class ReturnRequestFactory extends Factory
 {
@@ -21,7 +22,7 @@ class ReturnRequestFactory extends Factory
         return [
             'order_id' => Order::factory(),
             'customer_id' => User::factory(),
-            'return_number' => 'RTN-' . $this->faker->unique()->randomNumber(8),
+            'return_number' => 'RTN-'.$this->faker->unique()->randomNumber(8),
             'reason' => $this->faker->numberBetween(1, 5),
             'description' => $this->faker->paragraph(),
             'status' => 'pending', // Default: Pending

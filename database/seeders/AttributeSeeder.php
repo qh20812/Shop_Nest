@@ -17,9 +17,10 @@ class AttributeSeeder extends Seeder
         ];
 
         foreach ($attributes as $attributeName => $values) {
-            $attribute = Attribute::create(['name' => $attributeName]);
+            $attribute = Attribute::firstOrCreate(['name' => $attributeName]);
+
             foreach ($values as $value) {
-                $attribute->values()->create(['value' => $value]);
+                $attribute->values()->firstOrCreate(['value' => $value]);
             }
         }
     }

@@ -30,31 +30,31 @@ class OrderTestSeeder extends Seeder
         $timestamp = time();
         $orders = [
             [
-                'order_number' => 'ORD' . $timestamp . '1',
+                'order_number' => 'ORD'.$timestamp.'1',
                 'status' => 'pending_confirmation',
                 'payment_status' => 'unpaid',
                 'total_amount' => 100000,
             ],
             [
-                'order_number' => 'ORD' . $timestamp . '2',
+                'order_number' => 'ORD'.$timestamp.'2',
                 'status' => 'processing',
                 'payment_status' => 'paid',
                 'total_amount' => 200000,
             ],
             [
-                'order_number' => 'ORD' . $timestamp . '3',
+                'order_number' => 'ORD'.$timestamp.'3',
                 'status' => 'delivering',
                 'payment_status' => 'paid',
                 'total_amount' => 150000,
             ],
             [
-                'order_number' => 'ORD' . $timestamp . '4',
+                'order_number' => 'ORD'.$timestamp.'4',
                 'status' => 'delivered',
                 'payment_status' => 'paid',
                 'total_amount' => 300000,
             ],
             [
-                'order_number' => 'ORD' . $timestamp . '5',
+                'order_number' => 'ORD'.$timestamp.'5',
                 'status' => 'cancelled',
                 'payment_status' => 'refunded',
                 'total_amount' => 75000,

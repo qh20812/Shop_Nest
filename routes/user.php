@@ -127,13 +127,15 @@ Route::prefix('addresses')->as('addresses.')->group(function () {
     Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
 });
 
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
-Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
-Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
-Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
-Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
+Route::middleware(['auth', 'verified.optional'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
+    Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
+});
 
 Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Change password routes for customer

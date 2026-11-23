@@ -14,12 +14,23 @@ class CartSeeder extends Seeder
         $customers = Role::where('name->en', 'Customer')->first()?->users;
         $variants = ProductVariant::where('stock_quantity', '>', 0)->get();
 
-        if ($variants->isEmpty()) return;
+        if (! $customers || $customers->isEmpty() || $variants->isEmpty()) {
+            return;
+        }
+
+        if (CartItem::query()->exists()) {
+            $this->command?->info('Cart items already seeded, skipping.');
+
+            return;
+        }
 
         // Tạo giỏ hàng cho khoảng 15 khách hàng
-        foreach ($customers->random(15) as $customer) {
+        $cartOwners = $customers->random(min(15, $customers->count()));
+
+        foreach ($cartOwners as $customer) {
             // Mỗi giỏ hàng có 1-5 sản phẩm
-            $items = $variants->random(rand(1, 5))->unique('variant_id');
+            $maxItems = min(5, $variants->count());
+            $items = $variants->random(rand(1, $maxItems))->unique('variant_id');
             foreach ($items as $item) {
                 CartItem::create([
                     'user_id' => $customer->id,

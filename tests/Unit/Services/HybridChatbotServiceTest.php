@@ -2,13 +2,15 @@
 
 namespace Tests\Unit\Services;
 
+use App\Models\AnalyticsReport;
+use App\Models\ChatMessage;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\HybridChatbotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class HybridChatbotServiceTest extends TestCase
 {
@@ -52,7 +54,7 @@ class HybridChatbotServiceTest extends TestCase
                     ['message' => ['content' => 'Tôi có thể giúp bạn tìm sản phẩm phù hợp.']],
                 ],
                 'usage' => ['total_tokens' => 100],
-                'model' => 'llama3-70b-8192',
+                'model' => 'qwen/qwen3.8-27b',
             ], 200),
             '*' => Http::response([], 500),
         ]);
@@ -66,6 +68,11 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertSame('groq', $result['provider']);
         $this->assertSame('customer', $result['role']);
         $this->assertNotEmpty($result['reply']);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'api.groq.com')
+                && $request['model'] === 'qwen/qwen3.8-27b';
+        });
     }
 
     #[Test]
@@ -79,7 +86,7 @@ class HybridChatbotServiceTest extends TestCase
                     ['message' => ['content' => 'Tôi có thể hỗ trợ quản lý cửa hàng của bạn.']],
                 ],
                 'usage' => ['total_tokens' => 110],
-                'model' => 'llama3-70b-8192',
+                'model' => 'qwen/qwen3.8-27b',
             ], 200),
             '*' => Http::response([], 500),
         ]);
@@ -178,7 +185,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->attachRole($user, 'Admin', 'Quản trị');
 
         // Mock analytics report
-        \App\Models\AnalyticsReport::create([
+        AnalyticsReport::create([
             'title' => 'Monthly Sales',
             'type' => 'revenue',
             'period_type' => 'monthly',
@@ -207,7 +214,7 @@ class HybridChatbotServiceTest extends TestCase
         $this->assertSame('admin', $result['role']);
 
         // Check that context was stored in DB
-        $chatMessage = \App\Models\ChatMessage::find($result['message_id']);
+        $chatMessage = ChatMessage::find($result['message_id']);
         $this->assertNotNull($chatMessage);
         $this->assertNotNull($chatMessage->context_snapshot);
         $this->assertArrayHasKey('recent_reports', $chatMessage->context_snapshot);
@@ -222,7 +229,7 @@ class HybridChatbotServiceTest extends TestCase
             'services.openai.timeout' => 5,
             'services.groq.api_key' => 'test-groq-key',
             'services.groq.base_url' => 'https://api.groq.com/openai/v1',
-            'services.groq.default_model' => 'llama3-70b-8192',
+            'services.groq.default_model' => 'qwen/qwen3.8-27b',
             'services.groq.timeout' => 5,
         ]);
     }

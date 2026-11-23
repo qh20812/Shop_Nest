@@ -31,10 +31,10 @@ class RoleSeeder extends Seeder
         foreach ($roles as $roleData) {
             // Sử dụng firstOrNew để lấy hoặc tạo một instance mới mà không lưu
             $role = Role::firstOrNew(['name->en' => $roleData['name']['en']]);
-            
+
             // Fill dữ liệu vào instance, lúc này trait HasTranslations sẽ hoạt động
             $role->fill($roleData);
-            
+
             // Lưu instance vào database
             $role->save();
         }

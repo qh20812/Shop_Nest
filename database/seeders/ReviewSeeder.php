@@ -14,7 +14,13 @@ class ReviewSeeder extends Seeder
         $customers = Role::where('name->en', 'Customer')->first()?->users;
         $products = Product::all();
 
-        if ($customers->isEmpty() || $products->isEmpty()) {
+        if (! $customers || $customers->isEmpty() || $products->isEmpty()) {
+            return;
+        }
+
+        if (Review::query()->exists()) {
+            $this->command?->info('Reviews already seeded, skipping.');
+
             return;
         }
 

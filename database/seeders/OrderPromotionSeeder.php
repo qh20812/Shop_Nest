@@ -10,39 +10,63 @@ class OrderPromotionSeeder extends Seeder
 {
     public function run(): void
     {
-        $orders = Order::all();
-        $promotions = Promotion::where('is_active', true)->get();
+        if (Order::whereHas('promotions')->exists()) {
+            $this->command?->info('Order promotions already seeded, skipping.');
 
-        if ($promotions->isEmpty()) {
+            return;
+        }
+
+        $orders = Order::with('items')->get();
+        $promotions = Promotion::where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->get();
+
+        if ($promotions->isEmpty() || $orders->isEmpty()) {
             return;
         }
 
         foreach ($orders as $order) {
             // 30% cơ hội một đơn hàng áp dụng khuyến mãi
-            if (rand(1, 100) <= 30) {
-                $promotion = $promotions->random();
-
-                // Kiểm tra điều kiện tối thiểu
-                if ($order->sub_total >= $promotion->min_order_amount) {
-                    $discountAmount = 0;
-                    if ($promotion->type == 1) { // Percentage
-                        $discountAmount = ($order->sub_total * $promotion->value) / 100;
-                        if ($discountAmount > $promotion->max_discount_amount) {
-                            $discountAmount = $promotion->max_discount_amount;
-                        }
-                    } else { // Fixed Amount
-                        $discountAmount = $promotion->value;
-                    }
-
-                    // Cập nhật đơn hàng
-                    $order->discount_amount = $discountAmount;
-                    $order->total_amount = ($order->sub_total + $order->shipping_fee) - $discountAmount;
-                    $order->save();
-
-                    // Gán vào bảng pivot
-                    $order->promotions()->attach($promotion->promotion_id, ['discount_applied' => $discountAmount]);
-                }
+            if (rand(1, 100) > 30 || $order->promotions()->exists()) {
+                continue;
             }
+
+            $promotion = $promotions->random();
+            $subTotal = (float) $order->sub_total;
+            $shippingFee = (float) $order->shipping_fee;
+            $minOrderAmount = (float) ($promotion->min_order_amount ?? 0);
+
+            // Kiểm tra điều kiện tối thiểu
+            if ($subTotal < $minOrderAmount) {
+                continue;
+            }
+
+            if ((int) $promotion->type === 1) { // Percentage
+                $discountAmount = $subTotal * ((float) $promotion->value) / 100;
+
+                if ($promotion->max_discount_amount !== null) {
+                    $discountAmount = min($discountAmount, (float) $promotion->max_discount_amount);
+                }
+            } else { // Fixed amount
+                $discountAmount = (float) $promotion->value;
+            }
+
+            // Không cho giảm giá vượt quá giá trị đơn hàng.
+            $discountAmount = min($discountAmount, $subTotal + $shippingFee);
+            $totalAmount = $subTotal + $shippingFee - $discountAmount;
+
+            $order->update([
+                'discount_amount' => $discountAmount,
+                'total_amount' => $totalAmount,
+                'total_amount_base' => $totalAmount,
+            ]);
+
+            $order->promotions()->attach($promotion->promotion_id, [
+                'discount_applied' => $discountAmount,
+            ]);
+
+            $promotion->apply($discountAmount);
         }
     }
 }

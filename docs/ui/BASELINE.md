@@ -13,7 +13,7 @@
 | Primitive `components/ui` | 47 |
 | File import `Page.css` | 41 |
 | Chỗ dùng `className=` | 2.096 |
-| Render target thiếu file | 17 |
+| Render target thiếu file | 16 (17 trước Phase 5) |
 | File trong `token-allowlist.json` sau baseline | 187 |
 | Tổng vi phạm guardrail ghi nhận | 4.755 |
 
@@ -55,7 +55,7 @@
 | # | Page | Layout | Props chính | Trạng thái | Hành động chính | Ghi chú |
 |---|---|---|---|---|---|---|
 | 1 | Auth/ForgotPassword | Auth | status | loading, form | useForm | — |
-| 2 | Auth/Login | Auth | — | loading | POST /login | no props |
+| 2 | Auth/Login | Auth | status, canResetPassword | loading | POST /login | errors.google |
 | 3 | Auth/Register | Auth | — | loading | — | no props |
 | 4 | Auth/ResetPassword | Auth | email, token | loading, form | useForm | — |
 | 5 | Auth/SellerRegister | Auth | — | static | — | no props |
@@ -247,7 +247,9 @@
 - `pages/Seller/Promotions/Index.tsx`
 - `pages/Seller/Shop/Edit.tsx`
 
-## 6. Render target thiếu file (17)
+## 6. Render target thiếu file (16)
+
+Trước Phase 5 là 17; `Auth/ConfirmPassword` đã được tạo trong Phase 5.
 
 | Component | Nguồn render |
 |---|---|
@@ -258,7 +260,6 @@
 | Admin/Inventory/Report | app/Http/Controllers/Admin/Concerns/InventoryReportingTrait.php |
 | Admin/Orders/Show | app/Http/Controllers/Admin/OrderController.php |
 | Admin/Returns/Show | app/Http/Controllers/Admin/ReturnController.php |
-| Auth/ConfirmPassword | app/Http/Controllers/Auth/ConfirmablePasswordController.php |
 | Product/Index | app/Http/Controllers/ProductController.php |
 | Product/Show | app/Http/Controllers/ProductController.php |
 | Seller/Promotions/Edit | app/Http/Controllers/Seller/PromotionController.php |

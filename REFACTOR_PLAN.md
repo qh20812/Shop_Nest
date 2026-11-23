@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3 hoàn tất; **Phase 4 hoàn tất** (2026-11-23) — 8 page storefront/auth-free migrated, 7/8 page đã verify runtime, `ProductDetail` chờ dữ liệu sản phẩm để chụp; Phase 5 chưa build.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4 hoàn tất; **Phase 5 hoàn tất** (2026-11-23) — 8 page Auth migrated (thêm `Auth/ConfirmPassword`), `ResultState` sang CSS thuần, allowlist **104**; Phase 6 chưa build. Chi tiết ở §15.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -28,7 +28,7 @@
 | CSS runtime | 1 entry `resources/css/app.css`, không Tailwind, không `@apply`, không `@theme`                 |
 | Token       | `--sn-*` 2 tầng, đầy đủ trong `resources/css/tokens/`                                           |
 | Component   | 47 primitive toàn cục (37 ở Phase 2 + 10 legacy defer), dùng class `sn-*`, variant qua `data-*` |
-| Page        | 78 page dùng `*.module.css`, không còn class Tailwind                                           |
+| Page        | 79 page dùng `*.module.css`, không còn class Tailwind                                           |
 | Dark mode   | `[data-theme='dark']`, đủ token, không FOUC                                                     |
 | Workspace   | `WorkspaceLayout` mới thay `layouts/app/AppLayout`, icon Lucide                                 |
 | Tooling     | `scripts/check-tokens.mjs` viết lại thành guardrail CSS thuần                                   |
@@ -53,7 +53,7 @@
 | 2     | 37 primitive dùng chung + 10 legacy defer |  XL |       ~56 |
 | 3     | 4 shell/layout + tách reset Page.css      |   L |       ~26 |
 | 4     | Storefront                                |   L |       ~35 |
-| 5     | Auth                                      |   M |       ~12 |
+| 5     | Auth                                      |   M |       ~14 |
 | 6     | Customer + Settings                       |  XL |       ~30 |
 | 7     | Seller                                    |   L |       ~20 |
 | 8     | Admin                                     |  XL |       ~55 |
@@ -116,6 +116,14 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 29  | Phase 3 hotfix | Trước Phase 4: (1) thêm nền `var(--sn-color-canvas)` cho `.sn-storefront__main` hoặc pin root đúng cách; (2) đổi Pagination sang `div role=navigation`; (3) scope `base/*`; (4) chụp/so 5 trang legacy; (5) smoke 4 layout + modal trên sidebar |
 | 30  | Docs tạm xoá   | Khôi phục `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md`; chỉ xoá/archived ở Phase 11. Không đưa các xoá này vào commit Phase 3 |
 | 31  | Phase 4 thêm   | Thêm `commerce/Countdown.tsx` vào phạm vi Phase 4 (dependency của `FlashSaleModule`). `check-tokens.mjs` phải quét thêm `resources/js/**/*.module.css` trước khi Phase 4 dùng module CSS |
+| 32  | Phase 5 scope  | **8 page**: 7 page cũ + `Auth/ConfirmPassword` tạo mới (~40 dòng, trên `AuthLayout variant="centered"`, không đổi route/props). Thêm `components/feedback/ResultState.tsx` vào Phase 5 vì `VerifyEmail` phụ thuộc và `PaymentResult` sẽ dùng lại ở Phase 6. Allowlist 112 → **104** (7 entry Auth + `ResultState`) |
+| 33  | Password strength | Viết lại `password-strength` dùng primitive `Progress` **1 thanh** + nhãn chữ; xoá khối `.sn-password*` trong `field.css`. Không giữ 4 thanh segmented 3 màu |
+| 34  | Auth form width | `Login`, `ForgotPassword`, `ResetPassword`, `VerifyEmail`, `ConfirmPassword` giữ `--sn-container-form` (420 px); `Register`, `SellerRegister`, `ShipperRegister` dùng biến thể rộng `--sn-container-form-wide` (**600 px**) để grid 2 cột không bị bóp còn ~200 px/ô |
+| 35  | Auth panel    | Trust point **không số**: "Shop đã kiểm duyệt", "Đổi trả theo chính sách", "Hỗ trợ qua hotline". Bỏ `7 ngày`, `24/7`, "Shop Việt đã kiểm duyệt" (không có nguồn trong Legal, trái #28). Bỏ props chết `imageUrl`/`imageAlt`, bỏ `serif`, tối đa 4 phần tử chữ (bỏ label role trùng eyebrow hoặc bỏ tagline) |
+| 36  | Auth theme    | Auth **không pin light**; sau migrate phải đạt cả light và dark, kiểm bằng computed color (không chỉ nhìn ảnh). Hiện `text-ink` ở heading section đo được `rgb(29,27,23)` trên nền `rgb(13,15,12)` |
+| 37  | Auth a11y     | Nút hiện/ẩn mật khẩu dùng `IconButton` (bỏ `focus-ring`/`rounded-chip` legacy); `FileDropzone` nhận `label`/`aria-label` theo từng field (3 dropzone hiện dùng chung một label); đồng bộ validate client `Register` với regex của `RegisterRequest` (hoa/thường/số/ký tự đặc biệt) |
+| 38  | Auth props    | `Login` khai báo `canResetPassword` + `status` do `AuthenticatedSessionController::create` truyền; hiện flash `status`, ẩn link "Quên mật khẩu?" khi route không tồn tại. Không đổi payload/route |
+| 39  | Git trước Phase 5 | Commit **tách riêng** phần backend/route/test đang dở (52 file working tree, gồm `routes/{web,user}.php`, controllers, factories, seeders, 2 page Phase 4) trước khi build Phase 5. Không trộn vào commit UI, giữ nguyên tắc “mỗi phase là một đơn vị merge được” |
 
 ---
 
@@ -158,7 +166,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; **112 sau Phase 4**        | Giữ làm ratchet đến Phase 11                              |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; **104 sau Phase 5**        | Giữ làm ratchet đến Phase 11                              |
 | `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
@@ -169,9 +177,11 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 
 ### 2.4 Trang thiếu (backlog, không tạo trong refactor)
 
-`Admin/CustomerSegments/*` (4), `Admin/Inventory/Report`, `Admin/Orders/Show`, `Admin/Returns/Show`, `Seller/Promotions/Edit|Show`, `Seller/Reports/*` (2), `Seller/Wallet/*` (3), `Product/Index|Show` (2), `Auth/ConfirmPassword` — **17 render target**.
+`Admin/CustomerSegments/*` (4), `Admin/Inventory/Report`, `Admin/Orders/Show`, `Admin/Returns/Show`, `Seller/Promotions/Edit|Show`, `Seller/Reports/*` (2), `Seller/Wallet/*` (3), `Product/Index|Show` (2) — **16 render target**.
 
 Các `Inertia::render` này đang trỏ file không tồn tại. **Không sửa trong refactor UI**; ghi nhận để không bị hiểu là regression.
+
+**Ngoại lệ Phase 5:** `Auth/ConfirmPassword` đã được đưa **vào** Phase 5 (quyết định #32) vì route `password.confirm` đã đăng ký (`ConfirmablePasswordController::show`) và page thiếu làm truy cập trực tiếp hỏng ở client. 16 target còn lại vẫn giữ backlog.
 
 ### 2.5 Phát hiện khi rà soát trước Phase 3 (2026-11-23)
 
@@ -189,6 +199,25 @@ Các số liệu dưới đây đo trực tiếp trên code + Edge headless/CDP,
 | Breakpoint 640 chưa có trong tài liệu                                   | `@media (min-width: 40rem)` ở overlay/feedback/navigation                                                                                                   | Phase 3 dùng breakpoint dày đặc, cần chốt trước                                                                        |
 | Git casing                                                              | 7 file `components/ui` track chữ hoa nhưng đĩa chữ thường (`Avatar`, `Header`, `Insights`, `Navbar`, `Pagination`, `Sidebar`, `Tooltip`)                    | Checkout Linux/CI có thể fail                                                                                          |
 | `@fortawesome/fontawesome-free`                                         | 0 chỗ dùng trong `resources/js`                                                                                                                             | Ghi backlog, xoá ở Phase 11                                                                                            |
+
+### 2.6 Đo lại trước Phase 5 (2026-11-23)
+
+Số liệu dưới đây đo trực tiếp trên working tree (build sạch + Edge headless/CDP) để chốt scope Phase 5:
+
+| Chỉ số                                         | Giá trị đo được                                                                                     |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| File page / primitive                          | 78 / 47 (79 page sau khi tạo `Auth/ConfirmPassword` ở Phase 5)                                       |
+| `className=`                                   | 2.081                                                                                               |
+| File import `Page.css`                         | **40** (không phải 41; một file đã migrate ở Phase 4)                                                |
+| File import `layouts/app/AppLayout`            | 39 (khớp tài liệu)                                                                                   |
+| `bx-*`                                         | 232                                                                                                 |
+| Allowlist                                      | 112 file, trong đó **7 entry Auth** (`Login`, `Register`, `ForgotPassword`, `ResetPassword`, `ShipperRegister`, `VerifyEmail`, `components/auth/SellerRegisterForm`) |
+| CSS bundle `build`                             | `app-*.css` **179,67 kB** + chunk `Page.css` **43,85 kB** (không tái lập được con số 130,77 kB ở §15) |
+| Gate                                           | `types`, `format:check`, `check:css` (167 file), `build` đều pass; `/login`, `/register`, `/forgot-password`, `/reset-password/*`, `/register/seller`, `/register/shipper` trả 200 |
+| Auth light                                     | `.sn-auth__form` 420 px, panel 720 px @1440; không tràn ngang ở 390/768/1440 (`scrollWidth === innerWidth`) |
+| Auth dark                                      | Nền shell `rgb(13,15,12)`; heading `sn-*` đúng token, nhưng 4 heading section dùng `text-ink` đo được `rgb(29,27,23)` → gần như vô hình |
+| Utility Nếp còn trong Auth                     | 57 chỗ (`Login` 10, `Register` 11, `ResetPassword` 9, `ShipperRegister` 15, `SellerRegisterForm` 10, `ForgotPassword` 2) |
+| Form đăng ký                                   | `SellerRegister` 420×940, `ShipperRegister` 420×1177 @1440; grid 2 cột cho input ~202 px             |
 
 ---
 
@@ -214,7 +243,7 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 | Khu vực          | Grid                         | Mật độ     | Nhịp dọc       | Đặc trưng                                                                          |
 | ---------------- | ---------------------------- | ---------- | -------------- | ---------------------------------------------------------------------------------- |
 | Storefront       | 12 cột, hero 7/5, shelf 4-up | Thoáng vừa | `--sn-section` | Catalogue in, tiêu đề lớn, ảnh 4:5, metadata 1 dòng                                |
-| Auth             | 6/6 split, form 420 px       | Thoáng     | 32 px          | Không card giữa màn hình; panel trái là brand ledger                               |
+| Auth             | 6/6 split, form 420 px (600 px cho trang đăng ký) | Thoáng     | 32 px          | Không card giữa màn hình; panel trái là brand ledger                               |
 | Customer account | 220 px rail + content        | Vừa        | 24–32 px       | Bảng đơn, timeline, form dọc                                                       |
 | Seller           | 232 px sidebar               | Dày        | 20–24 px       | KPI strip, bảng, form 2 cột                                                        |
 | Admin            | 232 px sidebar               | Dày nhất   | 16–20 px       | Bảng ledger, filter bar, bulk action                                               |
@@ -249,7 +278,7 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 - **Lucide only**, stroke 1.75, size 14/16/20/24. Xoá Boxicons khỏi `app.blade.php` ở Phase 11.
 - Ảnh sản phẩm 4:5, radius 2 px, `object-fit: cover`. Không overlay card lên ảnh.
-- Logo giữ nguyên `public/image/ShopnestLogoSVG.svg`, không đổi màu.
+- Logo dùng asset thật đang có: `public/image/ShopnestLogo.png` (logo ngang, kèm chữ) và `public/image/ShopnestLogoIcon.ico`; không đổi màu. **Lưu ý:** `app.blade.php` đang link favicon `/image/ShopnestLogoSVG.svg` — file này **không tồn tại**; sửa link trong Phase 11 cùng lúc dọn blade (hoặc thêm asset SVG nếu muốn giữ tên).
 - Không icon tự vẽ SVG, không emoji trong UI/alt/filename.
 
 ### 3.6 Copy
@@ -646,6 +675,7 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
     --sn-container: 90rem; /* 1440 */
     --sn-container-narrow: 65rem; /* 1040 */
     --sn-container-form: 26.25rem; /* 420 */
+    --sn-container-form-wide: 37.5rem; /* 600 — trang đăng ký nhiều section (quyết định #34) */
 
     /* Control */
     --sn-control-sm: 2rem; /* 32 */
@@ -1453,9 +1483,9 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 **Auth**
 
-- `AuthLayout`, `AuthBrandPanel`: split **6/6**, form rộng `--sn-container-form` (420 px).
-- Panel trái là editorial: logo, eyebrow, headline, mô tả, 3 trust point, hotline/email. **Bỏ ảnh picsum và bỏ ý "số liệu thật"** (shared props không có số, backend ngoài phạm vi).
-- Giữ `variant="centered"` cho các trang không dùng split.
+- `AuthLayout`, `AuthBrandPanel`: split **6/6**, form rộng `--sn-container-form` (420 px); trang đăng ký dùng `--sn-container-form-wide` (600 px, quyết định #34).
+- Panel trái là editorial: logo, eyebrow, headline, mô tả, **3 trust point không số**, hotline/email. **Bỏ ảnh picsum và bỏ ý "số liệu thật"** (shared props không có số, backend ngoài phạm vi). Tối đa 4 phần tử chữ — không lặp eyebrow + tagline + label role (quyết định #35).
+- Giữ `variant="centered"` cho các trang không dùng split (`ForgotPassword`, `ResetPassword`, `VerifyEmail`, `ConfirmPassword`).
 
 **Account**
 
@@ -1541,21 +1571,63 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 **DoD:** 8 trang hợp lệ ở 375/390/768/1024/1440; ảnh không nhảy layout (đặt `width/height` hoặc `aspect-ratio`); dark mode đạt; không còn class Tailwind/Nếp trong file đã migrate; mỗi page có `*.module.css`; allowlist giảm tương ứng; `types` + `build` + `check:css` sạch.
 
 > **Trạng thái 2026-11-23:** 8 page đã migrate; `Price` bỏ `cva`; thêm `Countdown`; `ProductCard`/`ShopIdentity` bỏ badge xác thực giả, badge ra khỏi ảnh; Home bỏ UtilityStrip/voucher/hero trust/số liệu giả/01-02-03, còn 7 section + 2 eyebrow; Search rail 264px sticky, mobile sheet, filter group rỗng bị ẩn; Legal viết lại tiếng Việt prose 65ch; copy en-dash đã xoá.
-> Allowlist 143 → **112**; `check:css` pass (167 file checked); `types`/`format:check`/`build` pass; CSS bundle **130,77 kB**. Runtime: 7 trang guest verify light/dark, không tràn ngang ở 375/390/768/1024/1440; `ProductDetail` chưa có product trong DB để chụp, cần review khi có dữ liệu mẫu.
+> Allowlist 143 → **112**; `check:css` pass (167 file checked); `types`/`format:check`/`build` pass; CSS bundle **130,77 kB** (đo lại 2026-11-23: `app-*.css` 179,67 kB + chunk `Page.css` 43,85 kB — xem §2.6 và ghi chú ở §15). Runtime: 7 trang guest verify light/dark, không tràn ngang ở 375/390/768/1024/1440; `ProductDetail` chưa có product trong DB để chụp, cần review khi có dữ liệu mẫu.
 
 ---
 
-### Phase 5 — Auth (7 page)
+### Phase 5 — Auth (8 page)
 
-`Login`, `Register`, `ForgotPassword`, `ResetPassword`, `VerifyEmail`, `SellerRegister`, `ShipperRegister` + `auth/SellerRegisterForm`.
+|   # | Page                     | Layout                    | Ghi chú                                                                                   |
+| --: | ------------------------ | ------------------------- | ----------------------------------------------------------------------------------------- |
+|   9 | `Auth/Login`             | split 6/6, form 420       | Nhận `canResetPassword` + `status`; Google button; flash `status` hiển thị bằng `Alert`     |
+|  10 | `Auth/Register`          | split 6/6, form 600       | Đồng bộ validate client với `RegisterRequest`; `PasswordStrength` dùng `Progress`           |
+|  11 | `Auth/ForgotPassword`    | centered 420              | Giữ `status` success bằng `Alert`                                                          |
+|  12 | `Auth/ResetPassword`     | centered 420              | Email readonly + token hidden; 2 field mật khẩu                                            |
+|  13 | `Auth/VerifyEmail`       | centered 420              | Thay `ResultState` bằng bản CSS thuần (migrate cùng phase)                                 |
+|  14 | `Auth/SellerRegister`    | split 6/6, form 600       | Qua `components/auth/SellerRegisterForm`; **1 trang 3 section**, không có stepper          |
+|  15 | `Auth/ShipperRegister`   | split 6/6, form 600       | 3 section + 3 dropzone tài liệu                                                            |
+|  16 | `Auth/ConfirmPassword`   | centered 420              | **Tạo mới** (quyết định #32); route `password.confirm` đã có sẵn                            |
 
-- Split layout, không card giữa màn hình.
-- Form: label trên, helper dưới, error dưới, không floating label.
-- Password strength dùng `Progress` + text, không thanh màu cầu vồng.
-- Social login (Google) là button secondary có logo thật, không tự vẽ.
-- Seller/Shipper register: multi-step giữ nguyên số bước và field.
+**File chạm:** 8 page + `components/auth/SellerRegisterForm.tsx` + `components/layout/{AuthLayout,AuthBrandPanel}.tsx` + `components/ui/password-strength.tsx` + `components/ui/file-dropzone.tsx` (thêm prop) + `components/feedback/ResultState.tsx` + `css/layouts/auth.css` + `css/components/{field,status}.css` + `css/tokens/scale.css`.
 
-**DoD:** toàn bộ trạng thái lỗi/validate hiển thị đúng; tab order hợp lý; không đổi route.
+**Luật riêng**
+
+- Split layout, không card giữa màn hình; form là trung tâm, panel trái là brand ledger.
+- Form: label trên, helper (`hint`) dưới, error dưới, không floating label. `FormField` đã hỗ trợ `hint`/`error`/`counter` — dùng, không tự dựng label.
+- `PasswordStrength` viết lại bằng `Progress` **1 thanh** + nhãn chữ; score 0–4 map tone `danger/warning/success`; xoá `.sn-password*` khỏi `field.css` (quyết định #33).
+- Social login (Google) là `Button variant="secondary"` có logo thật `/google-color-svgrepo-com.svg`, không tự vẽ; chỉ có ở `Login`.
+- Seller/Shipper register: **giữ nguyên 3 section và toàn bộ field** (không dựng stepper mới, không đổi payload). Dùng `--sn-container-form-wide` để grid 2 cột không bị bóp.
+- Nút hiện/ẩn mật khẩu dùng `IconButton variant="ghost" size="sm"` với `label` (không dùng `focus-ring`/`rounded-chip` legacy).
+- `FileDropzone`: thêm prop tuỳ chọn `label`/`aria-label`, truyền "CCCD mặt trước", "CCCD mặt sau", "Giấy phép lái xe"; error của dropzone phải được mô tả qua `aria-describedby`.
+- `VerifyEmail`: `ResultState` chuyển sang `sn-*` + CSS thuần, bỏ Tailwind/`cn`; giữ nguyên API `status/orderCode/title/message/actions` để `PaymentResult` (Phase 6) dùng lại.
+- `ConfirmPassword`: form 1 field mật khẩu, label + error, nút xác nhận; POST `/confirm-password`, không đổi route.
+- Theme: **không pin light**; light + dark dùng token (quyết định #36). Không còn `text-ink`, `text-brick`, `bg-raw-linen`, `border-border`, `focus-ring` trong file Auth.
+- `AuthBrandPanel`: trust point không số; bỏ `imageUrl`/`imageAlt`; bỏ `serif`; không lặp eyebrow + label role (quyết định #35).
+- Copy: tiếng Việt, không em-dash/en-dash; không claim có số khi không có nguồn.
+- i18n: giữ nguyên chuỗi tiếng Việt hardcode như hiện tại (không đổi key, không thêm object mới); nếu thêm key mới phải có ở **cả** `vi.json` và `en.json`.
+
+**DoD**
+
+- 8 page render ở 375/390/768/1024/1440, `scrollWidth === innerWidth`, zoom 200% không vỡ.
+- Light + dark đạt: đo computed color, không còn chữ tối trên nền tối (đặc biệt 4 heading section của 2 trang đăng ký).
+- Toàn bộ trạng thái lỗi/validate hiển thị đúng: required, sai định dạng, mật khẩu yếu/không khớp, lỗi server (`identifier`, `password`, `email`, `token`, `agreeToTerms`, lỗi file), flash `status`.
+- Tab order hợp lý, focus visible, mọi input có label thật, 3 dropzone có label riêng.
+- Không còn class Tailwind/Nếp, hex/rgb, `focus-ring` trong file Auth; mỗi phần layout đặc thù có `*.module.css` **chỉ khi cần** (không bắt buộc mỗi page một module).
+- Không đổi route, payload, validation backend.
+- Allowlist 112 → **104** (7 entry Auth + `ResultState`); `check:css` pass; `types` + `format:check` + `build` sạch.
+
+> **Trạng thái 2026-11-23 — hoàn tất:**
+>
+> - 8 page migrated + `Auth/ConfirmPassword` tạo mới (route `password.confirm` hết 500). `SellerRegister`/`ShipperRegister`/`Register` dùng `sn-auth__form--wide` (600 px); 5 page còn lại 420 px.
+> - `PasswordStrength` dùng `Progress` 1 thanh + nhãn; xoá khối `.sn-password*`. `AuthBrandPanel` bỏ claim có số, props chết, `serif`; còn brand/eyebrow/headline/mô tả + 3 trust point không số + hotline/email.
+> - Nút hiện/ẩn mật khẩu dùng `IconButton`; ẩn native reveal của Edge; `FileDropzone` nhận `label` + `aria-describedby`; `Register` validate trùng regex server.
+> - `ResultState` + `VerifyEmail` chuyển sang `sn-result*` trong `status.css`.
+> - `git mv pages/auth → pages/Auth` (Linux/CI resolve đúng `Inertia::render('Auth/…')`).
+> - `vite.config.ts`: `publicDir: 'public'` + `build.copyPublicDir: false` để `url('/fonts/…')` trong CSS không 404 ở dev (trước đó rơi về font hệ thống).
+> - Allowlist 112 → **104**; `check:css` pass (176 file checked); `types`/`format`/`build` pass; `app.css` **184,60 kB**.
+> - Tests: `php artisan test tests/Feature/Auth` — **27 passed / 97 assertions** (chỉ DEPRECATION PDO PHP 8.5).
+> - CDP/Edge: 8 page (6 guest + 2 cần đăng nhập kiểm bằng feature test) ở 390/768/1440, light + dark; `scrollWidth === innerWidth`; `h2` section đạt `rgb(21,22,15)` light và `rgb(241,242,234)` dark; input/label/divider/dropzone đúng token; không console error; strength meter đo `aria-valuenow=4`, tone success và `aria-valuenow=1`, tone danger cho mật khẩu yếu.
+> - Chưa chụp được `VerifyEmail`/`ConfirmPassword` bằng mắt vì cần phiên đăng nhập; component resolve đã được `PasswordConfirmationTest` + `EmailVerificationTest` phủ, visual `ResultState` kiểm bằng harness light/dark.
 
 ---
 
@@ -1730,10 +1802,10 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - **Reduced motion:** bật OS setting, xác nhận không animation.
 - **Trạng thái:** loading skeleton, empty, error, success cho mỗi page có dữ liệu.
 - **Hiệu năng:** đo CSS bundle trước/sau; mục tiêu < 120 KB uncompressed cho CSS chính (chưa gzip).
-- **Rà soát slop:** chạy checklist mục 6 trên toàn bộ 78 page.
+- **Rà soát slop:** chạy checklist mục 6 trên toàn bộ 79 page.
 - **Tài liệu:** cập nhật `DESIGN.md` + `COMPONENTS.md` theo token/primitive thực tế.
 
-**DoD:** không còn vi phạm `check:css`; không còn `Page.css`; danh sách page đã migrate đủ 78.
+**DoD:** không còn vi phạm `check:css`; không còn `Page.css`; danh sách page đã migrate đủ 79.
 
 ---
 
@@ -1756,69 +1828,70 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 | 5     |  13 | `Auth/VerifyEmail`              |
 | 5     |  14 | `Auth/SellerRegister`           |
 | 5     |  15 | `Auth/ShipperRegister`          |
-| 6     |  16 | `Customer/Cart`                 |
-| 6     |  17 | `Customer/Checkout`             |
-| 6     |  18 | `Customer/PaymentResult`        |
-| 6     |  19 | `Customer/Orders/Index`         |
-| 6     |  20 | `Customer/Orders/Show`          |
-| 6     |  21 | `Customer/Address/Index`        |
-| 6     |  22 | `Customer/Address/Create`       |
-| 6     |  23 | `Customer/Address/Edit`         |
-| 6     |  24 | `Customer/Address/Show`         |
-| 6     |  25 | `Customer/Address/AddressForm`  |
-| 6     |  26 | `Customer/Profile/Index`        |
-| 6     |  27 | `Customer/ChangePassword/Index` |
-| 6     |  28 | `Customer/Notification/Index`   |
-| 6     |  29 | `Customer/Chat/Index`           |
-| 6     |  30 | `Settings/Profile`              |
-| 6     |  31 | `Settings/Password`             |
-| 6     |  32 | `Settings/Appearance`           |
-| 6     |  33 | `Settings/SettingsTabs`         |
-| 7     |  34 | `Seller/Dashboard/Index`        |
-| 7     |  35 | `Seller/Products/Index`         |
-| 7     |  36 | `Seller/Products/Create`        |
-| 7     |  37 | `Seller/Products/Edit`          |
-| 7     |  38 | `Seller/Products/Show`          |
-| 7     |  39 | `Seller/Orders/Index`           |
-| 7     |  40 | `Seller/Orders/Show`            |
-| 7     |  41 | `Seller/Promotions/Index`       |
-| 7     |  42 | `Seller/Promotions/Create`      |
-| 7     |  43 | `Seller/Shop/Edit`              |
-| 8     |  44 | `Admin/Dashboard/Index`         |
-| 8     |  45 | `Admin/Users/Index`             |
-| 8     |  46 | `Admin/Users/Edit`              |
-| 8     |  47 | `Admin/Products/Index`          |
-| 8     |  48 | `Admin/Products/Show`           |
-| 8     |  49 | `Admin/Inventory/Index`         |
-| 8     |  50 | `Admin/Inventory/Show`          |
-| 8     |  51 | `Admin/Inventory/History`       |
-| 8     |  52 | `Admin/Orders/Index`            |
-| 8     |  53 | `Admin/Promotions/Index`        |
-| 8     |  54 | `Admin/Promotions/Create`       |
-| 8     |  55 | `Admin/Promotions/Edit`         |
-| 8     |  56 | `Admin/Promotions/Show`         |
-| 8     |  57 | `Admin/Categories/Index`        |
-| 8     |  58 | `Admin/Categories/Create`       |
-| 8     |  59 | `Admin/Categories/Edit`         |
-| 8     |  60 | `Admin/Brands/Index`            |
-| 8     |  61 | `Admin/Brands/Create`           |
-| 8     |  62 | `Admin/Brands/Edit`             |
-| 8     |  63 | `Admin/Shops/Index`             |
-| 8     |  64 | `Admin/Shops/Pending`           |
-| 8     |  65 | `Admin/Shops/Show`              |
-| 8     |  66 | `Admin/Shops/Dashboard`         |
-| 8     |  67 | `Admin/Shops/Statistics`        |
-| 8     |  68 | `Admin/Shops/Violations`        |
-| 8     |  69 | `Admin/Shippers/Index`          |
-| 8     |  70 | `Admin/Shippers/Show`           |
-| 8     |  71 | `Admin/Returns/Index`           |
-| 8     |  72 | `Admin/Analytics/Index`         |
-| 8     |  73 | `Admin/Analytics/Orders`        |
-| 8     |  74 | `Admin/Analytics/Products`      |
-| 8     |  75 | `Admin/Analytics/Reports`       |
-| 8     |  76 | `Admin/Analytics/Revenue`       |
-| 8     |  77 | `Admin/Analytics/Users`         |
-| 9     |  78 | `Shipper/Dashboard/Index`       |
+| 5     |  16 | `Auth/ConfirmPassword`          |
+| 6     |  17 | `Customer/Cart`                 |
+| 6     |  18 | `Customer/Checkout`             |
+| 6     |  19 | `Customer/PaymentResult`        |
+| 6     |  20 | `Customer/Orders/Index`         |
+| 6     |  21 | `Customer/Orders/Show`          |
+| 6     |  22 | `Customer/Address/Index`        |
+| 6     |  23 | `Customer/Address/Create`       |
+| 6     |  24 | `Customer/Address/Edit`         |
+| 6     |  25 | `Customer/Address/Show`         |
+| 6     |  26 | `Customer/Address/AddressForm`  |
+| 6     |  27 | `Customer/Profile/Index`        |
+| 6     |  28 | `Customer/ChangePassword/Index` |
+| 6     |  29 | `Customer/Notification/Index`   |
+| 6     |  30 | `Customer/Chat/Index`           |
+| 6     |  31 | `Settings/Profile`              |
+| 6     |  32 | `Settings/Password`             |
+| 6     |  33 | `Settings/Appearance`           |
+| 6     |  34 | `Settings/SettingsTabs`         |
+| 7     |  35 | `Seller/Dashboard/Index`        |
+| 7     |  36 | `Seller/Products/Index`         |
+| 7     |  37 | `Seller/Products/Create`        |
+| 7     |  38 | `Seller/Products/Edit`          |
+| 7     |  39 | `Seller/Products/Show`          |
+| 7     |  40 | `Seller/Orders/Index`           |
+| 7     |  41 | `Seller/Orders/Show`            |
+| 7     |  42 | `Seller/Promotions/Index`       |
+| 7     |  43 | `Seller/Promotions/Create`      |
+| 7     |  44 | `Seller/Shop/Edit`              |
+| 8     |  45 | `Admin/Dashboard/Index`         |
+| 8     |  46 | `Admin/Users/Index`             |
+| 8     |  47 | `Admin/Users/Edit`              |
+| 8     |  48 | `Admin/Products/Index`          |
+| 8     |  49 | `Admin/Products/Show`           |
+| 8     |  50 | `Admin/Inventory/Index`         |
+| 8     |  51 | `Admin/Inventory/Show`          |
+| 8     |  52 | `Admin/Inventory/History`       |
+| 8     |  53 | `Admin/Orders/Index`            |
+| 8     |  54 | `Admin/Promotions/Index`        |
+| 8     |  55 | `Admin/Promotions/Create`       |
+| 8     |  56 | `Admin/Promotions/Edit`         |
+| 8     |  57 | `Admin/Promotions/Show`         |
+| 8     |  58 | `Admin/Categories/Index`        |
+| 8     |  59 | `Admin/Categories/Create`       |
+| 8     |  60 | `Admin/Categories/Edit`         |
+| 8     |  61 | `Admin/Brands/Index`            |
+| 8     |  62 | `Admin/Brands/Create`           |
+| 8     |  63 | `Admin/Brands/Edit`             |
+| 8     |  64 | `Admin/Shops/Index`             |
+| 8     |  65 | `Admin/Shops/Pending`           |
+| 8     |  66 | `Admin/Shops/Show`              |
+| 8     |  67 | `Admin/Shops/Dashboard`         |
+| 8     |  68 | `Admin/Shops/Statistics`        |
+| 8     |  69 | `Admin/Shops/Violations`        |
+| 8     |  70 | `Admin/Shippers/Index`          |
+| 8     |  71 | `Admin/Shippers/Show`           |
+| 8     |  72 | `Admin/Returns/Index`           |
+| 8     |  73 | `Admin/Analytics/Index`         |
+| 8     |  74 | `Admin/Analytics/Orders`        |
+| 8     |  75 | `Admin/Analytics/Products`      |
+| 8     |  76 | `Admin/Analytics/Reports`       |
+| 8     |  77 | `Admin/Analytics/Revenue`       |
+| 8     |  78 | `Admin/Analytics/Users`         |
+| 9     |  79 | `Shipper/Dashboard/Index`       |
 
 Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộc trước; trang nhiều state sau**. Với Admin, thứ tự nội bộ: Dashboard → Users → Categories/Brands → Products → Inventory → Orders → Promotions → Shops → Shippers → Returns → Analytics.
 
@@ -1907,6 +1980,11 @@ php artisan test --filter=<area>
 | Class global `sn-*` trùng `Page.css`                                    | Trung bình | Prefix `sn-`; rà `Page.css` trước Phase 2                                                                                                                                                                                                                                               |
 | Phase 2 đổi primitive dùng chung làm page chưa migrate đổi giao diện    | Cao        | Chấp nhận có chủ đích; verify login + customer sau mỗi đợt; page migration ở Phase 4–8                                                                                                                                                                                                  |
 | Dark mode trộn token mới với layout sáng cũ                             | Cao        | **Hotfix Phase 3:** pin light ở **root** qua prop `pinLight`, thêm background canvas cho `<main>`; 8 trang Phase 4 tắt pin, Account/Cart/Checkout/PaymentResult giữ pin đến Phase 6; Settings/Appearance xử lý riêng                                                                       |
+| Auth dark mode: heading section dùng `text-ink` không đổi theo theme    | Cao        | **Phase 5:** migrate hết utility Nếp trong Auth; đo computed color (`h2` đang `rgb(29,27,23)` trên nền `rgb(13,15,12)`), thêm bước verify dark vào DoD thay vì chỉ nhìn ảnh                                                  |
+| `VerifyEmail` phụ thuộc `feedback/ResultState` (Nếp, allowlist)         | Trung bình | Đưa `ResultState` vào scope Phase 5 (quyết định #32), migrate sang `sn-*`; `PaymentResult` dùng lại ở Phase 6, tránh làm hai lần                                                                                         |
+| `Auth/ConfirmPassword` thiếu page nhưng route đã đăng ký                | Trung bình | Tạo page ở Phase 5 (quyết định #32); không đổi route/controller; bỏ khỏi danh sách backlog (§2.4 còn 16)                                                                                                                |
+| Form đăng ký 420 px + grid 2 cột làm input ~200 px                      | Trung bình | Thêm `--sn-container-form-wide` (600 px) cho `Register`/`SellerRegister`/`ShipperRegister`; login/reset giữ 420 px                                                                                                      |
+| `FileDropzone` dùng chung một label cho 3 tài liệu shipper              | Trung bình | Thêm prop `label`/`aria-label`; nối `aria-describedby` cho error; kiểm tab order và trình đọc màn hình                                                                                                                   |
 | `Page.css` `.content nav` biến Pagination thành topbar                  | Cao        | **Hotfix Phase 3:** đổi `Pagination` sang `<div role="navigation">`; đo lại computed style; retest 4 trang legacy có phân trang                                                                                                                                                          |
 | Guardrail không quét `resources/js/**/*.module.css`                     | Cao        | **Hotfix Phase 3:** mở rộng `check-tokens.mjs` quét module CSS và thêm vào `isCssColorScope` trước khi Phase 4 tạo module                                                                                                                                                                   |
 | Badge/số liệu bịa (`Shop Việt`, `Đã mua`, `1.200+`, `100%`, `299k`)     | Cao        | **Phase 4:** chỉ render khi có prop/DB xác thực; còn lại bỏ badge/số, dùng claim không số                                                                                                                                                                                               |
@@ -1923,7 +2001,7 @@ php artisan test --filter=<area>
 | Email client cắt `<style>`                                              | Trung bình | Inline style cho layout, `<style>` chỉ cho media query                                                                                                                                                                                                                                  |
 | Google Fonts bị chặn trong Docker/offline                               | Trung bình | Self-host `woff2` ngay Phase 1; giữ fallback system; kiểm tra dấu tiếng Việt                                                                                                                                                                                                            |
 | `npm run lint` tự sửa file gây diff lớn                                 | Trung bình | Chạy theo phase, commit riêng                                                                                                                                                                                                                                                           |
-| 17 render target thiếu (gồm `Admin/Inventory/Report`) bị báo regression | Thấp       | Ghi rõ trong baseline và PR description                                                                                                                                                                                                                                                 |
+| 16 render target thiếu (gồm `Admin/Inventory/Report`) bị báo regression | Thấp       | Ghi rõ trong baseline và PR description; `Auth/ConfirmPassword` đã được tạo ở Phase 5 nên chỉ còn 16                                                                                                                    |
 | Tailwind còn trong `node_modules` sau khi xoá                           | Thấp       | `npm ci` + kiểm tra `package-lock.json`                                                                                                                                                                                                                                                 |
 | Bundle CSS phình do module trùng lặp                                    | Trung bình | Primitive dùng global; module chỉ layout; đo ở Phase 12                                                                                                                                                                                                                                 |
 
@@ -1937,6 +2015,7 @@ php artisan test --filter=<area>
 - Không đổi cấu trúc `role_user` hay cách query role.
 - Không thêm provider thanh toán.
 - Không thêm trang mới (trừ error pages bắt buộc).
+- **Ngoại lệ Phase 5:** được tạo `Auth/ConfirmPassword` (quyết định #32) vì route `password.confirm` đã có và page thiếu làm hỏng truy cập trực tiếp. Không đổi route, controller hay props.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code.
@@ -1961,7 +2040,10 @@ fix(ui): move legacy global reset under sn-legacy-reset
 refactor(ui): rebuild storefront, auth and workspace shells
 fix(ui): restore storefront surface and workspace pagination
 refactor(storefront): migrate home, search, product and legal pages
+chore(repo): commit pending backend, route and test work before phase 5
+refactor(feedback): migrate ResultState and fix Auth page casing
 refactor(auth): migrate login and registration pages
+chore(build): serve public assets in vite dev for css url()
 refactor(customer): migrate cart, checkout, orders and account pages
 refactor(seller): migrate seller workspace
 refactor(admin): migrate admin workspace
@@ -1971,6 +2053,8 @@ chore(ui): remove tailwind, legacy css and boxicons
 test(ui): responsive, dark mode and accessibility sweep
 docs(ui): rewrite design system and component rules
 ```
+
+> **Trước Phase 5 (quyết định #39):** working tree đang có 52 file backend/route/test chưa commit (gồm `routes/{web,user}.php`, controllers, factories, seeders, 2 page Phase 4, 1 migration untracked). Commit phần này thành commit riêng (`chore(repo): …`) trước khi build Phase 5 để phase UI vẫn là một đơn vị merge sạch; không trộn vào commit `refactor(auth)`.
 
 ---
 
@@ -2008,6 +2092,50 @@ docs(ui): rewrite design system and component rules
 
 ## 15. Nhật ký cập nhật
 
+**2026-11-23 — Phase 5 hoàn tất (Auth):**
+
+- Migrate 8 page: `Auth/{Login,Register,ForgotPassword,ResetPassword,VerifyEmail,SellerRegister,ShipperRegister}` + **`Auth/ConfirmPassword` tạo mới** (route `password.confirm` có sẵn, trước đó thiếu page). Backlog còn **16** render target.
+- `AuthLayout` thêm prop `width` (`default` 420 / `wide` 600) + `.sn-auth__form--wide`; `Register`/`SellerRegister`/`ShipperRegister` dùng 600 px, 5 page còn lại 420 px.
+- `layouts/auth.css` thêm lớp composition `.sn-auth-page*` (intro, form, divider, footnote, aside, section, grid, docs, preview) dùng token; không thêm utility mới.
+- `PasswordStrength` viết lại bằng `Progress` (1 thanh + nhãn, tone danger/warning/success); xoá toàn bộ khối `.sn-password*` khỏi `field.css`.
+- `AuthBrandPanel`: trust point đổi thành “Shop đã kiểm duyệt”, “Đổi trả theo chính sách”, “Hỗ trợ qua hotline”; bỏ `7 ngày`/`24/7`/“Shop Việt”, bỏ tagline + label role, bỏ props chết `imageUrl`/`imageAlt`, bỏ `serif`.
+- `Login`: nhận `canResetPassword` + `status`; flash `status` bằng `Alert`; ẩn link quên mật khẩu khi route không có; giữ cảnh báo lỗi Google (`errors.google`) do người dùng thêm trước đó.
+- `Register`: validate client khớp `RegisterRequest` (8 ký tự + hoa/thường/số/ký tự đặc biệt, username cho phép `_` và `.`); `agreeToTerms` dùng `.sn-field__error`.
+- Nút hiện/ẩn mật khẩu → `IconButton ghost/sm`; thêm `.sn-input::-ms-reveal/::-ms-clear { display: none }` để không hiện 2 icon trên Edge.
+- `FileDropzone` thêm prop `label` → `aria-label` + `aria-invalid` + `aria-describedby` nối error; 3 dropzone shipper có nhãn riêng.
+- `ResultState` chuyển sang `sn-result*` (status success/pending/failure/cod, code chip, title, message, actions) trong `status.css`; `VerifyEmail` dùng lại; `PaymentResult` sẽ dùng ở Phase 6.
+- `field.css`: `.sn-input[readonly]` dùng `surface-sunken` + `text-muted` (email ở `ResetPassword`).
+- `git mv resources/js/pages/auth → Auth` để checkout Linux resolve `Inertia::render('Auth/…')`; trước đó git track chữ thường như 7 file `components/ui` ở Phase 3.
+- **Tooling:** `vite.config.ts` thêm `publicDir: 'public'` + `build.copyPublicDir: false`. `laravel-vite-plugin` mặc định `publicDir: false`, nên CSS `url('/fonts/…')` resolve về origin Vite và 404 ở dev; sau fix cả 8 woff2 trả 200, không còn rơi về font hệ thống.
+- Allowlist 112 → **104** (7 entry Auth + `ResultState`); `check:css` pass (176 file checked); `format`/`types`/`build` pass; `app.css` **184,60 kB** (từ 179,67 kB).
+- Tests: `php artisan test tests/Feature/Auth` — **27 passed / 97 assertions**, gồm `PasswordConfirmationTest` hiển thị page mới (chỉ DEPRECATION PDO PHP 8.5).
+- CDP/Edge (6 trang guest): `/login`, `/register`, `/forgot-password`, `/reset-password/*`, `/register/seller`, `/register/shipper` ở 390/768/1440, light + dark.
+    - `scrollWidth === innerWidth`; form 420/600 đúng thiết kế; panel 720 px @1440, ẩn dưới 1024.
+    - `h2` section trước đây `rgb(29,27,23)` trên nền `rgb(13,15,12)` nay `rgb(21,22,15)` light / `rgb(241,242,234)` dark; label, input, divider, aside, dropzone đều đúng token.
+    - Password strength: `Abcd1234!` → “Mạnh”, tone success, `aria-valuenow=4`; `abcdefgh` → “Rất yếu”, tone danger, `aria-valuenow=1`; submit yếu hiện đúng lỗi regex của server.
+    - Không còn console error (sau khi sửa font dev); `tailwindLeft = 0` trong toàn bộ `.sn-auth-page`.
+    - Visual `ResultState` kiểm bằng harness light/dark (4 status), đã xoá harness sau khi chụp.
+    - Chưa chụp `VerifyEmail`/`ConfirmPassword` vì cần phiên đăng nhập; component resolve đã được feature test phủ.
+- Commit: `chore(repo)` (dọn working tree), `refactor(feedback)` (ResultState + casing), `refactor(auth)` (8 page + layout + primitive), `chore(build)` (font dev).
+
+**2026-11-23 — rà soát trước Phase 5 (chốt 8 quyết định, chưa build):**
+
+- **Đo lại toàn bộ** (build sạch + Edge headless/CDP), ghi thành §2.6: 78 page / 47 primitive; `className=` 2.081; `Page.css` importers **40**; `AppLayout` 39; `bx-*` 232; allowlist 112 (7 entry Auth); `types`/`format:check`/`check:css`/`build` pass; 6 route Auth trả 200.
+- **Bundle:** `app-*.css` **179,67 kB** + chunk `Page.css` **43,85 kB**. Con số **130,77 kB** ghi ở log Phase 4 **không tái lập được** trên cùng commit → giữ làm số lịch sử, thêm ghi chú ở §7/§15 và dùng số đo mới cho Phase 12. Tổng CSS thực tế ~259 kB, vượt mục tiêu < 120 kB nếu tính cả chunk legacy.
+- **Auth hiện trạng:** `.sn-auth__form` 420 px, panel 720 px @1440, không tràn ngang 390/768/1440 (`scrollWidth === innerWidth`). Dark mode: heading `sn-*` đúng token nhưng **4 heading section dùng `text-ink` đo được `rgb(29,27,23)` trên nền `rgb(13,15,12)`** → gần như vô hình. Còn **57 chỗ utility Nếp** trong Auth (`Login` 10, `Register` 11, `ResetPassword` 9, `ShipperRegister` 15, `SellerRegisterForm` 10, `ForgotPassword` 2).
+- **Sai biệt với plan đã sửa:**
+    - Phase 5 ghi “multi-step” nhưng code là **1 trang 3 section**, không có stepper → đổi thành “giữ nguyên 3 section + field”.
+    - `PasswordStrength` là 4 thanh segmented 3 màu, không phải `Progress` → quyết định #33.
+    - `AuthBrandPanel` có claim có số (`7 ngày`, `24/7`, “Shop Việt đã kiểm duyệt”) không có nguồn trong Legal, trái #28 → quyết định #35.
+    - `Login` bỏ qua props `canResetPassword`/`status` do controller truyền (BASELINE ghi sai “no props”) → quyết định #38.
+    - `VerifyEmail` phụ thuộc `feedback/ResultState` (Nếp, allowlist) ngoài scope → quyết định #32.
+    - `Auth/ConfirmPassword` thiếu page dù route `password.confirm` đã đăng ký → quyết định #32; backlog còn **16** target.
+    - `FileDropzone` dùng chung một label cho 3 tài liệu shipper; nút hiện/ẩn mật khẩu còn `focus-ring`/`rounded-chip` → quyết định #37.
+    - §3.5 tham chiếu `public/image/ShopnestLogoSVG.svg` **không tồn tại** (chỉ có `ShopnestLogo.png` + `.ico`); `app.blade.php` vẫn link favicon SVG đó → sửa ở Phase 11 cùng lúc dọn blade.
+    - Working tree bẩn 52 file (backend/route/test + 2 page Phase 4) → quyết định #39, commit tách riêng trước Phase 5.
+- **Quyết định mới #32–#39:** scope 8 page; `Progress` 1 thanh; form đăng ký rộng 600 px; trust point không số; Auth không pin theme, dark đầy đủ; a11y dropzone + `IconButton` + đồng bộ validate; `Login` nhận props; commit backend riêng.
+- **Cập nhật tài liệu:** §0.2/§0.4, §1 (#32–#39), §2.4 (17 → 16, thêm ngoại lệ), §2.6 (mới), §3.3/§3.5, §4.6 (`--sn-container-form-wide`), §7 Phase 3 (Auth shell), Phase 4 (ghi chú bundle), **Phase 5 viết lại đầy đủ 8 page + DoD**, Phase 12 (79 page), §8 (thêm `Auth/ConfirmPassword` #16, đánh số lại 1–79), §11 (5 rủi ro Phase 5), §12 (ngoại lệ trang mới), §13 (commit backend + `ResultState`).
+
 **2026-11-23 — Phase 4 hoàn tất (Storefront):**
 
 - Migrate 8 page: `Home/Index`, `Home/Search`, `Customer/ProductDetail`, `Home/About`, `Home/Contact`, `Legal/{Terms,PrivacyPolicy,SellingPolicy}`.
@@ -2019,7 +2147,7 @@ docs(ui): rewrite design system and component rules
 - Legal: viết lại toàn bộ nội dung tiếng Việt, prose 65ch, bỏ card bao ngoài.
 - Copy: xoá en-dash/em-dash khỏi page/component Phase 4; giữ hyphen.
 - Allowlist 143 → **112** (31 entry Phase 4). `check:css` pass: 167 file checked, 112 allowlisted.
-- `types`, `format:check`, `build` pass; CSS bundle `app.css` **130,77 kB** (từ 186,57 kB).
+- `types`, `format:check`, `build` pass; CSS bundle `app.css` **130,77 kB** (từ 186,57 kB). *Đo lại 2026-11-23 trên cùng commit: 179,67 kB + 43,85 kB `Page.css` — con số 130,77 không tái lập, xem §2.6.*
 - Runtime verify bằng CDP/Edge:
   - Light: `/`, `/search`, `/about`, `/contact`, `/terms` screenshot; Home hero 2 dòng, 7 section, 2 eyebrow; Search rail 264px; Contact form 2 cột; Legal prose đọc tốt.
   - Dark: 7 trang guest có main bg `rgb(13,15,12)`, text `rgb(241,242,234)`; không còn chữ tối trên nền tối.

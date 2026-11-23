@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4 hoàn tất; **Phase 5 hoàn tất** (2026-11-23) — 8 page Auth migrated (thêm `Auth/ConfirmPassword`), `ResultState` sang CSS thuần, allowlist **104**. **Đã rà soát và chốt scope Phase 6** (2026-11-24, quyết định #40–#47): 16 page + 2 component, allowlist target **57**; Phase 6 chưa build. Chi tiết ở §15.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5 hoàn tất; **Phase 6 hoàn tất** (2026-11-24) — 16 page + 2 component Customer/Settings, 17 component commerce, `ConfirmDialog`, 12 component chat; allowlist **104 → 57**. Phase 7 chưa build. Chi tiết ở §15.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -174,7 +174,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; **target 57 sau Phase 6**        | Giữ làm ratchet đến Phase 11                              |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; **57 sau Phase 6**        | Giữ làm ratchet đến Phase 11                              |
 | `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
@@ -1716,7 +1716,18 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - `ConfirmDialog` không còn Tailwind; `PaymentMarks` không tự vẽ logo.
 - Allowlist **57**; `types` + `format:check` + `build` + `check:css` sạch.
 
-> **Trạng thái 2026-11-24:** scope đã chốt sau rà soát (quyết định #40–#47), **chưa build**. Working tree cần commit/stash 31 file từ việc khác trước khi bắt đầu.
+> **Trạng thái 2026-11-24 — hoàn tất:**
+>
+> - Migrate 16 page + 2 component trong `pages/` (`Address/AddressForm`, `Settings/SettingsTabs`), 17 component commerce (gồm 3 file dead `ReturnItemPicker`/`RefundOption`/`PreferenceRow`), `feedback/ConfirmDialog` và 12 component chat. `Customer/Chat/Index` chỉ là layout + `ChatWorkspace`, không cần sửa.
+> - **Theme:** `StorefrontLayout` default `pinLight = false`; `AccountLayout` nhận prop; Cart/Checkout/PaymentResult truyền `false`. Không còn page Storefront/Account bị khoá sáng.
+> - **Checkout address:** form còn 2 cấp tỉnh → phường, gọi `/user/addresses/provinces` + `/user/addresses/wards/{provinceId}`. Submit bằng `axios.post('/user/addresses')` và coi response resolved là thành công, vì `AddressController::store` luôn redirect về danh sách địa chỉ; dùng Inertia sẽ điều hướng khỏi Checkout. Sau đó `router.reload({ only: ['addresses'] })`.
+> - **Data authenticity (#28):** bỏ `shopName: 'Shop Việt'`, `Đổi trả 7 ngày`, `Hỗ trợ 24/7`, `Giao tiêu chuẩn 2–4 ngày`, `phí kiểm định`; `OrderSummary` default `trust = []`; sửa `BuyBox` (`Theo địa chỉ giao hàng`, trust rỗng) và `ProductDetail` (`Đổi trả theo chính sách`).
+> - **Layout/copy:** `OrderSummary` dùng `<details>` native trên mobile (controlled + `matchMedia`), desktop sticky; `CheckoutStepper` bỏ `01./02.`; `OrderTimeline` còn đường 1 px + mốc 8 px, không số/icon tròn; `PaymentMarks` dùng nhãn chữ thay logo Mastercard tự vẽ; 0 em/en-dash trong vùng Phase 6.
+> - **Appearance:** xoá `Alert` “Giao diện tối đang thử nghiệm”; thêm 3 panel preview dùng chính token qua `data-theme` cục bộ (light/dark/system).
+> - **Chat:** list nền `surface-sunken`, active surface + thanh accent; bubble phẳng, bỏ tail/glow; `TypingIndicator` có bounce nhưng tôn trọng `prefers-reduced-motion`.
+> - **Allowlist:** 104 → **57** (bỏ 47 entry Phase 6). `check:css` pass: **227 file checked, 57 allowlisted**.
+> - **Gate:** `format:check`, `types`, `check:css`, `build` sạch; `app-*.css` **183,8 kB**. Tests: `Customer`, `Checkout`, `User/AddressControllerTest`, `Settings`, `Chat/ChatControllerTest` — **91 passed / 454 assertions**, chỉ DEPRECATION PDO PHP 8.5.
+> - **Chưa kiểm chứng runtime:** các page Customer/Settings cần phiên đăng nhập trên DB remote; chưa chụp CDP light/dark cho 16 page. Code/types/build/test đã phủ, cần review thủ công khi có phiên.
 
 ---
 
@@ -2170,6 +2181,19 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — Phase 6 hoàn tất (Customer + Settings):**
+
+- **Code:** migrate 16 page + 2 component trong `pages/`, 17 component commerce (gồm 3 file dead), `ConfirmDialog`, 12 component chat. Tạo `pages/Customer/customer.module.css`, `pages/Settings/settings.module.css`, `components/chat/chat.module.css`, `components/feedback/feedback.module.css`; nối tiếp `components/commerce/commerce.module.css`.
+- **Theme:** `pinLight` default `false` ở `StorefrontLayout`; `AccountLayout` nhận prop; Cart/Checkout/PaymentResult truyền `false`. Dark mode không còn bị khoá ở Account/Cart/Checkout/PaymentResult.
+- **Checkout address:** bỏ cấp quận/huyện; `CheckoutAddressForm` gọi `/user/addresses/provinces` và `/user/addresses/wards/{provinceId}`. `Checkout` submit bằng axios và coi response resolved là thành công vì controller redirect về danh sách địa chỉ; đóng Dialog, toast, `router.reload({ only: ['addresses'] })`. Không đổi route/controller/payload.
+- **Data authenticity:** bỏ `Shop Việt`, `Đổi trả 7 ngày`, `Hỗ trợ 24/7`, `Giao tiêu chuẩn 2–4 ngày`, `phí kiểm định`; `OrderSummary` default `trust = []`; `BuyBox` default `deliveryNote = 'Theo địa chỉ giao hàng.'`, trust `[]`; `ProductDetail` dùng `Đổi trả theo chính sách`.
+- **Component/layout:** `OrderSummary` là `<details>` mobile (controlled + `matchMedia`) và sticky desktop; `CheckoutStepper` bỏ số thứ tự; `OrderTimeline` dùng đường 1 px + mốc 8 px; `PaymentMarks` bỏ logo Mastercard tự vẽ, dùng nhãn chữ; `ConfirmDialog` sang `sn-*` + `cx`.
+- **Appearance:** xoá cảnh báo “dark đang thử nghiệm”; thêm 3 panel preview dùng token qua `data-theme` cục bộ.
+- **Copy:** 0 em/en-dash trong vùng Phase 6; 0 nhãn `01./02.`; chat bubble bỏ tail/glow.
+- **Allowlist:** 104 → **57** (bỏ 47 entry). `check:css` pass: 227 file checked, 57 allowlisted.
+- **Gate:** `format:check`, `types`, `check:css`, `build` sạch; `app-*.css` 183,8 kB. Tests: 91 passed / 454 assertions (chỉ DEPRECATION PDO PHP 8.5).
+- **Chưa làm:** chụp/so CDP 16 page ở 375/390/768/1024/1440 light + dark vì cần phiên đăng nhập trên DB remote; ghi lại để Phase 12 hoặc lần review có phiên.
 
 **2026-11-24 — rà soát và chốt scope Phase 6 (chưa build):**
 

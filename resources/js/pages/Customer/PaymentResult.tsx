@@ -49,7 +49,7 @@ const statusConfig = {
     succeeded: {
         result: 'success' as const,
         title: 'Đặt hàng thành công',
-        message: 'Shop sẽ xác nhận đơn trong 15 phút. Bạn có thể theo dõi đơn trong mục Đơn hàng.',
+        message: 'Shop sẽ sớm xác nhận đơn. Bạn có thể theo dõi đơn trong mục Đơn hàng.',
     },
     canceled: {
         result: 'pending' as const,

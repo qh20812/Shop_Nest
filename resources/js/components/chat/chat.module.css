@@ -139,6 +139,31 @@
     flex-shrink: 0;
 }
 
+/* Xoá hội thoại: xác nhận 2 bước ngay trong panel */
+.clearConfirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-2) var(--sn-space-3);
+    border: 1px solid var(--sn-color-danger);
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-danger-wash);
+    color: var(--sn-color-danger-text);
+}
+
+.clearConfirmText {
+    flex: 1 1 10rem;
+    font-size: var(--sn-text-2xs);
+    line-height: var(--sn-leading-normal);
+}
+
+.clearConfirmActions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
 /* Workspace */
 .workspace {
     display: flex;

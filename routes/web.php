@@ -68,6 +68,14 @@ Route::middleware(['auth', 'verified.optional'])->group(function () {
         ->middleware('throttle:10,1')
         ->name('chatbot.message');
 
+    Route::get('/chatbot/history', [ChatbotController::class, 'history'])
+        ->middleware('throttle:60,1')
+        ->name('chatbot.history');
+
+    Route::delete('/chatbot/history', [ChatbotController::class, 'destroyHistory'])
+        ->middleware('throttle:10,1')
+        ->name('chatbot.history.destroy');
+
     // Notification routes
     // Legacy demo page retained until Phase 6; the canonical page is /user/notifications.
     Route::redirect('/notifications', '/user/notifications')->name('notifications.index');

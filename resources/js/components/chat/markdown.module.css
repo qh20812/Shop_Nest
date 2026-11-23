@@ -1,0 +1,161 @@
+/* Markdown rendered inside chat bubbles — tokens only. */
+
+.markdown {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.markdown > :first-child {
+    margin-block-start: 0;
+}
+
+.markdown > :last-child {
+    margin-block-end: 0;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown blockquote,
+.markdown pre,
+.markdown hr,
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+    margin: 0;
+}
+
+.markdown > * + * {
+    margin-block-start: var(--sn-space-2);
+}
+
+.markdown strong {
+    font-weight: var(--sn-weight-semibold);
+}
+
+.markdown em {
+    font-style: italic;
+}
+
+.markdown del {
+    text-decoration: line-through;
+}
+
+.markdown .link {
+    color: var(--sn-color-accent-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.markdown .link:hover {
+    color: var(--sn-color-accent-hover);
+}
+
+.markdown ul,
+.markdown ol {
+    padding-inline-start: var(--sn-space-5);
+}
+
+.markdown ul {
+    list-style: disc;
+}
+
+.markdown ol {
+    list-style: decimal;
+}
+
+.markdown li + li {
+    margin-block-start: var(--sn-space-1);
+}
+
+.markdown li > ul,
+.markdown li > ol {
+    margin-block-start: var(--sn-space-1);
+}
+
+.markdown code {
+    padding-inline: var(--sn-space-1);
+    border-radius: var(--sn-radius-sm);
+    background: var(--sn-color-surface);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--sn-text-xs);
+}
+
+.markdown pre {
+    overflow-x: auto;
+    padding: var(--sn-space-3);
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-surface);
+}
+
+.markdown pre code {
+    padding-inline: 0;
+    background: none;
+}
+
+.markdown blockquote {
+    padding-inline-start: var(--sn-space-3);
+    border-inline-start: 2px solid var(--sn-color-border-strong);
+    color: var(--sn-color-text-muted);
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-snug);
+}
+
+.markdown h1 {
+    font-size: var(--sn-text-lg);
+}
+
+.markdown h2 {
+    font-size: var(--sn-text-md);
+}
+
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+    font-size: 1em;
+}
+
+.markdown hr {
+    border: 0;
+    border-block-start: 1px solid var(--sn-color-border);
+}
+
+.markdown img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--sn-radius-md);
+}
+
+.markdown .tableWrap {
+    overflow-x: auto;
+}
+
+.markdown table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--sn-text-xs);
+}
+
+.markdown th,
+.markdown td {
+    padding: var(--sn-space-1) var(--sn-space-2);
+    border: 1px solid var(--sn-color-border);
+    text-align: start;
+}
+
+.markdown th {
+    background: var(--sn-color-surface);
+    font-weight: var(--sn-weight-semibold);
+}

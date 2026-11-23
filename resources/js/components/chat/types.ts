@@ -29,6 +29,14 @@ export type ChatProduct = {
     stock?: 'in' | 'low' | 'out';
 };
 
+export type ChatbotHistoryTurn = {
+    id: number;
+    user_content: string;
+    assistant_content: string;
+    products?: ChatProduct[];
+    created_at?: string | null;
+};
+
 export type ChatConversationModel = {
     id: number;
     partnerId: number | null;

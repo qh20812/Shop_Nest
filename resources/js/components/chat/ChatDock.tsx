@@ -4,8 +4,9 @@ import * as React from 'react';
 
 import { ChatbotLauncher } from '@/components/chat/ChatbotLauncher';
 import { ChatbotPanel } from '@/components/chat/ChatbotPanel';
+import { MarkdownText } from '@/components/chat/MarkdownText';
 import type { MessageListItem } from '@/components/chat/MessageList';
-import type { ChatProduct } from '@/components/chat/types';
+import type { ChatbotHistoryTurn, ChatProduct } from '@/components/chat/types';
 import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
 import { cx } from '@/lib/cx';
@@ -116,6 +117,46 @@ function sanitizeProducts(value: unknown): ChatProduct[] | undefined {
     return products.length > 0 ? products : undefined;
 }
 
+function mapHistoryTurns(turns: unknown): StoredMessage[] {
+    if (!Array.isArray(turns)) {
+        return [];
+    }
+
+    const restored: StoredMessage[] = [];
+
+    for (const turn of turns) {
+        if (typeof turn !== 'object' || turn === null) {
+            continue;
+        }
+
+        const record = turn as Partial<ChatbotHistoryTurn>;
+
+        if (typeof record.id !== 'number' || typeof record.user_content !== 'string' || typeof record.assistant_content !== 'string') {
+            continue;
+        }
+
+        const createdAt = typeof record.created_at === 'string' && record.created_at !== '' ? record.created_at : new Date().toISOString();
+        const products = sanitizeProducts(record.products);
+
+        restored.push({
+            id: record.id * 2,
+            variant: 'outgoing',
+            content: record.user_content,
+            createdAt,
+        });
+
+        restored.push({
+            id: record.id * 2 + 1,
+            variant: 'incoming',
+            content: record.assistant_content,
+            createdAt,
+            products,
+        });
+    }
+
+    return restored.slice(-MAX_STORED_MESSAGES);
+}
+
 export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 }: ChatDockProps) {
     const page = usePage<ChatDockPageProps>();
     const pathname = page.url.split('?')[0];
@@ -128,6 +169,8 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const [typing, setTyping] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [resolvedUnread, setResolvedUnread] = React.useState(unreadCount);
+    const [clearing, setClearing] = React.useState(false);
+    const historySynced = React.useRef(false);
 
     React.useEffect(() => {
         try {
@@ -137,9 +180,98 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
         }
     }, [messages, storageKey]);
 
+    // Server là nguồn lịch sử chính: đăng nhập máy khác vẫn thấy hội thoại cũ.
+    React.useEffect(() => {
+        if (!open || !isAuthenticated || historySynced.current) {
+            return;
+        }
+
+        let cancelled = false;
+        const controller = new AbortController();
+
+        void (async () => {
+            try {
+                const response = await fetch('/chatbot/history?limit=20', {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    return; // Giữ bản localStorage và thử lại ở lần mở sau.
+                }
+
+                const payload = await response.json();
+
+                if (cancelled) {
+                    return;
+                }
+
+                const restored = mapHistoryTurns(payload?.data?.turns);
+
+                if (restored.length > 0) {
+                    setMessages(restored);
+                    setResolvedUnread(0);
+                }
+
+                historySynced.current = true;
+            } catch {
+                // Ngoại tuyến hoặc request bị huỷ: giữ lịch sử localStorage.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [open, isAuthenticated]);
+
     if (!enabled || !isAuthenticated || !isChatDockVisible(pathname)) {
         return null;
     }
+
+    const handleClearHistory = async () => {
+        if (clearing) {
+            return;
+        }
+
+        setClearing(true);
+
+        try {
+            const response = await fetch('/chatbot/history', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                throw new Error('Không xoá được lịch sử trò chuyện.');
+            }
+
+            historySynced.current = true;
+            setMessages([greeting]);
+            setResolvedUnread(0);
+            setError(null);
+
+            try {
+                window.localStorage.removeItem(storageKey);
+            } catch {
+                // localStorage có thể bị chặn; server đã xoá là đủ.
+            }
+        } catch (clearError) {
+            setError(clearError instanceof Error ? clearError.message : 'Không xoá được lịch sử trò chuyện.');
+        } finally {
+            setClearing(false);
+        }
+    };
 
     const handleOpenChange = (next: boolean) => {
         setOpen(next);
@@ -224,7 +356,8 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const panelMessages: MessageListItem[] = messages.map((message) => ({
         id: message.id,
         variant: message.variant,
-        content: message.content,
+        // Assistant replies are markdown; user input and errors stay plain text.
+        content: message.variant === 'incoming' ? <MarkdownText text={message.content} /> : message.content,
         timestamp: formatChatTimestamp(message.createdAt),
         products: message.products,
     }));
@@ -250,6 +383,8 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                         typing={typing}
                         error={error}
                         onDismissError={() => setError(null)}
+                        onClearHistory={handleClearHistory}
+                        clearing={clearing}
                     />
                 </DialogPrimitive.Content>
             </DialogPrimitive.Portal>

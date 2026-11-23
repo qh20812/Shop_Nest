@@ -26,6 +26,14 @@ class HybridChatbotService
 {
     private const CACHE_TTL_MINUTES = 5;
 
+    private const HISTORY_TURNS = 6;
+
+    private const HISTORY_TURN_CHARS = 600;
+
+    private const HISTORY_LIMIT = 20;
+
+    private const HISTORY_LIMIT_MAX = 50;
+
     private array $contextGatherers;
 
     public function __construct(private readonly ChatbotProductRecommender $productRecommender)
@@ -110,12 +118,60 @@ class HybridChatbotService
             ? $this->productRecommender->recommend($user, $message, $context)
             : [];
 
-        $messages = $this->buildMessages($role, $user, $message, $context, $products);
+        $history = $this->recentTurns($user, $role);
+        $messages = $this->buildMessages($role, $user, $message, $context, $products, $history);
         $result = $this->callPreferredProviders($role, $messages);
         $result['products'] = $products;
         $chatMessage = $this->storeConversation($user, $role, $message, $context, $result);
 
         return $this->buildResponsePayload($role, $chatMessage, $result);
+    }
+
+    /**
+     * Lịch sử hội thoại chatbot của chính người dùng, cũ nhất trước.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function history(User $user, int $limit = self::HISTORY_LIMIT): array
+    {
+        $roomId = $this->findRoomId($user, $this->determineRole($user));
+
+        if ($roomId === null) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, self::HISTORY_LIMIT_MAX));
+
+        return ChatMessage::query()
+            ->where('chat_room_id', $roomId)
+            ->whereNotNull('assistant_content')
+            ->orderByDesc('chat_message_id')
+            ->limit($limit)
+            ->get(['chat_message_id', 'content', 'assistant_content', 'assistant_metadata', 'created_at'])
+            ->reverse()
+            ->map(fn (ChatMessage $chatMessage): array => [
+                'id' => (int) $chatMessage->chat_message_id,
+                'user_content' => (string) $chatMessage->content,
+                'assistant_content' => (string) $chatMessage->assistant_content,
+                'products' => $chatMessage->assistant_metadata['products'] ?? [],
+                'created_at' => $chatMessage->created_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Xoá toàn bộ lượt trò chuyện chatbot của người dùng, giữ lại room/participant.
+     */
+    public function clearHistory(User $user): int
+    {
+        $roomId = $this->findRoomId($user, $this->determineRole($user));
+
+        if ($roomId === null) {
+            return 0;
+        }
+
+        return ChatMessage::query()->where('chat_room_id', $roomId)->delete();
     }
 
     private function buildResponsePayload(string $role, ChatMessage $chatMessage, array $result): array
@@ -166,7 +222,13 @@ class HybridChatbotService
         });
     }
 
-    private function buildMessages(string $role, User $user, string $message, array $context, array $products = []): array
+    /**
+     * @param  array<string, mixed>  $context
+     * @param  array<int, array<string, mixed>>  $products
+     * @param  array<int, array{role: string, content: string}>  $history
+     * @return array<int, array{role: string, content: string}>
+     */
+    private function buildMessages(string $role, User $user, string $message, array $context, array $products = [], array $history = []): array
     {
         $system = self::ROLE_SYSTEM_PROMPTS[$role] ?? self::ROLE_SYSTEM_PROMPTS['default'];
         $contextJson = $this->truncateForPrompt(json_encode($context, JSON_UNESCAPED_UNICODE));
@@ -185,11 +247,12 @@ Tin nhắn người dùng: {$message}
 Thông tin người dùng: {$userProfile}
 Dữ liệu liên quan: {$contextJson}
 Danh sách sản phẩm ứng viên (chỉ được tư vấn trong danh sách này, không bịa thêm sản phẩm/giá): {$productCandidates}
-Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu nếu cần.
+Hãy trả lời phù hợp với tin nhắn, sử dụng dữ liệu và lịch sử hội thoại nếu cần.
 TEXT;
 
         return [
             ['role' => 'system', 'content' => $system],
+            ...$history,
             ['role' => 'user', 'content' => $userContent],
         ];
     }
@@ -446,13 +509,42 @@ TEXT;
 
     private function storeConversation(User $user, string $role, string $message, array $context, array $result): ChatMessage
     {
-        $roomId = Cache::remember(
+        return ChatMessage::create([
+            'chat_room_id' => $this->ensureRoomId($user, $role),
+            'sender_id' => $user->getKey(),
+            'role_context' => $role,
+            'assistant_api' => $result['provider'] ?? null,
+            'content' => $message,
+            'assistant_content' => $result['content'] ?? null,
+            'context_snapshot' => $this->trimContextForStorage($context),
+            'assistant_metadata' => $this->buildAssistantMetadata($result),
+            'response_latency_ms' => $result['latency_ms'] ?? null,
+        ]);
+    }
+
+    private function roomName(User $user, string $role): string
+    {
+        return sprintf('chatbot:%d:%s', $user->getKey(), $role);
+    }
+
+    private function findRoomId(User $user, string $role): ?int
+    {
+        $roomId = ChatRoom::query()
+            ->where('room_name', $this->roomName($user, $role))
+            ->value('chat_room_id');
+
+        return $roomId !== null ? (int) $roomId : null;
+    }
+
+    private function ensureRoomId(User $user, string $role): int
+    {
+        return (int) Cache::remember(
             sprintf('chatbot:room:%d:%s', $user->getKey(), $role),
             now()->addDay(),
-            function () use ($user, $role) {
+            function () use ($user, $role): int {
                 $room = ChatRoom::firstOrCreate(
                     [
-                        'room_name' => sprintf('chatbot:%d:%s', $user->getKey(), $role),
+                        'room_name' => $this->roomName($user, $role),
                     ],
                     [
                         'type' => 3,
@@ -470,21 +562,46 @@ TEXT;
                     ]
                 );
 
-                return $room->getKey();
+                return (int) $room->getKey();
             }
         );
+    }
 
-        return ChatMessage::create([
-            'chat_room_id' => $roomId,
-            'sender_id' => $user->getKey(),
-            'role_context' => $role,
-            'assistant_api' => $result['provider'] ?? null,
-            'content' => $message,
-            'assistant_content' => $result['content'] ?? null,
-            'context_snapshot' => $this->trimContextForStorage($context),
-            'assistant_metadata' => $this->buildAssistantMetadata($result),
-            'response_latency_ms' => $result['latency_ms'] ?? null,
-        ]);
+    /**
+     * Vài lượt gần nhất để model giữ mạch hội thoại.
+     *
+     * @return array<int, array{role: string, content: string}>
+     */
+    private function recentTurns(User $user, string $role, int $limit = self::HISTORY_TURNS): array
+    {
+        $roomId = $this->findRoomId($user, $role);
+
+        if ($roomId === null) {
+            return [];
+        }
+
+        $turns = ChatMessage::query()
+            ->where('chat_room_id', $roomId)
+            ->whereNotNull('assistant_content')
+            ->orderByDesc('chat_message_id')
+            ->limit($limit)
+            ->get(['content', 'assistant_content'])
+            ->reverse();
+
+        $history = [];
+
+        foreach ($turns as $turn) {
+            $history[] = [
+                'role' => 'user',
+                'content' => Str::limit((string) $turn->content, self::HISTORY_TURN_CHARS),
+            ];
+            $history[] = [
+                'role' => 'assistant',
+                'content' => Str::limit((string) $turn->assistant_content, self::HISTORY_TURN_CHARS),
+            ];
+        }
+
+        return $history;
     }
 
     private function trimContextForStorage(array $context): array
@@ -518,7 +635,15 @@ TEXT;
                 ->map(fn ($product) => [
                     'id' => $product['id'] ?? null,
                     'name' => $product['name'] ?? null,
+                    'image' => $product['image'] ?? null,
                     'price' => $product['price'] ?? null,
+                    'compare_at' => $product['compare_at'] ?? null,
+                    'rating' => $product['rating'] ?? null,
+                    'review_count' => $product['review_count'] ?? 0,
+                    'shop_name' => $product['shop_name'] ?? null,
+                    'url' => $product['url'] ?? null,
+                    'badges' => $product['badges'] ?? [],
+                    'stock' => $product['stock'] ?? 'in',
                 ])
                 ->values()
                 ->all(),

@@ -70,4 +70,37 @@ class ChatbotController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Lịch sử hội thoại chatbot của người dùng hiện tại (phục hồi khi đổi thiết bị).
+     */
+    public function history(Request $request)
+    {
+        Gate::authorize('chatbot.access', $request->user());
+
+        $turns = $this->chatbotService->history(
+            $request->user(),
+            max(1, $request->integer('limit', 20))
+        );
+
+        return response()->json([
+            'data' => [
+                'turns' => $turns,
+            ],
+        ]);
+    }
+
+    /**
+     * Xoá lịch sử hội thoại chatbot của người dùng hiện tại.
+     */
+    public function destroyHistory(Request $request)
+    {
+        Gate::authorize('chatbot.access', $request->user());
+
+        return response()->json([
+            'data' => [
+                'deleted' => $this->chatbotService->clearHistory($request->user()),
+            ],
+        ]);
+    }
 }

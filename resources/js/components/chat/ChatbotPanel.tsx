@@ -6,7 +6,9 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MessageList, type MessageListItem } from '@/components/chat/MessageList';
 import { QuickReplies } from '@/components/chat/QuickReplies';
 import { Alert } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type ChatbotPanelProps = {
     messages: MessageListItem[];
@@ -49,7 +51,7 @@ export function ChatbotPanel({
     };
 
     return (
-        <div className={cn('flex h-full min-h-0 flex-col bg-warm-porcelain', className)} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className={cx(styles.panel, className)}>
             <ChatHeader variant="assistant" title="Trợ lý ShopNest" subtitle="Trực tuyến" online onClose={onClose} onMinimize={onMinimize} />
 
             <MessageList
@@ -59,11 +61,10 @@ export function ChatbotPanel({
                 typingLabel="Trợ lý đang soạn tin"
                 emptyTitle="Xin chào!"
                 emptyDescription="Hỏi mình về đơn hàng, đổi trả hoặc chọn sản phẩm phù hợp."
-                className="min-h-0"
             />
 
-            <div className="flex flex-col gap-3 border-t border-border p-3">
-                {error && <Alert tone="danger" title="Trợ lý đang bận" description={error} onDismiss={onDismissError} />}
+            <div className={styles.panelFooter}>
+                {error ? <Alert tone="danger" title="Trợ lý đang bận" description={error} onDismiss={onDismissError} /> : null}
 
                 <QuickReplies items={quickReplies} onSelect={send} disabled={typing} />
 
@@ -76,8 +77,8 @@ export function ChatbotPanel({
                     placeholder="Hỏi trợ lý ShopNest..."
                 />
 
-                <p className="flex items-start gap-1.5 text-label-micro text-ink-faint">
-                    <ShieldCheck aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                <p className={styles.panelNote}>
+                    <ShieldCheck aria-hidden="true" className={styles.panelNoteIcon} />
                     Trợ lý có thể sai sót. Kiểm tra thông tin quan trọng trước khi đặt hàng.
                 </p>
             </div>

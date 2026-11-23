@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cx } from '@/lib/cx';
 import { formatVnd } from '@/lib/format';
 import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusLabel, paymentStatusTone } from '@/lib/status';
-import { cn } from '@/lib/utils';
+
+import styles from './commerce.module.css';
 
 type OrderTableRow = {
     id: number | string;
@@ -37,12 +39,12 @@ export function OrderTable({
 }: OrderTableProps) {
     if (loading) {
         return (
-            <div className={cn('flex flex-col gap-3', className)}>
+            <div className={cx(styles.orderCards, className)}>
                 {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="flex items-center gap-4 rounded-card border border-border bg-warm-porcelain p-4">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="ml-auto h-4 w-20" />
+                    <div key={index} className={styles.orderSkeletonRow}>
+                        <Skeleton className={styles.orderSkeletonCode} />
+                        <Skeleton className={styles.orderSkeletonDate} />
+                        <Skeleton className={cx(styles.orderSkeletonAmount, styles.orderSkeletonSpacer)} />
                     </div>
                 ))}
             </div>
@@ -55,50 +57,47 @@ export function OrderTable({
 
     return (
         <div className={className}>
-            <div className="hidden overflow-hidden rounded-card border border-border bg-warm-porcelain md:block">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-left">
-                        <thead className="border-b border-border bg-raw-linen/50">
+            <div className={styles.orderTableWrap}>
+                <div className={styles.orderTableScroll}>
+                    <table className={styles.orderTable}>
+                        <thead className={styles.orderTableHead}>
                             <tr>
                                 {['Mã đơn', 'Ngày tạo', 'Trạng thái', 'Thanh toán', 'Tổng tiền', ''].map((header, index) => (
-                                    <th
-                                        key={header || index}
-                                        scope="col"
-                                        className="px-4 py-3 font-sans text-label-micro font-medium tracking-[0.12em] text-ink-muted uppercase"
-                                    >
+                                    <th key={header || index} scope="col">
                                         {header}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody>
                             {orders.map((order) => {
                                 const paymentStatus = order.paymentStatus ?? 'unpaid';
 
                                 return (
-                                    <tr key={order.id} className="transition-colors hover:bg-rice-paper/60">
-                                        <td className="px-4 py-3">
-                                            <Link
-                                                href={`/user/orders/${order.id}`}
-                                                className="focus-ring font-mono text-label-code font-semibold text-ink transition-colors hover:text-lacquer-red"
-                                            >
+                                    <tr key={order.id} className={styles.orderTableRow}>
+                                        <td className={styles.orderTableCell}>
+                                            <Link href={`/user/orders/${order.id}`} className={styles.orderTableLink}>
                                                 {order.code}
                                             </Link>
                                         </td>
-                                        <td className="px-4 py-3 font-mono text-label-micro text-ink-muted">{order.createdAt ?? '—'}</td>
-                                        <td className="px-4 py-3">
+                                        <td className={styles.orderTableCell}>
+                                            <span className={styles.orderTableDate}>{order.createdAt ?? '-'}</span>
+                                        </td>
+                                        <td className={styles.orderTableCell}>
                                             <OrderStatusBadge
                                                 status={normalizeOrderStatus(order.status)}
                                                 label={backendOrderStatusLabel(order.status)}
                                             />
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className={styles.orderTableCell}>
                                             <Badge tone={paymentStatusTone[paymentStatus] ?? 'neutral'} dot>
                                                 {paymentStatusLabel[paymentStatus] ?? paymentStatus}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-3 font-mono text-label-code font-semibold text-ink">{formatVnd(order.total)}</td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className={styles.orderTableCell}>
+                                            <span className={styles.orderTableAmount}>{formatVnd(order.total)}</span>
+                                        </td>
+                                        <td className={cx(styles.orderTableCell, styles.orderTableAction)}>
                                             <Button variant="ghost" size="sm" asChild rightIcon={ChevronRight}>
                                                 <Link href={`/user/orders/${order.id}`}>Xem</Link>
                                             </Button>
@@ -111,28 +110,25 @@ export function OrderTable({
                 </div>
             </div>
 
-            <ul className="flex flex-col gap-3 md:hidden">
+            <ul className={styles.orderCards}>
                 {orders.map((order) => {
                     const paymentStatus = order.paymentStatus ?? 'unpaid';
 
                     return (
                         <li key={order.id}>
-                            <Link
-                                href={`/user/orders/${order.id}`}
-                                className="focus-ring flex flex-col gap-3 rounded-card border border-border bg-warm-porcelain p-4 transition-colors hover:border-ink-muted"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="font-mono text-label-code font-semibold text-ink">{order.code}</span>
-                                        <span className="font-mono text-label-micro text-ink-faint">{order.createdAt ?? '—'}</span>
+                            <Link href={`/user/orders/${order.id}`} className={styles.orderCard}>
+                                <div className={styles.orderCardTop}>
+                                    <div>
+                                        <span className={styles.orderCardCode}>{order.code}</span>
+                                        <span className={styles.orderCardDate}>{order.createdAt ?? '-'}</span>
                                     </div>
                                     <OrderStatusBadge status={normalizeOrderStatus(order.status)} label={backendOrderStatusLabel(order.status)} />
                                 </div>
-                                <div className="flex items-center justify-between gap-3">
+                                <div className={styles.orderCardBottom}>
                                     <Badge tone={paymentStatusTone[paymentStatus] ?? 'neutral'} dot>
                                         {paymentStatusLabel[paymentStatus] ?? paymentStatus}
                                     </Badge>
-                                    <span className="font-mono text-body-sm font-semibold text-ink">{formatVnd(order.total)}</span>
+                                    <span className={styles.orderCardAmount}>{formatVnd(order.total)}</span>
                                 </div>
                             </Link>
                         </li>

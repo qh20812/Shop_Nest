@@ -69,6 +69,7 @@ type AccountLayoutProps = {
     active?: AccountNavKey;
     children: React.ReactNode;
     compactFooter?: boolean;
+    pinLight?: boolean;
     className?: string;
 };
 
@@ -82,13 +83,14 @@ export function AccountLayout({
     active,
     children,
     compactFooter = true,
+    pinLight = false,
     className,
 }: AccountLayoutProps) {
     const { url } = usePage();
     const resolvedActive = active ?? resolveActiveKey(url);
 
     return (
-        <StorefrontLayout compactFooter={compactFooter}>
+        <StorefrontLayout compactFooter={compactFooter} pinLight={pinLight}>
             <PageContainer className={cx('sn-account', className)}>
                 <PageHeader
                     breadcrumbs={

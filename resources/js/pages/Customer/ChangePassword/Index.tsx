@@ -10,6 +10,8 @@ import Input from '@/components/ui/input';
 import { PasswordStrength } from '@/components/ui/password-strength';
 import { useToast } from '@/components/ui/toast';
 
+import styles from '../customer.module.css';
+
 interface PageProps extends Record<string, unknown> {
     errors?: Record<string, string>;
 }
@@ -20,6 +22,8 @@ interface PasswordForm {
     confirm_password: string;
     [key: string]: string;
 }
+
+const INSET_VARIANT = 'inset' as const;
 
 const emptyForm: PasswordForm = {
     current_password: '',
@@ -70,6 +74,17 @@ export default function ChangePasswordIndex() {
 
     const isValid = Boolean(form.current_password && form.new_password && form.confirm_password);
 
+    const revealButton = (key: keyof typeof show, label: string) => (
+        <button
+            type="button"
+            aria-label={show[key] ? `Ẩn ${label}` : `Hiện ${label}`}
+            className={styles.reveal}
+            onClick={() => setShow((current) => ({ ...current, [key]: !current[key] }))}
+        >
+            {show[key] ? <EyeOff aria-hidden="true" className={styles.revealIcon} /> : <Eye aria-hidden="true" className={styles.revealIcon} />}
+        </button>
+    );
+
     return (
         <AccountLayout
             active="password"
@@ -85,12 +100,12 @@ export default function ChangePasswordIndex() {
         >
             <Head title="Đổi mật khẩu" />
 
-            <div className="grid gap-6 lg:grid-cols-12">
-                <Card padding="lg" className="lg:col-span-7">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                        <div className="flex items-center gap-2 border-b border-border pb-3">
-                            <KeyRound aria-hidden="true" className="size-4 text-lacquer-red" />
-                            <h2 className="text-headline-3 text-ink">Mật khẩu đăng nhập</h2>
+            <div className={styles.passwordGrid}>
+                <Card padding="lg" className={styles.passwordCard}>
+                    <form onSubmit={handleSubmit} className={styles.formStack}>
+                        <div className={styles.cardHead}>
+                            <KeyRound aria-hidden="true" className={styles.iconAccent} />
+                            <h2 className={styles.cardTitle}>Mật khẩu đăng nhập</h2>
                         </div>
 
                         <FormField label="Mật khẩu hiện tại" required error={errors.current_password}>
@@ -100,20 +115,7 @@ export default function ChangePasswordIndex() {
                                 onChange={update('current_password')}
                                 autoComplete="current-password"
                                 invalid={Boolean(errors.current_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.current ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, current: !current.current }))}
-                                    >
-                                        {show.current ? (
-                                            <EyeOff aria-hidden="true" className="size-4" />
-                                        ) : (
-                                            <Eye aria-hidden="true" className="size-4" />
-                                        )}
-                                    </button>
-                                }
+                                trailing={revealButton('current', 'mật khẩu hiện tại')}
                                 required
                             />
                         </FormField>
@@ -125,16 +127,7 @@ export default function ChangePasswordIndex() {
                                 onChange={update('new_password')}
                                 autoComplete="new-password"
                                 invalid={Boolean(errors.new_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.next ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, next: !current.next }))}
-                                    >
-                                        {show.next ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                                    </button>
-                                }
+                                trailing={revealButton('next', 'mật khẩu mới')}
                                 required
                             />
                         </FormField>
@@ -148,25 +141,12 @@ export default function ChangePasswordIndex() {
                                 onChange={update('confirm_password')}
                                 autoComplete="new-password"
                                 invalid={Boolean(errors.confirm_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.confirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, confirm: !current.confirm }))}
-                                    >
-                                        {show.confirm ? (
-                                            <EyeOff aria-hidden="true" className="size-4" />
-                                        ) : (
-                                            <Eye aria-hidden="true" className="size-4" />
-                                        )}
-                                    </button>
-                                }
+                                trailing={revealButton('confirm', 'mật khẩu xác nhận')}
                                 required
                             />
                         </FormField>
 
-                        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+                        <div className={styles.formFooter}>
                             <Button type="button" variant="secondary" asChild>
                                 <Link href="/user/profile">Huỷ</Link>
                             </Button>
@@ -177,9 +157,9 @@ export default function ChangePasswordIndex() {
                     </form>
                 </Card>
 
-                <Card padding="lg" variant="inset" className="flex flex-col gap-3 lg:col-span-5">
-                    <h3 className="text-headline-3 text-ink">Mẹo bảo mật</h3>
-                    <ul className="flex list-disc flex-col gap-2 pl-5 text-body-sm text-ink-muted">
+                <Card padding="lg" variant={INSET_VARIANT} className={styles.tipsCard}>
+                    <h3 className={styles.cardTitle}>Mẹo bảo mật</h3>
+                    <ul className={styles.tipsList}>
                         <li>Mật khẩu tối thiểu 8 ký tự, nên có chữ hoa, số và ký tự đặc biệt.</li>
                         <li>Không dùng lại mật khẩu của email hoặc mạng xã hội.</li>
                         <li>Đăng xuất khỏi thiết bị lạ sau khi đổi mật khẩu.</li>

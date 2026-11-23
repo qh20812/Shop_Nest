@@ -6,6 +6,8 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 
+import styles from './customer.module.css';
+
 interface PaymentResultAction {
     label: string;
     href: string;
@@ -93,10 +95,10 @@ export default function PaymentResult({ status, message, order, actions }: Payme
     const resolvedActions = actions && actions.length > 0 ? actions : fallbackActions;
 
     return (
-        <StorefrontLayout compactFooter>
+        <StorefrontLayout compactFooter pinLight={false}>
             <Head title="Kết quả thanh toán" />
 
-            <PageContainer size="narrow" className="py-section">
+            <PageContainer size="narrow" className={styles.pageTight}>
                 <ResultState
                     status={config.result}
                     orderCode={orderCode}
@@ -110,13 +112,13 @@ export default function PaymentResult({ status, message, order, actions }: Payme
                 />
 
                 {order && items.length > 0 && (
-                    <div className="mt-10">
+                    <div className={styles.resultSummary}>
                         <OrderSummary
                             items={items}
                             subtotal={total}
                             total={total}
                             showItems
-                            trust={order.payment_method ? [`Thanh toán: ${order.payment_method}`, 'Hỗ trợ 24/7'] : ['Hỗ trợ 24/7']}
+                            trust={order.payment_method ? [`Thanh toán: ${order.payment_method}`] : []}
                             footerNote="Cảm ơn bạn đã mua sắm tại ShopNest."
                         />
                     </div>

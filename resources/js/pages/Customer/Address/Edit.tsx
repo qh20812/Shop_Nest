@@ -4,6 +4,7 @@ import * as React from 'react';
 import { AccountLayout } from '@/components/layout/AccountLayout';
 import { Card } from '@/components/ui/card';
 
+import styles from '../customer.module.css';
 import { AddressForm, type AddressFormValue, type Division } from './AddressForm';
 
 interface AddressModel {
@@ -68,7 +69,7 @@ export default function AddressEdit() {
         >
             <Head title="Sửa địa chỉ" />
 
-            <Card padding="lg" className="max-w-3xl">
+            <Card padding="lg" className={styles.cardWide}>
                 <AddressForm
                     value={value}
                     onChange={setValue}

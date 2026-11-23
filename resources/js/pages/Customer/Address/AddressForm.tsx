@@ -7,6 +7,8 @@ import { FormField } from '@/components/ui/form-field';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 
+import styles from '../customer.module.css';
+
 export interface Division {
     id: number;
     name: string;
@@ -93,8 +95,8 @@ export function AddressForm({
     const isValid = Boolean(value.name.trim() && value.phone.trim() && value.address.trim() && value.province_id && value.ward_id);
 
     return (
-        <form onSubmit={onSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form onSubmit={onSubmit} className={styles.formStack}>
+            <div className={styles.addressFormGrid}>
                 <FormField label="Tên người nhận" required error={errors.name}>
                     <Input
                         value={value.name}
@@ -130,7 +132,7 @@ export function AddressForm({
                 />
             </FormField>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className={styles.addressFormGrid}>
                 <FormField label="Tỉnh/Thành phố" required error={errors.province_id}>
                     <Select
                         value={value.province_id}
@@ -162,7 +164,7 @@ export function AddressForm({
                 description="ShopNest sẽ dùng địa chỉ này cho lần thanh toán tiếp theo."
             />
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
+            <div className={styles.formFooter}>
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={processing}>
                     Huỷ
                 </Button>

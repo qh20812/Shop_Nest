@@ -7,6 +7,8 @@ import { FormField } from '@/components/ui/form-field';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 
+import styles from './commerce.module.css';
+
 interface AddressOption {
     id: number;
     name: string;
@@ -18,7 +20,6 @@ export interface NewAddress {
     phone: string;
     address: string;
     province_id: string;
-    district_id: string;
     ward_id: string;
     is_default: boolean;
 }
@@ -34,15 +35,12 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
         phone: '',
         address: '',
         province_id: '',
-        district_id: '',
         ward_id: '',
         is_default: false,
     });
     const [provinces, setProvinces] = React.useState<AddressOption[]>([]);
-    const [districts, setDistricts] = React.useState<AddressOption[]>([]);
     const [wards, setWards] = React.useState<AddressOption[]>([]);
     const [loadingProvinces, setLoadingProvinces] = React.useState(false);
-    const [loadingDistricts, setLoadingDistricts] = React.useState(false);
     const [loadingWards, setLoadingWards] = React.useState(false);
     const [submitting, setSubmitting] = React.useState(false);
 
@@ -50,10 +48,8 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
         const loadProvinces = async () => {
             setLoadingProvinces(true);
             try {
-                const response = await axios.get('/addresses/provinces');
-                if (response.data?.success) {
-                    setProvinces(response.data.data);
-                }
+                const response = await axios.get('/user/addresses/provinces');
+                setProvinces(response.data?.data ?? []);
             } catch {
                 // Keep the form usable; the user can retry by reopening.
             } finally {
@@ -64,37 +60,16 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
         loadProvinces();
     }, []);
 
-    const loadDistricts = async (provinceId: string) => {
+    const loadWards = async (provinceId: string) => {
         if (!provinceId) {
-            setDistricts([]);
-            return;
-        }
-
-        setLoadingDistricts(true);
-        try {
-            const response = await axios.get(`/addresses/districts/${provinceId}`);
-            if (response.data?.success) {
-                setDistricts(response.data.data);
-            }
-        } catch {
-            setDistricts([]);
-        } finally {
-            setLoadingDistricts(false);
-        }
-    };
-
-    const loadWards = async (districtId: string) => {
-        if (!districtId) {
             setWards([]);
             return;
         }
 
         setLoadingWards(true);
         try {
-            const response = await axios.get(`/addresses/wards/${districtId}`);
-            if (response.data?.success) {
-                setWards(response.data.data);
-            }
+            const response = await axios.get(`/user/addresses/wards/${provinceId}`);
+            setWards(response.data?.data ?? []);
         } catch {
             setWards([]);
         } finally {
@@ -114,13 +89,14 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
     };
 
     return (
-        <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className={styles.addressForm}>
+            <div className={styles.addressFormGrid}>
                 <FormField label="Họ và tên" required>
                     <Input
                         value={formData.name}
                         onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
                         placeholder="Nguyễn Thu Hà"
+                        autoComplete="name"
                         required
                     />
                 </FormField>
@@ -130,49 +106,35 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
                         value={formData.phone}
                         onChange={(event) => setFormData((current) => ({ ...current, phone: event.target.value }))}
                         placeholder="0912 345 678"
+                        autoComplete="tel"
                         required
                     />
                 </FormField>
             </div>
 
-            <FormField label="Địa chỉ" required>
+            <FormField label="Địa chỉ" required hint="Số nhà, tên đường, toà nhà, ghi chú giao hàng.">
                 <Input
                     value={formData.address}
                     onChange={(event) => setFormData((current) => ({ ...current, address: event.target.value }))}
                     placeholder="Số nhà, tên đường"
+                    autoComplete="street-address"
                     required
                 />
             </FormField>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className={styles.addressFormGrid}>
                 <FormField label="Tỉnh/Thành phố" required>
                     <Select
                         value={formData.province_id}
                         onChange={(event) => {
                             const provinceId = event.target.value;
-                            setFormData((current) => ({ ...current, province_id: provinceId, district_id: '', ward_id: '' }));
-                            setDistricts([]);
+                            setFormData((current) => ({ ...current, province_id: provinceId, ward_id: '' }));
                             setWards([]);
-                            loadDistricts(provinceId);
+                            loadWards(provinceId);
                         }}
                         placeholder={loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}
                         options={provinces.map((province) => ({ value: String(province.id), label: province.name }))}
                         disabled={loadingProvinces}
-                        required
-                    />
-                </FormField>
-                <FormField label="Quận/Huyện" required>
-                    <Select
-                        value={formData.district_id}
-                        onChange={(event) => {
-                            const districtId = event.target.value;
-                            setFormData((current) => ({ ...current, district_id: districtId, ward_id: '' }));
-                            setWards([]);
-                            loadWards(districtId);
-                        }}
-                        placeholder={loadingDistricts ? 'Đang tải...' : 'Chọn quận/huyện'}
-                        options={districts.map((district) => ({ value: String(district.id), label: district.name }))}
-                        disabled={!formData.province_id || loadingDistricts}
                         required
                     />
                 </FormField>
@@ -182,7 +144,7 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
                         onChange={(event) => setFormData((current) => ({ ...current, ward_id: event.target.value }))}
                         placeholder={loadingWards ? 'Đang tải...' : 'Chọn phường/xã'}
                         options={wards.map((ward) => ({ value: String(ward.id), label: ward.name }))}
-                        disabled={!formData.district_id || loadingWards}
+                        disabled={!formData.province_id || loadingWards}
                         required
                     />
                 </FormField>
@@ -194,7 +156,7 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
                 label="Đặt làm địa chỉ mặc định"
             />
 
-            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <div className={styles.addressFormActions}>
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
                     Huỷ
                 </Button>

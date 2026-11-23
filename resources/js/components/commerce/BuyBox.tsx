@@ -49,8 +49,8 @@ export function BuyBox({
     onBuyNow,
     adding = false,
     buying = false,
-    deliveryNote = 'Giao trong 2-4 ngày tại TP.HCM.',
-    trust = ['Đổi trả 7 ngày'],
+    deliveryNote = 'Theo địa chỉ giao hàng.',
+    trust = [],
     children,
     className,
 }: BuyBoxProps) {

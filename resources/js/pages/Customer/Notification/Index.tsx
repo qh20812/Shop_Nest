@@ -10,6 +10,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 
+import styles from '../customer.module.css';
+
 interface PageProps extends Record<string, unknown> {
     notifications?: NotificationModel[];
     filters?: { tab?: string };
@@ -81,7 +83,7 @@ export default function NotificationIndex() {
         >
             <Head title="Thông báo" />
 
-            <div className="flex flex-col gap-5">
+            <div className={styles.stack}>
                 <Tabs
                     items={tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
                     value={activeTab}
@@ -108,15 +110,15 @@ export default function NotificationIndex() {
                         }
                     />
                 ) : (
-                    <div className="rounded-card border border-border bg-warm-porcelain p-5">
+                    <div className={styles.notificationCard}>
                         {items.map((notification) => (
                             <NotificationRow key={notification.id} notification={notification} onRead={markRead} />
                         ))}
                     </div>
                 )}
 
-                <p className="flex items-center gap-2 text-label-micro text-ink-faint">
-                    <Bell aria-hidden="true" className="size-3.5" />
+                <p className={styles.fineprint}>
+                    <Bell aria-hidden="true" className={styles.fineprintIcon} />
                     Thông báo được giữ tối đa 100 bản gần nhất.
                 </p>
             </div>

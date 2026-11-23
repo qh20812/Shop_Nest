@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { IconButton } from '@/components/ui/icon-button';
 import Textarea from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type ChatComposerProps = {
     value: string;
@@ -47,19 +49,19 @@ export function ChatComposer({
 
     return (
         <form
-            className={cn('flex items-end gap-2 border-t border-border bg-warm-porcelain p-3', className)}
+            className={cx(styles.composer, className)}
             onSubmit={(event) => {
                 event.preventDefault();
                 submit();
             }}
         >
-            {onEmoji && (
+            {onEmoji ? (
                 <IconButton label="Chèn biểu tượng" variant="ghost" size="sm" onClick={onEmoji} disabled={disabled}>
                     <Smile aria-hidden="true" />
                 </IconButton>
-            )}
+            ) : null}
 
-            <div className="min-w-0 flex-1">
+            <div className={styles.composerField}>
                 <Textarea
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
@@ -70,7 +72,7 @@ export function ChatComposer({
                     autoGrow
                     maxRows={4}
                     disabled={disabled}
-                    className="min-h-control-md resize-none py-2.5 text-body-sm"
+                    className={styles.composerInput}
                     aria-label="Nội dung tin nhắn"
                 />
             </div>

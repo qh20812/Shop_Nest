@@ -2,9 +2,10 @@ import type { LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { RadioCard } from '@/components/ui/radio-card';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 import { PaymentMarks, type PaymentMethod } from './PaymentMarks';
+import styles from './commerce.module.css';
 
 type PaymentOptionProps = {
     name?: string;
@@ -41,14 +42,14 @@ export function PaymentOption({
             disabled={disabled}
             onChange={() => onChange(value)}
             title={
-                <span className="inline-flex items-center gap-2">
-                    {Icon && <Icon aria-hidden="true" className="size-4 text-ink-muted" />}
+                <span className={styles.refundTitle}>
+                    {Icon ? <Icon aria-hidden="true" className={styles.refundIcon} /> : null}
                     {title}
                 </span>
             }
             description={description}
             meta={marks && marks.length > 0 ? <PaymentMarks methods={marks} /> : undefined}
-            className={cn(className)}
+            className={cx(className)}
         >
             {children}
         </RadioCard>

@@ -16,6 +16,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 import { formatVnd } from '@/lib/format';
 
+import styles from './customer.module.css';
+
 interface CartItem {
     cart_item_id: number;
     variant_id: number;
@@ -177,9 +179,9 @@ export default function Cart() {
 
     if (cartItems.length === 0) {
         return (
-            <StorefrontLayout compactFooter>
+            <StorefrontLayout compactFooter pinLight={false}>
                 <Head title="Giỏ hàng" />
-                <PageContainer className="py-section">
+                <PageContainer className={styles.pageTight}>
                     <EmptyState
                         icon={ShoppingBag}
                         title="Giỏ đang trống"
@@ -205,10 +207,10 @@ export default function Cart() {
     }));
 
     return (
-        <StorefrontLayout compactFooter>
+        <StorefrontLayout compactFooter pinLight={false}>
             <Head title="Giỏ hàng" />
 
-            <PageContainer className="py-8 md:py-10">
+            <PageContainer className={styles.page}>
                 <PageHeader
                     breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Giỏ hàng' }]}
                     eyebrow="Đơn hàng của bạn"
@@ -221,9 +223,9 @@ export default function Cart() {
                     }
                 />
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-12">
-                    <section className="lg:col-span-8" aria-label="Danh sách món hàng">
-                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+                <div className={styles.cartGrid}>
+                    <section className={styles.cartMain} aria-label="Danh sách món hàng">
+                        <div className={styles.cartToolbar}>
                             <Checkbox
                                 checked={isAllSelected}
                                 onCheckedChange={(checked) => handleSelectAll(checked === true)}
@@ -232,7 +234,7 @@ export default function Cart() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-brick hover:bg-brick-soft hover:text-brick"
+                                className={styles.dangerAction}
                                 disabled={selectedItems.length === 0}
                                 onClick={() => setPendingDelete(selectedItems)}
                             >
@@ -240,7 +242,7 @@ export default function Cart() {
                             </Button>
                         </div>
 
-                        <div className="divide-y divide-border">
+                        <div className={styles.cartLines}>
                             {cartItems.map((item) => {
                                 const product = item.variant.product;
                                 if (!product) return null;
@@ -253,7 +255,6 @@ export default function Cart() {
                                             name: product.name,
                                             image: normalizeImage(product.images?.[0]?.image_url),
                                             href: `/product/${product.product_id}`,
-                                            shopName: 'Shop Việt',
                                             variant: item.variant.sku,
                                             price: item.discount_price || item.price,
                                             compareAt: item.discount_price ? item.price : undefined,
@@ -269,7 +270,7 @@ export default function Cart() {
                             })}
                         </div>
 
-                        <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-5">
+                        <div className={styles.cartActions}>
                             <Button variant="secondary" leftIcon={ArrowLeft} asChild>
                                 <Link href="/">Tiếp tục mua sắm</Link>
                             </Button>
@@ -279,7 +280,7 @@ export default function Cart() {
                         </div>
                     </section>
 
-                    <div className="lg:col-span-4">
+                    <div className={styles.cartAside}>
                         <OrderSummary
                             items={summaryItems}
                             subtotal={totals.subtotal}
@@ -294,7 +295,7 @@ export default function Cart() {
                                     onApply={handleApplyPromo}
                                     onRemove={handleRemovePromo}
                                     appliedCode={promotion?.code}
-                                    appliedLabel={promotion ? `– Giảm ${formatVnd(totals.discount)}` : undefined}
+                                    appliedLabel={promotion ? `- Giảm ${formatVnd(totals.discount)}` : undefined}
                                     error={promoError}
                                     loading={applyingPromo}
                                 />
@@ -302,8 +303,7 @@ export default function Cart() {
                             ctaLabel="Thanh toán"
                             onCheckout={() => router.visit('/checkout')}
                             disabled={cartItems.length === 0}
-                            trust={['Shop Việt', 'Đổi trả 7 ngày', 'Thanh toán bảo mật']}
-                            footerNote="Đã bao gồm thuế VAT và phí kiểm định."
+                            trust={['Thanh toán bảo mật', 'Đổi trả theo chính sách']}
                         />
                     </div>
                 </div>

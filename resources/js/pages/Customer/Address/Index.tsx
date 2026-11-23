@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
 
+import styles from '../customer.module.css';
+
 interface AddressModel {
     id: number;
     name: string;
@@ -90,7 +92,7 @@ export default function AddressIndex() {
                     }
                 />
             ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className={styles.addressGrid}>
                     {addresses.map((address) => (
                         <AddressCard
                             key={address.id}
@@ -114,7 +116,7 @@ export default function AddressIndex() {
                 title="Xoá địa chỉ này?"
                 description={
                     pendingDelete
-                        ? `${pendingDelete.name} — ${pendingDelete.address}, ${pendingDelete.ward}, ${pendingDelete.province}. Địa chỉ đã xoá không thể khôi phục.`
+                        ? `${pendingDelete.name}, ${pendingDelete.address}, ${pendingDelete.ward}, ${pendingDelete.province}. Địa chỉ đã xoá không thể khôi phục.`
                         : ''
                 }
                 confirmLabel="Xoá địa chỉ"

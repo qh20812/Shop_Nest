@@ -16,7 +16,9 @@ import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Textarea from '@/components/ui/textarea';
 import { formatChatTimestamp, formatConversationTimestamp, useChatConversations, type ChatUser } from '@/hooks/useChatConversations';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type ChatWorkspaceProps = {
     conversations?: ChatConversationModel[];
@@ -157,8 +159,8 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
     };
 
     return (
-        <div className={cn('flex min-h-chat-workspace-height flex-col gap-4', className)}>
-            <div className="grid min-h-chat-workspace-height flex-1 grid-rows-[auto_1fr] overflow-hidden rounded-surface border border-border bg-warm-porcelain lg:grid-cols-[20rem_1fr] lg:grid-rows-1 xl:grid-cols-[20rem_1fr_18rem]">
+        <div className={cx(styles.workspace, className)}>
+            <div className={styles.workspaceGrid} data-rail={activeConversation && order ? 'true' : undefined}>
                 <ConversationList
                     conversations={listItems}
                     activeId={activeId}
@@ -169,11 +171,11 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                     error={error}
                     onRefresh={refresh}
                     onCompose={() => setComposeOpen(true)}
-                    className={cn('max-h-60 border-b lg:max-h-none lg:border-r lg:border-b-0', activeConversation ? 'hidden lg:flex' : 'flex')}
+                    className={cx(activeConversation ? styles.listHidden : undefined)}
                 />
 
                 <section
-                    className={cn('flex min-h-0 flex-col', activeConversation ? 'flex' : 'hidden lg:flex')}
+                    className={cx(styles.workspaceThread, activeConversation ? undefined : styles.threadHidden)}
                     aria-label="Nội dung cuộc trò chuyện"
                 >
                     {activeConversation ? (
@@ -193,14 +195,13 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                 typingLabel="Đang gửi tin"
                                 emptyTitle="Bắt đầu trò chuyện"
                                 emptyDescription={`Gửi tin nhắn đầu tiên tới ${activeConversation.partnerName}.`}
-                                className="min-h-0"
                             />
 
-                            {sendError && (
-                                <div className="px-3 pt-3">
+                            {sendError ? (
+                                <div className={styles.workspaceAlert}>
                                     <Alert tone="danger" title="Không gửi được tin nhắn" description={sendError} onDismiss={clearSendError} />
                                 </div>
-                            )}
+                            ) : null}
 
                             <ChatComposer
                                 value={draft}
@@ -212,19 +213,19 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                             />
                         </>
                     ) : (
-                        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+                        <div className={styles.workspaceEmpty}>
                             {loading ? (
                                 <>
-                                    <Skeleton className="h-8 w-40" />
-                                    <Skeleton className="h-4 w-56" />
+                                    <Skeleton className={styles.workspaceEmptySkeletonTitle} />
+                                    <Skeleton className={styles.workspaceEmptySkeletonText} />
                                 </>
                             ) : (
                                 <>
-                                    <span className="flex size-14 items-center justify-center rounded-pill bg-lacquer-wash text-lacquer-red">
-                                        <Search aria-hidden="true" className="size-6" />
+                                    <span className={styles.workspaceEmptyIcon}>
+                                        <Search aria-hidden="true" className={styles.headerIconSvg} />
                                     </span>
-                                    <span className="text-headline-3 text-ink">Chọn một cuộc trò chuyện</span>
-                                    <span className="max-w-sm text-body-sm text-ink-muted">
+                                    <span className={styles.workspaceEmptyTitle}>Chọn một cuộc trò chuyện</span>
+                                    <span className={styles.workspaceEmptyText}>
                                         Chọn shop hoặc người bán ở cột bên trái, hoặc bắt đầu cuộc trò chuyện mới để được tư vấn.
                                     </span>
                                     <Button variant="secondary" size="sm" onClick={() => setComposeOpen(true)}>
@@ -236,9 +237,9 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                     )}
                 </section>
 
-                {activeConversation && order && (
-                    <OrderContextRail order={order} onAsk={(question) => setDraft(question)} className="hidden xl:flex" />
-                )}
+                {activeConversation && order ? (
+                    <OrderContextRail order={order} onAsk={(question) => setDraft(question)} className={styles.railHidden} />
+                ) : null}
             </div>
 
             <Dialog
@@ -254,7 +255,7 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                 description="Tìm shop hoặc người bán bạn muốn liên hệ."
                 size="lg"
             >
-                <form onSubmit={handleCreateConversation} className="mt-4 flex flex-col gap-4">
+                <form onSubmit={handleCreateConversation} className={styles.composeForm}>
                     <SearchInput
                         value={composeQuery}
                         onChange={(event) => setComposeQuery(event.target.value)}
@@ -263,9 +264,9 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                         aria-label="Tìm người để chat"
                     />
 
-                    <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+                    <div className={styles.composeResults}>
                         {composeResults.length === 0 ? (
-                            <span className="px-2 py-4 text-center text-body-sm text-ink-muted">
+                            <span className={styles.composeEmpty}>
                                 {composeQuery.trim() === '' ? 'Nhập tên shop hoặc username để tìm.' : 'Không tìm thấy người phù hợp.'}
                             </span>
                         ) : (
@@ -283,16 +284,14 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                         key={user.id}
                                         type="button"
                                         onClick={() => setComposeSelected(user)}
-                                        className={cn(
-                                            'focus-ring flex items-center justify-between gap-3 rounded-control border px-3 py-2.5 text-left transition-colors',
-                                            selected ? 'border-lacquer-red bg-lacquer-wash/50' : 'border-border hover:border-ink-muted',
-                                        )}
+                                        className={styles.composeResult}
+                                        data-selected={selected ? 'true' : undefined}
                                     >
-                                        <span className="flex flex-col">
-                                            <span className="text-body-sm font-medium text-ink">{name}</span>
-                                            {user.username && <span className="font-mono text-label-micro text-ink-faint">@{user.username}</span>}
+                                        <span className={styles.composeResultBody}>
+                                            <span className={styles.composeResultName}>{name}</span>
+                                            {user.username ? <span className={styles.composeResultHandle}>@{user.username}</span> : null}
                                         </span>
-                                        {selected && <Check aria-hidden="true" className="size-4 text-lacquer-red" />}
+                                        {selected ? <Check aria-hidden="true" className={styles.composeCheck} /> : null}
                                     </button>
                                 );
                             })
@@ -310,9 +309,9 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                         />
                     </FormField>
 
-                    {sendError && <Alert tone="danger" title="Không thể tạo cuộc trò chuyện" description={sendError} />}
+                    {sendError ? <Alert tone="danger" title="Không thể tạo cuộc trò chuyện" description={sendError} /> : null}
 
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <div className={styles.composeActions}>
                         <Button type="button" variant="secondary" onClick={resetCompose}>
                             Huỷ
                         </Button>

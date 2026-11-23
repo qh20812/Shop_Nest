@@ -358,7 +358,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                             onBuyNow={handleBuyNow}
                             adding={isAddingToCart}
                             buying={isBuyingNow}
-                            trust={['Đổi trả 7 ngày', 'Bảo hành theo shop']}
+                            trust={['Đổi trả theo chính sách', 'Bảo hành theo shop']}
                         >
                             <VariantSelector
                                 groups={product.attributes.map((attribute) => ({

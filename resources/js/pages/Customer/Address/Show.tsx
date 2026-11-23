@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 
+import styles from '../customer.module.css';
+
 interface AddressModel {
     id: number;
     name: string;
@@ -52,20 +54,14 @@ export default function AddressShow() {
             title={address.name}
             description="Thông tin địa chỉ dùng khi giao hàng."
             actions={
-                <div className="flex flex-wrap items-center gap-2">
+                <div className={styles.badgeRow}>
                     <Button variant="secondary" size="sm" leftIcon={ArrowLeft} asChild>
                         <Link href="/user/addresses">Danh sách</Link>
                     </Button>
                     <Button variant="outline" size="sm" leftIcon={Pencil} onClick={() => router.visit(`/user/addresses/${address.id}/edit`)}>
                         Sửa
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        leftIcon={Trash2}
-                        className="text-brick hover:bg-brick-soft hover:text-brick"
-                        onClick={() => setConfirmOpen(true)}
-                    >
+                    <Button variant="ghost" size="sm" leftIcon={Trash2} className={styles.dangerAction} onClick={() => setConfirmOpen(true)}>
                         Xoá
                     </Button>
                 </div>
@@ -73,34 +69,34 @@ export default function AddressShow() {
         >
             <Head title={`Địa chỉ ${address.name}`} />
 
-            <Card padding="lg" className="max-w-2xl">
-                <div className="flex flex-col gap-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-headline-3 text-ink">{address.name}</span>
-                        <span className="font-mono text-label-code text-ink-muted">{address.phone}</span>
-                        {address.is_default && (
+            <Card padding="lg" className={styles.cardNarrow}>
+                <div className={styles.addressShowStack}>
+                    <div className={styles.addressShowHead}>
+                        <span className={styles.addressName}>{address.name}</span>
+                        <span className={styles.addressShowPhone}>{address.phone}</span>
+                        {address.is_default ? (
                             <Badge tone="success" icon={BadgeCheck}>
                                 Mặc định
                             </Badge>
-                        )}
+                        ) : null}
                     </div>
 
-                    <div className="flex items-start gap-3 rounded-control bg-rice-paper p-4">
-                        <MapPin aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-lacquer-red" />
-                        <div className="flex flex-col gap-1">
-                            <span className="text-label-micro font-semibold tracking-[0.12em] text-ink-faint uppercase">Địa chỉ giao hàng</span>
-                            <span className="text-body-md text-ink">{fullAddress}</span>
+                    <div className={styles.addressPinBox}>
+                        <MapPin aria-hidden="true" className={styles.addressPinIcon} />
+                        <div className={styles.addressPinBody}>
+                            <span className={styles.addressPinLabel}>Địa chỉ giao hàng</span>
+                            <span className={styles.addressPinValue}>{fullAddress}</span>
                         </div>
                     </div>
 
-                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-control border border-border p-3">
-                            <dt className="text-label-micro tracking-[0.12em] text-ink-faint uppercase">Tỉnh/Thành phố</dt>
-                            <dd className="mt-1 text-body-sm text-ink">{address.province || '—'}</dd>
+                    <dl className={styles.detailGrid}>
+                        <div className={styles.detailCell}>
+                            <dt className={styles.detailLabel}>Tỉnh/Thành phố</dt>
+                            <dd className={styles.detailValue}>{address.province || '-'}</dd>
                         </div>
-                        <div className="rounded-control border border-border p-3">
-                            <dt className="text-label-micro tracking-[0.12em] text-ink-faint uppercase">Xã/Phường</dt>
-                            <dd className="mt-1 text-body-sm text-ink">{address.ward || '—'}</dd>
+                        <div className={styles.detailCell}>
+                            <dt className={styles.detailLabel}>Xã/Phường</dt>
+                            <dd className={styles.detailValue}>{address.ward || '-'}</dd>
                         </div>
                     </dl>
                 </div>

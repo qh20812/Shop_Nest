@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Banknote, CreditCard, MapPin, Plus, ShieldCheck, Truck } from 'lucide-react';
 import * as React from 'react';
 
-import CheckoutAddressForm from '@/components/commerce/CheckoutAddressForm';
+import CheckoutAddressForm, { type NewAddress } from '@/components/commerce/CheckoutAddressForm';
 import CheckoutExitConfirmation from '@/components/commerce/CheckoutExitConfirmation';
 import { CheckoutStepper } from '@/components/commerce/CheckoutStepper';
 import { OrderSummary } from '@/components/commerce/OrderSummary';
@@ -26,6 +26,8 @@ import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
 import { toNumericPrice, type PriceLike } from '@/utils/price';
+
+import styles from './customer.module.css';
 
 interface ProductImage {
     id: number;
@@ -65,7 +67,7 @@ interface Address {
     phone: string;
     address: string;
     province: string;
-    district: string;
+    district?: string | null;
     ward: string;
     is_default: boolean;
 }
@@ -116,9 +118,13 @@ interface PageProps {
 }
 
 const PAYMENT_METHOD_FALLBACK: PaymentMethod[] = [
-    { id: 'stripe', name: 'Stripe — Thẻ quốc tế', description: 'Thanh toán bằng thẻ Visa/MasterCard/JCB' },
+    { id: 'stripe', name: 'Stripe - Thẻ quốc tế', description: 'Thanh toán bằng thẻ Visa, Mastercard hoặc JCB' },
     { id: 'cod', name: 'Thanh toán khi nhận hàng', description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
 ];
+
+function formatAddress(address: Address): string {
+    return [address.address, address.ward, address.district, address.province].filter(Boolean).join(', ');
+}
 
 export default function Checkout() {
     const pageProps = usePage<PageProps>().props;
@@ -271,28 +277,21 @@ export default function Checkout() {
         }
     };
 
-    const handleAddAddress = async (newAddress: {
-        name: string;
-        phone: string;
-        address: string;
-        province_id: string;
-        district_id: string;
-        ward_id: string;
-        is_default: boolean;
-    }) => {
+    const handleAddAddress = async (newAddress: NewAddress) => {
         try {
-            const response = await axios.post('/addresses', newAddress);
-            if (response.data?.success) {
-                setShowAddressModal(false);
-                success('Đã thêm địa chỉ giao hàng');
-                router.reload();
-            }
+            // AddressController::store redirects to the address list, so axios follows the
+            // redirect and resolves on success. Inertia would navigate away from checkout.
+            await axios.post('/user/addresses', {
+                ...newAddress,
+                country: 'Việt Nam',
+            });
+
+            setShowAddressModal(false);
+            success('Đã thêm địa chỉ giao hàng');
+            router.reload({ only: ['addresses'] });
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                showError('Không thể thêm địa chỉ', error.response?.data?.message);
-            } else {
-                showError('Không thể thêm địa chỉ');
-            }
+            const message = axios.isAxiosError(error) ? (error.response?.data?.message as string | undefined) : undefined;
+            showError('Không thể thêm địa chỉ', message);
         }
     };
 
@@ -345,9 +344,9 @@ export default function Checkout() {
 
     if (items.length === 0) {
         return (
-            <StorefrontLayout compactFooter>
+            <StorefrontLayout compactFooter pinLight={false}>
                 <Head title="Thanh toán" />
-                <PageContainer className="py-section">
+                <PageContainer className={styles.pageTight}>
                     <EmptyState
                         icon={MapPin}
                         title="Chưa có món nào để thanh toán"
@@ -373,10 +372,10 @@ export default function Checkout() {
     }));
 
     return (
-        <StorefrontLayout compactFooter>
+        <StorefrontLayout compactFooter pinLight={false}>
             <Head title="Thanh toán" />
 
-            <PageContainer className="py-8 md:py-10">
+            <PageContainer className={styles.page}>
                 <PageHeader
                     breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]}
                     eyebrow="Bước cuối"
@@ -386,15 +385,15 @@ export default function Checkout() {
                 />
 
                 <CheckoutStepper
-                    className="mt-5"
+                    className={styles.stepperOffset}
                     current={1}
-                    steps={[{ label: 'Giỏ hàng', state: 'done' }, { label: 'Thông tin & thanh toán' }, { label: 'Hoàn tất' }]}
+                    steps={[{ label: 'Giỏ hàng', state: 'done' }, { label: 'Thông tin và thanh toán' }, { label: 'Hoàn tất' }]}
                 />
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-12">
-                    <div className="flex flex-col gap-8 lg:col-span-7">
-                        <section className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                <div className={styles.checkoutGrid}>
+                    <div className={styles.checkoutMain}>
+                        <section className={styles.checkSection}>
+                            <div className={styles.sectionHead}>
                                 <Heading level={2} size="headline-3">
                                     Địa chỉ giao hàng
                                 </Heading>
@@ -410,7 +409,7 @@ export default function Checkout() {
                                     </Text>
                                 </Card>
                             ) : (
-                                <div className="flex flex-col gap-3">
+                                <div className={styles.addressList}>
                                     {addresses.map((address) => (
                                         <RadioCard
                                             key={address.id}
@@ -419,50 +418,48 @@ export default function Checkout() {
                                             checked={selectedAddress === address.id}
                                             onChange={() => setSelectedAddress(address.id)}
                                             title={
-                                                <span className="inline-flex flex-wrap items-center gap-2">
+                                                <span className={styles.addressTitle}>
                                                     {address.name}
-                                                    <span className="font-mono text-label-code text-ink-muted">{address.phone}</span>
-                                                    {address.is_default && (
+                                                    <span className={styles.addressPhone}>{address.phone}</span>
+                                                    {address.is_default ? (
                                                         <Badge tone="success" size="sm">
                                                             Mặc định
                                                         </Badge>
-                                                    )}
+                                                    ) : null}
                                                 </span>
                                             }
-                                            description={`${address.address}, ${address.ward}, ${address.district}, ${address.province}`}
+                                            description={formatAddress(address)}
                                         />
                                     ))}
                                 </div>
                             )}
                         </section>
 
-                        <section className="flex flex-col gap-4">
-                            <div className="border-b border-border pb-3">
+                        <section className={styles.checkSection}>
+                            <div className={styles.sectionHeadSimple}>
                                 <Heading level={2} size="headline-3">
                                     Phương thức vận chuyển
                                 </Heading>
                             </div>
                             <Card variant="inset" padding="md">
-                                <div className="flex items-center gap-3">
-                                    <Truck aria-hidden="true" className="size-5 text-jade" />
-                                    <div className="flex-1">
-                                        <span className="block text-body-sm font-semibold text-ink">Giao tiêu chuẩn 2–4 ngày</span>
-                                        <span className="text-body-sm text-ink-muted">Đơn vị vận chuyển được chỉ định theo địa chỉ.</span>
+                                <div className={styles.shipRow}>
+                                    <Truck aria-hidden="true" className={styles.shipIcon} />
+                                    <div className={styles.shipBody}>
+                                        <span className={styles.shipTitle}>Giao tiêu chuẩn</span>
+                                        <span className={styles.shipText}>Đơn vị vận chuyển được chỉ định theo địa chỉ.</span>
                                     </div>
-                                    <span className="font-mono text-label-code text-ink">
-                                        {finalShipping > 0 ? formatVnd(finalShipping) : 'Miễn phí'}
-                                    </span>
+                                    <span className={styles.shipPrice}>{finalShipping > 0 ? formatVnd(finalShipping) : 'Miễn phí'}</span>
                                 </div>
                             </Card>
                         </section>
 
-                        <section className="flex flex-col gap-4">
-                            <div className="border-b border-border pb-3">
+                        <section className={styles.checkSection}>
+                            <div className={styles.sectionHeadSimple}>
                                 <Heading level={2} size="headline-3">
                                     Phương thức thanh toán
                                 </Heading>
                             </div>
-                            <div className="flex flex-col gap-3">
+                            <div className={styles.addressList}>
                                 {availablePaymentMethods.map((method) => (
                                     <PaymentOption
                                         key={method.id}
@@ -476,8 +473,8 @@ export default function Checkout() {
                                     />
                                 ))}
                             </div>
-                            <div className="flex items-center gap-2 text-body-sm text-ink-muted">
-                                <ShieldCheck aria-hidden="true" className="size-4 text-jade" />
+                            <div className={styles.secureNote}>
+                                <ShieldCheck aria-hidden="true" className={styles.secureIcon} />
                                 Thông tin thanh toán được mã hóa và xử lý an toàn.
                             </div>
                         </section>
@@ -496,7 +493,7 @@ export default function Checkout() {
                         </section>
                     </div>
 
-                    <div className="lg:col-span-5">
+                    <div className={styles.checkoutAside}>
                         <OrderSummary
                             items={summaryItems}
                             subtotal={finalSubtotal}
@@ -511,7 +508,7 @@ export default function Checkout() {
                                     onApply={handleApplyPromo}
                                     onRemove={handleRemovePromo}
                                     appliedCode={appliedPromo?.code}
-                                    appliedLabel={appliedPromo ? `– Giảm ${formatVnd(finalDiscount)}` : undefined}
+                                    appliedLabel={appliedPromo ? `- Giảm ${formatVnd(finalDiscount)}` : undefined}
                                     error={promoError}
                                     loading={applyingPromo}
                                 />
@@ -520,7 +517,7 @@ export default function Checkout() {
                             onCheckout={handleCheckout}
                             loading={processing}
                             disabled={(!isBuyNowCheckout && (!selectedAddress || addresses.length === 0)) || !selectedPayment}
-                            trust={['Shop Việt', 'Đổi trả 7 ngày', 'Thanh toán bảo mật']}
+                            trust={['Thanh toán bảo mật', 'Đổi trả theo chính sách']}
                             footerNote="Bằng cách đặt hàng, bạn đồng ý với Điều khoản và Chính sách bảo mật."
                         />
                     </div>

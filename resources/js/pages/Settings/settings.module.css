@@ -1,0 +1,312 @@
+/* Settings pages module — Phase 6. Tokens only. */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-5);
+}
+
+.grid {
+    display: grid;
+    gap: var(--sn-space-6);
+}
+
+.mainCard {
+    min-width: 0;
+}
+
+.cardStack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-5);
+    min-width: 0;
+}
+
+.avatarCol,
+.formCol {
+    min-width: 0;
+}
+
+.sideCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-3);
+    min-width: 0;
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.cardHeadPlain {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.cardTitle {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-xl);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.iconAccent {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    flex-shrink: 0;
+    color: var(--sn-color-accent-text);
+}
+
+.iconSuccess {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    flex-shrink: 0;
+    color: var(--sn-color-success);
+}
+
+.formStack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-5);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+}
+
+.formFooter {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: var(--sn-space-2);
+    padding-top: var(--sn-space-4);
+    border-top: 1px solid var(--sn-color-border);
+}
+
+.formStatus {
+    color: var(--sn-color-success-text);
+    font-size: var(--sn-text-sm);
+}
+
+.hiddenInput {
+    display: none;
+}
+
+.avatarCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sn-space-3);
+}
+
+.avatarHint {
+    color: var(--sn-color-text-faint);
+    font-size: var(--sn-text-2xs);
+}
+
+.avatarError {
+    color: var(--sn-color-danger-text);
+    font-size: var(--sn-text-sm);
+}
+
+.avatarDivider {
+    width: 100%;
+    padding-top: var(--sn-space-3);
+    border-top: 1px solid var(--sn-color-border);
+    text-align: center;
+}
+
+.avatarUsername {
+    color: var(--sn-color-text-muted);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-sm);
+}
+
+.tipsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+    margin: 0;
+    padding-left: var(--sn-space-5);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.noteText {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+    line-height: var(--sn-leading-relaxed);
+}
+
+@media (min-width: 640px) {
+    .formGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .formFooter {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .formStatus {
+        margin-right: auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .mainCard {
+        grid-column: span 7;
+    }
+
+    .sideCard {
+        grid-column: span 5;
+    }
+
+    .avatarCard {
+        grid-column: span 4;
+    }
+
+    .avatarCardWide {
+        grid-column: span 8;
+    }
+
+    .avatarCol {
+        grid-column: span 4;
+    }
+
+    .formCol {
+        grid-column: span 8;
+    }
+}
+
+/* Settings tabs */
+.tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    overflow-x: auto;
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab {
+    display: inline-flex;
+    min-height: var(--sn-control-sm);
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-2) 0.875rem;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-color-surface);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.tab:hover {
+    border-color: var(--sn-color-border-strong);
+    color: var(--sn-color-text);
+}
+
+.tab[aria-current='page'] {
+    border-color: var(--sn-color-accent);
+    background: var(--sn-color-accent-wash);
+    color: var(--sn-color-accent-text);
+}
+
+.tabIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+}
+
+/* Theme preview */
+.themeList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-3);
+}
+
+.previewGrid {
+    display: grid;
+    gap: var(--sn-space-3);
+}
+
+.previewPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-3);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-canvas);
+    color: var(--sn-color-text);
+}
+
+.previewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sn-space-2);
+}
+
+.previewLabel {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+    letter-spacing: var(--sn-tracking-wider);
+    text-transform: uppercase;
+}
+
+.previewSurface {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-3);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-surface);
+}
+
+.previewText {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+}
+
+.previewMuted {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-2xs);
+}
+
+.previewCta {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: var(--sn-space-1) var(--sn-space-3);
+    border-radius: var(--sn-radius-sm);
+    background: var(--sn-color-accent);
+    color: var(--sn-color-on-accent);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-medium);
+}
+
+.previewCaption {
+    color: var(--sn-color-text-faint);
+    font-size: var(--sn-text-2xs);
+}

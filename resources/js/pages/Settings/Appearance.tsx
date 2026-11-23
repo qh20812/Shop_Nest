@@ -2,12 +2,12 @@ import { Head } from '@inertiajs/react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 
 import { AccountLayout } from '@/components/layout/AccountLayout';
-import { Alert } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { RadioCard } from '@/components/ui/radio-card';
 import { useTheme, type Theme } from '@/hooks/useTheme';
 
 import SettingsTabs from './SettingsTabs';
+import styles from './settings.module.css';
 
 const themeOptions: Array<{ value: Theme; label: string; description: string; icon: typeof Sun }> = [
     {
@@ -19,7 +19,7 @@ const themeOptions: Array<{ value: Theme; label: string; description: string; ic
     {
         value: 'dark',
         label: 'Tối',
-        description: 'Giảm chói khi dùng buổi tối. Giao diện tối còn đang thử nghiệm.',
+        description: 'Giảm chói khi dùng buổi tối.',
         icon: Moon,
     },
     {
@@ -30,8 +30,10 @@ const themeOptions: Array<{ value: Theme; label: string; description: string; ic
     },
 ];
 
+const INSET_VARIANT = 'inset' as const;
+
 export default function SettingsAppearance() {
-    const { theme, changeTheme } = useTheme();
+    const { theme, resolvedTheme, changeTheme } = useTheme();
 
     return (
         <AccountLayout
@@ -43,13 +45,13 @@ export default function SettingsAppearance() {
         >
             <Head title="Cài đặt giao diện" />
 
-            <div className="flex flex-col gap-5">
+            <div className={styles.stack}>
                 <SettingsTabs />
 
-                <div className="grid gap-6 lg:grid-cols-12">
-                    <Card padding="lg" className="flex flex-col gap-4 lg:col-span-7">
-                        <h2 className="text-headline-3 text-ink">Chủ đề</h2>
-                        <div className="flex flex-col gap-3" role="radiogroup" aria-label="Chọn chủ đề giao diện">
+                <div className={styles.grid}>
+                    <Card padding="lg" className={styles.mainCard}>
+                        <h2 className={styles.cardTitle}>Chủ đề</h2>
+                        <div className={styles.themeList} role="radiogroup" aria-label="Chọn chủ đề giao diện">
                             {themeOptions.map((option) => {
                                 const Icon = option.icon;
 
@@ -61,8 +63,8 @@ export default function SettingsAppearance() {
                                         checked={theme === option.value}
                                         onChange={() => changeTheme(option.value)}
                                         title={
-                                            <span className="inline-flex items-center gap-2">
-                                                <Icon aria-hidden="true" className="size-4 text-ink-muted" />
+                                            <span className={styles.cardHeadPlain}>
+                                                <Icon aria-hidden="true" className={styles.iconAccent} />
                                                 {option.label}
                                             </span>
                                         }
@@ -73,17 +75,33 @@ export default function SettingsAppearance() {
                         </div>
                     </Card>
 
-                    <div className="flex flex-col gap-4 lg:col-span-5">
-                        <Alert
-                            tone="warning"
-                            title="Giao diện tối đang thử nghiệm"
-                            description="Bảng màu tối chưa được thiết kế đầy đủ theo hệ Nếp. Nếu thấy khó đọc, hãy quay lại chế độ Sáng."
-                        />
-                        <Card padding="lg" variant="inset" className="flex flex-col gap-2">
-                            <h3 className="text-headline-3 text-ink">Ghi chú</h3>
-                            <p className="text-body-sm text-ink-muted">
-                                Lựa chọn được lưu trên trình duyệt này. Thiết bị khác có thể dùng chủ đề riêng.
-                            </p>
+                    <div className={styles.sideCard}>
+                        <Card padding="lg" className={styles.cardStack}>
+                            <h3 className={styles.cardTitle}>Xem trước</h3>
+                            <div className={styles.previewGrid}>
+                                {themeOptions.map((option) => (
+                                    <div
+                                        key={option.value}
+                                        className={styles.previewPanel}
+                                        data-theme={option.value === 'system' ? resolvedTheme : option.value}
+                                    >
+                                        <div className={styles.previewHeader}>
+                                            <span className={styles.previewLabel}>{option.label}</span>
+                                        </div>
+                                        <div className={styles.previewSurface}>
+                                            <span className={styles.previewText}>Sản phẩm mẫu</span>
+                                            <span className={styles.previewMuted}>Mô tả ngắn về sản phẩm</span>
+                                            <span className={styles.previewCta}>Thêm vào giỏ</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className={styles.previewCaption}>Màu sắc lấy trực tiếp từ bảng màu của từng chủ đề.</p>
+                        </Card>
+
+                        <Card padding="lg" variant={INSET_VARIANT} className={styles.sideCard}>
+                            <h3 className={styles.cardTitle}>Ghi chú</h3>
+                            <p className={styles.noteText}>Lựa chọn được lưu trên trình duyệt này. Thiết bị khác có thể dùng chủ đề riêng.</p>
                         </Card>
                     </div>
                 </div>

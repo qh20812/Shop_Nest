@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type ConversationItem = {
     id: number;
@@ -44,8 +46,8 @@ export function ConversationList({
     className,
 }: ConversationListProps) {
     return (
-        <aside aria-label="Danh sách cuộc trò chuyện" className={cn('flex min-h-0 flex-col gap-3 border-border p-3', className)}>
-            <div className="flex items-center gap-2">
+        <aside aria-label="Danh sách cuộc trò chuyện" className={cx(styles.conversationList, className)}>
+            <div className={styles.conversationListHeader}>
                 {onQueryChange ? (
                     <SearchInput
                         value={query}
@@ -54,24 +56,24 @@ export function ConversationList({
                         placeholder="Tìm cuộc trò chuyện..."
                         size="sm"
                         aria-label="Tìm cuộc trò chuyện"
-                        className="min-w-0 flex-1"
+                        className={styles.conversationSearch}
                     />
                 ) : (
-                    <div className="min-w-0 flex-1" />
+                    <div className={styles.conversationSearch} />
                 )}
-                {onRefresh && (
+                {onRefresh ? (
                     <IconButton label="Tải lại cuộc trò chuyện" variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
-                        <RefreshCw aria-hidden="true" className={loading ? 'animate-spin' : undefined} />
+                        <RefreshCw aria-hidden="true" className={loading ? styles.spinning : undefined} />
                     </IconButton>
-                )}
-                {onCompose && (
+                ) : null}
+                {onCompose ? (
                     <IconButton label="Bắt đầu cuộc trò chuyện mới" variant="primary" size="sm" onClick={onCompose}>
                         <MessageSquarePlus aria-hidden="true" />
                     </IconButton>
-                )}
+                ) : null}
             </div>
 
-            {error && (
+            {error ? (
                 <Alert
                     tone="danger"
                     title="Không tải được cuộc trò chuyện"
@@ -84,28 +86,28 @@ export function ConversationList({
                         ) : undefined
                     }
                 />
-            )}
+            ) : null}
 
-            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            <div className={styles.conversationScroll}>
                 {loading && conversations.length === 0 ? (
                     Array.from({ length: 5 }).map((_, index) => (
-                        <div key={index} className="flex items-center gap-3 px-3 py-3">
-                            <Skeleton className="size-10 rounded-pill" />
-                            <div className="flex flex-1 flex-col gap-2">
-                                <Skeleton className="h-3 w-1/2" />
-                                <Skeleton className="h-3 w-3/4" />
+                        <div key={index} className={styles.conversationSkeleton}>
+                            <Skeleton className={styles.conversationSkeletonAvatar} />
+                            <div className={styles.conversationSkeletonBody}>
+                                <Skeleton className={styles.conversationSkeletonLine} />
+                                <Skeleton className={styles.conversationSkeletonLineShort} />
                             </div>
                         </div>
                     ))
                 ) : conversations.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-                        <span className="text-body-sm font-medium text-ink">Chưa có cuộc trò chuyện</span>
-                        <span className="text-label-micro text-ink-muted">Bắt đầu chat với shop để được tư vấn.</span>
-                        {onCompose && (
-                            <Button variant="secondary" size="sm" onClick={onCompose} className="mt-2">
+                    <div className={styles.conversationEmpty}>
+                        <span className={styles.conversationEmptyTitle}>Chưa có cuộc trò chuyện</span>
+                        <span className={styles.conversationEmptyText}>Bắt đầu chat với shop để được tư vấn.</span>
+                        {onCompose ? (
+                            <Button variant="secondary" size="sm" onClick={onCompose}>
                                 Chat với shop
                             </Button>
-                        )}
+                        ) : null}
                     </div>
                 ) : (
                     conversations.map((conversation) => (

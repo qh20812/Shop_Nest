@@ -8,7 +8,9 @@ import type { MessageListItem } from '@/components/chat/MessageList';
 import type { ChatProduct } from '@/components/chat/types';
 import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type StoredMessage = {
     id: number;
@@ -234,14 +236,11 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             </DialogTrigger>
 
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Content
-                    className={cn(
-                        'z-chat fixed inset-x-0 top-auto bottom-0 h-chat-sheet-height w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-t-sheet border border-border bg-warm-porcelain p-0 shadow-float focus:outline-none',
-                        'md:inset-auto md:right-6 md:bottom-6 md:h-[var(--spacing-chat-panel-height)] md:w-chat-panel md:rounded-surface',
-                    )}
-                >
-                    <DialogTitle className="sr-only">Trợ lý ShopNest</DialogTitle>
-                    <DialogDescription className="sr-only">Cửa sổ trò chuyện với trợ lý ảo ShopNest. Nhấn Escape để đóng.</DialogDescription>
+                <DialogPrimitive.Content className={cx(styles.dockContent)}>
+                    <DialogTitle className={styles.visuallyHidden}>Trợ lý ShopNest</DialogTitle>
+                    <DialogDescription className={styles.visuallyHidden}>
+                        Cửa sổ trò chuyện với trợ lý ảo ShopNest. Nhấn Escape để đóng.
+                    </DialogDescription>
 
                     <ChatbotPanel
                         messages={panelMessages}

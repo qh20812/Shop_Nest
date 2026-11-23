@@ -1,4 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type QuickReply = {
     id?: string;
@@ -19,7 +21,7 @@ export function QuickReplies({ items, onSelect, disabled = false, className }: Q
     }
 
     return (
-        <div className={cn('flex flex-wrap gap-2', className)} aria-label="Gợi ý câu hỏi">
+        <div className={cx(styles.quickReplies, className)} aria-label="Gợi ý câu hỏi">
             {items.map((item) => {
                 const label = typeof item === 'string' ? item : item.label;
                 const value = typeof item === 'string' ? item : (item.value ?? item.label);
@@ -30,7 +32,7 @@ export function QuickReplies({ items, onSelect, disabled = false, className }: Q
                         type="button"
                         disabled={disabled}
                         onClick={() => onSelect(value)}
-                        className="focus-ring inline-flex min-h-control-sm items-center rounded-pill border border-border bg-warm-porcelain px-3.5 py-1.5 text-body-sm text-ink transition-colors hover:border-lacquer-red hover:text-lacquer-red disabled:cursor-not-allowed disabled:opacity-50"
+                        className={styles.quickReply}
                     >
                         {label}
                     </button>

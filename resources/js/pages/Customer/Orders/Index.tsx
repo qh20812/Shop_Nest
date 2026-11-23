@@ -7,6 +7,8 @@ import { AccountLayout } from '@/components/layout/AccountLayout';
 import { SearchInput } from '@/components/ui/search-input';
 import { Tabs } from '@/components/ui/tabs';
 
+import styles from '../customer.module.css';
+
 interface OrderRow {
     id: number;
     code: string;
@@ -84,7 +86,7 @@ export default function OrdersIndex() {
             description="Theo dõi trạng thái, thanh toán và tiến trình giao hàng của mọi đơn đã đặt."
             count={`${orders.length} đơn`}
             actions={
-                <div className="w-full sm:w-72">
+                <div className={styles.searchWrap}>
                     <SearchInput
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
@@ -102,7 +104,7 @@ export default function OrdersIndex() {
         >
             <Head title="Đơn hàng của tôi" />
 
-            <div className="flex flex-col gap-5">
+            <div className={styles.stack}>
                 <Tabs
                     items={statusTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.value === 'all' ? ClipboardList : undefined }))}
                     value={activeStatus}
@@ -113,9 +115,7 @@ export default function OrdersIndex() {
 
                 <OrderTable orders={tableRows} emptyDescription="Khi bạn đặt món đầu tiên, đơn hàng sẽ xuất hiện tại đây." />
 
-                <p className="text-label-micro text-ink-faint">
-                    Danh sách hiển thị tối đa 50 đơn gần nhất. Dùng ô tìm kiếm để tra cứu mã đơn cũ hơn.
-                </p>
+                <p className={styles.fineprint}>Danh sách hiển thị tối đa 50 đơn gần nhất. Dùng ô tìm kiếm để tra cứu mã đơn cũ hơn.</p>
             </div>
         </AccountLayout>
     );

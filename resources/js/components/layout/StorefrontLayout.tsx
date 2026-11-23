@@ -11,16 +11,14 @@ type StorefrontLayoutProps = {
     compactFooter?: boolean;
     showChatDock?: boolean;
     /**
-     * Legacy pages still use the light Nếp palette until Phase 4/6. Pin the
-     * whole shell to light so header, footer and content share one theme.
-     * Phase 4 storefront pages opt out; Account/Cart/Checkout keep the pin
-     * until Phase 6.
+     * Escape hatch kept until Phase 11. Storefront, auth and account shells
+     * all follow `data-theme` after Phase 6, so the default is `false`.
      */
     pinLight?: boolean;
     className?: string;
 };
 
-export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, pinLight = true, className }: StorefrontLayoutProps) {
+export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, pinLight = false, className }: StorefrontLayoutProps) {
     return (
         <div className={cx('sn-shell sn-storefront', className)} data-theme={pinLight ? 'light' : undefined}>
             <StorefrontHeader />

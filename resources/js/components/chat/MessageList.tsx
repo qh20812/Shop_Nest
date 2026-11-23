@@ -6,7 +6,9 @@ import type { ChatProduct } from '@/components/chat/types';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import type { OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './chat.module.css';
 
 type MessageListItem = {
     id: number | string;
@@ -46,29 +48,29 @@ export function MessageList({
 
     if (loading) {
         return (
-            <div className={cn('flex flex-1 flex-col gap-4 overflow-hidden p-4', className)}>
-                <Skeleton className="h-14 w-2/3 rounded-surface" />
-                <Skeleton className="ml-auto h-12 w-1/2 rounded-surface" />
-                <Skeleton className="h-16 w-3/4 rounded-surface" />
+            <div className={cx(styles.messageListSkeleton, className)}>
+                <Skeleton className={styles.messageListSkeletonIncoming} />
+                <Skeleton className={styles.messageListSkeletonOutgoing} />
+                <Skeleton className={styles.messageListSkeletonWide} />
             </div>
         );
     }
 
     if (messages.length === 0 && !typing) {
         return (
-            <div className={cn('flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center', className)}>
-                <span className="flex size-12 items-center justify-center rounded-pill bg-lacquer-wash text-lacquer-red">
-                    <MessagesSquare aria-hidden="true" className="size-6" />
+            <div className={cx(styles.messagesEmpty, className)}>
+                <span className={styles.messagesEmptyIcon}>
+                    <MessagesSquare aria-hidden="true" className={styles.headerIconSvg} />
                 </span>
-                <span className="text-body-md font-semibold text-ink">{emptyTitle}</span>
-                <span className="max-w-xs text-body-sm text-ink-muted">{emptyDescription}</span>
+                <span className={styles.messagesEmptyTitle}>{emptyTitle}</span>
+                <span className={styles.messagesEmptyText}>{emptyDescription}</span>
             </div>
         );
     }
 
     return (
-        <div className={cn('flex-1 overflow-y-auto', className)}>
-            <div className="flex flex-col gap-4 p-4" role="log" aria-live="polite" aria-relevant="additions text">
+        <div className={cx(styles.messageList, className)}>
+            <div className={styles.messageListInner} role="log" aria-live="polite">
                 {messages.map((message) => (
                     <ChatMessage
                         key={message.id}
@@ -81,7 +83,7 @@ export function MessageList({
                         products={message.products}
                     />
                 ))}
-                {typing && <TypingIndicator label={typingLabel} />}
+                {typing ? <TypingIndicator label={typingLabel} /> : null}
                 <div ref={endRef} />
             </div>
         </div>

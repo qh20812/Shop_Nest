@@ -3,11 +3,12 @@ import { Trash2 } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconButton } from '@/components/ui/icon-button';
+import { cx } from '@/lib/cx';
 import { formatVnd } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 import { Price } from './Price';
 import { QuantityStepper } from './QuantityStepper';
+import styles from './commerce.module.css';
 
 type CartLineItem = {
     id: number | string;
@@ -36,38 +37,37 @@ export function CartLine({ item, selected, onSelect, onQuantityChange, onRemove,
     const total = item.price * item.quantity;
 
     return (
-        <article className={cn('flex items-start gap-3 border-t border-border py-5 first:border-t-0 first:pt-0', className)}>
-            <div className="pt-2">
+        <article className={cx(styles.cartLine, className)}>
+            <div className={styles.cartLineCheck}>
                 <Checkbox checked={selected} onCheckedChange={(checked) => onSelect(checked === true)} aria-label={`Chọn ${item.name}`} />
             </div>
 
-            <div className="h-25 w-20 shrink-0 overflow-hidden rounded-control border border-border bg-warm-porcelain">
-                <img src={item.image} alt={item.imageAlt ?? item.name} className="size-full object-cover" />
+            <div className={styles.cartLineMedia}>
+                <img src={item.image} alt={item.imageAlt ?? item.name} className={styles.cartLineImage} />
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2">
-                    {item.shopName && <span className="font-mono text-label-micro tracking-[0.08em] text-ink-muted uppercase">{item.shopName}</span>}
-                    {item.variant && <span className="text-body-sm text-ink-muted">· {item.variant}</span>}
+            <div className={styles.cartLineBody}>
+                <div className={styles.cartLineMeta}>
+                    {item.shopName ? <span className={styles.cartLineShop}>{item.shopName}</span> : null}
+                    {item.variant ? <span className={styles.cartLineVariant}>{item.variant}</span> : null}
                 </div>
+
                 {item.href ? (
-                    <Link
-                        href={item.href}
-                        className="focus-ring line-clamp-2 text-body-md font-medium text-ink transition-colors hover:text-lacquer-red"
-                    >
+                    <Link href={item.href} className={styles.cartLineTitle}>
                         {item.name}
                     </Link>
                 ) : (
-                    <span className="line-clamp-2 text-body-md font-medium text-ink">{item.name}</span>
+                    <span className={styles.cartLineTitle}>{item.name}</span>
                 )}
-                <div className="mt-1">
+
+                <div className={styles.cartLinePrice}>
                     <Price value={item.price} compareAt={item.compareAt} size="sm" showDiscount={false} />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className={styles.cartLineFooter}>
                     <QuantityStepper value={item.quantity} min={1} max={item.maxQuantity} onChange={onQuantityChange} size="sm" />
-                    <div className="flex items-center gap-3">
-                        <span className="font-mono text-body-sm font-semibold text-ink">{formatVnd(total)}</span>
+                    <div className={styles.cartLineActions}>
+                        <span className={styles.cartLineTotal}>{formatVnd(total)}</span>
                         <IconButton label={`Xoá ${item.name}`} size="sm" variant="danger" onClick={onRemove}>
                             <Trash2 aria-hidden="true" />
                         </IconButton>

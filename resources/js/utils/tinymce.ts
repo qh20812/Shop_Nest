@@ -39,8 +39,6 @@ export const TINYMCE_CONFIG = {
         block_formats: 'Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3; Header 4=h4; Header 5=h5; Header 6=h6;',
         style_formats: [
             { title: 'Bold text', inline: 'b' },
-            { title: 'Red text', inline: 'span', styles: { color: '#ff0000' } },
-            { title: 'Red header', block: 'h1', styles: { color: '#ff0000' } },
             { title: 'Example 1', inline: 'span', classes: 'example1' },
             { title: 'Example 2', inline: 'span', classes: 'example2' },
             { title: 'Table styles' },

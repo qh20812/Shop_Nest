@@ -1,0 +1,16 @@
+/* Legacy page-local toast. Tokens only; sits above the workspace topbar. */
+
+.wrap {
+    position: fixed;
+    top: var(--sn-space-5);
+    right: var(--sn-space-4);
+    left: var(--sn-space-4);
+    z-index: var(--sn-z-toast);
+}
+
+@media (min-width: 640px) {
+    .wrap {
+        left: auto;
+        width: 24rem;
+    }
+}

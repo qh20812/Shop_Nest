@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem as BreadcrumbsItem } from '@/components/ui/breadcrumbs';
 import PageHeader from '@/components/layout/PageHeader';
+import { renderIcon, type IconProp } from '@/lib/icon';
 
 interface BreadcrumbItem {
     label: string;
@@ -13,7 +14,7 @@ interface HeadProps {
     breadcrumbs: BreadcrumbItem[];
     reportButton?: {
         label: string;
-        icon: string;
+        icon: IconProp;
         onClick?: () => void;
     };
 }
@@ -27,7 +28,7 @@ export default function Header({ title, breadcrumbs, reportButton }: HeadProps) 
 
     const actions = reportButton ? (
         <Button variant="secondary" size="sm" onClick={reportButton.onClick}>
-            <i className={reportButton.icon} aria-hidden="true" />
+            {renderIcon(reportButton.icon)}
             <span>{reportButton.label}</span>
         </Button>
     ) : undefined;

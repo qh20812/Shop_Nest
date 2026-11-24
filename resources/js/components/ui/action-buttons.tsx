@@ -1,93 +1,69 @@
 import { Link } from '@inertiajs/react';
-import React from 'react';
+import * as React from 'react';
+
+import { renderIcon, type IconProp } from '@/lib/icon';
 import { useTranslation } from '@/lib/i18n';
+
+import { Button } from './button';
+
+import styles from './action-buttons.module.css';
 
 // Defines a single action button
 interface ActionConfig {
-  type: 'link' | 'button';
-  label: string;
-  href?: string; // Required if type is 'link'
-  onClick?: () => void; // Required if type is 'button'
-  icon: string; // e.g., 'bx bx-edit'
-  variant: 'primary' | 'danger';
-  disabled?: boolean;
+    type: 'link' | 'button';
+    label: string;
+    href?: string; // Required if type is 'link'
+    onClick?: () => void; // Required if type is 'button'
+    icon: IconProp;
+    variant: 'primary' | 'danger';
+    disabled?: boolean;
 }
 
-// The component's props
 interface ActionButtonsProps {
-  actions: ActionConfig[];
+    actions: ActionConfig[];
 }
 
+/**
+ * Legacy row-action group. Sold as `Button` pairs so pages never ship
+ * hand-rolled chips; icon accepts a Lucide component or a Boxicons string.
+ */
 export default function ActionButtons({ actions }: ActionButtonsProps) {
-  const { t } = useTranslation();
+    const { t } = useTranslation();
 
-  // Helper function to get variant styles - replicates exact styles from UserTable.tsx
-  const getVariantStyles = (variant: 'primary' | 'danger', disabled?: boolean) => {
-    const baseStyles = {
-      padding: "4px 12px",
-      borderRadius: "16px",
-      fontSize: "12px",
-      fontWeight: "500",
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-      textDecoration: "none",
-      border: "none",
-      cursor: disabled ? "not-allowed" : "pointer",
-      opacity: disabled ? 0.6 : 1,
-    };
+    return (
+        <div className={styles.group}>
+            {actions.map((action, index) => {
+                const variant = action.variant === 'danger' ? 'ghost' : 'secondary';
+                const className = action.variant === 'danger' ? styles.danger : undefined;
 
-    if (variant === 'primary') {
-      return {
-        ...baseStyles,
-        background: "var(--light-primary)",
-        color: "var(--primary)",
-      };
-    } else if (variant === 'danger') {
-      return {
-        ...baseStyles,
-        background: disabled ? "var(--grey)" : "var(--light-danger)",
-        color: disabled ? "var(--dark-grey)" : "var(--danger)",
-      };
-    }
+                if (action.type === 'link') {
+                    return (
+                        <Button key={index} asChild variant={variant} size="sm" className={className}>
+                            <Link href={action.href ?? '#'}>
+                                {renderIcon(action.icon)}
+                                {t(action.label)}
+                            </Link>
+                        </Button>
+                    );
+                }
 
-    return baseStyles;
-  };
-
-  return (
-    <div style={{ display: "flex", gap: "8px"}}>
-      {actions.map((action, index) => {
-        const styles = getVariantStyles(action.variant, action.disabled);
-
-        if (action.type === 'link') {
-          return (
-            <Link
-              key={index}
-              href={action.href!}
-              style={styles}
-            >
-              <i className={action.icon} style={{ verticalAlign: 'middle' }}></i>
-              {t(action.label)}
-            </Link>
-          );
-        } else if (action.type === 'button') {
-          return (
-            <button
-              key={index}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              style={styles}
-            >
-              <i className={action.icon} style={{ verticalAlign: 'middle' }}></i>
-              {t(action.label)}
-            </button>
-          );
-        }
-
-        return null;
-      })}
-    </div>
-  );
+                return (
+                    <Button
+                        key={index}
+                        type="button"
+                        variant={variant}
+                        size="sm"
+                        className={className}
+                        disabled={action.disabled}
+                        onClick={action.onClick}
+                    >
+                        {renderIcon(action.icon)}
+                        {t(action.label)}
+                    </Button>
+                );
+            })}
+        </div>
+    );
 }
 
 export type { ActionConfig };

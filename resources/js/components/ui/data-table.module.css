@@ -1,0 +1,62 @@
+/* Workspace data table panel. Tokens only. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+    margin-top: var(--sn-space-6);
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.headIcon {
+    display: inline-flex;
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    color: var(--sn-color-text-muted);
+}
+
+.headIcon :global(svg) {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+}
+
+.headIcon :global(i) {
+    font-size: var(--sn-icon-md);
+}
+
+.title {
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-lg);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-snug);
+}
+
+/* Design spec: workspace rows are 48px tall. */
+.panel :global(.sn-table__td) {
+    height: 3rem;
+}
+
+.empty {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.emptyIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+    flex-shrink: 0;
+}

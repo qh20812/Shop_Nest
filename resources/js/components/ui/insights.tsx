@@ -1,29 +1,38 @@
-import React from 'react';
-import '@/../css/Page.css';
+import * as React from 'react';
+
+import { renderIcon, type IconProp } from '@/lib/icon';
+
+import styles from './insights.module.css';
 
 interface InsightItem {
-  icon: string;
-  value: string | number;
-  label: string;
-  tooltip?: string; // Add tooltip support
+    icon: IconProp;
+    value: string | number;
+    label: string;
+    tooltip?: string;
 }
 
 interface InsightsProps {
-  items: InsightItem[];
+    items: InsightItem[];
+    columns?: 3 | 4;
+    className?: string;
 }
 
-export default function Insights({ items }: InsightsProps) {
-  return (
-    <ul className="insights">
-      {items.map((item, index) => (
-        <li key={index} title={item.tooltip}>
-          <i className={`bx ${item.icon}`}></i>
-          <span className="info">
-            <h3>{item.value}</h3>
-            <p>{item.label}</p>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
+/**
+ * KPI strip. Keeps the legacy `items` shape so Admin can stay on Boxicons
+ * strings until Phase 8 while Seller passes Lucide components.
+ */
+export default function Insights({ items, columns = 4, className }: InsightsProps) {
+    return (
+        <ul data-columns={columns === 3 ? '3' : '4'} className={className ? `${styles.list} ${className}` : styles.list}>
+            {items.map((item, index) => (
+                <li key={index} title={item.tooltip} className={styles.item}>
+                    <span className={styles.iconWrap}>{renderIcon(item.icon)}</span>
+                    <span className={styles.info}>
+                        <span className={styles.value}>{item.value}</span>
+                        <span className={styles.label}>{item.label}</span>
+                    </span>
+                </li>
+            ))}
+        </ul>
+    );
 }

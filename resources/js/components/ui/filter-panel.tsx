@@ -2,10 +2,11 @@ import { Link } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import * as React from 'react';
 
-import Header from '@/components/ui/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import Header from '@/components/ui/header';
+import { renderIcon, type IconProp } from '@/lib/icon';
 import { useTranslation } from '@/lib/i18n';
 
 interface Breadcrumb {
@@ -30,7 +31,7 @@ interface FilterDropdownConfig {
 interface ActionButtonConfig {
     href: string;
     label: string;
-    icon: string;
+    icon: IconProp;
     color: 'primary' | 'success' | 'danger';
 }
 
@@ -43,12 +44,20 @@ interface FilterPanelProps {
     buttonConfigs?: ActionButtonConfig[];
     reportButtonConfig?: {
         label: string;
-        icon: string;
+        icon: IconProp;
         onClick: () => void;
     };
 }
 
 const buttonVariant = (color: ActionButtonConfig['color']) => (color === 'danger' ? 'destructive' : 'primary');
+
+/**
+ * Legacy Admin filter bar. Icon props accept Lucide components (Seller) or the
+ * bare Boxicons names Admin still passes until Phase 8.
+ */
+function configIcon(icon: IconProp) {
+    return renderIcon(icon);
+}
 
 export default function FilterPanel({
     title,
@@ -115,7 +124,7 @@ export default function FilterPanel({
                     {buttonConfigs.map((buttonConfig, index) => (
                         <Button asChild key={index} variant={buttonVariant(buttonConfig.color)} size="md">
                             <Link href={buttonConfig.href}>
-                                <i className={`bx ${buttonConfig.icon}`} aria-hidden="true" />
+                                {configIcon(buttonConfig.icon)}
                                 {t(buttonConfig.label)}
                             </Link>
                         </Button>

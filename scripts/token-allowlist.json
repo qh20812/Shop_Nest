@@ -17,14 +17,10 @@
         "resources/js/components/admin/products/ProductInfo.tsx",
         "resources/js/components/admin/products/ProductTabs.tsx",
         "resources/js/components/admin/shippers/DocumentViewer.tsx",
-        "resources/js/components/admin/users/Toast.tsx",
         "resources/js/components/admin/users/UserEditForm.tsx",
         "resources/js/components/feedback/LoadingOverlay.tsx",
         "resources/js/components/storefront/UtilityStrip.tsx",
-        "resources/js/components/ui/action-button.tsx",
-        "resources/js/components/ui/action-buttons.tsx",
         "resources/js/components/ui/action-dropdown.tsx",
-        "resources/js/components/ui/data-table.tsx",
         "resources/js/components/ui/navbar.tsx",
         "resources/js/components/ui/sidebar.tsx",
         "resources/js/pages/Admin/Analytics/Index.tsx",
@@ -46,17 +42,6 @@
         "resources/js/pages/Admin/Shippers/Index.tsx",
         "resources/js/pages/Admin/Shippers/Show.tsx",
         "resources/js/pages/Admin/Shops/Index.tsx",
-        "resources/js/pages/Admin/Users/Index.tsx",
-        "resources/js/pages/Seller/Dashboard/Index.tsx",
-        "resources/js/pages/Seller/Orders/Index.tsx",
-        "resources/js/pages/Seller/Orders/Show.tsx",
-        "resources/js/pages/Seller/Products/Create.tsx",
-        "resources/js/pages/Seller/Products/Edit.tsx",
-        "resources/js/pages/Seller/Products/Index.tsx",
-        "resources/js/pages/Seller/Products/Show.tsx",
-        "resources/js/pages/Seller/Promotions/Create.tsx",
-        "resources/js/pages/Seller/Promotions/Index.tsx",
-        "resources/js/pages/Seller/Shop/Edit.tsx",
-        "resources/js/utils/tinymce.ts"
+        "resources/js/pages/Admin/Users/Index.tsx"
     ]
 }

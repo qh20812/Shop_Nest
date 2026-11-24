@@ -1,0 +1,17 @@
+/* Compact row action group. Tokens only. */
+
+.group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.danger {
+    color: var(--sn-color-danger-text);
+}
+
+.danger:hover {
+    background: var(--sn-color-danger-wash);
+    color: var(--sn-color-danger-text);
+}

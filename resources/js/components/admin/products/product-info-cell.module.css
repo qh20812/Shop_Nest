@@ -1,0 +1,57 @@
+/* Product identity cell: 40x50 thumbnail plus name and category. Tokens only. */
+
+.cell {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-3);
+    min-width: 0;
+}
+
+.thumb {
+    width: 40px;
+    height: 50px;
+    flex-shrink: 0;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-xs);
+    object-fit: cover;
+    background: var(--sn-color-surface-sunken);
+}
+
+.placeholder {
+    display: flex;
+    width: 40px;
+    height: 50px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-xs);
+    background: var(--sn-color-surface-sunken);
+    color: var(--sn-color-text-faint);
+}
+
+.placeholderIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+}
+
+.body {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.name {
+    overflow: hidden;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.category {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}

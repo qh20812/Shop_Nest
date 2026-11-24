@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.11, còn 2 blocker là working tree mail/locale và alias `shipper`.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -57,7 +57,7 @@
 | 6     | Customer + Settings                       |  XL |       ~66 |
 | 7     | Seller                                    |   L |       ~29 |
 | 8     | Admin                                     |  XL |       ~60 |
-| 9     | Shipper                                   |   S |        ~4 |
+| 9     | Shipper                                   |   S |        ~6 |
 | 10    | Email, error pages, PDF                   |   M |       ~12 |
 | 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~15 |
 | 12    | QA sweep                                  |   L |   toàn bộ |
@@ -147,6 +147,10 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 60  | Phase 8 KPI/chart/table | `AnalyticsCard` bỏ 5 màu + icon tile, thành KPI trung tính (hoặc `Insights`); `AnalyticsChart` dùng token accent/success/warning, grid 1 px, **bỏ `linearGradient`**, tooltip surface; `AnalyticsTable` giữ sort trong module hoặc mở rộng `Table` additive; `QuickFilter` → `Tabs variant="filter"`; `ExportButton` → `Button` |
 | 61  | Phase 8 allowlist | 42 → **5**: xoá 36 entry Admin + `action-dropdown`; còn `base.css`, `feedback/LoadingOverlay`, `storefront/UtilityStrip`, `ui/navbar`, `ui/sidebar` đến Phase 11 |
 | 62  | Phase 8 pre-flight | Khôi phục `public/image/default-product.png` (đã bị xoá, còn fallback ở 10+ component Phase 4/6) hoặc đổi path; commit/stash 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`); cập nhật §3.5/§15 đã cũ; build trên cây sạch |
+| 63  | Phase 9 pre-flight | **Chưa build Phase 9** vì working tree có **27 file sửa + 24 file mới** thuộc cụm mail/locale (gần Phase 10), gồm `bootstrap/app.php`, `app/Mail/*`, `app/Notifications/*`, `resources/views/emails/*`, `lang/{vi,en}/mail.php`, 2 migration và `tests/Feature/Mail/*`. `php artisan test tests/Feature/Admin` hiện **19 failed** do `LogicException: An email must have a "To", "Cc", or "Bcc" header`; không phải regression UI Phase 8. Commit/stash riêng, chạy lại test Admin rồi mới bắt đầu Phase 9 |
+| 64  | Phase 9 middleware | Chọn **đổi `routes/shipper.php` từ `shipper` sang `isShipper`** thay vì thêm alias vào `bootstrap/app.php` đang bẩn; alias `isShipper` đã có trong map, cách này một dòng và thống nhất với `is_admin`/`isSeller`. Không đổi URL, controller hay props |
+| 65  | Phase 9 i18n/test/tap | Bổ sung **3 key** vào cả `vi.json` + `en.json`: `Chưa có chuyến được giao`, mô tả empty state, `Tải lại`. Thêm feature test `tests/Feature/Shipper/DashboardTest.php` (seed `RoleSeeder`, gắn role Shipper, `actingAs`, assert component + `title`) hoặc smoke có phiên shipper. CTA dùng `Button size="lg"` (48 px) để đạt tap target 44 px; không dùng `Button` mặc định 40 px |
+| 66  | Phase 9 shell note | `sn-workspace__main` **chưa có CSS riêng**; page Phase 9 nhận padding từ `Page.css` `.content main` (36 px 24 px) qua `WorkspaceLayout`. Không cần module mới cho empty state; khi Phase 11 xoá `Page.css` phải bổ sung style cho `.sn-workspace__main` |
 
 ---
 
@@ -351,12 +355,39 @@ Số liệu sau khi build Phase 8 trên working tree:
 | Allowlist | **42 → 5** (chỉ còn `base.css`, `LoadingOverlay`, `UtilityStrip`, `navbar`, `sidebar`) |
 | `check:css` | pass **293 file checked, 5 allowlisted** |
 | Gate | `format:check`, `types`, `check:css`, `build`, ESLint sạch |
-| Test Admin | **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5) |
+| Test Admin | **134 test / 671 assertion** tại commit `d611aa3` (chỉ DEPRECATION PDO PHP 8.5); cây hiện tại có cụm mail/locale làm 19 test fail, xem §2.11 |
 | Asset | `public/image/default-product.png` đã khôi phục |
 
 **Đã làm:** `AnalyticsCard` thành KPI trung tính (bỏ 5 màu/icon tile); `AnalyticsChart` dùng token, grid 1 px, bỏ gradient; `AnalyticsTable` sort trong module trên `Table`; `AnalyticsFilters` bỏ vỏ card; `QuickFilter` → `Tabs variant="filter"`; `ExportButton` → `Button`; Orders gộp `OrderFilterPanel` vào một filter bar; Shops có bulk approve/reject thật + `Dialog`/`ConfirmDialog` thay `window.confirm/prompt/alert`; 5 stub Shops render đúng props; dead action CSV/export/Returns edit-delete/Inventory Report/ProductInfo add-to-cart/Analytics quick range đã bỏ; link tới page thiếu đã ẩn/disable.
 
 **Chưa làm:** CDP/Edge 29 page + 5 stub ở 5 breakpoint light/dark vì cần phiên Admin trên DB remote; ghi lại cho Phase 12 hoặc lần review có phiên.
+
+### 2.11 Rà soát trước Phase 9 (2026-11-24)
+
+Rà soát read-only trên working tree sau commit Phase 8 `d611aa3` để đối chiếu plan trước khi build Phase 9:
+
+| Chỉ số / hạng mục | Hiện trạng |
+|---|---|
+| Working tree | **27 file modified + 24 file untracked = 51 file**, thuộc cụm mail/locale gần Phase 10: `app/Mail/*`, `app/Notifications/*`, `app/Observers/OrderObserver.php`, `resources/views/emails/*`, `resources/views/vendor/mail/*`, `lang/{vi,en}/mail.php`, `bootstrap/app.php`, `config/{auth,mail}.php`, 2 migration `locale` + `low_stock_notified_at`, `tests/Feature/Mail/*` |
+| Test Admin hiện tại | **19 failed / 115 deprecated / 572 assertions**; lỗi `LogicException: An email must have a "To", "Cc", or "Bcc" header` ở `DashboardControllerTest` + `InventoryTest`. `ShipperManagementTest` riêng vẫn **21 test / 99 assertion** pass |
+| Route shipper | `GET /shipper/dashboard` name `shipper.dashboard` tồn tại; `route:list -v` hiện middleware `web, auth, verified.optional, shipper`; `bootstrap/app.php` chỉ có `is_admin`, `isSeller`, `isShipper`, `verified`, `verified.optional` |
+| Page shipper | Chỉ `resources/js/pages/Shipper/Dashboard/Index.tsx`, stub `<h1>Giao diện shipper</h1>`; không có layout/Head/props |
+| Controller shipper | `Shipper\DashboardController@index` chỉ trả `title` |
+| Nav shipper | `WorkspaceLayout` còn đúng **2 mục**: `Shipper Dashboard` + `navbar.settings`; key i18n đều có |
+| Missing render target | **16**, khớp §2.4; `Admin/CustomerSegments/*` vẫn không có route |
+| Guardrail | `check:css` pass **293 checked / 5 allowlisted**; `npm run types` pass |
+| `AppLayout` importers | **44**, không còn 39 như §2.6 (số liệu lịch sử sau Phase 7/8) |
+| `sn-workspace__main` | Không có CSS riêng; page dựa vào `Page.css` `.content main` (padding 36 px 24 px) |
+| i18n Phase 9 | Thiếu `Chưa có chuyến được giao`, mô tả empty state, `Tải lại`; `Shipper Dashboard`/`Shipper`/`Overview`/`navbar.settings` đã có |
+
+**Sai biệt với plan:**
+- Plan Phase 9 đúng ở phần cốt lõi: stub, controller chỉ `title`, alias `shipper` chưa đăng ký, nav 2 mục, 1 page, không bịa dữ liệu.
+- Plan **thiếu** bước i18n cho 3 chuỗi empty state, thiếu test route 200, và chưa nói rõ tap target phải dùng `Button size="lg"` (mặc định 40 px).
+- Plan ước lượng `~4 file`; thực tế 5-6 file nếu tính i18n + test.
+- Working tree hiện bẩn bởi cụm mail/locale, không phải Phase 8/9; phải commit/stash trước khi build.
+- `AppLayout` 44 vs 39 và `sn-workspace__main` chưa có CSS là drift tài liệu/nợ Phase 11, không chặn Phase 9.
+
+**Kết luận:** chưa build Phase 9 cho đến khi dọn cụm mail/locale và sửa middleware. Sau đó Phase 9 chỉ gồm page shipper + route one-line + i18n + test, không tạo page/route/endpoint mới.
 
 ---
 
@@ -1952,23 +1983,32 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - Allowlist **5**; `types` + `format:check` + `build` + `check:css` + ESLint sạch.
 - Không đổi route/controller/payload backend; `public/image/default-product.png` đã khôi phục hoặc fallback đã đổi.
 
-> **Trạng thái 2026-11-24 — hoàn tất:** 29 page Admin + 5 stub Shops migrate sang `sn-*` + module CSS; 17 component + `action-dropdown`; 5 module CSS mới. `AnalyticsCard`/`AnalyticsChart`/`AnalyticsTable`/`AnalyticsFilters`/`QuickFilter`/`ExportButton` đúng #60. Orders gộp một filter bar; Shops bulk approve/reject dùng endpoint thật và `Dialog`/`ConfirmDialog`; dead action/link đã bỏ hoặc ẩn. i18n Admin: 555 key, 0 thiếu, thêm **282 `vi` + 284 `en`**. Allowlist **42 → 5**; `check:css` pass **293 checked / 5 allowlisted**; `format:check`, `types`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5). `public/image/default-product.png` đã khôi phục. Chưa chụp CDP 29 page + 5 stub vì cần phiên Admin; ghi lại cho Phase 12.
+> **Trạng thái 2026-11-24 — hoàn tất:** 29 page Admin + 5 stub Shops migrate sang `sn-*` + module CSS; 17 component + `action-dropdown`; 5 module CSS mới. `AnalyticsCard`/`AnalyticsChart`/`AnalyticsTable`/`AnalyticsFilters`/`QuickFilter`/`ExportButton` đúng #60. Orders gộp một filter bar; Shops bulk approve/reject dùng endpoint thật và `Dialog`/`ConfirmDialog`; dead action/link đã bỏ hoặc ẩn. i18n Admin: 555 key, 0 thiếu, thêm **282 `vi` + 284 `en`**. Allowlist **42 → 5**; `check:css` pass **293 checked / 5 allowlisted**; `format:check`, `types`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5) tại commit `d611aa3`; cây hiện tại có cụm mail/locale làm 19 test fail, xem §2.11. `public/image/default-product.png` đã khôi phục. Chưa chụp CDP 29 page + 5 stub vì cần phiên Admin; ghi lại cho Phase 12.
 
 ---
 
 ### Phase 9 — Shipper (1 page)
 
+**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.11; còn 2 blocker.
+
+**Pre-flight (bắt buộc, #63)**
+
+- Working tree đang có **27 file sửa + 24 file mới** thuộc cụm mail/locale, không phải Phase 8/9. Commit/stash riêng, chạy lại `php artisan test tests/Feature/Admin` (hiện **19 failed** do mail thiếu `To`) rồi mới bắt đầu.
+- `routes/shipper.php` dùng middleware `shipper`; `bootstrap/app.php` chỉ có `isShipper`. Đổi route sang `isShipper` (#64); không sửa `bootstrap/app.php` đang bẩn, không đổi URL/controller/props.
+- `WorkspaceLayout` đã có nav shipper 2 mục; `PageHeader`/`EmptyState`/`Button` sẵn dùng. `sn-workspace__main` **chưa có CSS riêng**, page dựa vào `Page.css` `.content main` (36 px 24 px) đến Phase 11 (#66).
+
 **Hiện trạng:** `Shipper/Dashboard/Index.tsx` chỉ là stub `<div><h1>Giao diện shipper</h1></div>`; controller chỉ trả `title`; `routes/shipper.php` dùng alias `shipper` chưa đăng ký (chỉ có `isShipper`) nên route hiện lỗi.
 
 **Việc làm**
 
-- Sửa middleware: đăng ký alias `shipper` trong `bootstrap/app.php` trỏ `IsShipper`, hoặc đổi route sang `isShipper`. Không đổi URL, controller hay props.
+- Sửa middleware: đổi `routes/shipper.php` từ `shipper` sang `isShipper` (hoặc đăng ký alias `shipper` trong `bootstrap/app.php` sau khi cây sạch). Không đổi URL, controller hay props.
 - Nav shipper đã rút còn Dashboard + Cài đặt từ Phase 3; khi backend bổ sung route thật thì mở lại mục tương ứng.
-- Dựng `Shipper/Dashboard/Index` trên `WorkspaceLayout`.
-- Vì controller chỉ trả `title`, page gồm: header, empty state "Chưa có chuyến được giao", 1 CTA tải lại. **Không** bịa danh sách chuyến, trạng thái hay thu nhập.
+- Dựng `Shipper/Dashboard/Index` trên `WorkspaceLayout`: `Head`, `PageHeader` + breadcrumb, `EmptyState` icon `Truck`/`Package`, title + mô tả ngắn, 1 CTA `Button size="lg"` (48 px, đạt tap target 44) dùng `RefreshCw` và `router.reload()`. **Không** bịa danh sách chuyến, trạng thái hay thu nhập.
+- Thêm **3 key i18n** vào **cả** `lang/vi.json` và `lang/en.json`: `Chưa có chuyến được giao`, mô tả empty state (ví dụ “Các chuyến được giao sẽ xuất hiện ở đây.”), `Tải lại`. `Shipper Dashboard`, `Shipper`, `Overview`, `navbar.settings` đã có sẵn.
+- Thêm feature test `tests/Feature/Shipper/DashboardTest.php`: seed `RoleSeeder`, gắn role `Shipper`, `actingAs($shipper)->get('/shipper/dashboard')`, assert Inertia component `Shipper/Dashboard/Index` + `title`. Hoặc smoke thủ công có phiên shipper nếu không thêm test.
 - Khi backend bổ sung props chuyến, ghi backlog để làm danh sách thật.
 
-**DoD:** route trả 200; page render shell + empty state; không có dữ liệu giả; mobile-first; tap target 44 px; không phụ thuộc hover.
+**DoD:** route trả 200; page render shell + empty state; không có dữ liệu giả; mobile-first; tap target 44 px (`Button size="lg"`); không phụ thuộc hover; 3 key i18n có ở cả hai file; test shipper pass hoặc smoke có phiên; `types` + `format:check` + `check:css` + `build` + ESLint sạch; không tạo page/route/endpoint mới; không đổi controller/props.
 
 ---
 
@@ -2152,6 +2192,8 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 > **Ghi chú Phase 7:** 10 dòng Seller đúng code hiện tại; `Promotions/Edit` và `Promotions/Show`, `Reports/*`, `Wallet/*` vẫn là backlog (7 render target) và **không tạo** trong Phase 7. `Promotions/Index` phải ẩn link Xem/Sửa để không trỏ page thiếu.
 >
 > **Ghi chú Phase 8:** 34 file = **29 page có UI + 5 stub Shops** (`Pending`, `Show`, `Dashboard`, `Statistics`, `Violations`). 5 stub được hoàn thiện read-only từ props, không tạo page mới. Các render target thiếu vẫn backlog; mọi link tới `Orders/Show`, `Inventory/Report`, `Returns/Show` phải ẩn/disable (#59).
+>
+> **Ghi chú Phase 9:** chỉ **1 page** `Shipper/Dashboard/Index`; route `/shipper/dashboard` đã có, chỉ sửa middleware + UI. Không tạo page mới; thêm 3 key i18n và test shipper theo #65.
 
 Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộc trước; trang nhiều state sau**. Với Admin, thứ tự nội bộ: Dashboard → Users → Categories/Brands → Products → Inventory → Orders → Promotions → Shops → Shippers → Returns → Analytics.
 
@@ -2293,6 +2335,9 @@ php artisan test --filter=<area>
 | `default-product.png` bị xoá                                            | Cao        | **Pre-flight (#62):** khôi phục asset hoặc đổi path ở 10+ component Phase 4/6 trước QA; không để ảnh 404                                                                                                                                                                                |
 | Admin thiếu test Shops/Analytics/Orders/Promotions                      | Trung bình | **Phase 8:** chạy 9 test Admin hiện có + smoke route; thêm test nếu có phiên; ghi backlog nếu không                                                                                                                                                                                      |
 | Working tree bẩn từ việc khác trước Phase 8                             | Trung bình | **Trước Phase 8 (#62):** commit/stash `StorefrontFooter.tsx`, `Home/Contact.tsx`; kiểm tra `git status` lại                                                                                                                                                                              |
+| Working tree mail/locale trước Phase 9                                  | Cao        | **Trước Phase 9 (#63):** 27 file sửa + 24 file mới thuộc mail/locale; commit/stash riêng; chạy lại `php artisan test tests/Feature/Admin` (hiện 19 failed do mail thiếu `To`) trước khi build                                                                                                                                 |
+| Phase 9 thiếu i18n/test/tap target                                      | Trung bình | **Phase 9 (#65):** thêm 3 key empty state + `Tải lại` vào cả `vi.json`/`en.json`; thêm test `Shipper/DashboardTest`; dùng `Button size="lg"` 48 px                                                                                                                                                                      |
+| `sn-workspace__main` chưa có CSS                                        | Thấp       | **Phase 9 (#66):** page dựa `Page.css` `.content main` đến Phase 11; bổ sung style `.sn-workspace__main` khi xoá `Page.css`                                                                                                                                                                                             |
 
 ---
 
@@ -2309,6 +2354,8 @@ php artisan test --filter=<area>
 - **Ngoại lệ Phase 7:** được migrate `ui/{insights,confirmation-modal}`, `admin/users/Toast`, `admin/products/ProductInfoCell`, `utils/tinymce.ts` và mở rộng API icon `LucideIcon` hoặc `string` cho `Header`/`FilterPanel`/`DataTable`/`ActionButton(s)`; được ẩn action Xem/Sửa trong `Promotions/Index`. Không tạo page mới, không thêm tính năng.
 - **Ngoại lệ Phase 8:** được hoàn thiện **5 file stub Shop read-only** từ props controller (không tạo file/route/endpoint mới); được mở rộng `Table` sort additive hoặc giữ sort trong module; được thay `AnalyticsCard` màu/icon tile bằng KPI trung tính; được xoá/disable dead action và ẩn link tới page thiếu. Không tạo page mới, không thêm tính năng.
 - **Pre-flight Phase 8 (ngoài UI code):** được khôi phục `public/image/default-product.png` hoặc đổi fallback path; không đổi nghiệp vụ.
+- **Ngoại lệ Phase 9:** được đổi middleware của `routes/shipper.php` từ `shipper` sang `isShipper` (hoặc đăng ký alias `shipper` trong `bootstrap/app.php`), được thêm 3 key i18n và một feature test shipper; không đổi URL, controller, props hay hành vi nghiệp vụ. Không tạo page/route/endpoint mới.
+- **Pre-flight Phase 9 (ngoài UI code):** commit/stash cụm mail/locale đang dở (27 file sửa + 24 file mới) và chạy lại test Admin trước khi build; không trộn vào commit Phase 9.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá.
@@ -2357,7 +2404,7 @@ refactor(admin): migrate users, products, categories, brands and promotions page
 refactor(admin): migrate inventory and shipper pages
 refactor(admin): migrate shops pages and admin i18n keys
 docs(ui): log phase 8 admin migration
-fix(shipper): register middleware alias and migrate dashboard shell
+fix(shipper): correct middleware alias and migrate dashboard shell
 feat(ui): restyle email, error pages and invoice print
 chore(ui): remove tailwind, legacy css and boxicons
 test(ui): responsive, dark mode and accessibility sweep
@@ -2367,6 +2414,8 @@ docs(ui): rewrite design system and component rules
 > **Trước Phase 5 (quyết định #39):** working tree đang có 52 file backend/route/test chưa commit (gồm `routes/{web,user}.php`, controllers, factories, seeders, 2 page Phase 4, 1 migration untracked). Commit phần này thành commit riêng (`chore(repo): …`) trước khi build Phase 5 để phase UI vẫn là một đơn vị merge sạch; không trộn vào commit `refactor(auth)`.
 
 > **Trước Phase 8 (quyết định #62):** khôi phục `public/image/default-product.png` hoặc đổi fallback path; commit/stash 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`); chạy lại `git status` và gate trước khi bắt đầu. Commit Phase 8 tách theo §13, không trộn asset/favicon.
+
+> **Trước Phase 9 (quyết định #63):** working tree có **27 file sửa + 24 file mới** thuộc mail/locale, không phải Phase 8/9. Commit/stash riêng, chạy lại `php artisan test tests/Feature/Admin` (hiện **19 failed** do mail thiếu `To`) rồi mới sửa `routes/shipper.php` và build page. Không trộn cụm mail/locale vào commit shipper.
 
 ---
 
@@ -2403,6 +2452,15 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — rà soát trước Phase 9 (chưa build):**
+
+- **Working tree:** **27 file sửa + 24 file mới** thuộc cụm mail/locale gần Phase 10 (`app/Mail/*`, `app/Notifications/*`, `resources/views/emails/*`, `lang/{vi,en}/mail.php`, `bootstrap/app.php`, `config/{auth,mail}.php`, 2 migration, `tests/Feature/Mail/*`). Không phải Phase 8/9; phải commit/stash riêng.
+- **Test Admin hiện tại:** **19 failed / 115 deprecated / 572 assertions** do `LogicException: An email must have a "To", "Cc", or "Bcc" header` ở `DashboardControllerTest` + `InventoryTest`; `ShipperManagementTest` riêng vẫn **21 test / 99 assertion** pass.
+- **Phase 9 khớp plan:** stub `Shipper/Dashboard/Index`; controller chỉ `title`; `route:list -v` có middleware `shipper`; alias map chỉ có `isShipper`; nav shipper 2 mục; **16 missing target** đúng; `check:css` **293/5**; `types` pass.
+- **Gap:** thiếu 3 key i18n (`Chưa có chuyến được giao`, mô tả, `Tải lại`), thiếu test shipper, tap target phải dùng `Button size="lg"` (48 px), `sn-workspace__main` chưa có CSS (dựa `Page.css` đến Phase 11), `AppLayout` 44 vs 39.
+- **Quyết định #63–#66:** dọn mail/locale trước; đổi route `shipper` → `isShipper`; thêm i18n + test + tap target; ghi nợ `sn-workspace__main` cho Phase 11.
+- **Cập nhật tài liệu:** header status, §0.4 (`~6`), §1 (#63–#66), **§2.11 (mới)**, Phase 9 (pre-flight + i18n + test + DoD), §8 (ghi chú Phase 9), §11 (3 rủi ro Phase 9), §12 (ngoại lệ + pre-flight Phase 9), §13 (commit shipper + note trước Phase 9), §15.
 
 **2026-11-24 — Phase 8 hoàn tất (Admin):**
 

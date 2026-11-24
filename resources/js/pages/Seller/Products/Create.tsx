@@ -1,5 +1,5 @@
-import '@/../css/Page.css';
-import ActionButton from '@/components/ui/action-button';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
 import PrimaryInput from '@/components/ui/primary-input';
 import RichTextEditor from '@/components/ui/rich-text-editor';
@@ -7,7 +7,10 @@ import { useToast } from '@/Contexts/ToastContext';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Image as ImageIcon, Package, Save, Search, Tag, UploadCloud, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface CategoryOption {
     value: string;
@@ -122,6 +125,7 @@ function CreateContent() {
     const [isMetaSlugTouched, setIsMetaSlugTouched] = useState(false);
     const [isMetaDescriptionTouched, setIsMetaDescriptionTouched] = useState(false);
     const [mediaPreviews, setMediaPreviews] = useState<MediaPreview[]>([]);
+
     const seoPreview = useMemo(() => {
         const fallbackTitle = form.data.name.trim();
         const fallbackSlug = slugify(form.data.name || '');
@@ -192,7 +196,7 @@ function CreateContent() {
 
             setMediaPreviews((prev) => [...prev, ...previews]);
             form.setData('images', [...form.data.images, ...files]);
-            showInfo(t('Sample previews added. Files are not uploaded yet.'));
+            showInfo(t('Images added to the upload queue.'));
         },
         [form, showInfo, t],
     );
@@ -212,9 +216,8 @@ function CreateContent() {
                 }
                 return prev.filter((media) => media.id !== id);
             });
-            showInfo(t('Removed selected media preview.'));
         },
-        [form, showInfo, t],
+        [form],
     );
 
     const handleSubmit = useCallback(
@@ -327,272 +330,224 @@ function CreateContent() {
                     { label: t('Products'), href: '/seller/products' },
                     { label: t('Create'), href: '/seller/products/create', active: true },
                 ]}
-                reportButton={{
-                    label: t('Product Guidelines'),
-                    icon: 'bx-help-circle',
-                    onClick: () => {
-                        showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
-                    },
-                }}
             />
 
-            <form onSubmit={handleSubmit}>
-                <div className="bottom-data" style={{ display: 'grid', gap: '20px' }}>
-                    {/* Basic Information & Localization */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-package"></i>
-                            <h3>{t('Product Basics')}</h3>
+            <form onSubmit={handleSubmit} className={styles.stack}>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Package aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Product Basics')}
+                            </h2>
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Product Name (Vietnamese)')}
-                                    name="name_vi"
-                                    value={form.data.name}
-                                    onChange={(event) => form.setData('name', event.target.value)}
-                                    error={form.errors.name}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Product Name (English)')}
-                                    name="name_en"
-                                    value={form.data.name_en}
-                                    onChange={(event) => form.setData('name_en', event.target.value)}
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Product SKU')}
-                                    name="sku"
-                                    value={form.data.sku}
-                                    onChange={(event) => form.setData('sku', event.target.value)}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Category')}
-                                    name="category_id"
-                                    type="select"
-                                    value={form.data.category_id}
-                                    onChange={(event) => form.setData('category_id', event.target.value)}
-                                    options={categoryOptions}
-                                    error={form.errors.category_id}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Brand')}
-                                    name="brand_id"
-                                    type="select"
-                                    value={form.data.brand_id}
-                                    onChange={(event) => form.setData('brand_id', event.target.value)}
-                                    options={brandOptions}
-                                    error={form.errors.brand_id}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Status')}
-                                    name="status"
-                                    type="select"
-                                    value={form.data.status}
-                                    onChange={(event) => form.setData('status', event.target.value)}
-                                    options={statusOptions}
-                                    error={form.errors.status}
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <RichTextEditor
-                                    label={t('Product Description (Vietnamese)')}
-                                    value={form.data.description}
-                                    onChange={(value) => form.setData('description', value)}
-                                    error={form.errors.description as string}
-                                    height="220px"
-                                />
-                                <RichTextEditor
-                                    label={t('Product Description (English)')}
-                                    value={form.data.description_en}
-                                    onChange={(value) => form.setData('description_en', value)}
-                                    height="220px"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Pricing & Inventory */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-dollar-circle"></i>
-                            <h3>{t('Pricing & Inventory')}</h3>
+                        <div className={styles.formGrid}>
+                            <PrimaryInput
+                                label={t('Product Name (Vietnamese)')}
+                                name="name_vi"
+                                value={form.data.name}
+                                onChange={(event) => form.setData('name', event.target.value)}
+                                error={form.errors.name}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Product Name (English)')}
+                                name="name_en"
+                                value={form.data.name_en}
+                                onChange={(event) => form.setData('name_en', event.target.value)}
+                                error={form.errors.name_en}
+                                required
+                            />
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Base Price (VND)')}
-                                    name="price"
-                                    value={form.data.price}
-                                    onChange={(event) => form.setData('price', event.target.value)}
-                                    error={form.errors.price}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Total Stock')}
-                                    name="stock"
-                                    value={form.data.stock}
-                                    onChange={(event) => form.setData('stock', event.target.value)}
-                                    error={form.errors.stock}
-                                    required
-                                />
-                            </div>
+                        <div className={styles.formGrid4}>
+                            <PrimaryInput
+                                label={t('Product SKU')}
+                                name="sku"
+                                value={form.data.sku}
+                                onChange={(event) => form.setData('sku', event.target.value)}
+                                error={form.errors.sku}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Category')}
+                                name="category_id"
+                                type="select"
+                                value={form.data.category_id}
+                                onChange={(event) => form.setData('category_id', event.target.value)}
+                                options={categoryOptions}
+                                error={form.errors.category_id}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Brand')}
+                                name="brand_id"
+                                type="select"
+                                value={form.data.brand_id}
+                                onChange={(event) => form.setData('brand_id', event.target.value)}
+                                options={brandOptions}
+                                error={form.errors.brand_id}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Status')}
+                                name="status"
+                                type="select"
+                                value={form.data.status}
+                                onChange={(event) => form.setData('status', event.target.value)}
+                                options={statusOptions}
+                                error={form.errors.status}
+                                required
+                            />
+                        </div>
+
+                        <div className={styles.formGrid}>
+                            <RichTextEditor
+                                label={t('Product Description (Vietnamese)')}
+                                value={form.data.description}
+                                onChange={(value) => form.setData('description', value)}
+                                error={form.errors.description as string}
+                                height="220px"
+                            />
+                            <RichTextEditor
+                                label={t('Product Description (English)')}
+                                value={form.data.description_en}
+                                onChange={(value) => form.setData('description_en', value)}
+                                height="220px"
+                            />
                         </div>
                     </div>
-                    {/* Media Library */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-image"></i>
-                            <h3>{t('Media & Gallery')}</h3>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Tag aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Pricing & Inventory')}
+                            </h2>
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gap: '16px',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                                }}
-                            >
-                                {mediaPreviews.map((media) => (
-                                    <div
-                                        key={media.id}
-                                        style={{
-                                            position: 'relative',
-                                            borderRadius: '12px',
-                                            overflow: 'hidden',
-                                            boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
-                                        }}
+                        <div className={styles.formGrid}>
+                            <PrimaryInput
+                                label={t('Base Price (VND)')}
+                                name="price"
+                                value={form.data.price}
+                                onChange={(event) => form.setData('price', event.target.value)}
+                                error={form.errors.price}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Total Stock')}
+                                name="stock"
+                                value={form.data.stock}
+                                onChange={(event) => form.setData('stock', event.target.value)}
+                                error={form.errors.stock}
+                                required
+                            />
+                        </div>
+                    </div>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <ImageIcon aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Media & Gallery')}
+                            </h2>
+                        </div>
+
+                        <div className={styles.mediaGrid}>
+                            {mediaPreviews.map((media) => (
+                                <div key={media.id} className={styles.mediaItem}>
+                                    <img src={media.url} alt={t('Product image preview')} className={styles.mediaImage} />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveMedia(media.id)}
+                                        className={styles.mediaRemove}
+                                        aria-label={t('Remove image')}
                                     >
-                                        <img src={media.url} alt="product preview" style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveMedia(media.id)}
-                                            style={{
-                                                position: 'absolute',
-                                                top: '8px',
-                                                right: '8px',
-                                                background: 'rgba(255,255,255,0.9)',
-                                                border: 'none',
-                                                borderRadius: '50%',
-                                                width: '32px',
-                                                height: '32px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            <i className="bx bx-x" style={{ color: 'var(--danger)', fontSize: '18px' }}></i>
-                                        </button>
-                                    </div>
-                                ))}
-
-                                <label
-                                    htmlFor="product-media-uploader"
-                                    style={{
-                                        border: '2px dashed var(--grey)',
-                                        borderRadius: '12px',
-                                        minHeight: '160px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexDirection: 'column',
-                                        gap: '12px',
-                                        color: 'var(--dark-grey)',
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    <i className="bx bx-cloud-upload" style={{ fontSize: '28px' }}></i>
-                                    <span>{t('Click or drop files to add sample images')}</span>
-                                    <input
-                                        id="product-media-uploader"
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        style={{ display: 'none' }}
-                                        onChange={handleMediaUpload}
-                                    />
-                                </label>
-                                {form.errors.images && <div className="form-error">{form.errors.images}</div>}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* SEO Preview */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-chart"></i>
-                            <h3>{t('SEO Preview')}</h3>
-                        </div>
-
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Meta Title')}
-                                    name="seo_title"
-                                    value={form.data.meta_title}
-                                    onChange={(event) => {
-                                        setIsMetaTitleTouched(true);
-                                        form.setData('meta_title', event.target.value);
-                                    }}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Meta Slug')}
-                                    name="seo_slug"
-                                    value={form.data.meta_slug}
-                                    onChange={(event) => {
-                                        setIsMetaSlugTouched(true);
-                                        form.setData('meta_slug', event.target.value);
-                                    }}
-                                />
-                                <PrimaryInput
-                                    label={t('Meta Description')}
-                                    name="seo_description"
-                                    value={form.data.meta_description}
-                                    onChange={(event) => {
-                                        setIsMetaDescriptionTouched(true);
-                                        form.setData('meta_description', event.target.value);
-                                    }}
-                                />
-                            </div>
-
-                            <div
-                                style={{
-                                    border: '1px solid #dadce0',
-                                    borderRadius: '12px',
-                                    padding: '16px',
-                                    background: '#fff',
-                                }}
-                            >
-                                <span style={{ color: '#70757a', fontSize: '12px' }}>{t('Search preview')}</span>
-                                <div style={{ marginTop: '8px' }}>
-                                    <div style={{ color: '#1a0dab', fontSize: '18px', lineHeight: '1.3' }}>{seoPreview.title}</div>
-                                    <div style={{ color: '#006621', fontSize: '14px' }}>shopnest.vn/products/{seoPreview.slug}</div>
-                                    <div style={{ color: '#4d5156', fontSize: '13px', lineHeight: '1.6' }}>{seoPreview.description}</div>
+                                        <X aria-hidden="true" />
+                                    </button>
                                 </div>
-                            </div>
+                            ))}
+
+                            <label htmlFor="product-media-uploader" className={styles.dropzone}>
+                                <UploadCloud aria-hidden="true" className={styles.dropzoneIcon} />
+                                <span>{t('Click or drop files to add images')}</span>
+                                <input
+                                    id="product-media-uploader"
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className={styles.hiddenInput}
+                                    onChange={handleMediaUpload}
+                                />
+                            </label>
+                        </div>
+                        {form.errors.images && (
+                            <span className="sn-field__error" role="alert">
+                                {form.errors.images}
+                            </span>
+                        )}
+                    </div>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Search aria-hidden="true" className={styles.sectionIcon} />
+                                {t('SEO Preview')}
+                            </h2>
+                        </div>
+
+                        <div className={styles.formGrid4}>
+                            <PrimaryInput
+                                label={t('Meta Title')}
+                                name="seo_title"
+                                value={form.data.meta_title}
+                                onChange={(event) => {
+                                    setIsMetaTitleTouched(true);
+                                    form.setData('meta_title', event.target.value);
+                                }}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Meta Slug')}
+                                name="seo_slug"
+                                value={form.data.meta_slug}
+                                onChange={(event) => {
+                                    setIsMetaSlugTouched(true);
+                                    form.setData('meta_slug', event.target.value);
+                                }}
+                            />
+                            <PrimaryInput
+                                label={t('Meta Description')}
+                                name="seo_description"
+                                value={form.data.meta_description}
+                                onChange={(event) => {
+                                    setIsMetaDescriptionTouched(true);
+                                    form.setData('meta_description', event.target.value);
+                                }}
+                            />
+                        </div>
+
+                        <div className={styles.seoPreview}>
+                            <span className={styles.seoLabel}>{t('Search preview')}</span>
+                            <span className={styles.seoTitle}>{seoPreview.title}</span>
+                            <span className={styles.seoUrl}>shopnest.vn/products/{seoPreview.slug}</span>
+                            <span className={styles.seoDescription}>{seoPreview.description}</span>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', marginTop: '24px' }}>
-                    <ActionButton
-                        variant="secondary"
+                <div className={styles.formFooter}>
+                    <Button
                         type="button"
-                        icon="bx bx-arrow-back"
+                        variant="secondary"
                         onClick={() => {
                             if (!form.isDirty || window.confirm(t('You have unsaved changes. Leave the page?'))) {
                                 router.visit('/seller/products');
@@ -600,10 +555,10 @@ function CreateContent() {
                         }}
                     >
                         {t('Back to Products')}
-                    </ActionButton>
-                    <ActionButton variant="primary" type="submit" icon="bx bx-save" loading={form.processing}>
+                    </Button>
+                    <Button type="submit" variant="primary" loading={form.processing} leftIcon={Save}>
                         {t('Create Product')}
-                    </ActionButton>
+                    </Button>
                 </div>
             </form>
         </>

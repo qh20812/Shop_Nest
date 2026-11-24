@@ -1077,5 +1077,7 @@
     "period": "Khoảng thời gian",
     "role": "Vai trò",
     "segment_id": "Phân khúc",
-    "type": "Loại"
+    "type": "Loại",
+    "Open actions": "Mở thao tác",
+    "auth.logout": "Đăng xuất"
 }

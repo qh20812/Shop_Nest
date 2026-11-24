@@ -1081,5 +1081,7 @@
     "segment_id": "segment_id",
     "type": "type",
     "Analytics Overview": "Analytics Overview",
-    "Inventory Management": "Inventory Management"
+    "Inventory Management": "Inventory Management",
+    "Open actions": "Open actions",
+    "auth.logout": "Log out"
 }

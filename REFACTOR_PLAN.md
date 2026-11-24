@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.11, còn 2 blocker là working tree mail/locale và alias `shipper`.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. Cụm mail/locale ngoài phạm vi vẫn chưa commit.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -1989,7 +1989,7 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ### Phase 9 — Shipper (1 page)
 
-**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.11; còn 2 blocker.
+**Trạng thái:** **hoàn tất** (2026-11-24). Rà soát pre-flight ghi §2.11; kết quả build ghi §15.
 
 **Pre-flight (bắt buộc, #63)**
 
@@ -2452,6 +2452,16 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — Phase 9 hoàn tất (Shipper):**
+
+- **Code:** `Shipper/Dashboard/Index.tsx` dựng lại trên `WorkspaceLayout`: `Head`, `PageHeader` + breadcrumb (`Shipper Dashboard` → `Overview`), `EmptyState` icon `Truck`, CTA `Button size="lg"` + `RefreshCw` gọi `router.reload()`. Không thêm danh sách chuyến/trạng thái/thu nhập giả.
+- **Route:** `routes/shipper.php` đổi middleware `shipper` → `isShipper` (#64); không đổi URL, controller, props. Route `/shipper/dashboard` trả 200 với phiên shipper.
+- **i18n:** thêm 3 key vào **cả** `lang/vi.json` + `lang/en.json`: `No deliveries assigned yet` / `Assigned deliveries will appear here.` / `Reload`.
+- **Test:** thêm `tests/Feature/Shipper/DashboardTest.php` (seed `RoleSeeder`, gắn role Shipper, assert component + `title`); pass **1 test / 10 assertions** (chỉ DEPRECATION PDO PHP 8.5).
+- **Gate:** `types`, `check:css` (293 checked / 5 allowlisted), `build`, ESLint trên page sạch. `format:check` chỉ còn lỗi ở `resources/views/vendor/mail/html/themes/shopnest.css` thuộc cụm mail/locale chưa commit, không phải Phase 9.
+- **Chưa làm:** `sn-workspace__main` vẫn chưa có CSS riêng, page dựa `Page.css` `.content main` đến Phase 11 (#66); danh sách chuyến thật chờ backend bổ sung props.
+- **Working tree:** cụm mail/locale ngoài phạm vi vẫn bẩn; không trộn vào commit shipper.
 
 **2026-11-24 — rà soát trước Phase 9 (chưa build):**
 

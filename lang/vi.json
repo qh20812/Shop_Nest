@@ -1079,5 +1079,8 @@
     "segment_id": "Phân khúc",
     "type": "Loại",
     "Open actions": "Mở thao tác",
-    "auth.logout": "Đăng xuất"
+    "auth.logout": "Đăng xuất",
+    "No deliveries assigned yet": "Chưa có chuyến được giao",
+    "Assigned deliveries will appear here.": "Các chuyến được giao sẽ xuất hiện ở đây.",
+    "Reload": "Tải lại"
 }

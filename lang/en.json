@@ -1083,5 +1083,8 @@
     "Analytics Overview": "Analytics Overview",
     "Inventory Management": "Inventory Management",
     "Open actions": "Open actions",
-    "auth.logout": "Log out"
+    "auth.logout": "Log out",
+    "No deliveries assigned yet": "No deliveries assigned yet",
+    "Assigned deliveries will appear here.": "Assigned deliveries will appear here.",
+    "Reload": "Reload"
 }

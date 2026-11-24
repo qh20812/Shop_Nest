@@ -1,10 +1,17 @@
 import Toast from '@/components/admin/users/Toast';
-import DataTable from '@/components/ui/data-table';
+import { Button } from '@/components/ui/button';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
+import StatusBadge from '@/components/ui/status-badge';
 import AppLayout from '@/layouts/app/AppLayout';
+import { formatDateTime, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { ShoppingCart } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface Customer {
     id: number;
@@ -23,7 +30,7 @@ interface Order {
     customer: Customer;
 }
 
-interface PageProps {
+interface PageProps extends Record<string, unknown> {
     orders: {
         data: Order[];
         links: { url: string | null; label: string; active: boolean }[];
@@ -32,7 +39,6 @@ interface PageProps {
     filters?: { search?: string; status?: string };
     stats?: { [k: string]: number };
     flash?: { success?: string; error?: string };
-    [key: string]: unknown;
 }
 
 const STATUS_OPTIONS = [
@@ -44,24 +50,8 @@ const STATUS_OPTIONS = [
     { value: '4', label: 'Cancelled' },
 ];
 
-const getStatusInfo = (status: number) => {
-    switch (Number(status)) {
-        case 0:
-            return { text: 'Pending', className: 'bg-yellow-100 text-yellow-800' };
-        case 1:
-            return { text: 'Processing', className: 'bg-blue-100 text-blue-800' };
-        case 2:
-            return { text: 'Shipped', className: 'bg-indigo-100 text-indigo-800' };
-        case 3:
-            return { text: 'Delivered', className: 'bg-green-100 text-green-800' };
-        case 4:
-            return { text: 'Cancelled', className: 'bg-red-100 text-red-800' };
-        default:
-            return { text: 'Unknown', className: 'bg-gray-100 text-gray-800' };
-    }
-};
-
 export default function Index() {
+    const { t } = useTranslation();
     const { orders, filters = {}, stats, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
@@ -85,95 +75,107 @@ export default function Index() {
         );
     };
 
-    const orderColumns = [
-        {
-            header: 'Order Code',
-            cell: (order: Order) => `#${order.order_number}`,
-        },
-        {
-            header: 'Customer',
-            cell: (order: Order) => `${order.customer.first_name} ${order.customer.last_name}`,
-        },
-        {
-            header: 'Created At',
-            cell: (order: Order) => new Date(order.created_at).toLocaleString('en-US'),
-        },
-        {
-            header: 'Total Amount',
-            cell: (order: Order) => `$${order.total_amount.toLocaleString('en-US')}`,
-        },
-        {
-            header: 'Status',
-            cell: (order: Order) => {
-                const s = getStatusInfo(order.status);
-                return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.className}`}>{s.text}</span>;
+    const orderColumns = useMemo<DataTableColumn<Order>[]>(
+        () => [
+            {
+                key: 'order_number',
+                header: t('Order Code'),
+                cell: (order) => <span className={styles.numeric}>#{order.order_number}</span>,
             },
-        },
-        {
-            header: 'Action',
-            cell: (order: Order) => (
-                <Link href={`/seller/orders/${order.order_id}`} className="text-blue-500 hover:underline">
-                    View Details
-                </Link>
-            ),
-        },
-    ];
+            {
+                key: 'customer',
+                header: t('Customer'),
+                cell: (order) => (
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>
+                            {order.customer.first_name} {order.customer.last_name}
+                        </span>
+                        {order.customer.email && <span className={styles.cellMeta}>{order.customer.email}</span>}
+                    </div>
+                ),
+            },
+            {
+                key: 'created_at',
+                header: t('Created At'),
+                cell: (order) => <span className={styles.numeric}>{formatDateTime(order.created_at)}</span>,
+            },
+            {
+                key: 'total_amount',
+                header: t('Total Amount'),
+                align: 'right',
+                cell: (order) => <span className={styles.price}>{formatVnd(order.total_amount)}</span>,
+            },
+            {
+                key: 'status',
+                header: t('Status'),
+                cell: (order) => <StatusBadge status={order.status} type="order" />,
+            },
+            {
+                key: 'action',
+                header: t('Action'),
+                align: 'right',
+                cell: (order) => (
+                    <Button asChild variant="secondary" size="sm">
+                        <Link href={`/seller/orders/${order.order_id}`}>{t('View Details')}</Link>
+                    </Button>
+                ),
+            },
+        ],
+        [t],
+    );
 
     return (
         <AppLayout>
-            <Head title="Orders List" />
+            <Head title={t('Orders List')} />
 
-            {/* Stats summary (if provided by backend) */}
-            {stats && (
-                <div className="mb-4 flex flex-wrap gap-3">
-                    {Object.entries(stats).map(([k, v]) => (
-                        <div key={k} className="rounded border bg-gray-50 px-3 py-2">
-                            <div className="text-sm font-medium">{k}</div>
-                            <div className="text-lg font-bold">{v}</div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Toast message */}
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Filter panel */}
             <FilterPanel
-                title="Orders Management"
+                title={t('Orders Management')}
                 breadcrumbs={[
-                    { label: 'Seller Dashboard', href: '/seller/dashboard' },
-                    { label: 'Orders', href: '/seller/orders', active: true },
+                    { label: t('Seller Dashboard'), href: '/seller/dashboard' },
+                    { label: t('Orders'), href: '/seller/orders', active: true },
                 ]}
                 searchConfig={{
                     value: search,
                     onChange: setSearch,
-                    placeholder: 'Search by order code or customer name...',
+                    placeholder: t('Search by order code or customer name...'),
                 }}
                 filterConfigs={[
                     {
                         value: status,
                         onChange: setStatus,
-                        label: '-- Status --',
-                        options: STATUS_OPTIONS.map((o) => ({
-                            value: o.value,
-                            label: o.label,
+                        label: t('-- Status --'),
+                        options: STATUS_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: t(option.label),
                         })),
                     },
                 ]}
                 onApplyFilters={() => applyFilters('/seller/orders')}
             />
 
-            {/* Orders table */}
+            {stats && Object.keys(stats).length > 0 && (
+                <div className={styles.actions}>
+                    {Object.entries(stats).map(([key, value]) => (
+                        <div key={key} className={styles.metricCard}>
+                            <div className={styles.metricBody}>
+                                <span className={styles.metricLabel}>{key}</span>
+                                <span className={styles.metricValue}>{value}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <DataTable
                 columns={orderColumns}
                 data={orders?.data || []}
-                headerTitle="Orders List"
-                headerIcon="bx-cart"
-                emptyMessage="No orders found"
+                headerTitle={t('Orders List')}
+                headerIcon={ShoppingCart}
+                emptyMessage={t('No orders found')}
             />
 
-            {/* Pagination */}
             <Pagination links={orders?.links || []} filters={{ search, status }} />
         </AppLayout>
     );

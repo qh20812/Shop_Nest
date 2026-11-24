@@ -1,8 +1,16 @@
-import '@/../css/Page.css';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { FormField } from '@/components/ui/form-field';
+import Header from '@/components/ui/header';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/Contexts/ToastContext';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface PageProps extends Record<string, unknown> {
     shop: {
@@ -12,11 +20,11 @@ interface PageProps extends Record<string, unknown> {
         logo?: string | null;
         banner?: string | null;
     };
-    [key: string]: unknown;
 }
 
 export default function ShopEdit() {
     const { t } = useTranslation();
+    const { success: showSuccess } = useToast();
     const { shop } = usePage<PageProps>().props;
 
     const [form, setForm] = useState({
@@ -41,8 +49,8 @@ export default function ShopEdit() {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
 
         const formData = new FormData();
         formData.append('name', form.name);
@@ -52,7 +60,7 @@ export default function ShopEdit() {
 
         router.post('/seller/shop', formData, {
             forceFormData: true,
-            onSuccess: () => alert(t('Shop updated successfully!')),
+            onSuccess: () => showSuccess(t('Shop updated successfully!')),
         });
     };
 
@@ -60,78 +68,63 @@ export default function ShopEdit() {
         <AppLayout>
             <Head title={t('Shop Profile')} />
 
-            <div
-                className="shop-profile-page"
-                style={{
-                    maxWidth: 700,
-                    margin: '40px auto',
-                    padding: '20px',
-                    background: '#fff',
-                    borderRadius: 12,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
-            >
-                <h2 style={{ marginBottom: 24 }}>{t('Shop Profile')}</h2>
+            <Header
+                title={t('Shop Profile')}
+                breadcrumbs={[
+                    { label: t('Seller Dashboard'), href: '/seller/dashboard' },
+                    { label: t('Shop Profile'), href: '/seller/shop', active: true },
+                ]}
+            />
 
-                <form onSubmit={handleSubmit} className="shop-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ marginBottom: 6, fontWeight: 500 }}>{t('Shop Name')}</label>
-                        <input
-                            type="text"
-                            value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            className="input-text"
-                            style={{ padding: '10px', borderRadius: 6, border: '1px solid #ccc' }}
-                            required
-                        />
-                    </div>
+            <form onSubmit={handleSubmit} className={styles.stack}>
+                <Card variant="flat" padding="md" className={styles.shopCard}>
+                    <div className={styles.formSection}>
+                        <FormField label={t('Shop Name')} required>
+                            <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+                        </FormField>
 
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ marginBottom: 6, fontWeight: 500 }}>{t('Description')}</label>
-                        <textarea
-                            value={form.description}
-                            onChange={(e) => setForm({ ...form, description: e.target.value })}
-                            className="input-textarea"
-                            style={{ padding: '10px', borderRadius: 6, border: '1px solid #ccc', minHeight: 100, resize: 'vertical' }}
-                        />
-                    </div>
+                        <FormField label={t('Description')}>
+                            <Textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} autoGrow />
+                        </FormField>
 
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ marginBottom: 6, fontWeight: 500 }}>{t('Shop Logo')}</label>
-                        <input type="file" accept="image/*" onChange={(e) => handleFileChange('logo', e.target.files?.[0] || null)} />
+                        <FormField label={t('Shop Logo')} hint={t('Square image shown in shop listings.')}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className={styles.fileInput}
+                                onChange={(event) => handleFileChange('logo', event.target.files?.[0] || null)}
+                            />
+                        </FormField>
+
                         {previewLogo && (
-                            <img
-                                src={previewLogo}
-                                alt="Logo Preview"
-                                style={{ width: 120, height: 120, objectFit: 'cover', marginTop: 10, borderRadius: 8, border: '1px solid #ddd' }}
-                            />
+                            <div className={styles.shopPreview}>
+                                <img src={previewLogo} alt={t('Logo preview')} className={styles.shopLogo} />
+                            </div>
                         )}
-                    </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <label style={{ marginBottom: 6, fontWeight: 500 }}>{t('Shop Banner')}</label>
-                        <input type="file" accept="image/*" onChange={(e) => handleFileChange('banner', e.target.files?.[0] || null)} />
+                        <FormField label={t('Shop Banner')} hint={t('Wide image shown at the top of the shop page.')}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className={styles.fileInput}
+                                onChange={(event) => handleFileChange('banner', event.target.files?.[0] || null)}
+                            />
+                        </FormField>
+
                         {previewBanner && (
-                            <img
-                                src={previewBanner}
-                                alt="Banner Preview"
-                                style={{
-                                    width: '100%',
-                                    maxHeight: 200,
-                                    objectFit: 'cover',
-                                    marginTop: 10,
-                                    borderRadius: 8,
-                                    border: '1px solid #ddd',
-                                }}
-                            />
+                            <div className={styles.shopPreview}>
+                                <img src={previewBanner} alt={t('Banner preview')} className={styles.shopBanner} />
+                            </div>
                         )}
                     </div>
+                </Card>
 
-                    <button type="submit" className="btn btn-primary" style={{ marginTop: 20, padding: '12px 20px', fontSize: 16, borderRadius: 8 }}>
+                <div className={styles.actions}>
+                    <Button type="submit" variant="primary">
                         {t('Save Changes')}
-                    </button>
-                </form>
-            </div>
+                    </Button>
+                </div>
+            </form>
         </AppLayout>
     );
 }

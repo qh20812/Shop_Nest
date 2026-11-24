@@ -347,7 +347,7 @@ Số liệu sau khi build Phase 8 trên working tree:
 | File Admin import `Page.css` | **0** (trước Phase 8: 28) |
 | Boxicons / hex / `$` / `en-US` / em-dash trong Admin | **0 / 0 / 0 / 0 / 0** |
 | Key `t()` trong Admin | **555**; thiếu `vi` **0**, thiếu `en` **0** |
-| Key i18n thêm | **280 `vi` + 282 `en`** (nhiều hơn 204/206 do rewrite dùng thêm nhãn mới) |
+| Key i18n thêm | **282 `vi` + 284 `en`** (nhiều hơn 204/206 do rewrite dùng thêm nhãn mới; gồm 2 key wrapper/layout `Open actions`, `auth.logout`) |
 | Allowlist | **42 → 5** (chỉ còn `base.css`, `LoadingOverlay`, `UtilityStrip`, `navbar`, `sidebar`) |
 | `check:css` | pass **293 file checked, 5 allowlisted** |
 | Gate | `format:check`, `types`, `check:css`, `build`, ESLint sạch |
@@ -1947,12 +1947,12 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - 29 page thật + 5 Shop stub render đúng props; không thêm tính năng/route/page mới; `Page.css` không còn cần cho Admin (trừ layout).
 - 17 component + `action-dropdown` migrate; `AnalyticsChart`/`AnalyticsCard`/`AnalyticsTable` đúng luật #60.
 - Không còn bulk action ngoài Shops; Shops bulk dùng endpoint thật; filter 1 dòng + panel phụ.
-- 0 `t()` key thiếu cho Admin (280 `vi`/282 `en` đã thêm); 0 `$`/`en-US`/em-dash/copy tiếng Anh hardcode.
+- 0 `t()` key thiếu cho Admin (282 `vi`/284 `en` đã thêm); 0 `$`/`en-US`/em-dash/copy tiếng Anh hardcode.
 - Không còn dead action/link 500; 5 stub không còn rỗng.
 - Allowlist **5**; `types` + `format:check` + `build` + `check:css` + ESLint sạch.
 - Không đổi route/controller/payload backend; `public/image/default-product.png` đã khôi phục hoặc fallback đã đổi.
 
-> **Trạng thái 2026-11-24 — hoàn tất:** 29 page Admin + 5 stub Shops migrate sang `sn-*` + module CSS; 17 component + `action-dropdown`; 5 module CSS mới. `AnalyticsCard`/`AnalyticsChart`/`AnalyticsTable`/`AnalyticsFilters`/`QuickFilter`/`ExportButton` đúng #60. Orders gộp một filter bar; Shops bulk approve/reject dùng endpoint thật và `Dialog`/`ConfirmDialog`; dead action/link đã bỏ hoặc ẩn. i18n Admin: 555 key, 0 thiếu, thêm **280 `vi` + 282 `en`**. Allowlist **42 → 5**; `check:css` pass **293 checked / 5 allowlisted**; `format:check`, `types`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5). `public/image/default-product.png` đã khôi phục. Chưa chụp CDP 29 page + 5 stub vì cần phiên Admin; ghi lại cho Phase 12.
+> **Trạng thái 2026-11-24 — hoàn tất:** 29 page Admin + 5 stub Shops migrate sang `sn-*` + module CSS; 17 component + `action-dropdown`; 5 module CSS mới. `AnalyticsCard`/`AnalyticsChart`/`AnalyticsTable`/`AnalyticsFilters`/`QuickFilter`/`ExportButton` đúng #60. Orders gộp một filter bar; Shops bulk approve/reject dùng endpoint thật và `Dialog`/`ConfirmDialog`; dead action/link đã bỏ hoặc ẩn. i18n Admin: 555 key, 0 thiếu, thêm **282 `vi` + 284 `en`**. Allowlist **42 → 5**; `check:css` pass **293 checked / 5 allowlisted**; `format:check`, `types`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5). `public/image/default-product.png` đã khôi phục. Chưa chụp CDP 29 page + 5 stub vì cần phiên Admin; ghi lại cho Phase 12.
 
 ---
 
@@ -2410,7 +2410,7 @@ docs(ui): rewrite design system and component rules
 - **Component:** 17 component + `ui/action-dropdown` migrate. `AnalyticsCard` thành KPI trung tính; `AnalyticsChart` token + grid 1 px + bỏ gradient; `AnalyticsTable` sort trong module; `AnalyticsFilters` bỏ vỏ card; `QuickFilter` → `Tabs`; `ExportButton` → `Button`; `ShipperInfoCard`/`DocumentViewer` module hoá.
 - **Hành vi:** Orders gộp `OrderFilterPanel` vào một filter bar qua slot `children` của `FilterPanel`; bỏ export + 4 action hỏng, bỏ action column của `OrderTable`. Shops có bulk approve/reject thật (`bulkApprove`/`bulkReject`), thanh bulk chỉ hiện khi có selection, thay `window.confirm/prompt/alert` bằng `Dialog`/`ConfirmDialog`. 5 stub Shops render read-only từ props (`metrics`, `trend`, `shops`, `statistics`, `violations`).
 - **Dead action/link:** bỏ CSV Dashboard/Users, Orders export, Returns edit/delete, Inventory Report, `ProductInfo` add-to-cart, Analytics quick range; ẩn link tới `Orders/Show`, `Inventory/Report`, `Returns/Show`.
-- **i18n/format:** 555 key `t()` trong Admin, **0 thiếu**; thêm **280 key `vi` + 282 key `en`**. Màn VND dùng `formatVnd`/`vi-VN`; Dashboard/Analytics/Shops giữ `formatCurrency` khi có prop currency.
+- **i18n/format:** 555 key `t()` trong Admin, **0 thiếu**; thêm **282 key `vi` + 284 key `en`** (gồm 2 key wrapper/layout). Màn VND dùng `formatVnd`/`vi-VN`; Dashboard/Analytics/Shops giữ `formatCurrency` khi có prop currency.
 - **Allowlist:** 42 → **5**; `check:css` pass **293 checked / 5 allowlisted**.
 - **Gate:** `format:check`, `types`, `check:css`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5).
 - **Asset:** khôi phục `public/image/default-product.png` (placeholder 400×500) để fallback Phase 4/6 không 404.

@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. Cụm mail/locale ngoài phạm vi vẫn chưa commit.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.12; email presentation nằm trong cụm mail/locale chưa commit, error pages chưa có, PDF defer.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -58,7 +58,7 @@
 | 7     | Seller                                    |   L |       ~29 |
 | 8     | Admin                                     |  XL |       ~60 |
 | 9     | Shipper                                   |   S |        ~6 |
-| 10    | Email, error pages, PDF                   |   M |       ~12 |
+| 10    | Email, error pages, PDF                   |   M |       ~22 |
 | 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~15 |
 | 12    | QA sweep                                  |   L |   toàn bộ |
 
@@ -151,6 +151,10 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 64  | Phase 9 middleware | Chọn **đổi `routes/shipper.php` từ `shipper` sang `isShipper`** thay vì thêm alias vào `bootstrap/app.php` đang bẩn; alias `isShipper` đã có trong map, cách này một dòng và thống nhất với `is_admin`/`isSeller`. Không đổi URL, controller hay props |
 | 65  | Phase 9 i18n/test/tap | Bổ sung **3 key** vào cả `vi.json` + `en.json`: `Chưa có chuyến được giao`, mô tả empty state, `Tải lại`. Thêm feature test `tests/Feature/Shipper/DashboardTest.php` (seed `RoleSeeder`, gắn role Shipper, `actingAs`, assert component + `title`) hoặc smoke có phiên shipper. CTA dùng `Button size="lg"` (48 px) để đạt tap target 44 px; không dùng `Button` mặc định 40 px |
 | 66  | Phase 9 shell note | `sn-workspace__main` **chưa có CSS riêng**; page Phase 9 nhận padding từ `Page.css` `.content main` (36 px 24 px) qua `WorkspaceLayout`. Không cần module mới cho empty state; khi Phase 11 xoá `Page.css` phải bổ sung style cho `.sn-workspace__main` |
+| 67  | Phase 10 pre-flight | Working tree **35 file sửa + 29 file mới = 64 file** thuộc cụm mail/locale backend: `app/Mail/*` (9), `app/Notifications/*` (9), `app/Listeners/Auth/SendWelcomeEmail`, `app/Observers/OrderObserver`, 2 migration (`locale`, `low_stock_notified_at`), `config/{auth,mail}`, `routes/web.php`, `app/Http/Requests/Auth/*`, `resources/views/emails/*`, `resources/views/vendor/mail/*`, `lang/{vi,en}/mail.php`, `tests/Feature/{Mail,Auth}`. Không phải Phase 10 UI: commit riêng (`feat(mail): …`) trước khi build. Test hiện **xanh** (Mail 10/40, Admin 135/681, Auth 27/97, chỉ DEPRECATION PDO 8.5), khác con số 19 failed ở §2.11. `format:check` fail duy nhất ở `resources/views/vendor/mail/html/themes/shopnest.css` (untracked) — format trước gate |
+| 68  | Phase 10 email scope | Bám code thực tế: **8 template** (`welcome`, `welcome_google_user`, `verify`, `reset_password`, `low_stock`, `order_status`, `shop_status`, `google_account_linked`), theme `resources/views/vendor/mail/html/themes/shopnest.css` + override `vendor/mail/html/{header,footer,message}.blade.php`, `config/mail.php` `markdown.theme = shopnest`, `lang/{vi,en}/mail.php` (188/189 dòng), 10 test. **Bỏ** `emails/partials/theme.blade.php` khỏi spec. Giữ **system font stack** thay Be Vietnam Pro vì email client không tải woff2 self-host ổn định. Chuẩn hoá 5 hex lệch (`#2f6e4f`, `#a5241b`, `#f7f1ea`, `#e6e6df`, `#6b6e61`) về primitive. Chỉ sửa trình bày; không sửa mail class/notification/listener/observer/migration |
+| 69  | Phase 10 error pages | Tạo **6 file**: `resources/views/errors/layout.blade.php` + `{404,419,429,500,503}.blade.php`. Self-contained: CSS trong `<style>`, hex literal, không Vite/React/CSS var; dark mode bằng `@media (prefers-color-scheme: dark)`. Font `'Be Vietnam Pro', Arial, sans-serif` qua `@font-face` trỏ `/fonts/be-vietnam-pro/*.woff2`, fallback Arial nếu 404. **Copy tiếng Việt hardcode**, không dùng `__()` vì error page phải render khi session/locale/translation lỗi. Thêm `tests/Feature/Errors/ErrorPageTest.php` (404 thật + render 419/429/500/503). Không thêm route/Vite entry |
+| 70  | Phase 10 PDF | **Defer, không làm trong Phase 10.** `barryvdh/laravel-dompdf ^3.1` đã cài, nhưng `routes/user.php` có `GET user/orders/{order}/invoice` → `OrderController@downloadInvoice` **không tồn tại** nên route 500; không có `resources/views/pdf`, không có link invoice trong `resources/js`. Spec cũ ghi “chỉ có comment” là sai. Không tạo view/controller PDF trong refactor UI; ghi backlog backend. Commit §13 đổi thành chỉ email + error pages |
 
 ---
 
@@ -388,6 +392,37 @@ Rà soát read-only trên working tree sau commit Phase 8 `d611aa3` để đối
 - `AppLayout` 44 vs 39 và `sn-workspace__main` chưa có CSS là drift tài liệu/nợ Phase 11, không chặn Phase 9.
 
 **Kết luận:** chưa build Phase 9 cho đến khi dọn cụm mail/locale và sửa middleware. Sau đó Phase 9 chỉ gồm page shipper + route one-line + i18n + test, không tạo page/route/endpoint mới.
+
+### 2.12 Rà soát trước Phase 10 (2026-11-24)
+
+Rà soát read-only trên working tree sau commit Phase 9 `40dd881` để đối chiếu plan trước khi build Phase 10:
+
+| Chỉ số / hạng mục | Hiện trạng |
+|---|---|
+| Working tree | **35 file modified + 29 file untracked = 64 file**, vẫn là cụm mail/locale backend; không có file Phase 10 UI nào ngoài email templates |
+| Email template | **8 file** trong `resources/views/emails/`: `welcome`, `welcome_google_user`, `verify`, `reset_password`, `low_stock`, `order_status`, `shop_status`, `google_account_linked` |
+| Theme email | `resources/views/vendor/mail/html/themes/shopnest.css` (**271 dòng**) + override `vendor/mail/html/{header,footer,message}.blade.php`; không có `emails/partials/theme.blade.php` |
+| Mail config | `config/mail.php` đặt `markdown.theme = env('MAIL_MARKDOWN_THEME', 'shopnest')`, `paths = resources/views/vendor/mail` |
+| Mail class / notification | **9 mailable** (`BaseMail` + 8) và **9 notification**; kèm `SendWelcomeEmail` listener + `OrderObserver` |
+| i18n email | `lang/vi/mail.php` **188 dòng**, `lang/en/mail.php` **189 dòng**; email không dùng `vi.json`/`en.json` |
+| Font email | System stack (`-apple-system, Segoe UI, Roboto, Helvetica, Arial, …`), **không** Be Vietnam Pro |
+| Hex email | Đúng canvas/surface/ink/muted/accent/border, nhưng lệch primitive: `#2f6e4f`, `#a5241b`, `#f7f1ea`, `#e6e6df`, `#6b6e61` |
+| Test email | `tests/Feature/Mail/TransactionalMailTest.php` **10 test / 40 assertion** pass (chỉ DEPRECATION PDO 8.5) |
+| Test Admin/Auth | **135 test / 681 assertion** và **27 test / 97 assertion** pass; không còn 19 failed như §2.11 |
+| Error pages | **Chưa có** `resources/views/errors`; Laravel vẫn dùng vendor default cho 404/419/429/500/503 |
+| PDF | `barryvdh/laravel-dompdf ^3.1` **đã cài**; **không có** `resources/views/pdf`; route `GET user/orders/{order}/invoice` trỏ `OrderController@downloadInvoice` **không tồn tại**; **không có** link invoice trong `resources/js` |
+| Guardrail | `check:css` pass **293 checked / 5 allowlisted**; `npm run types` pass; `format:check` fail duy nhất ở `shopnest.css` |
+
+**Sai biệt với plan:**
+- Plan Phase 10 mô tả **2 email**, thực tế **8 template** + vendor theme + 2 file lang mail + config; nếu build theo spec cũ sẽ bỏ sót hoặc làm lại.
+- Plan yêu cầu tạo `emails/partials/theme.blade.php`; code dùng Markdown theme của Laravel, không có partial.
+- Plan chốt font **Be Vietnam Pro**; theme dùng system stack. Giữ system stack (#68) vì email client không tải woff2 ổn định.
+- Plan nói PDF “chỉ có comment”; thực tế **route tồn tại nhưng method thiếu**, dompdf đã cài. Không thể coi là “chưa có gì”.
+- Plan coi email là việc UI thuần; thực tế cụm mail/locale kèm listener, observer, migration, `config/auth`, `routes/web`, request validation — là feature backend, phải commit riêng.
+- **Error pages vẫn là phần duy nhất thực sự chưa làm** và có thể build độc lập.
+- Chưa có xác nhận Gmail/Outlook thật; test hiện chỉ kiểm nội dung/localization.
+
+**Kết luận:** Phase 10 gồm (1) commit cụm mail/locale trước, (2) rà soát/chuẩn hoá trình bày email hiện có, (3) tạo 6 file error page + test, (4) defer PDF và ghi backlog. Không tạo route/page/endpoint mới.
 
 ---
 
@@ -2014,33 +2049,53 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ### Phase 10 — Email, error pages, PDF
 
-**Email (2 file)**
+**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.12; email presentation đã có trong cụm mail/locale chưa commit, error pages chưa có, PDF defer.
 
-- `resources/views/emails/welcome.blade.php`
-- `resources/views/emails/welcome_google_user.blade.php`
-- Tạo `resources/views/emails/partials/theme.blade.php` chứa **hex literal** (email client không hỗ trợ CSS variable) + `<style>` embedded.
-- Palette email: canvas `#f2f2ee`, surface `#ffffff`, ink `#15160f`, muted `#53564b`, accent `#c2410c`, border `#d2d2ca`, radius 6.
-- Font: `Be Vietnam Pro, Arial, sans-serif`; fallback Arial.
-- Không gradient, không ảnh nền, không dark mode (email client không đáng tin).
+**Pre-flight (bắt buộc, #67)**
 
-**Error pages (mới)**
+- Working tree đang có **35 file sửa + 29 file mới = 64 file** thuộc cụm mail/locale backend: `app/Mail/*` (9), `app/Notifications/*` (9), `app/Listeners/Auth/SendWelcomeEmail`, `app/Observers/OrderObserver`, 2 migration (`locale`, `low_stock_notified_at`), `config/{auth,mail}`, `routes/web.php`, `app/Http/Requests/Auth/*`, `resources/views/emails/*`, `resources/views/vendor/mail/*`, `lang/{vi,en}/mail.php`, `tests/Feature/{Mail,Auth}`.
+- Đây **không phải** Phase 10 UI. Commit thành commit riêng (`feat(mail): …`) trước khi build; không trộn vào commit email/error page.
+- Test hiện **xanh**, khác §2.11: `tests/Feature/Mail` **10 test / 40 assertion**, `tests/Feature/Admin` **135 test / 681 assertion**, `tests/Feature/Auth` **27 test / 97 assertion** (chỉ DEPRECATION PDO PHP 8.5).
+- `npm run format:check` fail duy nhất ở `resources/views/vendor/mail/html/themes/shopnest.css` (untracked). Chạy `npm run format` hoặc Prettier file đó trước gate.
 
-- `resources/views/errors/{404,419,429,500,503}.blade.php`
-- `resources/views/errors/layout.blade.php`
-- **Self-contained**: toàn bộ CSS nằm trong `<style>` của layout, dùng hex literal (không phụ thuộc Vite manifest, không phụ thuộc bundle React, không dùng CSS variable vì có thể render trước khi asset sẵn sàng).
-- Palette: canvas `#f2f2ee`, surface `#ffffff`, ink `#15160f`, muted `#53564b`, accent `#c2410c`, border `#d2d2ca`, font `Be Vietnam Pro, Arial, sans-serif`.
-- Hỗ trợ dark mode bằng `@media (prefers-color-scheme: dark)` với graphite `#0d0f0c` / `#151814` / `#f1f2ea`.
-- Nội dung: mã lỗi lớn, 1 câu giải thích, 1 CTA về `/`.
+**Email — hiện trạng (#68)**
+
+- **8 template**, không phải 2: `welcome`, `welcome_google_user`, `verify`, `reset_password`, `low_stock`, `order_status`, `shop_status`, `google_account_linked`.
+- Theme ở `resources/views/vendor/mail/html/themes/shopnest.css` (271 dòng) + override `resources/views/vendor/mail/html/{header,footer,message}.blade.php`; `config/mail.php` đặt `markdown.theme = env('MAIL_MARKDOWN_THEME', 'shopnest')`.
+- **Không có** `resources/views/emails/partials/theme.blade.php`; không tạo mới. Email render qua Markdown của Laravel để tự inline CSS + sinh text/plain.
+- **Font:** system stack (`-apple-system, Segoe UI, Roboto, Helvetica, Arial, …`), không phải Be Vietnam Pro. Giữ system stack vì email client không tải woff2 self-host ổn định.
+- **Palette:** đúng canvas/surface/ink/muted/accent/border, nhưng 5 hex lệch primitive: `#2f6e4f` (success), `#a5241b` (danger), `#f7f1ea` (canvas-alt), `#e6e6df` (sunken), `#6b6e61` (faint). Chuẩn hoá về `#1f6f4a`, `#b3261e`, `#f7f7f4`, `#ecece7`, `#6b6e62`.
+- **i18n:** `lang/vi/mail.php` 188 dòng + `lang/en/mail.php` 189 dòng; không dùng `vi.json`/`en.json` cho email.
+- **Test:** `tests/Feature/Mail/TransactionalMailTest.php` 10 test: welcome sau verify, verify, reset, Google không chứa mật khẩu, shop approval, low stock một lần, order status + summary, locale lưu vào user.
+
+**Việc làm — Email (trình bày only)**
+
+- Giữ 8 template + vendor theme + `lang/*/mail.php`; **không sửa** mail class, notification, listener, observer hay migration trong Phase 10.
+- Chuẩn hoá 5 hex lệch trong `shopnest.css` về primitive; không đổi cấu trúc theme.
+- Kiểm tra width 570 px, button ≥ 44 px, logo 44×44, `alt` có nghĩa; không gradient, không ảnh nền, không dark mode.
+- Chạy Prettier cho `shopnest.css` để `format:check` xanh.
+- Xác nhận text/plain fallback của Laravel sinh đúng tiếng Việt.
+- Test thủ công Gmail/Outlook web vẫn là bước cuối; nếu không có hộp thư, ghi backlog và dựa vào 10 test hiện có.
+
+**Error pages (mới — phần duy nhất thực sự chưa có)**
+
+- `resources/views/errors/layout.blade.php` + `{404,419,429,500,503}.blade.php`.
+- **Self-contained:** toàn bộ CSS trong `<style>` của layout, hex literal, không phụ thuộc Vite manifest, bundle React hay CSS variable.
+- Palette: canvas `#f2f2ee`, surface `#ffffff`, ink `#15160f`, muted `#53564b`, accent `#c2410c`, border `#d2d2ca`; dark `@media (prefers-color-scheme: dark)` graphite `#0d0f0c` / `#151814` / `#f1f2ea`.
+- Font `'Be Vietnam Pro', Arial, sans-serif` qua `@font-face` trỏ `/fonts/be-vietnam-pro/*.woff2`; nếu font 404 vẫn fallback Arial. Không phụ thuộc manifest.
+- Nội dung: mã lỗi lớn, 1 câu giải thích, 1 CTA `Về trang chủ` (`href="/"`), logo text. Không emoji, không số liệu, không badge.
+- **Copy tiếng Việt hardcode**, không dùng `__()`: error page phải render cả khi session/locale/translation lỗi (ngoại lệ i18n #69).
 - Không thêm entry Vite cho error page.
+- Thêm `tests/Feature/Errors/ErrorPageTest.php`: request URL không tồn tại → 404 + marker layout; render trực tiếp 419/429/500/503 qua `view()` và assert marker. Không tạo route mới.
 
-**PDF/invoice (có điều kiện)**
+**PDF/invoice (#70) — defer**
 
-- Hiện **không có** controller/view PDF; `routes/user.php` chỉ có comment.
-- Nếu bật trong refactor: tạo `resources/views/pdf/invoice.blade.php` + `resources/views/pdf/layout.blade.php`.
-- Dompdf **không hỗ trợ CSS custom properties** → dùng hex literal, không `var(--sn-*)`.
-- Print CSS: A4, margin 16 mm, font Be Vietnam Pro (hoặc DejaVu Sans nếu thiếu glyph), bảng 2 cột, không shadow.
+- `barryvdh/laravel-dompdf ^3.1` **đã cài**.
+- `routes/user.php` có `GET user/orders/{order}/invoice` → `OrderController@downloadInvoice`, nhưng **method không tồn tại** → 500. Spec cũ ghi "chỉ có comment" là sai.
+- Không có `resources/views/pdf`; không có link invoice trong `resources/js`.
+- **Không tạo view PDF, không thêm controller method** trong refactor UI. Route hỏng ghi backlog backend; nếu muốn bật thì làm task riêng (controller + authorization + view + test).
 
-**DoD:** email render trong Gmail/Outlook web (test thủ công); error page không cần JS; PDF (nếu có) mở đúng.
+**DoD:** 8 email template render đúng theme, hex khớp primitive, không gradient/dark mode, text/plain có tiếng Việt; 6 file error page self-contained, không cần JS/Vite, 404 thật trả layout mới, dark mode theo OS; không tạo route/page/endpoint mới; không sửa mail logic nghiệp vụ; `format:check` + `types` + `check:css` + `build` + `php artisan test tests/Feature/Mail tests/Feature/Errors` sạch; PDF ghi backlog, không tạo file chết.
 
 ---
 
@@ -2338,6 +2393,10 @@ php artisan test --filter=<area>
 | Working tree mail/locale trước Phase 9                                  | Cao        | **Trước Phase 9 (#63):** 27 file sửa + 24 file mới thuộc mail/locale; commit/stash riêng; chạy lại `php artisan test tests/Feature/Admin` (hiện 19 failed do mail thiếu `To`) trước khi build                                                                                                                                 |
 | Phase 9 thiếu i18n/test/tap target                                      | Trung bình | **Phase 9 (#65):** thêm 3 key empty state + `Tải lại` vào cả `vi.json`/`en.json`; thêm test `Shipper/DashboardTest`; dùng `Button size="lg"` 48 px                                                                                                                                                                      |
 | `sn-workspace__main` chưa có CSS                                        | Thấp       | **Phase 9 (#66):** page dựa `Page.css` `.content main` đến Phase 11; bổ sung style `.sn-workspace__main` khi xoá `Page.css`                                                                                                                                                                                             |
+| Working tree mail/locale trước Phase 10                                 | Cao        | **Trước Phase 10 (#67):** 35 file sửa + 29 file mới (64) thuộc mail/locale backend, không phải UI; commit riêng `feat(mail)`; test hiện xanh (Mail 10/40, Admin 135/681, Auth 27/97); `format:check` fail ở `shopnest.css` — sửa trước gate                                                                                                                                 |
+| Phase 10 email scope lỗi thời                                           | Trung bình | **Phase 10 (#68):** bám 8 template + vendor theme + `lang/*/mail.php`; bỏ `partials/theme.blade.php`; giữ system font stack; chuẩn hoá 5 hex lệch; không sửa mail logic                                                                                                                                                |
+| Error page phụ thuộc asset/font/Vite                                    | Trung bình | **Phase 10 (#69):** CSS inline hex, không CSS var, không bundle React; `@font-face` có fallback Arial; copy tiếng Việt hardcode để render cả khi session/locale lỗi                                                                                                                                                    |
+| Route invoice PDF hỏng nhưng plan ghi “chưa có”                          | Trung bình | **Phase 10 (#70):** dompdf đã cài nhưng `OrderController@downloadInvoice` không tồn tại nên `GET user/orders/{order}/invoice` 500; không tạo view/controller PDF trong refactor UI; ghi backlog backend, không tạo file chết                                                                                                                                                        |
 
 ---
 
@@ -2356,6 +2415,8 @@ php artisan test --filter=<area>
 - **Pre-flight Phase 8 (ngoài UI code):** được khôi phục `public/image/default-product.png` hoặc đổi fallback path; không đổi nghiệp vụ.
 - **Ngoại lệ Phase 9:** được đổi middleware của `routes/shipper.php` từ `shipper` sang `isShipper` (hoặc đăng ký alias `shipper` trong `bootstrap/app.php`), được thêm 3 key i18n và một feature test shipper; không đổi URL, controller, props hay hành vi nghiệp vụ. Không tạo page/route/endpoint mới.
 - **Pre-flight Phase 9 (ngoài UI code):** commit/stash cụm mail/locale đang dở (27 file sửa + 24 file mới) và chạy lại test Admin trước khi build; không trộn vào commit Phase 9.
+- **Ngoại lệ Phase 10:** được sửa **trình bày** trong 8 template `resources/views/emails/*`, `resources/views/vendor/mail/html/{header,footer,message}.blade.php` và `themes/shopnest.css` (chuẩn hoá hex, format); được tạo **6 file** `resources/views/errors/*` và `tests/Feature/Errors/ErrorPageTest.php`. Không sửa mail class/notification/listener/observer/migration, không tạo view/controller PDF, không đổi route.
+- **Pre-flight Phase 10 (ngoài UI code):** commit cụm mail/locale (35 file sửa + 29 file mới) thành commit `feat(mail)` riêng trước khi build Phase 10; không trộn vào commit UI.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá.
@@ -2363,7 +2424,7 @@ php artisan test --filter=<area>
 - Không thêm voucher band, số liệu `1.200+`/`100%`/`299k`, badge “Shop Việt”/“Đã mua” nếu không có props/DB xác thực.
 - Không đưa các xoá `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md` vào Phase 3; khôi phục và để Phase 11.
 - Không xoá wrapper legacy (`action-button`, `action-buttons`, `confirmation-modal`, `data-table`, `filter-panel`, `status-badge`, …) trước khi page cuối cùng dùng nó đã migrate.
-- Không sửa email/PDF logic nghiệp vụ, chỉ trình bày.
+- Không sửa email/PDF logic nghiệp vụ, chỉ trình bày; Phase 10 **không** tạo PDF view/controller, route invoice hỏng ghi backlog backend.
 - **Ngoại lệ thứ hai (Phase 3):** được sửa `resources/css/Page.css` **đúng 6 block toàn cục** (`*`, `a`, `li`, `html`, `body`, `body.dark`) để bọc vào `@layer sn-legacy-reset`. Không sửa bất kỳ selector component nào trong file này; không xoá file trước Phase 11.
 
 ---
@@ -2405,7 +2466,7 @@ refactor(admin): migrate inventory and shipper pages
 refactor(admin): migrate shops pages and admin i18n keys
 docs(ui): log phase 8 admin migration
 fix(shipper): correct middleware alias and migrate dashboard shell
-feat(ui): restyle email, error pages and invoice print
+feat(ui): restyle email templates and error pages
 chore(ui): remove tailwind, legacy css and boxicons
 test(ui): responsive, dark mode and accessibility sweep
 docs(ui): rewrite design system and component rules
@@ -2416,6 +2477,8 @@ docs(ui): rewrite design system and component rules
 > **Trước Phase 8 (quyết định #62):** khôi phục `public/image/default-product.png` hoặc đổi fallback path; commit/stash 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`); chạy lại `git status` và gate trước khi bắt đầu. Commit Phase 8 tách theo §13, không trộn asset/favicon.
 
 > **Trước Phase 9 (quyết định #63):** working tree có **27 file sửa + 24 file mới** thuộc mail/locale, không phải Phase 8/9. Commit/stash riêng, chạy lại `php artisan test tests/Feature/Admin` (hiện **19 failed** do mail thiếu `To`) rồi mới sửa `routes/shipper.php` và build page. Không trộn cụm mail/locale vào commit shipper.
+
+> **Trước Phase 10 (quyết định #67):** working tree có **35 file sửa + 29 file mới = 64 file** thuộc mail/locale backend (`app/Mail/*`, `app/Notifications/*`, listener, observer, 2 migration, `config/{auth,mail}`, `routes/web.php`, `resources/views/emails/*`, `resources/views/vendor/mail/*`, `lang/{vi,en}/mail.php`, `tests/Feature/{Mail,Auth}`). Commit thành `feat(mail): …` riêng, không trộn vào commit `feat(ui): restyle email templates and error pages`. Test hiện xanh; chỉ cần format `shopnest.css`. PDF/invoice **không** nằm trong Phase 10 (#70).
 
 ---
 
@@ -2452,6 +2515,17 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — rà soát trước Phase 10 và chốt scope (chưa build):**
+
+- **Working tree:** **35 file sửa + 29 file mới = 64 file** thuộc cụm mail/locale backend, không phải Phase 10 UI. Gồm `app/Mail/*` (9), `app/Notifications/*` (9), `SendWelcomeEmail`, `OrderObserver`, 2 migration, `config/{auth,mail}`, `routes/web.php`, `requests/Auth/*`, `resources/views/emails/*` (8), `resources/views/vendor/mail/*` (3 + theme), `lang/{vi,en}/mail.php`, `tests/Feature/{Mail,Auth}`.
+- **Test hiện tại:** Mail **10/40**, Admin **135/681**, Auth **27/97** đều pass (chỉ DEPRECATION PDO 8.5). Không còn 19 failed như §2.11.
+- **Email:** 8 template (không phải 2); theme `vendor/mail/html/themes/shopnest.css` 271 dòng + 3 override blade; `config/mail.php` `markdown.theme = shopnest`; `lang/*/mail.php` 188/189 dòng; font system stack (không Be Vietnam Pro); 5 hex lệch primitive.
+- **Error pages:** `resources/views/errors` **chưa tồn tại**; vẫn dùng vendor default.
+- **PDF:** `barryvdh/laravel-dompdf ^3.1` đã cài; không có `resources/views/pdf`; route `GET user/orders/{order}/invoice` trỏ `OrderController@downloadInvoice` **không tồn tại**; không có link invoice trong `resources/js`.
+- **Gate:** `check:css` **293/5**, `types` pass; `format:check` fail duy nhất ở `shopnest.css`.
+- **Quyết định #67–#70:** commit cụm mail/locale riêng; email bám 8 template + vendor theme + system font + chuẩn hoá hex; error pages 6 file self-contained + copy hardcode + test; **defer PDF**, ghi backlog backend.
+- **Cập nhật tài liệu:** header status, §0.4 (`~22`), §1 (#67–#70), **§2.12 (mới)**, Phase 10 (viết lại pre-flight + email/error/PDF), §11 (4 rủi ro Phase 10), §12 (ngoại lệ + pre-flight Phase 10), §13 (commit email/error + note trước Phase 10), §15.
 
 **2026-11-24 — Phase 9 hoàn tất (Shipper):**
 

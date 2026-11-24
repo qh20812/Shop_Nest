@@ -1,17 +1,20 @@
-import '@/../css/Page.css';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { BarChart3, DollarSign, FileText, Package, ShoppingBag, Users } from 'lucide-react';
+import React, { useMemo } from 'react';
+
 import AnalyticsCard from '@/components/admin/analytics/AnalyticsCard';
 import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/analytics/AnalyticsChart';
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
-import type { QuickFilterOption } from '@/components/admin/analytics/QuickFilter';
-import QuickFilter from '@/components/admin/analytics/QuickFilter';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/ui/header';
 import AppLayout from '@/layouts/app/AppLayout';
+import { formatDecimal, formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
-import { Head, Link, usePage } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface UserGrowthMetric {
     current: number;
@@ -48,6 +51,7 @@ interface AnalyticsPageProps extends Record<string, unknown> {
     meta?: {
         generatedAt?: string;
     };
+    currency?: string | { code?: string };
     locale?: string;
 }
 
@@ -61,78 +65,52 @@ type NormalizedActivity = Record<string, unknown> & {
     actor?: string;
 };
 
-const percentFormatter = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 1,
-});
+const statusTone = (status: string) => {
+    const value = status.toLowerCase();
+    if (value === 'success' || value === 'completed') return 'success' as const;
+    if (value === 'danger' || value === 'error' || value === 'failed') return 'danger' as const;
+    if (value === 'warning' || value === 'pending') return 'warning' as const;
+    if (value === 'accent' || value === 'info') return 'accent' as const;
+    return 'neutral' as const;
+};
 
 const Index: React.FC = () => {
     const { props } = usePage<AnalyticsPageProps>();
     const { stats, revenueChart, userGrowthChart, recentActivities = [], meta } = props;
-    const locale = props.locale ?? 'en';
+    const locale = props.locale ?? 'vi';
     const resolvedCurrency = resolveCurrencyCode(props.currency);
+    const { t } = useTranslation();
 
-    const currencyFormatter = React.useMemo(
+    const currencyFormatter = useMemo(
         () =>
-            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : 'en-US', {
+            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
                 style: 'currency',
                 currency: resolvedCurrency,
                 maximumFractionDigits: 0,
             }),
         [locale, resolvedCurrency],
     );
-    const { t } = useTranslation();
-
-    const [selectedRange, setSelectedRange] = useState<string>('7days');
-
-    const quickFilterOptions: QuickFilterOption[] = useMemo(
-        () => [
-            { label: 'Last 7 Days', value: '7days' },
-            { label: 'Last 30 Days', value: '30days' },
-            { label: 'Last 12 Months', value: '12months' },
-        ],
-        [],
-    );
-
-    const handleRangeChange = (value: string) => {
-        setSelectedRange(value);
-        // Future enhancement: trigger server-side refresh once backend supports custom ranges.
-    };
 
     const lastGeneratedAt = useMemo(() => {
         if (!meta?.generatedAt) {
             return null;
         }
 
-        try {
-            const parsed = new Date(meta.generatedAt);
-            if (Number.isNaN(parsed.getTime())) {
-                return null;
-            }
-
-            return new Intl.DateTimeFormat(locale, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            }).format(parsed);
-        } catch {
+        const parsed = new Date(meta.generatedAt);
+        if (Number.isNaN(parsed.getTime())) {
             return null;
         }
+
+        return new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(parsed);
     }, [meta?.generatedAt, locale]);
-
-    const userGrowthChange = stats?.userGrowth?.change ?? 0;
-    const userGrowthLabel = useMemo(() => {
-        if (!stats?.userGrowth) {
-            return '';
-        }
-
-        return t('vs previous period');
-    }, [stats?.userGrowth, t]);
 
     const normalizedActivities: NormalizedActivity[] = useMemo(() => {
         return recentActivities.map((activity, index) => {
             const reference =
                 activity.reference || activity.entity || activity.message || (activity.id ? `#${activity.id}` : `activity-${index + 1}`);
-
-            const occurredAt = activity.occurred_at || activity.created_at || '';
 
             return {
                 id: String(activity.id ?? `activity-${index + 1}`),
@@ -140,7 +118,7 @@ const Index: React.FC = () => {
                 type: activity.type ?? 'activity',
                 description: activity.description || activity.message || t('No additional details'),
                 status: activity.status ?? 'info',
-                occurredAt,
+                occurredAt: activity.occurred_at || activity.created_at || '',
                 actor: activity.actor ?? activity.source,
             };
         });
@@ -153,9 +131,9 @@ const Index: React.FC = () => {
                 label: t('Reference'),
                 sortable: false,
                 render: (value, row) => (
-                    <div className="analytics-activity__reference">
-                        <strong>{value as string}</strong>
-                        {row.actor ? <span className="analytics-activity__actor">{row.actor}</span> : null}
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>{String(value ?? '')}</span>
+                        {row.actor ? <span className={styles.cellMeta}>{row.actor}</span> : null}
                     </div>
                 ),
             },
@@ -163,7 +141,7 @@ const Index: React.FC = () => {
                 key: 'type',
                 label: t('Type'),
                 sortable: false,
-                render: (value) => <span className="analytics-activity__type">{t(String(value))}</span>,
+                render: (value) => <span className={styles.faint}>{t(String(value))}</span>,
             },
             {
                 key: 'description',
@@ -174,7 +152,7 @@ const Index: React.FC = () => {
                 key: 'status',
                 label: t('Status'),
                 sortable: false,
-                render: (value) => <span className={`status ${String(value)}`}>{t(String(value))}</span>,
+                render: (value) => <Badge tone={statusTone(String(value))}>{t(String(value))}</Badge>,
             },
             {
                 key: 'occurredAt',
@@ -190,7 +168,7 @@ const Index: React.FC = () => {
                         return value;
                     }
 
-                    return new Intl.DateTimeFormat(locale, {
+                    return new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
                         dateStyle: 'medium',
                         timeStyle: 'short',
                     }).format(parsed);
@@ -210,69 +188,38 @@ const Index: React.FC = () => {
                 key="total-revenue"
                 title={t('Total Revenue')}
                 value={currencyFormatter.format(stats.totalRevenue)}
-                icon="bx bx-line-chart"
-                color="blue"
                 tooltip={t('Total revenue generated in the selected period')}
             />,
             <AnalyticsCard
                 key="pending-orders"
                 title={t('Pending Orders')}
-                value={stats.pendingOrders.toLocaleString(locale)}
-                icon="bx bx-receipt"
-                color="yellow"
+                value={formatNumber(stats.pendingOrders)}
                 tooltip={t('Orders awaiting confirmation or processing')}
             />,
             <AnalyticsCard
                 key="user-growth"
                 title={t('User Growth')}
-                value={stats.userGrowth.current.toLocaleString(locale)}
-                change={userGrowthChange}
-                changeLabel={userGrowthLabel}
-                icon="bx bx-user-plus"
-                color="green"
+                value={formatNumber(stats.userGrowth.current)}
+                change={stats.userGrowth.change}
+                changeLabel={t('vs previous period')}
                 tooltip={t('New users acquired compared to the previous period')}
             />,
             <AnalyticsCard
                 key="system-health"
                 title={t('System Health')}
-                value={`${percentFormatter.format(stats.systemHealth)}%`}
-                icon="bx bx-shield-quarter"
-                color="neutral"
+                value={`${formatDecimal(stats.systemHealth)}%`}
                 tooltip={t('Completion rate of successful orders in the period')}
             />,
         ];
-    }, [currencyFormatter, locale, stats, t, userGrowthChange, userGrowthLabel]);
+    }, [currencyFormatter, stats, t]);
 
-    const quickActions = useMemo(
-        () => [
-            {
-                href: '/admin/analytics/revenue',
-                icon: 'bx bx-dollar',
-                label: t('View Revenue Analytics'),
-            },
-            {
-                href: '/admin/analytics/users',
-                icon: 'bx bx-group',
-                label: t('View User Analytics'),
-            },
-            {
-                href: '/admin/analytics/products',
-                icon: 'bx bx-package',
-                label: t('View Product Analytics'),
-            },
-            {
-                href: '/admin/analytics/orders',
-                icon: 'bx bx-shopping-bag',
-                label: t('View Order Analytics'),
-            },
-            {
-                href: '/admin/analytics/reports',
-                icon: 'bx bx-file',
-                label: t('Generate Custom Reports'),
-            },
-        ],
-        [t],
-    );
+    const quickActions = [
+        { href: '/admin/analytics/revenue', icon: DollarSign, label: t('View Revenue Analytics') },
+        { href: '/admin/analytics/users', icon: Users, label: t('View User Analytics') },
+        { href: '/admin/analytics/products', icon: Package, label: t('View Product Analytics') },
+        { href: '/admin/analytics/orders', icon: ShoppingBag, label: t('View Order Analytics') },
+        { href: '/admin/analytics/reports', icon: FileText, label: t('Generate Custom Reports') },
+    ];
 
     return (
         <AppLayout>
@@ -284,66 +231,68 @@ const Index: React.FC = () => {
                     { label: t('Analytics'), href: '/admin/analytics' },
                 ]}
             />
-            <div className="inventory-page analytics-page">
-                <section className="inventory-section analytics-page__header">
-                    <div className="analytics-page__heading">
-                        {/* <h1>{t('Analytics Overview')}</h1> */}
-                        <p className="analytics-page__subtitle">
-                            {t('Monitor platform performance, track key business metrics, and explore trends at a glance.')}
-                        </p>
+
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>
+                            <BarChart3 aria-hidden="true" className={styles.sectionIcon} />
+                            {t('Overview')}
+                        </h2>
                         {lastGeneratedAt ? (
-                            <span className="analytics-page__meta">
+                            <span className={styles.sectionMeta}>
                                 {t('Last updated at')} {lastGeneratedAt}
                             </span>
                         ) : null}
                     </div>
-
-                    <QuickFilter options={quickFilterOptions} activeValue={selectedRange} onChange={handleRangeChange} />
+                    <p className={styles.muted}>{t('Monitor platform performance, track key business metrics, and explore trends at a glance.')}</p>
                 </section>
 
-                <section className="inventory-section analytics-page__actions">
-                    <h2>{t('Quick Actions')}</h2>
-                    <div className="analytics-page__actions-grid">
-                        {quickActions.map((action) => (
-                            <Link key={action.href} href={action.href} className="inventory-link-button analytics-page__action-link">
-                                <i className={`bx ${action.icon}`}></i>
-                                <span>{action.label}</span>
-                            </Link>
-                        ))}
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Quick Actions')}</h2>
+                    </div>
+                    <div className={styles.quickActions}>
+                        {quickActions.map((action) => {
+                            const Icon = action.icon;
+
+                            return (
+                                <Link key={action.href} href={action.href} className={styles.quickAction}>
+                                    <Icon aria-hidden="true" />
+                                    <span>{action.label}</span>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </section>
 
-                <section className="inventory-section analytics-page__kpis">
-                    <ul className="insights analytics-page__insights-grid">{kpiCards}</ul>
+                <section className={styles.section}>
+                    <ul className={styles.kpiList}>{kpiCards}</ul>
                 </section>
 
-                <section className="inventory-section analytics-page__charts">
-                    <div className="analytics-page__charts-grid">
-                        <AnalyticsChart
-                            type="line"
-                            data={revenueChart}
-                            title={t('Revenue Trend')}
-                            description={t('Daily revenue within the selected range')}
-                        />
-                        <AnalyticsChart
-                            type="area"
-                            data={userGrowthChart}
-                            title={t('User Growth Trend')}
-                            description={t('New users acquired over time')}
-                        />
-                    </div>
-                </section>
-
-                <section className="inventory-section analytics-page__table">
-                    <AnalyticsTable
-                        data={normalizedActivities}
-                        columns={activityColumns}
-                        headerTitle={t('Recent Platform Activity')}
-                        headerIcon="bx bx-time"
-                        emptyMessage={t('No recent activity recorded')}
-                        rowKey={(row) => row.id}
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="line"
+                        data={revenueChart}
+                        title={t('Revenue Trend')}
+                        description={t('Daily revenue within the selected range')}
+                    />
+                    <AnalyticsChart
+                        type="bar"
+                        data={userGrowthChart}
+                        title={t('User Growth Trend')}
+                        description={t('New users acquired over time')}
                     />
                 </section>
+
+                <AnalyticsTable
+                    data={normalizedActivities}
+                    columns={activityColumns}
+                    headerTitle={t('Recent Platform Activity')}
+                    headerIcon={<BarChart3 aria-hidden="true" />}
+                    emptyMessage={t('No recent activity recorded')}
+                    rowKey={(row) => row.id}
+                />
             </div>
         </AppLayout>
     );

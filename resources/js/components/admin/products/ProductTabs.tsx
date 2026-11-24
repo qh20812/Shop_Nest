@@ -1,6 +1,12 @@
+import { MessageSquare, Star } from 'lucide-react';
 import { useState } from 'react';
+
+import { formatDate } from '../../../lib/format';
 import { useTranslation } from '../../../lib/i18n';
 import { decodeHtmlEntities } from '../../../utils/htmlUtils';
+import { Tabs } from '../../ui/tabs';
+
+import styles from './products.module.css';
 
 interface Review {
     review_id: number;
@@ -24,7 +30,6 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
     const { t, locale } = useTranslation();
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
-    // Helper function to get localized description with HTML entity decoding
     const getDescription = (): string => {
         if (!description) return t('No description available');
         let desc = '';
@@ -36,85 +41,55 @@ export default function ProductTabs({ description, reviews }: ProductTabsProps) 
         return decodeHtmlEntities(desc);
     };
 
-    // Helper function to format date
-    const formatDate = (dateString: string): string => {
-        try {
-            return new Date(dateString).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
-        } catch {
-            return dateString;
-        }
-    };
-
-    // Helper function to render star rating
     const renderStars = (rating: number) => {
         const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <i
-                    key={i}
-                    className={`bx ${i <= rating ? 'bxs-star' : 'bx-star'} product-tabs__star ${i <= rating ? 'product-tabs__star--filled' : ''}`}
-                ></i>,
-            );
+        for (let index = 1; index <= 5; index += 1) {
+            const filled = index <= rating;
+            stars.push(<Star key={index} aria-hidden="true" className={`${styles.star} ${filled ? styles.starFilled : ''}`.trim()} />);
         }
         return stars;
     };
 
     return (
-        <div className="product-tabs">
-            {/* Tab Navigation */}
-            <div className="product-tabs__nav">
-                <button
-                    type="button"
-                    className={`product-tabs__button ${activeTab === 'description' ? 'product-tabs__button--active' : ''}`}
-                    onClick={() => setActiveTab('description')}
-                >
-                    {t('Description')}
-                </button>
-                <button
-                    type="button"
-                    className={`product-tabs__button ${activeTab === 'reviews' ? 'product-tabs__button--active' : ''}`}
-                    onClick={() => setActiveTab('reviews')}
-                >
-                    {t('Reviews')} ({reviews.length})
-                </button>
-            </div>
+        <div className={styles.tabs}>
+            <Tabs
+                items={[
+                    { value: 'description', label: t('Description') },
+                    { value: 'reviews', label: t('Reviews'), count: reviews.length },
+                ]}
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as 'description' | 'reviews')}
+                ariaLabel={t('Product details')}
+            />
 
-            {/* Tab Content */}
-            <div className="product-tabs__content">
-                {activeTab === 'description' && (
-                    <div className="product-tabs__description">
-                        <div className="product-tabs__description-content">{getDescription()}</div>
-                    </div>
-                )}
+            <div className={styles.tabContent}>
+                {activeTab === 'description' && <div className={styles.description}>{getDescription()}</div>}
 
                 {activeTab === 'reviews' && (
-                    <div className="product-tabs__reviews">
+                    <div className={styles.reviews}>
                         {reviews.length === 0 ? (
-                            <div className="product-tabs__no-reviews">
-                                <i className="bx bx-comment"></i>
+                            <div className={styles.noReviews}>
+                                <MessageSquare aria-hidden="true" className={styles.noReviewsIcon} />
                                 <p>{t('No reviews yet')}</p>
                                 <p>{t('Be the first to review this product!')}</p>
                             </div>
                         ) : (
-                            <div className="product-tabs__reviews-list">
-                                {reviews.map((review) => (
-                                    <div key={review.review_id} className="product-tabs__review">
-                                        <div className="product-tabs__review-header">
-                                            <div className="product-tabs__review-user">
-                                                <strong>
-                                                    {(() => {
-                                                        const fullName = `${review.user.first_name || ''} ${review.user.last_name || ''}`.trim();
-                                                        return fullName || review.user.username || 'Anonymous User';
-                                                    })()}
-                                                </strong>
-                                            </div>
-                                            <div className="product-tabs__review-rating">{renderStars(review.rating)}</div>
-                                            <div className="product-tabs__review-date">{formatDate(review.created_at)}</div>
+                            reviews.map((review) => {
+                                const fullName = `${review.user.first_name || ''} ${review.user.last_name || ''}`.trim();
+
+                                return (
+                                    <article key={review.review_id} className={styles.review}>
+                                        <div className={styles.reviewHead}>
+                                            <span className={styles.reviewUser}>{fullName || review.user.username || t('Anonymous User')}</span>
+                                            <span className={styles.stars} aria-label={`${review.rating}/5`}>
+                                                {renderStars(review.rating)}
+                                            </span>
+                                            <span className={styles.reviewDate}>{formatDate(review.created_at)}</span>
                                         </div>
-                                        <div className="product-tabs__review-comment">{decodeHtmlEntities(review.comment)}</div>
-                                    </div>
-                                ))}
-                            </div>
+                                        <div className={styles.reviewComment}>{decodeHtmlEntities(review.comment)}</div>
+                                    </article>
+                                );
+                            })
                         )}
                     </div>
                 )}

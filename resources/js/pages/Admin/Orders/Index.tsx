@@ -1,3 +1,6 @@
+import { Head, router } from '@inertiajs/react';
+import { useState } from 'react';
+
 import OrderFilterPanel from '@/components/admin/orders/OrderFilterPanel';
 import OrderSummaryCards from '@/components/admin/orders/OrderSummaryCards';
 import OrderTable from '@/components/admin/orders/OrderTable';
@@ -5,8 +8,8 @@ import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface Customer {
     id: number;
@@ -68,14 +71,12 @@ interface PageProps {
 export default function Index({ orders, filters, statusOptions, paymentStatusOptions, orderSummary }: PageProps) {
     const { t } = useTranslation();
 
-    // Filter states
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [paymentStatus, setPaymentStatus] = useState(filters.payment_status || '');
     const [fromDate, setFromDate] = useState(filters.from_date || '');
     const [toDate, setToDate] = useState(filters.to_date || '');
 
-    // Apply filters
     const handleApplyFilters = () => {
         router.get(
             '/admin/orders',
@@ -93,7 +94,6 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
         );
     };
 
-    // Date range filter handlers
     const handleDateRangeApply = (from: string, to: string) => {
         setFromDate(from);
         setToDate(to);
@@ -130,116 +130,58 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
         );
     };
 
-    // Order action handlers
-    const handleViewDetails = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}`);
-    };
-
-    const handleAssignShipper = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}/assign-shipper`);
-    };
-
-    const handleUpdateStatus = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}/update-status`);
-    };
-
-    const handleProcessRefund = (orderId: number) => {
-        router.post(`/admin/orders/${orderId}/refund`);
-    };
-
-    const handlePrintInvoice = (orderId: number) => {
-        window.open(`/admin/orders/${orderId}/invoice`, '_blank');
-    };
-
-    const handleCancelOrder = (orderId: number) => {
-        if (confirm(t('Are you sure you want to cancel this order?'))) {
-            router.post(`/admin/orders/${orderId}/cancel`);
-        }
-    };
-
-    // Breadcrumb configuration
-    const breadcrumbs = [
-        { label: 'Dashboard', href: '/admin/dashboard' },
-        { label: 'Orders', href: '/admin/orders', active: true },
-    ];
-
-    // Search configuration
-    const searchConfig = {
-        value: search,
-        onChange: setSearch,
-        placeholder: t('Search by order number, customer name or email...'),
-    };
-
-    // Filter configurations
-    const filterConfigs = [
-        {
-            value: status,
-            onChange: setStatus,
-            label: t('-- All Statuses --'),
-            options: Object.entries(statusOptions).map(([value, label]) => ({
-                value: value,
-                label: label,
-            })),
-        },
-        {
-            value: paymentStatus,
-            onChange: setPaymentStatus,
-            label: t('-- All Payment Statuses --'),
-            options: Object.entries(paymentStatusOptions).map(([value, label]) => ({
-                value: value,
-                label: label,
-            })),
-        },
-    ];
-
     return (
         <AppLayout>
-            <Head title="Orders Management" />
+            <Head title={t('Orders Management')} />
 
-            {/* Header with filters */}
-            <FilterPanel
-                title="Orders Management"
-                breadcrumbs={breadcrumbs}
-                onApplyFilters={handleApplyFilters}
-                searchConfig={searchConfig}
-                filterConfigs={filterConfigs}
-                reportButtonConfig={{
-                    label: t('Export Orders'),
-                    icon: 'bx-export',
-                    onClick: () => alert('Export functionality - to be implemented'),
-                }}
-            />
+            <div className={styles.stack}>
+                <FilterPanel
+                    title={t('Orders Management')}
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Orders'), href: '/admin/orders', active: true },
+                    ]}
+                    onApplyFilters={handleApplyFilters}
+                    searchConfig={{
+                        value: search,
+                        onChange: setSearch,
+                        placeholder: t('Search by order number, customer name or email...'),
+                    }}
+                    filterConfigs={[
+                        {
+                            value: status,
+                            onChange: setStatus,
+                            label: t('-- All Statuses --'),
+                            options: Object.entries(statusOptions).map(([value, label]) => ({ value, label })),
+                        },
+                        {
+                            value: paymentStatus,
+                            onChange: setPaymentStatus,
+                            label: t('-- All Payment Statuses --'),
+                            options: Object.entries(paymentStatusOptions).map(([value, label]) => ({ value, label })),
+                        },
+                    ]}
+                >
+                    <OrderFilterPanel fromDate={fromDate} toDate={toDate} onApply={handleDateRangeApply} onReset={handleDateRangeReset} />
+                </FilterPanel>
 
-            {/* Date Range Filters */}
-            <OrderFilterPanel fromDate={fromDate} toDate={toDate} onApply={handleDateRangeApply} onReset={handleDateRangeReset} />
+                <OrderSummaryCards orderSummary={orderSummary} />
 
-            {/* Orders Summary Cards */}
-            <OrderSummaryCards orderSummary={orderSummary} />
+                <OrderTable orders={orders.data} />
 
-            {/* Orders DataTable */}
-            <OrderTable
-                orders={orders.data}
-                onViewDetails={handleViewDetails}
-                onAssignShipper={handleAssignShipper}
-                onUpdateStatus={handleUpdateStatus}
-                onProcessRefund={handleProcessRefund}
-                onPrintInvoice={handlePrintInvoice}
-                onCancelOrder={handleCancelOrder}
-            />
-
-            {/* Pagination */}
-            <Pagination
-                links={orders.links}
-                filters={{
-                    search,
-                    status,
-                    payment_status: paymentStatus,
-                    from_date: fromDate,
-                    to_date: toDate,
-                }}
-                preserveState={true}
-                preserveScroll={true}
-            />
+                <Pagination
+                    links={orders.links}
+                    filters={{
+                        search,
+                        status,
+                        payment_status: paymentStatus,
+                        from_date: fromDate,
+                        to_date: toDate,
+                    }}
+                    preserveState
+                    preserveScroll
+                />
+            </div>
         </AppLayout>
     );
 }

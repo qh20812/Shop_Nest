@@ -1,10 +1,13 @@
-import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import React from 'react';
-import ActionDropdown from '../../ui/action-dropdown';
-import DataTable from '../../ui/data-table';
-import StatusBadge from '../../ui/status-badge';
+
+import DataTable from '@/components/ui/data-table';
+import StatusBadge from '@/components/ui/status-badge';
+import { formatDateTime } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+import { resolveCurrencyCode } from '@/lib/utils';
+
+import styles from '../admin.module.css';
 
 interface Customer {
     first_name: string;
@@ -27,133 +30,66 @@ interface Order {
 
 interface OrderTableProps {
     orders: Order[];
-    onViewDetails: (orderId: number) => void;
-    onAssignShipper: (orderId: number) => void;
-    onUpdateStatus: (orderId: number) => void;
-    onProcessRefund: (orderId: number) => void;
-    onPrintInvoice: (orderId: number) => void;
-    onCancelOrder: (orderId: number) => void;
 }
 
-export default function OrderTable({
-    orders,
-    onViewDetails,
-    onAssignShipper,
-    onUpdateStatus,
-    onProcessRefund,
-    onPrintInvoice,
-    onCancelOrder,
-}: OrderTableProps) {
+export default function OrderTable({ orders }: OrderTableProps) {
     const { t } = useTranslation();
-    const { props } = usePage<{ locale?: string; currency?: string | { code?: string } }>();
-    const locale = typeof props.locale === 'string' ? props.locale : 'en';
+    const { props } = usePage<{ currency?: string | { code?: string } }>();
     const fallbackCurrency = resolveCurrencyCode(props.currency);
-    const localeForCurrency = locale.startsWith('vi') ? 'vi-VN' : locale;
 
-    const formatCurrency = React.useCallback(
+    const formatAmount = React.useCallback(
         (amount: number, currencyOverride?: string) => {
             const currencyCode = currencyOverride ?? fallbackCurrency;
 
-            return new Intl.NumberFormat(localeForCurrency, {
+            return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: currencyCode,
-                maximumFractionDigits: 2,
+                maximumFractionDigits: 0,
             }).format(amount);
         },
-        [fallbackCurrency, localeForCurrency],
+        [fallbackCurrency],
     );
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const getOrderActions = (order: Order) => [
-        {
-            label: t('View Details'),
-            icon: 'bx-show',
-            onClick: () => onViewDetails(order.order_id),
-            color: 'primary' as const,
-        },
-        {
-            label: t('Assign Shipper'),
-            icon: 'bx-user-plus',
-            onClick: () => onAssignShipper(order.order_id),
-            color: 'success' as const,
-            disabled: ['assigned_to_shipper', 'delivering', 'delivered', 'completed'].includes(order.status),
-        },
-        {
-            label: t('Update Status'),
-            icon: 'bx-edit',
-            onClick: () => onUpdateStatus(order.order_id),
-            color: 'warning' as const,
-        },
-        {
-            label: t('Process Refund'),
-            icon: 'bx-money',
-            onClick: () => onProcessRefund(order.order_id),
-            color: 'danger' as const,
-            disabled: order.payment_status !== 'paid',
-        },
-        {
-            label: t('Print Invoice'),
-            icon: 'bx-printer',
-            onClick: () => onPrintInvoice(order.order_id),
-            color: 'primary' as const,
-        },
-        {
-            label: t('Cancel Order'),
-            icon: 'bx-x-circle',
-            onClick: () => onCancelOrder(order.order_id),
-            color: 'danger' as const,
-            disabled: ['assigned_to_shipper', 'delivering', 'delivered', 'completed'].includes(order.status),
-        },
-    ];
 
     const columns = [
         {
+            key: 'order_number',
             header: t('Order Number'),
-            cell: (order: Order) => <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>{order.order_number}</span>,
+            cell: (order: Order) => <span className={styles.numeric}>{order.order_number}</span>,
         },
         {
+            key: 'customer',
             header: t('Customer'),
             cell: (order: Order) => (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: '500' }}>
+                <div className={styles.cellStack}>
+                    <span className={styles.cellTitle}>
                         {order.customer.first_name} {order.customer.last_name}
                     </span>
-                    <span style={{ fontSize: '12px', color: 'var(--dark-grey)' }}>{order.customer.email}</span>
+                    <span className={styles.cellMeta}>{order.customer.email}</span>
                 </div>
             ),
         },
         {
+            key: 'created_at',
             header: t('Date'),
-            cell: (order: Order) => <span style={{ fontSize: '14px' }}>{formatDate(order.created_at)}</span>,
+            cell: (order: Order) => <span className={styles.numeric}>{formatDateTime(order.created_at)}</span>,
         },
         {
+            key: 'total_amount',
             header: t('Total Amount'),
-            cell: (order: Order) => (
-                <span style={{ fontWeight: '600', color: 'var(--success)' }}>{formatCurrency(order.total_amount, order.currency)}</span>
-            ),
+            align: 'right' as const,
+            cell: (order: Order) => <span className={styles.price}>{formatAmount(order.total_amount, order.currency)}</span>,
         },
         {
+            key: 'status',
             header: t('Status'),
             cell: (order: Order) => <StatusBadge status={order.status} type="order" />,
         },
         {
+            key: 'payment_status',
             header: t('Payment'),
             cell: (order: Order) => <StatusBadge status={order.payment_status} type="payment" />,
         },
-        {
-            header: t('Actions'),
-            cell: (order: Order) => <ActionDropdown actions={getOrderActions(order)} />,
-        },
     ];
 
-    return <DataTable columns={columns} data={orders} headerTitle={t('Orders List')} headerIcon="bx-receipt" emptyMessage={t('No orders found')} />;
+    return <DataTable columns={columns} data={orders} headerTitle={t('Orders List')} emptyMessage={t('No orders found')} />;
 }

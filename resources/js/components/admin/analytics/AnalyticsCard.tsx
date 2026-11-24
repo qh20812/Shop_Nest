@@ -1,5 +1,7 @@
-import '@/../css/Page.css';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import React from 'react';
+
+import styles from './analytics.module.css';
 
 export type AnalyticsCardColor = 'blue' | 'green' | 'red' | 'yellow' | 'neutral';
 
@@ -8,7 +10,9 @@ export interface AnalyticsCardProps {
     value: string | number | React.ReactNode;
     change?: number | null;
     changeLabel?: string;
+    /** Kept for API compatibility; the KPI is neutral in Phase 8. */
     icon?: string;
+    /** Kept for API compatibility; colour variants are no longer rendered. */
     color?: AnalyticsCardColor;
     tooltip?: string;
     compact?: boolean;
@@ -17,14 +21,6 @@ export interface AnalyticsCardProps {
     valueFormatter?: (value: string | number) => React.ReactNode;
     as?: 'li' | 'div';
 }
-
-const colorClassMap: Record<AnalyticsCardColor, string> = {
-    blue: 'analytics-card--blue',
-    green: 'analytics-card--green',
-    red: 'analytics-card--red',
-    yellow: 'analytics-card--yellow',
-    neutral: 'analytics-card--neutral',
-};
 
 const defaultNumberFormatter = new Intl.NumberFormat('vi-VN', {
     maximumFractionDigits: 0,
@@ -43,43 +39,32 @@ const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
     value,
     change,
     changeLabel,
-    icon = 'bx bx-pie-chart-alt-2',
-    color = 'blue',
     tooltip,
-    compact = false,
     footer,
     className = '',
     valueFormatter,
     as: ComponentTag = 'li',
 }) => {
     const hasChange = typeof change === 'number' && Number.isFinite(change);
-    const trend = hasChange ? ((change as number) >= 0 ? 'up' : 'down') : null;
+    const trendUp = hasChange ? (change as number) >= 0 : true;
+    const TrendIcon = trendUp ? TrendingUp : TrendingDown;
 
     const resolvedValue = typeof value === 'number' ? (valueFormatter ? valueFormatter(value) : defaultNumberFormatter.format(value)) : value;
 
     return (
-        <ComponentTag
-            className={`analytics-card ${colorClassMap[color]} ${compact ? 'analytics-card--compact' : ''} ${className}`.trim()}
-            title={tooltip}
-        >
-            <div className="analytics-card__icon-wrapper">
-                <i className={icon}></i>
-            </div>
+        <ComponentTag className={`${styles.card} ${className}`.trim()} title={tooltip}>
+            <span className={styles.cardTitle}>{title}</span>
+            <span className={styles.cardValue}>{resolvedValue}</span>
 
-            <div className="analytics-card__content">
-                <span className="analytics-card__title">{title}</span>
-                <span className="analytics-card__value">{resolvedValue}</span>
+            {hasChange && (
+                <span className={`${styles.cardChange} ${trendUp ? styles.changeUp : styles.changeDown}`}>
+                    <TrendIcon aria-hidden="true" className={styles.changeIcon} />
+                    {formatChange(change as number)}
+                    {changeLabel ? <span className={styles.changeLabel}>{changeLabel}</span> : null}
+                </span>
+            )}
 
-                {hasChange && (
-                    <span className={`analytics-card__change analytics-card__change--${trend}`}>
-                        <i className={`bx ${trend === 'up' ? 'bx-trending-up' : 'bx-trending-down'}`}></i>
-                        {formatChange(change as number)}
-                        {changeLabel ? <span className="analytics-card__change-label">{` ${changeLabel}`}</span> : null}
-                    </span>
-                )}
-
-                {footer ? <div className="analytics-card__footer">{footer}</div> : null}
-            </div>
+            {footer ? <div className={styles.cardFooter}>{footer}</div> : null}
         </ComponentTag>
     );
 };

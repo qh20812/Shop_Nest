@@ -1,5 +1,9 @@
+import { ImageOff } from 'lucide-react';
 import { useState } from 'react';
+
 import { useTranslation } from '../../../lib/i18n';
+
+import styles from './products.module.css';
 
 interface ProductImage {
     image_id: number;
@@ -21,16 +25,15 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
         return `/storage/${url}`;
     };
 
-    // Set the primary image as default, or the first image if no primary exists
-    const primaryImage = images.find((img) => img.is_primary) || images[0];
+    const primaryImage = images.find((image) => image.is_primary) || images[0];
     const [selectedImage, setSelectedImage] = useState<ProductImage | null>(primaryImage || null);
 
     if (!images || images.length === 0) {
         return (
-            <div className="product-gallery">
-                <div className="product-gallery__main-image">
-                    <div className="product-gallery__no-image">
-                        <i className="bx bx-image"></i>
+            <div className={styles.gallery}>
+                <div className={styles.mainImage}>
+                    <div className={styles.noImage}>
+                        <ImageOff aria-hidden="true" className={styles.noImageIcon} />
                         <span>{t('No images available')}</span>
                     </div>
                 </div>
@@ -39,31 +42,29 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
     }
 
     return (
-        <div className="product-gallery">
-            {/* Main Image Display */}
-            <div className="product-gallery__main-image">
-                {selectedImage && <img src={resolveSrc(selectedImage.image_url)} alt={t('Product Image')} className="product-gallery__main-img" />}
+        <div className={styles.gallery}>
+            <div className={styles.mainImage}>
+                {selectedImage && <img src={resolveSrc(selectedImage.image_url)} alt={t('Product Image')} className={styles.mainImg} />}
             </div>
 
-            {/* Thumbnail Images */}
             {images.length > 1 && (
-                <div className="product-gallery__thumbnails">
-                    {images.map((image) => (
-                        <button
-                            key={image.image_id}
-                            type="button"
-                            className={`product-gallery__thumbnail ${
-                                selectedImage?.image_id === image.image_id ? 'product-gallery__thumbnail--active' : ''
-                            }`}
-                            onClick={() => setSelectedImage(image)}
-                        >
-                            <img
-                                src={resolveSrc(image.image_url)}
-                                alt={`${t('Product Image')} ${image.image_id}`}
-                                className="product-gallery__thumbnail-img"
-                            />
-                        </button>
-                    ))}
+                <div className={styles.thumbnails}>
+                    {images.map((image) => {
+                        const active = selectedImage?.image_id === image.image_id;
+
+                        return (
+                            <button
+                                key={image.image_id}
+                                type="button"
+                                className={`${styles.thumbnail} ${active ? styles.thumbnailActive : ''}`.trim()}
+                                onClick={() => setSelectedImage(image)}
+                                aria-pressed={active}
+                                aria-label={`${t('Product Image')} ${image.image_id}`}
+                            >
+                                <img src={resolveSrc(image.image_url)} alt="" className={styles.thumbnailImg} />
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

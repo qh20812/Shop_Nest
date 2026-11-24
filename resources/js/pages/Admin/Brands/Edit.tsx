@@ -1,10 +1,10 @@
-import '@/../css/Page.css';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
-import BrandForm from '../../../components/admin/brands/BrandForm';
-import Header from '../../../components/ui/header';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import BrandForm from '@/components/admin/brands/BrandForm';
+import Header from '@/components/ui/header';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 
 interface Brand {
     brand_id: number;
@@ -39,11 +39,9 @@ export default function Edit() {
         is_active: brand.is_active,
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(`/admin/brands/${brand.brand_id}`, {
-            forceFormData: true,
-        });
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        post(`/admin/brands/${brand.brand_id}`, { forceFormData: true });
     };
 
     return (

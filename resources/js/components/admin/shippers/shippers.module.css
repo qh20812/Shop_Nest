@@ -1,0 +1,98 @@
+/* Admin shipper components. Phase 8. Tokens only. */
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.cardHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.cardTitle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-lg);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.cardIcon {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    color: var(--sn-color-text-muted);
+}
+
+.cardActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sn-space-2);
+    margin-left: auto;
+}
+
+.viewerImageWrap {
+    position: relative;
+    display: flex;
+    min-height: 12rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.viewerImage {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-md);
+    object-fit: contain;
+}
+
+.viewerStatus {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-8);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+    text-align: center;
+}
+
+.viewerError {
+    color: var(--sn-color-danger-text);
+}
+
+.viewerIcon {
+    width: var(--sn-icon-lg);
+    height: var(--sn-icon-lg);
+}
+
+.spin {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spin {
+        animation: none;
+    }
+}

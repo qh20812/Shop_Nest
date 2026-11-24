@@ -1,10 +1,14 @@
-import '@/../css/Page.css';
-import ActionButton from '@/components/ui/action-button';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Pencil, Tag } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatDateTime, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import AppLayout from '../../../layouts/app/AppLayout';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface ProductSummary {
     product_id: number;
@@ -48,30 +52,13 @@ const typeLabelMap: Record<string, string> = {
     buy_x_get_y: 'Buy X Get Y',
 };
 
-const formatDateTime = (value: string) => {
-    if (!value) {
-        return '—';
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleString();
-};
-
-const formatCurrency = (value?: number | string | null) => {
+const toNumber = (value?: number | string | null): number | null => {
     if (value === null || value === undefined || value === '') {
-        return '—';
+        return null;
     }
 
-    const numeric = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (Number.isNaN(numeric)) {
-        return '—';
-    }
-
-    return `${numeric.toLocaleString()} VND`;
+    const numeric = typeof value === 'string' ? Number.parseFloat(value) : Number(value);
+    return Number.isNaN(numeric) ? null : numeric;
 };
 
 export default function Show() {
@@ -79,6 +66,7 @@ export default function Show() {
     const { promotion } = usePage<PageProps>().props;
 
     const usageText = promotion.usage_limit !== null ? `${promotion.used_count} / ${promotion.usage_limit}` : `${promotion.used_count}`;
+    const roi = toNumber(promotion.roi_percentage);
 
     return (
         <AppLayout>
@@ -93,113 +81,123 @@ export default function Show() {
                 ]}
             />
 
-            <div className="promotion-form">
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Overview')}</h2>
-                    <div className="detail-grid">
-                        <div>
-                            <div className="detail-label">{t('Promotion Name')}</div>
-                            <div className="detail-value">{promotion.name}</div>
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>
+                            <Tag aria-hidden="true" className={styles.sectionIcon} />
+                            {t('Overview')}
+                        </h2>
+                        <StatusBadge status={promotion.status} />
+                    </div>
+
+                    <div className={styles.detailGrid}>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Promotion Name')}</span>
+                            <span className={styles.detailValue}>{promotion.name}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Status')}</div>
-                            <StatusBadge status={promotion.status} />
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Type')}</span>
+                            <span className={styles.detailValue}>{t(typeLabelMap[promotion.type] ?? promotion.type)}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Type')}</div>
-                            <div className="detail-value">{t(typeLabelMap[promotion.type] ?? promotion.type)}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Discount Value')}</span>
+                            <span className={styles.detailValue}>
+                                {promotion.type === 'percentage'
+                                    ? `${Number(promotion.value).toLocaleString('vi-VN')}%`
+                                    : formatVnd(toNumber(promotion.value))}
+                            </span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Discount Value')}</div>
-                            <div className="detail-value">
-                                {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString()}%` : formatCurrency(promotion.value)}
-                            </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Start Date')}</span>
+                            <span className={styles.detailValue}>{formatDateTime(promotion.start_date)}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Start Date')}</div>
-                            <div className="detail-value">{formatDateTime(promotion.start_date)}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('End Date')}</span>
+                            <span className={styles.detailValue}>{formatDateTime(promotion.end_date)}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('End Date')}</div>
-                            <div className="detail-value">{formatDateTime(promotion.end_date)}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Usage')}</span>
+                            <span className={styles.detailValue}>{usageText}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Usage')}</div>
-                            <div className="detail-value">{usageText}</div>
-                        </div>
-                        <div>
-                            <div className="detail-label">{t('Auto Apply New Products')}</div>
-                            <div className="detail-value">{promotion.auto_apply_new_products ? t('Yes') : t('No')}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Auto Apply New Products')}</span>
+                            <span className={styles.detailValue}>{promotion.auto_apply_new_products ? t('Yes') : t('No')}</span>
                         </div>
                     </div>
 
                     {promotion.description && (
-                        <div className="form-group">
-                            <div className="detail-label">{t('Description')}</div>
-                            <div className="promotion-meta">{promotion.description}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Description')}</span>
+                            <p className={styles.detailProse}>{promotion.description}</p>
                         </div>
                     )}
-                </div>
+                </section>
 
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Financials')}</h2>
-                    <div className="detail-grid">
-                        <div>
-                            <div className="detail-label">{t('Allocated Budget')}</div>
-                            <div className="detail-value">{formatCurrency(promotion.allocated_budget)}</div>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Financials')}</h2>
+                    </div>
+                    <div className={styles.detailGrid}>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Allocated Budget')}</span>
+                            <span className={styles.detailValue}>{formatVnd(toNumber(promotion.allocated_budget))}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('Spent Budget')}</div>
-                            <div className="detail-value">{formatCurrency(promotion.spent_budget)}</div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('Spent Budget')}</span>
+                            <span className={styles.detailValue}>{formatVnd(toNumber(promotion.spent_budget))}</span>
                         </div>
-                        <div>
-                            <div className="detail-label">{t('ROI')}</div>
-                            <div className="detail-value">
-                                {promotion.roi_percentage !== null && promotion.roi_percentage !== undefined
-                                    ? `${Number(promotion.roi_percentage).toFixed(2)}%`
-                                    : '—'}
-                            </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>{t('ROI')}</span>
+                            <span className={styles.detailValue}>{roi !== null ? `${roi.toFixed(2)}%` : '-'}</span>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Associated Products')}</h2>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Associated Products')}</h2>
+                    </div>
                     {promotion.products.length > 0 ? (
-                        <div className="tag-list">
+                        <ul className={styles.tagList}>
                             {promotion.products.map((product) => (
-                                <Link key={product.product_id} href={`/admin/products/${product.product_id}`} className="tag-pill">
-                                    {product.name}
-                                </Link>
+                                <li key={product.product_id}>
+                                    <Link href={`/admin/products/${product.product_id}`} className={styles.tag}>
+                                        {product.name}
+                                    </Link>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     ) : (
-                        <div className="promotion-meta">{t('No products selected')}</div>
+                        <p className={styles.note}>{t('No products selected')}</p>
                     )}
-                </div>
+                </section>
 
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Associated Categories')}</h2>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Associated Categories')}</h2>
+                    </div>
                     {promotion.categories.length > 0 ? (
-                        <div className="tag-list">
+                        <ul className={styles.tagList}>
                             {promotion.categories.map((category) => (
-                                <span key={category.category_id} className="tag-pill">
+                                <li key={category.category_id} className={styles.tag}>
                                     {category.name}
-                                </span>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     ) : (
-                        <div className="promotion-meta">{t('No categories selected')}</div>
+                        <p className={styles.note}>{t('No categories selected')}</p>
                     )}
-                </div>
+                </section>
 
-                <div className="form-actions">
-                    <ActionButton variant="secondary" onClick={() => router.get('/admin/promotions')}>
+                <div className={styles.formFooter}>
+                    <Button type="button" variant="secondary" onClick={() => router.get('/admin/promotions')}>
                         {t('Back to List')}
-                    </ActionButton>
-                    <ActionButton variant="primary" onClick={() => router.get(`/admin/promotions/${promotion.promotion_id}/edit`)}>
+                    </Button>
+                    <Button type="button" variant="primary" onClick={() => router.get(`/admin/promotions/${promotion.promotion_id}/edit`)}>
+                        <Pencil aria-hidden="true" />
                         {t('Edit Promotion')}
-                    </ActionButton>
+                    </Button>
                 </div>
             </div>
         </AppLayout>

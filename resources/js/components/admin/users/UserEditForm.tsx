@@ -1,12 +1,18 @@
-import ActionButton from '@/components/ui/action-button';
-import PrimaryInput from '@/components/ui/primary-input';
-import { useTranslation } from '@/lib/i18n';
 import { router, usePage } from '@inertiajs/react';
+import { UserRound } from 'lucide-react';
 import React, { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '../forms.module.css';
 
 interface Role {
     id: number;
-    name: Record<string, string>; // Translation object with locale keys
+    name: Record<string, string>;
 }
 
 interface User {
@@ -51,154 +57,113 @@ export default function UserEditForm({ user, roles, errors }: UserEditFormProps)
         role_id: user.roles[0]?.id ?? '',
     });
 
-    // State để track hover cho từng role
-    const [hoveredRole, setHoveredRole] = useState<number | null>(null);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setValues((prev) => ({ ...prev, [name]: value }));
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = event.target;
+        setValues((previous) => ({ ...previous, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         router.put(`/admin/users/${user.id}`, values);
     };
 
     const { t, locale } = useTranslation();
 
     return (
-        <div className="bottom-data">
-            <div style={{ flexGrow: 1, minWidth: '600px' }}>
-                <div className="header">
-                    <i className="bx bx-edit"></i>
-                    <h3>{t('User Information')}</h3>
-                </div>
+        <section className={styles.panel}>
+            <div className={styles.panelHead}>
+                <h2 className={styles.panelTitle}>
+                    <UserRound aria-hidden="true" className={styles.panelIcon} />
+                    {t('User Information')}
+                </h2>
+            </div>
 
-                <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
-                    {/* Thông tin cơ bản */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                        <PrimaryInput
-                            label={t('Last Name')}
+            <form onSubmit={handleSubmit} className={styles.formGridSingle}>
+                <div className={styles.formGrid}>
+                    <FormField label={t('Last Name')} htmlFor="user-first-name" required error={errors.first_name}>
+                        <Input
+                            id="user-first-name"
                             name="first_name"
                             value={values.first_name}
                             onChange={handleChange}
-                            error={errors.first_name}
                             placeholder={t('Enter your last name')}
                             disabled
-                            required
                         />
+                    </FormField>
 
-                        <PrimaryInput
-                            label={t('First Name')}
+                    <FormField label={t('First Name')} htmlFor="user-last-name" required error={errors.last_name}>
+                        <Input
+                            id="user-last-name"
                             name="last_name"
                             value={values.last_name}
                             onChange={handleChange}
-                            error={errors.last_name}
                             placeholder={t('Enter your first name')}
                             disabled
-                            required
                         />
-                    </div>
+                    </FormField>
+                </div>
 
-                    <PrimaryInput
-                        label="Email"
+                <FormField label="Email" htmlFor="user-email" required error={errors.email}>
+                    <Input
+                        id="user-email"
                         name="email"
                         type="email"
                         value={values.email}
                         onChange={handleChange}
-                        error={errors.email}
                         placeholder={t('Enter your email')}
                         disabled
-                        required
                     />
+                </FormField>
 
-                    <PrimaryInput
-                        label={t('Status')}
-                        name="is_active"
-                        type="select"
-                        value={values.is_active}
-                        onChange={handleChange}
-                        disabled={isEditingSelf}
-                        options={[
-                            { value: 1, label: t('Active') },
-                            { value: 0, label: t('Inactive') },
-                        ]}
-                    />
+                <FormField label={t('Status')} htmlFor="user-status" error={errors.is_active}>
+                    <Select id="user-status" name="is_active" value={String(values.is_active)} onChange={handleChange} disabled={isEditingSelf}>
+                        <option value="1">{t('Active')}</option>
+                        <option value="0">{t('Inactive')}</option>
+                    </Select>
+                </FormField>
 
-                    {/* Phân quyền */}
-                    <div className="form-group">
-                        <label className="form-label">{t('Role')} *</label>
-                        <div
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                gap: '12px',
-                                padding: '16px',
-                                background: 'var(--grey)',
-                                borderRadius: '8px',
-                            }}
-                        >
-                            {roles.map((role) => {
-                                const isSelected = values.role_id === role.id;
-                                const isHovered = hoveredRole === role.id;
-                                const isDisabled = isEditingSelf || isSelected;
-                                const roleName = role.name[locale] || role.name['en'];
-                                return (
-                                    <label
-                                        key={role.id}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            cursor: isDisabled ? (isEditingSelf ? 'not-allowed' : 'default') : 'pointer',
-                                            padding: '8px',
-                                            borderRadius: '6px',
-                                            background: isSelected
-                                                ? 'var(--light-primary)'
-                                                : isHovered && !isSelected && !isEditingSelf
-                                                  ? 'var(--grey)'
-                                                  : 'transparent',
-                                            color: isEditingSelf ? 'var(--dark-grey)' : isSelected ? 'var(--primary)' : 'var(--dark)',
-                                            fontWeight: isSelected ? '600' : '400',
-                                            border: isSelected ? '2px solid var(--primary)' : '2px solid transparent',
-                                            transition: 'all 0.3s ease',
-                                            opacity: isEditingSelf ? 0.6 : 1,
-                                        }}
-                                        onMouseEnter={() => !isDisabled && setHoveredRole(role.id)}
-                                        onMouseLeave={() => !isDisabled && setHoveredRole(null)}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="role_id"
-                                            checked={isSelected}
-                                            disabled={isDisabled}
-                                            onChange={() => !isEditingSelf && setValues((prev) => ({ ...prev, role_id: role.id }))}
-                                            style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                accentColor: 'var(--primary)',
-                                            }}
-                                        />
-                                        <span>{roleName}</span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                        {errors.role_id && <span className="form-error">{errors.role_id}</span>}
+                <div className={styles.roleGroup}>
+                    <span className={styles.fileLabel}>
+                        {t('Role')} <span aria-hidden="true">*</span>
+                    </span>
+                    <div className={styles.roleGrid}>
+                        {roles.map((role) => {
+                            const isSelected = values.role_id === role.id;
+                            const isDisabled = isEditingSelf || isSelected;
+                            const roleName = role.name[locale] || role.name['en'];
+
+                            return (
+                                <label
+                                    key={role.id}
+                                    className={`${styles.roleOption} ${isSelected ? styles.roleOptionSelected : ''} ${
+                                        isEditingSelf ? styles.roleOptionDisabled : ''
+                                    }`.trim()}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="role_id"
+                                        className={styles.roleRadio}
+                                        checked={isSelected}
+                                        disabled={isDisabled}
+                                        onChange={() => !isEditingSelf && setValues((previous) => ({ ...previous, role_id: role.id }))}
+                                    />
+                                    <span>{roleName}</span>
+                                </label>
+                            );
+                        })}
                     </div>
+                    {errors.role_id && <span className={styles.fileError}>{errors.role_id}</span>}
+                </div>
 
-                    {/* Nút hành động */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '20px' }}>
-                        <ActionButton variant="secondary" type="button" onClick={() => window.history.back()} icon="bx bx-x">
-                            {t('Cancel')}
-                        </ActionButton>
-
-                        <ActionButton variant="primary" type="submit" icon="bx bx-save">
-                            {t('Update')}
-                        </ActionButton>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div className={styles.footer}>
+                    <Button type="button" variant="secondary" onClick={() => window.history.back()}>
+                        {t('Cancel')}
+                    </Button>
+                    <Button type="submit" variant="primary">
+                        {t('Update')}
+                    </Button>
+                </div>
+            </form>
+        </section>
     );
 }

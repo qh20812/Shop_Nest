@@ -1,11 +1,16 @@
-import '@/../css/Page.css';
-import Toast from '@/components/admin/users/Toast';
-import ActionButton from '@/components/ui/action-button';
-import Header from '@/components/ui/header';
-import { useTranslation } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import React, { useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
+import { useEffect, useMemo, useState } from 'react';
+
+import Toast from '@/components/admin/users/Toast';
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import Header from '@/components/ui/header';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface ProductOption {
     product_id: number;
@@ -134,10 +139,6 @@ export default function Edit() {
         setData(key, values);
     };
 
-    const handleCancel = () => {
-        router.get(`/admin/promotions/${promotion.promotion_id}`);
-    };
-
     return (
         <AppLayout>
             <Head title={`${t('Edit Promotion')} - ${promotion.name}`} />
@@ -153,51 +154,38 @@ export default function Edit() {
                 ]}
             />
 
-            <form className="promotion-form" onSubmit={handleSubmit}>
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('General Information')}</h2>
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="name">
-                                {t('Promotion Name')}
-                            </label>
-                            <input
-                                id="name"
-                                className={`form-input-field ${errors.name ? 'error' : ''}`}
+            <form className={styles.stack} onSubmit={handleSubmit}>
+                <section className={styles.formSection}>
+                    <h2 className={styles.formSectionTitle}>{t('General Information')}</h2>
+                    <div className={styles.formGrid}>
+                        <FormField label={t('Promotion Name')} htmlFor="promotion-name" required error={errors.name}>
+                            <Input
+                                id="promotion-name"
                                 value={data.name}
                                 onChange={(event) => setData('name', event.target.value)}
                                 placeholder={t('Enter promotion name')}
-                                required
+                                invalid={Boolean(errors.name)}
                             />
-                            {errors.name && <div className="form-error">{errors.name}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="type">
-                                {t('Promotion Type')}
-                            </label>
-                            <select
-                                id="type"
-                                className={`form-input-field ${errors.type ? 'error' : ''}`}
+                        <FormField label={t('Promotion Type')} htmlFor="promotion-type" error={errors.type}>
+                            <Select
+                                id="promotion-type"
                                 value={data.type}
                                 onChange={(event) => setData('type', event.target.value)}
+                                invalid={Boolean(errors.type)}
                             >
                                 {Object.entries(promotionTypes).map(([key, label]) => (
                                     <option key={key} value={key}>
                                         {t(label)}
                                     </option>
                                 ))}
-                            </select>
-                            {errors.type && <div className="form-error">{errors.type}</div>}
-                        </div>
+                            </Select>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="promotion_status">
-                                {t('Promotion Status')}
-                            </label>
-                            <select
-                                id="promotion_status"
-                                className={`form-input-field ${errors.is_active ? 'error' : ''}`}
+                        <FormField label={t('Promotion Status')} htmlFor="promotion-status" error={errors.is_active}>
+                            <Select
+                                id="promotion-status"
                                 value={statusValue}
                                 disabled={!isStatusEditable}
                                 onChange={(event) => {
@@ -216,137 +204,103 @@ export default function Edit() {
                                 <option value="expired" disabled>
                                     {t('Expired')}
                                 </option>
-                            </select>
-                            {errors.is_active && <div className="form-error">{errors.is_active}</div>}
-                            {!isStatusEditable && <div className="promotion-meta">{t('Status updates automatically based on schedule.')}</div>}
-                        </div>
+                            </Select>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="value">
-                                {t('Discount Value')}
-                            </label>
-                            <input
-                                id="value"
+                        <FormField label={t('Discount Value')} htmlFor="promotion-value" required error={errors.value}>
+                            <Input
+                                id="promotion-value"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className={`form-input-field ${errors.value ? 'error' : ''}`}
                                 value={data.value}
                                 onChange={(event) => setData('value', event.target.value)}
-                                required
+                                invalid={Boolean(errors.value)}
                             />
-                            {errors.value && <div className="form-error">{errors.value}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="minimum_order_value">
-                                {t('Minimum Order Value')}
-                            </label>
-                            <input
-                                id="minimum_order_value"
+                        <FormField label={t('Minimum Order Value')} htmlFor="promotion-minimum" error={errors.minimum_order_value}>
+                            <Input
+                                id="promotion-minimum"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className={`form-input-field ${errors.minimum_order_value ? 'error' : ''}`}
                                 value={data.minimum_order_value}
                                 onChange={(event) => setData('minimum_order_value', event.target.value)}
+                                invalid={Boolean(errors.minimum_order_value)}
                             />
-                            {errors.minimum_order_value && <div className="form-error">{errors.minimum_order_value}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="max_discount_amount">
-                                {t('Maximum Discount Amount')}
-                            </label>
-                            <input
-                                id="max_discount_amount"
+                        <FormField label={t('Maximum Discount Amount')} htmlFor="promotion-maximum" error={errors.max_discount_amount}>
+                            <Input
+                                id="promotion-maximum"
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className={`form-input-field ${errors.max_discount_amount ? 'error' : ''}`}
                                 value={data.max_discount_amount}
                                 onChange={(event) => setData('max_discount_amount', event.target.value)}
+                                invalid={Boolean(errors.max_discount_amount)}
                             />
-                            {errors.max_discount_amount && <div className="form-error">{errors.max_discount_amount}</div>}
-                        </div>
+                        </FormField>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="description">
-                            {t('Description')}
-                        </label>
+                    {!isStatusEditable && <p className={styles.note}>{t('Status updates automatically based on schedule.')}</p>}
+
+                    <FormField label={t('Description')} htmlFor="promotion-description" error={errors.description}>
                         <textarea
-                            id="description"
-                            className={`form-input-field form-textarea ${errors.description ? 'error' : ''}`}
+                            id="promotion-description"
+                            className={styles.textArea}
                             value={data.description}
                             onChange={(event) => setData('description', event.target.value)}
                             placeholder={t('Describe the promotion...')}
                         />
-                        {errors.description && <div className="form-error">{errors.description}</div>}
-                    </div>
-                </div>
+                    </FormField>
+                </section>
 
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Scheduling and Budget')}</h2>
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="starts_at">
-                                {t('Start Date')}
-                            </label>
-                            <input
-                                id="starts_at"
+                <section className={styles.formSection}>
+                    <h2 className={styles.formSectionTitle}>{t('Scheduling and Budget')}</h2>
+                    <div className={styles.formGrid}>
+                        <FormField label={t('Start Date')} htmlFor="promotion-starts" required error={errors.starts_at}>
+                            <Input
+                                id="promotion-starts"
                                 type="date"
-                                className={`form-input-field ${errors.starts_at ? 'error' : ''}`}
                                 value={data.starts_at}
                                 onChange={(event) => setData('starts_at', event.target.value)}
-                                required
+                                invalid={Boolean(errors.starts_at)}
                             />
-                            {errors.starts_at && <div className="form-error">{errors.starts_at}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="expires_at">
-                                {t('End Date')}
-                            </label>
-                            <input
-                                id="expires_at"
+                        <FormField label={t('End Date')} htmlFor="promotion-expires" required error={errors.expires_at}>
+                            <Input
+                                id="promotion-expires"
                                 type="date"
-                                className={`form-input-field ${errors.expires_at ? 'error' : ''}`}
                                 value={data.expires_at}
                                 onChange={(event) => setData('expires_at', event.target.value)}
-                                required
+                                invalid={Boolean(errors.expires_at)}
                             />
-                            {errors.expires_at && <div className="form-error">{errors.expires_at}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="usage_limit_per_user">
-                                {t('Usage Limit Per User')}
-                            </label>
-                            <input
-                                id="usage_limit_per_user"
+                        <FormField label={t('Usage Limit Per User')} htmlFor="promotion-usage" error={errors.usage_limit_per_user}>
+                            <Input
+                                id="promotion-usage"
                                 type="number"
                                 min="0"
-                                className={`form-input-field ${errors.usage_limit_per_user ? 'error' : ''}`}
                                 value={data.usage_limit_per_user}
                                 onChange={(event) => setData('usage_limit_per_user', event.target.value)}
+                                invalid={Boolean(errors.usage_limit_per_user)}
                             />
-                            {errors.usage_limit_per_user && <div className="form-error">{errors.usage_limit_per_user}</div>}
-                        </div>
+                        </FormField>
                     </div>
-                </div>
+                </section>
 
-                <div className="form-section">
-                    <h2 className="form-section-title">{t('Targeting')}</h2>
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="product_ids">
-                                {t('Select Products')}
-                            </label>
+                <section className={styles.formSection}>
+                    <h2 className={styles.formSectionTitle}>{t('Targeting')}</h2>
+                    <div className={styles.formGrid}>
+                        <FormField label={t('Select Products')} htmlFor="promotion-products" error={errors.product_ids}>
                             <select
-                                id="product_ids"
+                                id="promotion-products"
                                 multiple
-                                className={`form-input-field form-multi-select ${errors.product_ids ? 'error' : ''}`}
+                                className={styles.multiSelect}
                                 value={data.product_ids.map(String)}
                                 onChange={(event) => handleMultiSelectChange(event, 'product_ids')}
                             >
@@ -356,17 +310,13 @@ export default function Edit() {
                                     </option>
                                 ))}
                             </select>
-                            {errors.product_ids && <div className="form-error">{errors.product_ids}</div>}
-                        </div>
+                        </FormField>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="category_ids">
-                                {t('Select Categories')}
-                            </label>
+                        <FormField label={t('Select Categories')} htmlFor="promotion-categories" error={errors.category_ids}>
                             <select
-                                id="category_ids"
+                                id="promotion-categories"
                                 multiple
-                                className={`form-input-field form-multi-select ${errors.category_ids ? 'error' : ''}`}
+                                className={styles.multiSelect}
                                 value={data.category_ids.map(String)}
                                 onChange={(event) => handleMultiSelectChange(event, 'category_ids')}
                             >
@@ -376,30 +326,26 @@ export default function Edit() {
                                     </option>
                                 ))}
                             </select>
-                            {errors.category_ids && <div className="form-error">{errors.category_ids}</div>}
-                        </div>
+                        </FormField>
                     </div>
 
-                    <div className="form-group">
-                        <div className="form-checkbox">
-                            <input
-                                id="auto_apply_new_products"
-                                type="checkbox"
-                                checked={data.auto_apply_new_products}
-                                onChange={(event) => setData('auto_apply_new_products', event.target.checked)}
-                            />
-                            <label htmlFor="auto_apply_new_products">{t('Auto Apply New Products')}</label>
-                        </div>
-                    </div>
-                </div>
+                    <label className={styles.checkboxLabel}>
+                        <input
+                            type="checkbox"
+                            checked={data.auto_apply_new_products}
+                            onChange={(event) => setData('auto_apply_new_products', event.target.checked)}
+                        />
+                        {t('Auto Apply New Products')}
+                    </label>
+                </section>
 
-                <div className="form-actions">
-                    <ActionButton type="button" variant="secondary" onClick={handleCancel}>
+                <div className={styles.formFooter}>
+                    <Button type="button" variant="secondary" onClick={() => router.get(`/admin/promotions/${promotion.promotion_id}`)}>
                         {t('Cancel')}
-                    </ActionButton>
-                    <ActionButton type="submit" variant="primary" loading={processing}>
+                    </Button>
+                    <Button type="submit" variant="primary" loading={processing}>
                         {processing ? t('Saving...') : t('Save Changes')}
-                    </ActionButton>
+                    </Button>
                 </div>
             </form>
         </AppLayout>

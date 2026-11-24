@@ -9,7 +9,7 @@ import { Table, type ColumnDef as TableColumnDef } from './table';
 import styles from './data-table.module.css';
 
 export interface DataTableColumn<T> {
-    header: string;
+    header: React.ReactNode;
     accessorKey?: keyof T;
     cell?: (row: T) => React.ReactNode;
     align?: 'left' | 'center' | 'right';

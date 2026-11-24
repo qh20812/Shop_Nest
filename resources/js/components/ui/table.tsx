@@ -51,7 +51,7 @@ const DEFAULT_ALIGN = 'left' as const;
 type TableProps<T> = {
     columns: ColumnDef<T>[];
     data: T[];
-    rowKey?: keyof T | ((row: T) => string | number);
+    rowKey?: keyof T | ((row: T, index: number) => string | number);
     density?: 'compact' | 'comfortable';
     stickyHeader?: boolean;
     loading?: boolean;
@@ -60,9 +60,9 @@ type TableProps<T> = {
     onRowClick?: (row: T) => void;
 };
 
-function getRowKey<T>(row: T, index: number, rowKey?: keyof T | ((row: T) => string | number)): string | number {
+function getRowKey<T>(row: T, index: number, rowKey?: keyof T | ((row: T, index: number) => string | number)): string | number {
     if (typeof rowKey === 'function') {
-        return rowKey(row);
+        return rowKey(row, index);
     }
 
     if (rowKey) {

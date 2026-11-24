@@ -1,16 +1,20 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Check, Eye, EyeOff, Package, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface Category {
     category_id: number;
@@ -48,6 +52,8 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+type StatusAction = 'approve' | 'reject' | 'deactivate' | 'activate';
+
 export default function Index() {
     const { t } = useTranslation();
     const {
@@ -63,46 +69,21 @@ export default function Index() {
     const [categoryId, setCategoryId] = useState(filters.category_id || '');
     const [brandId, setBrandId] = useState(filters.brand_id || '');
     const [status, setStatus] = useState(filters.status || '');
-
-    // Helper function to get localized category name
-    const getCategoryName = (category: Category): string => {
-        return category.name || 'Unnamed Category';
-    };
-
-    // Helper function to get localized product name
-    const getProductName = React.useCallback((product: Product): string => {
-        return product.name || 'Unnamed Product';
-    }, []);
-
-    // Helper function to get localized product category name from product
-    const getProductCategoryName = React.useCallback(
-        (product: Product): string => {
-            return product.category?.name || t('No Category');
-        },
-        [t],
-    );
-
-    // Toast state
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-    // Confirmation modal state
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
         productId: number | null;
-        productName: string;
-        action: 'approve' | 'reject' | 'deactivate' | 'activate' | null;
+        action: StatusAction | null;
         title: string;
         message: string;
     }>({
         isOpen: false,
         productId: null,
-        productName: '',
         action: null,
         title: '',
         message: '',
     });
 
-    // Listen for flash messages from backend
     useEffect(() => {
         if (flash?.success) {
             setToast({ type: 'success', message: flash.success });
@@ -111,96 +92,14 @@ export default function Index() {
         }
     }, [flash]);
 
-    // Auto-apply search filter on typing (debounced)
-    // useEffect(() => {
-    //     const delayTimer = setTimeout(() => {
-    //         if (search !== filters.search || categoryId !== filters.category_id || brandId !== filters.brand_id || status !== filters.status) {
-    //             router.get('/admin/products', {
-    //                 search: search || undefined,
-    //                 category_id: categoryId || undefined,
-    //                 brand_id: brandId || undefined,
-    //                 status: status || undefined
-    //             }, {
-    //                 preserveState: true,
-    //                 preserveScroll: true,
-    //             });
-    //         }
-    //     }, 500);
-
-    //     return () => clearTimeout(delayTimer);
-    // }, [search, categoryId, brandId, status, filters.search, filters.category_id, filters.brand_id, filters.status]);
-
     const applyFilters = () => {
         router.get('/admin/products', { search, category_id: categoryId, brand_id: brandId, status }, { preserveState: true });
     };
 
-    const handleStatusAction = React.useCallback(
-        (product: Product, action: 'approve' | 'reject' | 'deactivate' | 'activate') => {
-            const productName = getProductName(product);
-            const actionMessages = {
-                approve: {
-                    title: t('Confirm Approve Product'),
-                    message: `${t('Are you sure you want to approve product')} "${productName}"? ${t('This will make it active and visible to customers.')}`,
-                },
-                reject: {
-                    title: t('Confirm Reject Product'),
-                    message: `${t('Are you sure you want to reject product')} "${productName}"? ${t('This will mark it as inactive.')}`,
-                },
-                deactivate: {
-                    title: t('Confirm Deactivate Product'),
-                    message: `${t('Are you sure you want to deactivate product')} "${productName}"? ${t('This will hide it from customers.')}`,
-                },
-                activate: {
-                    title: t('Confirm Activate Product'),
-                    message: `${t('Are you sure you want to activate product')} "${productName}"? ${t('This will make it visible to customers again.')}`,
-                },
-            };
+    const getProductName = (product: Product) => product.name || t('Unnamed Product');
 
-            setConfirmModal({
-                isOpen: true,
-                productId: product.product_id,
-                productName: productName,
-                action,
-                title: actionMessages[action].title,
-                message: actionMessages[action].message,
-            });
-        },
-        [t, getProductName, setConfirmModal],
-    );
-
-    const handleConfirmAction = () => {
-        if (!confirmModal.productId || !confirmModal.action) return;
-
-        const statusMap = {
-            approve: 2, // active
-            reject: 3, // inactive
-            deactivate: 3, // inactive
-            activate: 2, // active
-        };
-
-        router.patch(`/admin/products/${confirmModal.productId}/status`, {
-            status: statusMap[confirmModal.action],
-        });
-    };
-
-    const handleCloseModal = () => {
-        setConfirmModal({
-            isOpen: false,
-            productId: null,
-            productName: '',
-            action: null,
-            title: '',
-            message: '',
-        });
-    };
-
-    const handleCloseToast = () => {
-        setToast(null);
-    };
-
-    // Helper functions
-    const getProductStatus = React.useCallback((status: number) => {
-        switch (status) {
+    const getProductStatus = (productStatus: number) => {
+        switch (productStatus) {
             case 1:
                 return 'pending';
             case 2:
@@ -210,169 +109,170 @@ export default function Index() {
             default:
                 return 'pending';
         }
-    }, []);
+    };
 
-    const getProductPrice = React.useCallback(
-        (product: Product) => {
-            if (!product.variants || product.variants.length === 0) {
-                return t('No variants');
-            }
+    const getProductPrice = (product: Product) => {
+        if (!product.variants || product.variants.length === 0) {
+            return t('No variants');
+        }
 
-            const prices = product.variants.map((v) => v.price);
-            const minPrice = Math.min(...prices);
-            const maxPrice = Math.max(...prices);
+        const prices = product.variants.map((variant) => variant.price);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
 
-            if (minPrice === maxPrice) {
-                return `${minPrice.toLocaleString()} VND`;
-            }
-            return `${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()} VND`;
+        if (minPrice === maxPrice) {
+            return formatVnd(minPrice);
+        }
+
+        return `${formatVnd(minPrice)} - ${formatVnd(maxPrice)}`;
+    };
+
+    const getSellerName = (seller: Product['seller']) => `${seller.first_name} ${seller.last_name}`.trim() || seller.username;
+
+    const handleStatusAction = (product: Product, action: StatusAction) => {
+        const productName = getProductName(product);
+        const messages: Record<StatusAction, { title: string; message: string }> = {
+            approve: {
+                title: t('Confirm Approve Product'),
+                message: `${t('Are you sure you want to approve product')} "${productName}"? ${t('This will make it active and visible to customers.')}`,
+            },
+            reject: {
+                title: t('Confirm Reject Product'),
+                message: `${t('Are you sure you want to reject product')} "${productName}"? ${t('This will mark it as inactive.')}`,
+            },
+            deactivate: {
+                title: t('Confirm Deactivate Product'),
+                message: `${t('Are you sure you want to deactivate product')} "${productName}"? ${t('This will hide it from customers.')}`,
+            },
+            activate: {
+                title: t('Confirm Activate Product'),
+                message: `${t('Are you sure you want to activate product')} "${productName}"? ${t('This will make it visible to customers again.')}`,
+            },
+        };
+
+        setConfirmModal({ isOpen: true, productId: product.product_id, action, ...messages[action] });
+    };
+
+    const handleConfirmAction = () => {
+        if (!confirmModal.productId || !confirmModal.action) return;
+
+        const statusMap: Record<StatusAction, number> = { approve: 2, reject: 3, deactivate: 3, activate: 2 };
+
+        router.patch(`/admin/products/${confirmModal.productId}/status`, {
+            status: statusMap[confirmModal.action],
+        });
+    };
+
+    const productColumns = [
+        {
+            key: 'product',
+            header: t('Product'),
+            cell: (product: Product) => <ProductInfoCell product={product} />,
         },
-        [t],
-    );
+        {
+            key: 'category',
+            header: t('Category'),
+            cell: (product: Product) => <span className={styles.muted}>{product.category?.name || t('No Category')}</span>,
+        },
+        {
+            key: 'seller',
+            header: t('Seller'),
+            cell: (product: Product) => <span className={styles.muted}>{getSellerName(product.seller)}</span>,
+        },
+        {
+            key: 'brand',
+            header: t('Brand'),
+            cell: (product: Product) => <span className={styles.muted}>{product.brand?.name}</span>,
+        },
+        {
+            key: 'price',
+            header: t('Price'),
+            cell: (product: Product) => <span className={styles.priceAccent}>{getProductPrice(product)}</span>,
+        },
+        {
+            key: 'stock',
+            header: t('Stock'),
+            cell: (product: Product) => (
+                <span className={`${styles.stockBadge} ${product.variants_sum_stock_quantity > 0 ? styles.stockIn : styles.stockOut}`.trim()}>
+                    {product.variants_sum_stock_quantity || 0} {t('units')}
+                </span>
+            ),
+        },
+        {
+            key: 'status',
+            header: t('Status'),
+            cell: (product: Product) => <StatusBadge status={getProductStatus(product.status)} />,
+        },
+        {
+            key: 'actions',
+            header: t('Actions'),
+            cell: (product: Product) => {
+                const actions: ActionConfig[] = [];
 
-    const getSellerName = React.useCallback((seller: Product['seller']) => {
-        return `${seller.first_name} ${seller.last_name}`.trim() || seller.username;
-    }, []);
+                if (product.status === 1) {
+                    actions.push(
+                        {
+                            type: 'button',
+                            onClick: () => handleStatusAction(product, 'approve'),
+                            variant: 'primary',
+                            icon: Check,
+                            label: t('Approve'),
+                        },
+                        {
+                            type: 'button',
+                            onClick: () => handleStatusAction(product, 'reject'),
+                            variant: 'danger',
+                            icon: X,
+                            label: t('Reject'),
+                        },
+                    );
+                } else if (product.status === 2) {
+                    actions.push(
+                        {
+                            type: 'link',
+                            href: `/admin/products/${product.product_id}`,
+                            variant: 'primary',
+                            icon: Eye,
+                            label: t('View'),
+                        },
+                        {
+                            type: 'button',
+                            onClick: () => handleStatusAction(product, 'deactivate'),
+                            variant: 'danger',
+                            icon: EyeOff,
+                            label: t('Deactivate'),
+                        },
+                    );
+                } else if (product.status === 3) {
+                    actions.push(
+                        {
+                            type: 'link',
+                            href: `/admin/products/${product.product_id}`,
+                            variant: 'primary',
+                            icon: Eye,
+                            label: t('View'),
+                        },
+                        {
+                            type: 'button',
+                            onClick: () => handleStatusAction(product, 'activate'),
+                            variant: 'primary',
+                            icon: Check,
+                            label: t('Activate'),
+                        },
+                    );
+                }
 
-    // Define columns for DataTable with useMemo for performance optimization
-    const productColumns = React.useMemo(
-        () => [
-            {
-                id: 'product_info',
-                header: t('Product'),
-                cell: (product: Product) => <ProductInfoCell product={product} />,
+                return <ActionButtons actions={actions} />;
             },
-            {
-                id: 'category_name',
-                header: t('Category'),
-                cell: (product: Product) => <div style={{ color: 'var(--dark)' }}>{getProductCategoryName(product)}</div>,
-            },
-            {
-                id: 'seller_info',
-                header: t('Seller'),
-                cell: (product: Product) => <div style={{ color: 'var(--dark)' }}>{getSellerName(product.seller)}</div>,
-            },
-            {
-                id: 'brand_name',
-                header: t('Brand'),
-                cell: (product: Product) => <div style={{ color: 'var(--dark)' }}>{product.brand.name}</div>,
-            },
-            {
-                id: 'price_range',
-                header: t('Price'),
-                cell: (product: Product) => (
-                    <div
-                        style={{
-                            fontWeight: '500',
-                            color: 'var(--primary)',
-                            fontSize: '14px',
-                        }}
-                    >
-                        {getProductPrice(product)}
-                    </div>
-                ),
-            },
-            {
-                id: 'stock_quantity',
-                header: t('Stock'),
-                cell: (product: Product) => (
-                    <div
-                        style={{
-                            padding: '4px 8px',
-                            background: product.variants_sum_stock_quantity > 0 ? 'var(--light-success)' : 'var(--light-danger)',
-                            color: product.variants_sum_stock_quantity > 0 ? 'var(--success)' : 'var(--danger)',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            textAlign: 'center',
-                        }}
-                    >
-                        {product.variants_sum_stock_quantity || 0} {t('units')}
-                    </div>
-                ),
-            },
-            {
-                id: 'status',
-                header: t('Status'),
-                cell: (product: Product) => <StatusBadge status={getProductStatus(product.status)} />,
-            },
-            {
-                id: 'actions',
-                header: t('Actions'),
-                cell: (product: Product) => {
-                    const actions: ActionConfig[] = [];
-
-                    if (product.status === 1) {
-                        // Pending - show Approve and Reject
-                        actions.push(
-                            {
-                                type: 'button',
-                                onClick: () => handleStatusAction(product, 'approve'),
-                                variant: 'primary',
-                                icon: 'bx bx-check',
-                                label: t('Approve'),
-                            },
-                            {
-                                type: 'button',
-                                onClick: () => handleStatusAction(product, 'reject'),
-                                variant: 'danger',
-                                icon: 'bx bx-x',
-                                label: t('Reject'),
-                            },
-                        );
-                    } else if (product.status === 2) {
-                        // Active - show View and Deactivate
-                        actions.push(
-                            {
-                                type: 'link',
-                                href: `/admin/products/${product.product_id}`,
-                                variant: 'primary',
-                                icon: 'bx bx-show',
-                                label: t('View'),
-                            },
-                            {
-                                type: 'button',
-                                onClick: () => handleStatusAction(product, 'deactivate'),
-                                variant: 'danger',
-                                icon: 'bx bx-hide',
-                                label: t('Deactivate'),
-                            },
-                        );
-                    } else if (product.status === 3) {
-                        // Inactive - show View and Activate
-                        actions.push(
-                            {
-                                type: 'link',
-                                href: `/admin/products/${product.product_id}`,
-                                variant: 'primary',
-                                icon: 'bx bx-show',
-                                label: t('View'),
-                            },
-                            {
-                                type: 'button',
-                                onClick: () => handleStatusAction(product, 'activate'),
-                                variant: 'primary',
-                                icon: 'bx bx-show',
-                                label: t('Activate'),
-                            },
-                        );
-                    }
-
-                    return <ActionButtons actions={actions} />;
-                },
-            },
-        ],
-        [t, getProductCategoryName, getSellerName, getProductStatus, getProductPrice, handleStatusAction],
-    );
+        },
+    ];
 
     return (
         <AppLayout>
             <Head title={t('Product Management')} />
 
-            {/* Toast notification */}
-            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Header và Bộ lọc */}
             <FilterPanel
                 title={t('Product Management')}
                 breadcrumbs={[
@@ -389,19 +289,13 @@ export default function Index() {
                         value: categoryId,
                         onChange: setCategoryId,
                         label: t('-- All Categories --'),
-                        options: categories.map((category) => ({
-                            value: category.category_id,
-                            label: getCategoryName(category),
-                        })),
+                        options: categories.map((category) => ({ value: category.category_id, label: category.name })),
                     },
                     {
                         value: brandId,
                         onChange: setBrandId,
                         label: t('-- All Brands --'),
-                        options: brands.map((brand) => ({
-                            value: brand.brand_id,
-                            label: brand.name,
-                        })),
+                        options: brands.map((brand) => ({ value: brand.brand_id, label: brand.name })),
                     },
                     {
                         value: status,
@@ -417,22 +311,19 @@ export default function Index() {
                 onApplyFilters={applyFilters}
             />
 
-            {/* Bảng dữ liệu */}
             <DataTable
                 columns={productColumns}
                 data={products.data}
                 headerTitle={`${t('Product List')} (${totalProducts})`}
-                headerIcon="bx-package"
+                headerIcon={Package}
                 emptyMessage={t('No products found')}
             />
 
-            {/* Phân trang */}
             <Pagination links={products.links} />
 
-            {/* Confirmation Modal */}
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
-                onClose={handleCloseModal}
+                onClose={() => setConfirmModal({ isOpen: false, productId: null, action: null, title: '', message: '' })}
                 onConfirm={handleConfirmAction}
                 title={confirmModal.title}
                 message={confirmModal.message}

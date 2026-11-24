@@ -1,0 +1,366 @@
+/* Analytics components. Phase 8. Tokens only. */
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+    padding: var(--sn-space-4) var(--sn-space-5);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.cardTitle {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-medium);
+    letter-spacing: var(--sn-tracking-wider);
+    text-transform: uppercase;
+}
+
+.cardValue {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-2xl);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-tight);
+    font-variant-numeric: tabular-nums;
+}
+
+.cardChange {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-1);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.changeUp {
+    color: var(--sn-color-success-text);
+}
+
+.changeDown {
+    color: var(--sn-color-danger-text);
+}
+
+.changeIcon {
+    width: var(--sn-icon-xs);
+    height: var(--sn-icon-xs);
+}
+
+.changeLabel {
+    color: var(--sn-color-text-muted);
+}
+
+.cardFooter {
+    margin-top: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.chartCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-3);
+    padding: var(--sn-space-5);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.chartHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sn-space-2);
+}
+
+.chartTitle {
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-md);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.chartDescription {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.chartBody {
+    min-height: 12rem;
+}
+
+.chartEmpty,
+.chartLoading {
+    display: flex;
+    min-height: 12rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+    text-align: center;
+}
+
+.chartEmptyIcon {
+    width: var(--sn-icon-lg);
+    height: var(--sn-icon-lg);
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+}
+
+.filtersHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sn-space-3);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.filtersTitles {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+}
+
+.filtersTitle {
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-md);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.filtersDescription {
+    margin: 0;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.filtersActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.filtersGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-3);
+}
+
+.filtersCustom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+}
+
+.filtersCustomGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+}
+
+.filtersLabel {
+    color: var(--sn-color-text-faint);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+    letter-spacing: var(--sn-tracking-wider);
+    text-transform: uppercase;
+}
+
+.checkboxGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--sn-space-2);
+}
+
+.checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+}
+
+.checkbox input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--sn-color-accent);
+}
+
+.tableCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.tableHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sn-space-2);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.tableTitle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-md);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.tableTitleIcon {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    color: var(--sn-color-text-muted);
+}
+
+.sortButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-1);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+}
+
+.sortButton:hover {
+    color: var(--sn-color-text);
+}
+
+.sortIcon {
+    width: var(--sn-icon-xs);
+    height: var(--sn-icon-xs);
+}
+
+.cellRight {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.cellCenter {
+    text-align: center;
+}
+
+.emptyCell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.emptyIcon {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+}
+
+.loadingCell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.spin {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.reference {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.reference strong {
+    color: var(--sn-color-text);
+    font-weight: var(--sn-weight-medium);
+}
+
+.referenceActor {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.activityType {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    letter-spacing: var(--sn-tracking-wide);
+    text-transform: uppercase;
+}
+
+.productName,
+.userName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.productName strong,
+.userName strong {
+    color: var(--sn-color-text);
+    font-weight: var(--sn-weight-medium);
+}
+
+.productSku,
+.userEmail {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.tableFooter {
+    padding-top: var(--sn-space-3);
+    border-top: 1px solid var(--sn-color-border);
+}
+
+@media (min-width: 640px) {
+    .filtersGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .filtersGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spin {
+        animation: none;
+    }
+}

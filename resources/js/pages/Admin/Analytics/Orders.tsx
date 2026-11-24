@@ -1,16 +1,23 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Filter, ShoppingBag } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
 import AnalyticsCard from '@/components/admin/analytics/AnalyticsCard';
 import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/analytics/AnalyticsChart';
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
+import { Button } from '@/components/ui/button';
+import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
 import AppLayout from '@/layouts/app/AppLayout';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+
+import styles from '@/components/admin/admin.module.css';
+import analyticsStyles from '@/components/admin/analytics/analytics.module.css';
 
 type OrderStatusSummary = {
     status: string;
@@ -136,7 +143,7 @@ const Orders: React.FC = () => {
     const { props } = usePage<OrdersPageProps>();
     const analytics = useMemo<OrderAnalyticsPayload>(() => props.orders ?? {}, [props.orders]);
     const initialFilters = props.filters ?? {};
-    const locale = typeof props.locale === 'string' ? props.locale : 'en';
+    const locale = typeof props.locale === 'string' ? props.locale : 'vi';
     const currency = resolveCurrencyCode(props.currency);
     const { t } = useTranslation();
 
@@ -168,10 +175,9 @@ const Orders: React.FC = () => {
     const disputeRate = analytics.disputeRate ?? 0;
     const averageOrderValue = analytics.averageOrderValue ?? 0;
 
-    const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
     const currencyFormatter = useMemo(
         () =>
-            new Intl.NumberFormat(locale, {
+            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
                 style: 'currency',
                 currency,
                 maximumFractionDigits: 0,
@@ -180,7 +186,7 @@ const Orders: React.FC = () => {
     );
     const dateFormatter = useMemo(
         () =>
-            new Intl.DateTimeFormat(locale, {
+            new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
                 dateStyle: 'medium',
                 timeStyle: 'short',
             }),
@@ -188,17 +194,11 @@ const Orders: React.FC = () => {
     );
 
     const totalOrders = useMemo(() => statusDistribution.reduce((sum, status) => sum + (status.value ?? 0), 0), [statusDistribution]);
-
     const fulfillmentRate = conversion.checkoutToOrderRate ?? 0;
     const avgFulfillmentHours = fulfillment.avgTotalHours ?? 0;
 
     const statusChartData: ChartDataPoint[] = useMemo(
-        () =>
-            statusDistribution.map((entry) => ({
-                label: entry.label ?? entry.status,
-                value: entry.value ?? 0,
-                status: entry.status,
-            })),
+        () => statusDistribution.map((entry) => ({ label: entry.label ?? entry.status, value: entry.value ?? 0, status: entry.status })),
         [statusDistribution],
     );
 
@@ -213,11 +213,8 @@ const Orders: React.FC = () => {
         return stages.map(([label, value]) => ({ label, value }));
     }, [conversion.cartAdds, conversion.checkoutCompletes, conversion.checkoutStarts, conversion.orders, t, totalOrders]);
 
-    const paymentMethodData: ChartDataPoint[] = useMemo(() => [], []);
-
     const tableSource = useMemo(() => {
         const candidates: Array<OrderRecordInput[] | undefined> = [analytics.orders, analytics.rows, analytics.records, analytics.table];
-
         return candidates.find((candidate): candidate is OrderRecordInput[] => Array.isArray(candidate)) ?? [];
     }, [analytics.orders, analytics.records, analytics.rows, analytics.table]);
 
@@ -226,15 +223,13 @@ const Orders: React.FC = () => {
             tableSource.map((item, index) => {
                 const identifier = item.id ?? item.order_id ?? `order-${index + 1}`;
                 const orderNumber = item.number ?? item.code ?? (typeof identifier === 'number' ? `#${identifier}` : String(identifier));
-                const placedAt = item.placed_at ?? item.created_at ?? item.date ?? null;
-                const rawStatus = item.status ?? 'pending_confirmation';
 
                 return {
                     id: String(identifier),
                     orderNumber,
                     customer: item.customer ?? item.customer_name ?? item.customerName ?? t('Unknown Customer'),
-                    placedAt,
-                    status: String(rawStatus),
+                    placedAt: item.placed_at ?? item.created_at ?? item.date ?? null,
+                    status: String(item.status ?? 'pending_confirmation'),
                     total: Number(item.total_amount ?? item.totalAmount ?? 0),
                     items: Number(item.items_count ?? item.itemsCount ?? 0),
                     paymentMethod: item.payment_method ?? item.paymentMethod ?? null,
@@ -249,13 +244,9 @@ const Orders: React.FC = () => {
                 key: 'orderNumber',
                 label: t('Order'),
                 sortable: false,
-                render: (value) => <strong>{String(value ?? '')}</strong>,
+                render: (value) => <span className={styles.cellTitle}>{String(value ?? '')}</span>,
             },
-            {
-                key: 'customer',
-                label: t('Customer'),
-                sortable: false,
-            },
+            { key: 'customer', label: t('Customer'), sortable: false },
             {
                 key: 'placedAt',
                 label: t('Placed At'),
@@ -284,7 +275,7 @@ const Orders: React.FC = () => {
                 label: t('Items'),
                 sortable: false,
                 align: 'right',
-                render: (value) => numberFormatter.format(Number(value ?? 0)),
+                render: (value) => formatNumber(Number(value ?? 0)),
             },
             {
                 key: 'total',
@@ -300,7 +291,7 @@ const Orders: React.FC = () => {
                 render: (value) => (value ? t(String(value)) : t('Unknown')),
             },
         ],
-        [currencyFormatter, dateFormatter, numberFormatter, t],
+        [currencyFormatter, dateFormatter, t],
     );
 
     const statusOptions = useMemo(() => Object.entries(props.statusOptions ?? {}), [props.statusOptions]);
@@ -310,64 +301,45 @@ const Orders: React.FC = () => {
     };
 
     const handleStatusToggle = (status: string) => {
-        setSelectedStatuses((previous) => {
-            if (previous.includes(status)) {
-                return previous.filter((value) => value !== status);
-            }
-            return [...previous, status];
-        });
+        setSelectedStatuses((previous) => (previous.includes(status) ? previous.filter((value) => value !== status) : [...previous, status]));
     };
 
     const handleApplyFilters = () => {
-        const payload: FilterPayload = {
-            ...cleanupFilters(filters),
-        };
+        const payload: FilterPayload = { ...cleanupFilters(filters) };
 
         if (selectedStatuses.length > 0) {
             payload.status = selectedStatuses;
         }
 
-        router.get('/admin/analytics/orders', payload, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/orders', payload, { preserveState: true, preserveScroll: true });
     };
 
     const handleResetFilters = () => {
-        const resetState: OrderFilterState = {
-            date_from: '',
-            date_to: '',
-            seller_id: '',
-            category_id: '',
-            customer_id: '',
-        };
-        setFilters(resetState);
+        setFilters({ date_from: '', date_to: '', seller_id: '', category_id: '', customer_id: '' });
         setSelectedStatuses([]);
-
-        router.get(
-            '/admin/analytics/orders',
-            {},
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        router.get('/admin/analytics/orders', {}, { preserveState: true, preserveScroll: true });
     };
 
     return (
         <AppLayout>
             <Head title={t('Order Analytics')} />
-            <div className="inventory-page analytics-page analytics-page--orders">
-                <section className="inventory-section analytics-page__header">
-                    <div className="analytics-page__heading">
-                        <h1>{t('Order Analytics')}</h1>
-                        <p className="analytics-page__subtitle">
-                            {t('Track fulfillment health, monitor status distribution, and review conversion performance across the order funnel.')}
-                        </p>
-                    </div>
+            <Header
+                title={t('Order Analytics')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Analytics'), href: '/admin/analytics' },
+                    { label: t('Order Analytics'), href: '/admin/analytics/orders', active: true },
+                ]}
+            />
+
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <p className={styles.muted}>
+                        {t('Track fulfillment health, monitor status distribution, and review conversion performance across the order funnel.')}
+                    </p>
                 </section>
 
-                <section className="inventory-section analytics-page__filters">
+                <section className={styles.section}>
                     <AnalyticsFilters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -376,13 +348,14 @@ const Orders: React.FC = () => {
                         onReset={handleResetFilters}
                     >
                         {statusOptions.length > 0 ? (
-                            <div className="analytics-filters__custom-group">
-                                <span className="analytics-filters__label">{t('Order Status')}</span>
-                                <div className="analytics-filters__checkbox-grid">
+                            <div className={analyticsStyles.filtersCustomGroup}>
+                                <span className={analyticsStyles.filtersLabel}>{t('Order Status')}</span>
+                                <div className={analyticsStyles.checkboxGrid}>
                                     {statusOptions.map(([value, label]) => {
                                         const checked = selectedStatuses.includes(value);
+
                                         return (
-                                            <label key={value} className="analytics-filters__checkbox">
+                                            <label key={value} className={analyticsStyles.checkbox}>
                                                 <input type="checkbox" checked={checked} onChange={() => handleStatusToggle(value)} />
                                                 <span>{t(label)}</span>
                                             </label>
@@ -392,93 +365,72 @@ const Orders: React.FC = () => {
                             </div>
                         ) : null}
 
-                        <div className="analytics-filters__actions-row">
-                            <button type="button" className="inventory-link-button" onClick={handleApplyFilters}>
-                                <i className="bx bx-filter"></i>
+                        <div className={styles.filterActions}>
+                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                                <Filter aria-hidden="true" />
                                 {t('Apply Filters')}
-                            </button>
+                            </Button>
                         </div>
                     </AnalyticsFilters>
                 </section>
 
-                <section className="inventory-section analytics-page__kpis">
-                    <ul className="insights analytics-page__insights-grid">
+                <section className={styles.section}>
+                    <ul className={styles.kpiList}>
                         <AnalyticsCard
                             title={t('Total Orders')}
-                            value={numberFormatter.format(totalOrders)}
-                            icon="bx bx-cart"
-                            color="blue"
+                            value={formatNumber(totalOrders)}
                             tooltip={t('Orders counted within the selected filters and statuses.')}
                         />
                         <AnalyticsCard
                             title={t('Average Order Value')}
                             value={currencyFormatter.format(averageOrderValue)}
-                            icon="bx bx-dollar"
-                            color="green"
                             tooltip={t('Mean revenue per order during the selected period.')}
                         />
                         <AnalyticsCard
                             title={t('Fulfillment Rate')}
                             value={`${(fulfillmentRate ?? 0).toFixed(1)}%`}
-                            icon="bx bx-transfer"
-                            color={fulfillmentRate >= 90 ? 'green' : fulfillmentRate >= 70 ? 'yellow' : 'red'}
                             tooltip={`${t('Ratio of successful checkouts converting into completed orders.')} ${t('Average fulfillment time')}: ${avgFulfillmentHours.toFixed(1)}h`}
                         />
                         <AnalyticsCard
                             title={t('Dispute Rate')}
                             value={`${(disputeRate ?? 0).toFixed(2)}%`}
-                            icon="bx bx-error-circle"
-                            color={disputeRate <= 2 ? 'green' : disputeRate <= 5 ? 'yellow' : 'red'}
                             tooltip={t('Percentage of orders that resulted in disputes for the chosen timeframe.')}
                         />
                     </ul>
                 </section>
 
-                <section className="inventory-section analytics-page__charts">
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--two">
-                        <AnalyticsChart
-                            type="bar"
-                            data={statusChartData}
-                            title={t('Status Distribution')}
-                            description={t('Visual breakdown of orders across fulfillment statuses.')}
-                            legend={false}
-                        />
-                        <AnalyticsChart
-                            type="line"
-                            data={conversionSeries}
-                            title={t('Order Funnel Volume')}
-                            description={t('Volume flowing through each stage of the conversion funnel.')}
-                            legend={false}
-                        />
-                    </div>
-
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--two">
-                        <AnalyticsChart
-                            type="pie"
-                            data={paymentMethodData}
-                            title={t('Payment Methods')}
-                            description={t('Payment method distribution for completed orders.')}
-                            legend
-                        />
-                        <AnalyticsChart
-                            type="funnel"
-                            data={conversionSeries}
-                            title={t('Checkout Conversion Funnel')}
-                            description={t('Funnel visualization from cart activity to completed orders.')}
-                        />
-                    </div>
-                </section>
-
-                <section className="inventory-section analytics-page__table">
-                    <AnalyticsTable
-                        data={tableRows}
-                        columns={tableColumns}
-                        headerTitle={t('Recent Orders Overview')}
-                        headerIcon="bx bx-receipt"
-                        emptyMessage={t('No order records available for the selected filters.')}
-                        rowKey={(row) => row.id}
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="bar"
+                        data={statusChartData}
+                        title={t('Status Distribution')}
+                        description={t('Visual breakdown of orders across fulfillment statuses.')}
+                    />
+                    <AnalyticsChart
+                        type="line"
+                        data={conversionSeries}
+                        title={t('Order Funnel Volume')}
+                        description={t('Volume flowing through each stage of the conversion funnel.')}
                     />
                 </section>
+
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="funnel"
+                        data={conversionSeries}
+                        title={t('Checkout Conversion Funnel')}
+                        description={t('Funnel visualization from cart activity to completed orders.')}
+                    />
+                </section>
+
+                <AnalyticsTable
+                    data={tableRows}
+                    columns={tableColumns}
+                    headerTitle={t('Recent Orders Overview')}
+                    headerIcon={<ShoppingBag aria-hidden="true" />}
+                    emptyMessage={t('No order records available for the selected filters.')}
+                    rowKey={(row) => row.id}
+                />
             </div>
         </AppLayout>
     );

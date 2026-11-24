@@ -1,15 +1,19 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Eye, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatDate, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface Promotion {
     promotion_id: number;
@@ -53,36 +57,13 @@ interface ConfirmState {
     promotionName: string;
 }
 
-type TableColumn = {
-    header: string;
-    accessorKey?: keyof Promotion;
-    cell?: (promotion: Promotion) => React.ReactNode;
-};
-
-const formatDate = (value?: string | null) => {
-    if (!value) {
-        return '—';
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString();
-};
-
-const formatCurrency = (value?: number | string | null) => {
+const toNumber = (value?: number | string | null): number | null => {
     if (value === null || value === undefined || value === '') {
-        return '—';
+        return null;
     }
 
-    const numeric = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (Number.isNaN(numeric)) {
-        return '—';
-    }
-
-    return `${numeric.toLocaleString()} VND`;
+    const numeric = typeof value === 'string' ? Number.parseFloat(value) : Number(value);
+    return Number.isNaN(numeric) ? null : numeric;
 };
 
 export default function Index() {
@@ -125,11 +106,7 @@ export default function Index() {
     };
 
     const openDeleteModal = (promotion: Promotion) => {
-        setConfirmState({
-            open: true,
-            promotionId: promotion.promotion_id,
-            promotionName: promotion.name,
-        });
+        setConfirmState({ open: true, promotionId: promotion.promotion_id, promotionName: promotion.name });
     };
 
     const handleConfirmDelete = () => {
@@ -137,86 +114,89 @@ export default function Index() {
             return;
         }
 
-        router.delete(`/admin/promotions/${confirmState.promotionId}`, {
-            preserveScroll: true,
-        });
+        router.delete(`/admin/promotions/${confirmState.promotionId}`, { preserveScroll: true });
     };
 
-    const clearToast = () => {
-        setToast(null);
-    };
-
-    const columns: TableColumn[] = useMemo(() => {
-        return [
+    const columns = useMemo(
+        () => [
             {
-                header: 'Promotion Name',
-                cell: (promotion) => (
-                    <div className="promotion-cell">
-                        <div className="promotion-name">{promotion.name || t('Unnamed Promotion')}</div>
-                        <div className="promotion-meta">
-                            {formatDate(promotion.start_date)} ⟶ {formatDate(promotion.end_date)}
-                        </div>
+                key: 'name',
+                header: t('Promotion Name'),
+                cell: (promotion: Promotion) => (
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>{promotion.name || t('Unnamed Promotion')}</span>
+                        <span className={styles.cellMeta}>
+                            {formatDate(promotion.start_date)} - {formatDate(promotion.end_date)}
+                        </span>
                     </div>
                 ),
             },
             {
-                header: 'Type',
-                cell: (promotion) => <div className="promotion-meta">{typeOptions[promotion.type] ?? promotion.type}</div>,
+                key: 'type',
+                header: t('Type'),
+                cell: (promotion: Promotion) => <span className={styles.muted}>{typeOptions[promotion.type] ?? promotion.type}</span>,
             },
             {
-                header: 'Discount Value',
-                cell: (promotion) => (
-                    <div className="promotion-discount">
-                        {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString()}%` : formatCurrency(promotion.value)}
+                key: 'value',
+                header: t('Discount Value'),
+                cell: (promotion: Promotion) => (
+                    <span className={styles.priceAccent}>
+                        {promotion.type === 'percentage'
+                            ? `${Number(promotion.value).toLocaleString('vi-VN')}%`
+                            : formatVnd(toNumber(promotion.value))}
+                    </span>
+                ),
+            },
+            {
+                key: 'budget',
+                header: t('Budget'),
+                cell: (promotion: Promotion) => (
+                    <div className={styles.cellStack}>
+                        <span className={styles.price}>{formatVnd(toNumber(promotion.allocated_budget))}</span>
+                        <span className={styles.cellMeta}>
+                            {t('Spent')}: {formatVnd(toNumber(promotion.spent_budget))}
+                        </span>
                     </div>
                 ),
             },
             {
-                header: 'Budget',
-                cell: (promotion) => (
-                    <div className="promotion-budget">
-                        <div className="promotion-budget-amount">{formatCurrency(promotion.allocated_budget)}</div>
-                        <div className="promotion-meta">
-                            {t('Spent')}: {formatCurrency(promotion.spent_budget)}
-                        </div>
-                    </div>
-                ),
-            },
-            {
-                header: 'Usage',
-                cell: (promotion) => (
-                    <div className="promotion-meta">
+                key: 'usage',
+                header: t('Usage'),
+                cell: (promotion: Promotion) => (
+                    <span className={styles.numeric}>
                         {promotion.usage_limit ? `${promotion.used_count} / ${promotion.usage_limit}` : `${promotion.used_count}`}
-                    </div>
+                    </span>
                 ),
             },
             {
-                header: 'Status',
-                cell: (promotion) => <StatusBadge status={promotion.status} />,
+                key: 'status',
+                header: t('Status'),
+                cell: (promotion: Promotion) => <StatusBadge status={promotion.status} />,
             },
             {
-                header: 'Actions',
-                cell: (promotion) => {
+                key: 'actions',
+                header: t('Actions'),
+                cell: (promotion: Promotion) => {
                     const actions: ActionConfig[] = [
                         {
                             type: 'link',
                             label: t('View'),
                             href: `/admin/promotions/${promotion.promotion_id}`,
-                            icon: 'bx bx-show',
+                            icon: Eye,
                             variant: 'primary',
                         },
                         {
                             type: 'link',
                             label: t('Edit'),
                             href: `/admin/promotions/${promotion.promotion_id}/edit`,
-                            icon: 'bx bx-edit',
+                            icon: Pencil,
                             variant: 'primary',
                         },
                         {
                             type: 'button',
                             label: t('Delete'),
                             onClick: () => openDeleteModal(promotion),
-                            icon: 'bx bx-trash',
+                            icon: Trash2,
                             variant: 'danger',
                         },
                     ];
@@ -224,26 +204,27 @@ export default function Index() {
                     return <ActionButtons actions={actions} />;
                 },
             },
-        ];
-    }, [t, typeOptions]);
+        ],
+        [t, typeOptions],
+    );
 
     return (
         <AppLayout>
             <Head title={t('Promotion Management')} />
 
-            {toast && <Toast type={toast.type} message={toast.message} onClose={clearToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
             <FilterPanel
-                title="Promotion Management"
+                title={t('Promotion Management')}
                 breadcrumbs={[
-                    { label: 'Dashboard', href: '/admin/dashboard' },
-                    { label: 'Promotions', href: '/admin/promotions', active: true },
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Promotions'), href: '/admin/promotions', active: true },
                 ]}
                 onApplyFilters={applyFilters}
                 searchConfig={{
                     value: search,
                     onChange: setSearch,
-                    placeholder: 'Search promotions, sellers, products...',
+                    placeholder: t('Search promotions, sellers, products...'),
                 }}
                 filterConfigs={[
                     {
@@ -263,17 +244,17 @@ export default function Index() {
                     {
                         href: '/admin/promotions/create',
                         label: t('Create Promotion'),
-                        icon: 'bx bx-plus',
+                        icon: Plus,
                         color: 'primary',
                     },
                 ]}
             />
 
-            <DataTable<Promotion>
+            <DataTable
                 columns={columns}
                 data={promotions.data}
                 headerTitle={t('Promotions')}
-                headerIcon="bx-purchase-tag"
+                headerIcon={Tag}
                 emptyMessage={t('No promotions found')}
             />
 
@@ -294,5 +275,6 @@ const ucfirst = (value: string) => {
     if (!value) {
         return value;
     }
+
     return value.charAt(0).toUpperCase() + value.slice(1);
 };

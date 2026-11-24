@@ -1,10 +1,10 @@
-import '@/../css/Page.css';
 import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
-import BrandForm from '../../../components/admin/brands/BrandForm';
-import Header from '../../../components/ui/header';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import BrandForm from '@/components/admin/brands/BrandForm';
+import Header from '@/components/ui/header';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 
 interface BrandFormData {
     name: string;
@@ -22,11 +22,9 @@ export default function Create() {
         is_active: true,
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/admin/brands', {
-            forceFormData: true,
-        });
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        post('/admin/brands', { forceFormData: true });
     };
 
     return (

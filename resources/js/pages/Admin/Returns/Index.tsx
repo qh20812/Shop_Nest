@@ -1,7 +1,17 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import Pagination from '../../../components/ui/pagination';
-import AppLayout from '../../../layouts/app/AppLayout';
+import { Head, router, usePage } from '@inertiajs/react';
+import { RotateCcw } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import Alert from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatDateTime } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface User {
     id: number;
@@ -33,7 +43,16 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+const statusMeta: Record<number, { label: string; tone: 'warning' | 'accent' | 'danger' | 'success' | 'neutral' }> = {
+    1: { label: 'Pending', tone: 'warning' },
+    2: { label: 'Approved', tone: 'accent' },
+    3: { label: 'Rejected', tone: 'danger' },
+    4: { label: 'Refunded', tone: 'success' },
+    5: { label: 'Exchanged', tone: 'success' },
+};
+
 export default function Index() {
+    const { t } = useTranslation();
     const { returns = { data: [], links: [] }, filters = {}, flash = {} } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
@@ -43,109 +62,94 @@ export default function Index() {
         router.get('/admin/returns', { search, status }, { preserveState: true });
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Bạn có chắc muốn xoá yêu cầu trả hàng này?')) {
-            router.delete(`/admin/returns/${id}`);
-        }
-    };
-
-    // Map trạng thái số -> chữ
-    const renderStatus = (status: number) => {
-        switch (status) {
-            case 1:
-                return 'Chờ xử lý';
-            case 2:
-                return 'Đã duyệt';
-            case 3:
-                return 'Đã từ chối';
-            case 4:
-                return 'Đã hoàn tiền';
-            case 5:
-                return 'Đã đổi hàng';
-            default:
-                return 'Không xác định';
-        }
-    };
+    const columns = useMemo(
+        () => [
+            {
+                key: 'return_id',
+                header: 'ID',
+                cell: (request: ReturnRequest) => <span className={styles.numeric}>#{request.return_id}</span>,
+            },
+            {
+                key: 'customer',
+                header: t('Customer'),
+                cell: (request: ReturnRequest) => (
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>{request.customer?.name}</span>
+                        <span className={styles.cellMeta}>{request.customer?.email}</span>
+                    </div>
+                ),
+            },
+            {
+                key: 'order',
+                header: t('Order'),
+                cell: (request: ReturnRequest) => <span className={styles.numeric}>{request.order?.code ? `#${request.order.code}` : '-'}</span>,
+            },
+            {
+                key: 'description',
+                header: t('Description'),
+                cell: (request: ReturnRequest) => <span className={styles.brandMeta}>{request.description}</span>,
+            },
+            {
+                key: 'status',
+                header: t('Status'),
+                cell: (request: ReturnRequest) => {
+                    const meta = statusMeta[request.status] ?? { label: 'Unknown', tone: 'neutral' as const };
+                    return <Badge tone={meta.tone}>{t(meta.label)}</Badge>;
+                },
+            },
+            {
+                key: 'created_at',
+                header: t('Created Date'),
+                cell: (request: ReturnRequest) => <span className={styles.numeric}>{formatDateTime(request.created_at)}</span>,
+            },
+        ],
+        [t],
+    );
 
     return (
         <AppLayout>
-            <div>
-                <h1 className="mb-4 text-xl font-bold">Quản lý Yêu cầu Trả hàng</h1>
+            <Head title={t('Return Management')} />
 
-                {/* Thông báo */}
-                {flash?.success && <div className="mb-3 rounded bg-green-100 p-2 text-green-700">{flash.success}</div>}
-                {flash?.error && <div className="mb-3 rounded bg-red-100 p-2 text-red-700">{flash.error}</div>}
+            {flash?.success && <Alert tone="success" title={flash.success} className={styles.stackTight} />}
+            {flash?.error && <Alert tone="danger" title={flash.error} className={styles.stackTight} />}
 
-                {/* Bộ lọc */}
-                <div className="mb-4">
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="mr-2 border px-2 py-1"
-                    />
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="mr-2 border px-2 py-1">
-                        <option value="">-- Trạng thái --</option>
-                        <option value="1">Chờ xử lý</option>
-                        <option value="2">Đã duyệt</option>
-                        <option value="3">Đã từ chối</option>
-                        <option value="4">Đã hoàn tiền</option>
-                        <option value="5">Đã đổi hàng</option>
-                    </select>
-                    <button onClick={applyFilters} className="rounded bg-blue-500 px-3 py-1 text-white">
-                        Lọc
-                    </button>
-                </div>
+            <FilterPanel
+                title={t('Return Management')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Returns'), href: '/admin/returns', active: true },
+                ]}
+                searchConfig={{
+                    value: search,
+                    onChange: setSearch,
+                    placeholder: t('Search returns...'),
+                }}
+                filterConfigs={[
+                    {
+                        value: status,
+                        onChange: setStatus,
+                        label: t('-- All Statuses --'),
+                        options: [
+                            { value: '1', label: t('Pending') },
+                            { value: '2', label: t('Approved') },
+                            { value: '3', label: t('Rejected') },
+                            { value: '4', label: t('Refunded') },
+                            { value: '5', label: t('Exchanged') },
+                        ],
+                    },
+                ]}
+                onApplyFilters={applyFilters}
+            />
 
-                {/* Bảng danh sách */}
-                <table className="w-full border-collapse border">
-                    <thead>
-                        <tr className="bg-gray-100">
-                            <th className="border px-2 py-1">ID</th>
-                            <th className="border px-2 py-1">Người yêu cầu</th>
-                            <th className="border px-2 py-1">Đơn hàng</th>
-                            <th className="border px-2 py-1">Mô tả</th>
-                            <th className="border px-2 py-1">Trạng thái</th>
-                            <th className="border px-2 py-1">Ngày tạo</th>
-                            <th className="border px-2 py-1">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {returns.data.length > 0 ? (
-                            returns.data.map((r) => (
-                                <tr key={r.return_id}>
-                                    <td className="border px-2 py-1">{r.return_id}</td>
-                                    <td className="border px-2 py-1">
-                                        {r.customer?.name} ({r.customer?.email})
-                                    </td>
-                                    <td className="border px-2 py-1">{r.order?.code ? `#${r.order.code}` : 'Không có'}</td>
-                                    <td className="border px-2 py-1">{r.description}</td>
-                                    <td className="border px-2 py-1">{renderStatus(r.status)}</td>
-                                    <td className="border px-2 py-1">{r.created_at}</td>
-                                    <td className="border px-2 py-1">
-                                        <Link href={`/admin/returns/${r.return_id}/edit`} className="mr-2 text-blue-600">
-                                            Sửa
-                                        </Link>
-                                        <button onClick={() => handleDelete(r.return_id)} className="text-red-600">
-                                            Xoá
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={7} className="py-4 text-center">
-                                    Không có yêu cầu trả hàng nào
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            <DataTable
+                columns={columns}
+                data={returns.data}
+                headerTitle={t('Return Requests')}
+                headerIcon={RotateCcw}
+                emptyMessage={t('No return requests found')}
+            />
 
-                {/* Phân trang */}
-                <Pagination links={returns.links} />
-            </div>
+            <Pagination links={returns.links} filters={{ search, status }} preserveState preserveScroll />
         </AppLayout>
     );
 }

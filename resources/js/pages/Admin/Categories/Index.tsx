@@ -1,15 +1,20 @@
 import { Head, router, usePage } from '@inertiajs/react';
+import { EyeOff, ImageOff, ListTree, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Toast from '../../../components/admin/users/Toast';
-import ActionButtons, { type ActionConfig } from '../../../components/ui/action-buttons';
-import ConfirmationModal from '../../../components/ui/confirmation-modal';
-import DataTable from '../../../components/ui/data-table';
-import FilterPanel from '../../../components/ui/filter-panel';
-import Pagination from '../../../components/ui/pagination';
-import StatusBadge from '../../../components/ui/status-badge';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
-import { htmlToPlainText } from '../../../utils/htmlUtils';
+
+import Toast from '@/components/admin/users/Toast';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Pagination from '@/components/ui/pagination';
+import StatusBadge from '@/components/ui/status-badge';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatDate } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+import { htmlToPlainText } from '@/utils/htmlUtils';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface Category {
     category_id: number;
@@ -33,34 +38,23 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+type CategoryAction = 'hide' | 'restore' | 'forceDelete';
+
 export default function Index() {
     const { t, locale } = useTranslation();
     const { categories = { data: [], links: [] }, totalCategories = 0, filters = {}, flash = {} } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
-
-    // Toast state
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-    // Confirmation modal state
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
         categoryId: number | null;
-        categoryName: string;
-        action: 'hide' | 'restore' | 'forceDelete' | null;
+        action: CategoryAction | null;
         title: string;
         message: string;
-    }>({
-        isOpen: false,
-        categoryId: null,
-        categoryName: '',
-        action: null,
-        title: '',
-        message: '',
-    });
+    }>({ isOpen: false, categoryId: null, action: null, title: '', message: '' });
 
-    // Listen for flash messages from backend
     useEffect(() => {
         if (flash?.success) {
             setToast({ type: 'success', message: flash.success });
@@ -68,48 +62,33 @@ export default function Index() {
             setToast({ type: 'error', message: flash.error });
         }
     }, [flash]);
+
     const applyFilters = () => {
         router.get('/admin/categories', { search, status }, { preserveState: true });
     };
 
     const getCategoryName = (category: Category): string => {
-        return category.name[locale as keyof typeof category.name] || category.name['en'] || 'Unnamed Category';
+        return category.name[locale as keyof typeof category.name] || category.name['en'] || t('Unnamed Category');
     };
 
-    const handleHide = (category: Category) => {
+    const openConfirm = (category: Category, action: CategoryAction) => {
         const categoryName = getCategoryName(category);
-        setConfirmModal({
-            isOpen: true,
-            categoryId: category.category_id,
-            categoryName,
-            action: 'hide',
-            title: t('Confirm Hide Category'),
-            message: `${t('Are you sure you want to hide category')} "${categoryName}"? ${t('This will make it invisible to users but can be restored later.')}`,
-        });
-    };
+        const labels: Record<CategoryAction, { title: string; message: string }> = {
+            hide: {
+                title: t('Confirm Hide Category'),
+                message: `${t('Are you sure you want to hide category')} "${categoryName}"? ${t('This will make it invisible to users but can be restored later.')}`,
+            },
+            restore: {
+                title: t('Confirm Restore Category'),
+                message: `${t('Are you sure you want to restore category')} "${categoryName}"? ${t('This will make it visible to users again.')}`,
+            },
+            forceDelete: {
+                title: t('Confirm Permanent Deletion'),
+                message: `${t('Are you sure you want to permanently delete category')} "${categoryName}"? ${t('This action cannot be undone!')}`,
+            },
+        };
 
-    const handleRestore = (category: Category) => {
-        const categoryName = getCategoryName(category);
-        setConfirmModal({
-            isOpen: true,
-            categoryId: category.category_id,
-            categoryName,
-            action: 'restore',
-            title: t('Confirm Restore Category'),
-            message: `${t('Are you sure you want to restore category')} "${categoryName}"? ${t('This will make it visible to users again.')}`,
-        });
-    };
-
-    const handleForceDelete = (category: Category) => {
-        const categoryName = getCategoryName(category);
-        setConfirmModal({
-            isOpen: true,
-            categoryId: category.category_id,
-            categoryName,
-            action: 'forceDelete',
-            title: t('Confirm Permanent Deletion'),
-            message: `${t('Are you sure you want to permanently delete category')} "${categoryName}"? ${t('This action cannot be undone!')}`,
-        });
+        setConfirmModal({ isOpen: true, categoryId: category.category_id, action, ...labels[action] });
     };
 
     const handleConfirmAction = () => {
@@ -128,112 +107,92 @@ export default function Index() {
         }
     };
 
-    const handleCloseModal = () => {
-        setConfirmModal({
-            isOpen: false,
-            categoryId: null,
-            categoryName: '',
-            action: null,
-            title: '',
-            message: '',
-        });
-    };
-
-    const handleCloseToast = () => {
-        setToast(null);
-    };
-
-    // Define columns for DataTable
     const categoryColumns = [
         {
+            key: 'id',
             header: 'ID',
-            cell: (category: Category) => `#${category.category_id}`,
+            cell: (category: Category) => <span className={styles.numeric}>#{category.category_id}</span>,
         },
         {
+            key: 'name',
             header: t('Category Name'),
             cell: (category: Category) => {
-                const categoryName = category.name[locale as keyof typeof category.name] || category.name['en'];
+                const categoryName = getCategoryName(category);
+
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                            src={category.image_url || `https://via.placeholder.com/40?text=${categoryName.charAt(0)}`}
-                            alt={categoryName}
-                            style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }}
-                        />
-                        <span>{categoryName}</span>
+                    <div className={styles.brandCell}>
+                        {category.image_url ? (
+                            <img src={category.image_url} alt={categoryName} className={styles.thumb} />
+                        ) : (
+                            <span className={styles.brandInitial} aria-hidden="true">
+                                <ImageOff className={styles.placeholderIcon} />
+                            </span>
+                        )}
+                        <span className={styles.brandName}>{categoryName}</span>
                     </div>
                 );
             },
         },
         {
+            key: 'description',
             header: t('Description'),
             cell: (category: Category) => {
                 const description = category.description?.[locale as keyof typeof category.description] || category.description?.['en'];
-                if (!description) return t('No description');
+                if (!description) return <span className={styles.faint}>{t('No description')}</span>;
 
                 const plainText = htmlToPlainText(description);
                 const truncated = plainText.length > 50 ? `${plainText.substring(0, 50)}...` : plainText;
 
-                return (
-                    <div
-                        style={{
-                            whiteSpace: 'pre-line',
-                            maxWidth: '300px',
-                            lineHeight: '1.4',
-                            fontSize: '14px',
-                        }}
-                    >
-                        {truncated}
-                    </div>
-                );
+                return <span className={styles.brandMeta}>{truncated}</span>;
             },
         },
         {
+            key: 'status',
             header: t('Status'),
             cell: (category: Category) => <StatusBadge status={category.deleted_at ? 'hidden' : category.is_active ? 'active' : 'inactive'} />,
         },
         {
+            key: 'created_at',
             header: t('Created Date'),
-            accessorKey: 'created_at' as keyof Category,
+            cell: (category: Category) => <span className={styles.numeric}>{formatDate(category.created_at)}</span>,
         },
         {
+            key: 'actions',
             header: t('Actions'),
             cell: (category: Category) => {
                 const actions: ActionConfig[] = [];
 
                 if (category.deleted_at) {
-                    // Category is hidden - show Restore and Delete Permanently
                     actions.push(
                         {
                             type: 'button',
-                            onClick: () => handleRestore(category),
+                            onClick: () => openConfirm(category, 'restore'),
                             variant: 'primary',
-                            icon: 'bx bx-refresh',
+                            icon: RotateCcw,
                             label: t('Restore'),
                         },
                         {
                             type: 'button',
-                            onClick: () => handleForceDelete(category),
+                            onClick: () => openConfirm(category, 'forceDelete'),
                             variant: 'danger',
-                            icon: 'bx bx-trash',
+                            icon: Trash2,
                             label: t('Delete Permanently'),
                         },
                     );
                 } else {
-                    // Category is active - show Edit and Hide
                     actions.push(
                         {
                             type: 'link',
                             href: `/admin/categories/${category.category_id}/edit`,
                             variant: 'primary',
-                            icon: 'bx bx-edit',
+                            icon: Pencil,
                             label: t('Edit'),
                         },
                         {
                             type: 'button',
-                            onClick: () => handleHide(category),
+                            onClick: () => openConfirm(category, 'hide'),
                             variant: 'danger',
-                            icon: 'bx bx-hide',
+                            icon: EyeOff,
                             label: t('Hide'),
                         },
                     );
@@ -248,10 +207,8 @@ export default function Index() {
         <AppLayout>
             <Head title={t('Category Management')} />
 
-            {/* Toast notification */}
-            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Header và Bộ lọc */}
             <FilterPanel
                 title={t('Category Management')}
                 breadcrumbs={[
@@ -280,37 +237,26 @@ export default function Index() {
                     {
                         href: '/admin/categories/create',
                         label: t('Add Category'),
-                        icon: 'bx-plus',
+                        icon: Plus,
                         color: 'success',
                     },
                 ]}
                 onApplyFilters={applyFilters}
             />
 
-            {/* Bảng dữ liệu */}
             <DataTable
                 columns={categoryColumns}
                 data={categories.data}
                 headerTitle={`${t('Category List')} (${totalCategories})`}
-                headerIcon="bx-list-ul"
+                headerIcon={ListTree}
                 emptyMessage={t('No categories found')}
             />
 
-            {/* Phân trang */}
-            <Pagination
-                links={categories.links}
-                filters={{
-                    search,
-                    status,
-                }}
-                preserveState={true}
-                preserveScroll={true}
-            />
+            <Pagination links={categories.links} filters={{ search, status }} preserveState preserveScroll />
 
-            {/* Confirmation Modal */}
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
-                onClose={handleCloseModal}
+                onClose={() => setConfirmModal({ isOpen: false, categoryId: null, action: null, title: '', message: '' })}
                 onConfirm={handleConfirmAction}
                 title={confirmModal.title}
                 message={confirmModal.message}

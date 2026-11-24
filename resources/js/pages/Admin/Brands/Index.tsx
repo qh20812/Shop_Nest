@@ -1,16 +1,20 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { EyeOff, Pencil, Plus, RotateCcw, Store } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Badge } from '@/components/ui/badge';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
-import { htmlToPlainText } from '../../../utils/htmlUtils';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
+import { htmlToPlainText } from '@/utils/htmlUtils';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface Brand {
     brand_id: number;
@@ -34,15 +38,15 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+type BrandAction = 'deactivate' | 'restore';
+
 export default function Index() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { brands = { data: [], links: [] }, totalBrands = 0, filters = {}, flash = {} } = usePage<PageProps>().props;
 
-    // Safety helper to extract string from potential translation object
     const getStringValue = (value: string | { [key: string]: string }): string => {
         if (typeof value === 'string') return value;
         if (typeof value === 'object' && value !== null) {
-            const locale = document.documentElement.lang || 'en';
             return value[locale] || value['en'] || value['vi'] || Object.values(value)[0] || '';
         }
         return '';
@@ -50,28 +54,15 @@ export default function Index() {
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
-
-    // Toast state
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-    // Confirmation modal state
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
         brandId: number | null;
-        brandName: string;
-        action: 'deactivate' | 'restore' | null;
+        action: BrandAction | null;
         title: string;
         message: string;
-    }>({
-        isOpen: false,
-        brandId: null,
-        brandName: '',
-        action: null,
-        title: '',
-        message: '',
-    });
+    }>({ isOpen: false, brandId: null, action: null, title: '', message: '' });
 
-    // Listen for flash messages from backend
     useEffect(() => {
         if (flash?.success) {
             setToast({ type: 'success', message: flash.success });
@@ -80,7 +71,6 @@ export default function Index() {
         }
     }, [flash]);
 
-    // Auto-apply search filter on typing (debounced)
     useEffect(() => {
         const delayTimer = setTimeout(() => {
             if (search !== filters.search) {
@@ -105,116 +95,62 @@ export default function Index() {
         router.get('/admin/brands', { search, status }, { preserveState: true });
     };
 
-    const handleDeactivate = (brand: Brand) => {
+    const openConfirm = (brand: Brand, action: BrandAction) => {
         const brandName = getStringValue(brand.name);
-        setConfirmModal({
-            isOpen: true,
-            brandId: brand.brand_id,
-            brandName: brandName,
-            action: 'deactivate',
-            title: t('Confirm Deactivate Brand'),
-            message: `${t('Are you sure you want to deactivate brand')} "${brandName}"? ${t('This will make it inactive but can be restored later.')}`,
-        });
-    };
+        const labels: Record<BrandAction, { title: string; message: string }> = {
+            deactivate: {
+                title: t('Confirm Deactivate Brand'),
+                message: `${t('Are you sure you want to deactivate brand')} "${brandName}"? ${t('This will make it inactive but can be restored later.')}`,
+            },
+            restore: {
+                title: t('Confirm Restore Brand'),
+                message: `${t('Are you sure you want to restore brand')} "${brandName}"? ${t('This will make it active again.')}`,
+            },
+        };
 
-    const handleRestore = (brand: Brand) => {
-        const brandName = getStringValue(brand.name);
-        setConfirmModal({
-            isOpen: true,
-            brandId: brand.brand_id,
-            brandName: brandName,
-            action: 'restore',
-            title: t('Confirm Restore Brand'),
-            message: `${t('Are you sure you want to restore brand')} "${brandName}"? ${t('This will make it active again.')}`,
-        });
+        setConfirmModal({ isOpen: true, brandId: brand.brand_id, action, ...labels[action] });
     };
 
     const handleConfirmAction = () => {
         if (!confirmModal.brandId || !confirmModal.action) return;
 
-        switch (confirmModal.action) {
-            case 'deactivate':
-                router.delete(`/admin/brands/${confirmModal.brandId}`);
-                break;
-            case 'restore':
-                router.patch(`/admin/brands/${confirmModal.brandId}/restore`);
-                break;
+        if (confirmModal.action === 'deactivate') {
+            router.delete(`/admin/brands/${confirmModal.brandId}`);
+        } else {
+            router.patch(`/admin/brands/${confirmModal.brandId}/restore`);
         }
     };
 
-    const handleCloseModal = () => {
-        setConfirmModal({
-            isOpen: false,
-            brandId: null,
-            brandName: '',
-            action: null,
-            title: '',
-            message: '',
-        });
-    };
-
-    const handleCloseToast = () => {
-        setToast(null);
-    };
-
-    // Define columns for DataTable
     const brandColumns = [
         {
+            key: 'id',
             header: 'ID',
-            cell: (brand: Brand) => `#${brand.brand_id}`,
+            cell: (brand: Brand) => <span className={styles.numeric}>#{brand.brand_id}</span>,
         },
         {
+            key: 'brand',
             header: t('Brand'),
             cell: (brand: Brand) => {
                 const brandName = getStringValue(brand.name);
+
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className={styles.brandCell}>
                         {brand.logo_url ? (
-                            <img
-                                src={brand.logo_url}
-                                alt={brandName}
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    objectFit: 'contain',
-                                    borderRadius: '4px',
-                                    border: '1px solid var(--grey)',
-                                }}
-                            />
+                            <img src={brand.logo_url} alt={brandName} className={styles.brandLogo} />
                         ) : (
-                            <div
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    backgroundColor: 'var(--grey)',
-                                    borderRadius: '4px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    color: 'var(--dark-grey)',
-                                }}
-                            >
+                            <span className={styles.brandInitial} aria-hidden="true">
                                 {brandName.charAt(0).toUpperCase()}
-                            </div>
+                            </span>
                         )}
-                        <div>
-                            <div style={{ fontWeight: '500', color: 'var(--dark)' }}>{brandName}</div>
+                        <div className={styles.brandBody}>
+                            <span className={styles.brandName}>{brandName}</span>
                             {brand.description && (
-                                <div
-                                    style={{
-                                        fontSize: '12px',
-                                        color: 'var(--dark-grey)',
-                                        whiteSpace: 'pre-line',
-                                        maxWidth: '300px',
-                                        lineHeight: '1.4',
-                                    }}
-                                >
+                                <span className={styles.brandMeta}>
                                     {(() => {
                                         const plainText = htmlToPlainText(brand.description);
                                         return plainText.length > 50 ? `${plainText.substring(0, 50)}...` : plainText;
                                     })()}
-                                </div>
+                                </span>
                             )}
                         </div>
                     </div>
@@ -222,56 +158,48 @@ export default function Index() {
             },
         },
         {
+            key: 'products',
             header: t('Products'),
             cell: (brand: Brand) => (
-                <span
-                    style={{
-                        padding: '4px 8px',
-                        background: 'var(--light-primary)',
-                        color: 'var(--primary)',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                    }}
-                >
+                <Badge tone="accent">
                     {brand.products_count} {t('Products')}
-                </span>
+                </Badge>
             ),
         },
         {
+            key: 'status',
             header: t('Status'),
             cell: (brand: Brand) => <StatusBadge status={brand.deleted_at ? 'inactive' : 'active'} />,
         },
         {
+            key: 'actions',
             header: t('Actions'),
             cell: (brand: Brand) => {
                 const actions: ActionConfig[] = [];
 
                 if (!brand.deleted_at) {
-                    // Active brand - show Edit and Deactivate
                     actions.push(
                         {
                             type: 'link',
                             href: `/admin/brands/${brand.brand_id}/edit`,
                             variant: 'primary',
-                            icon: 'bx bx-edit',
+                            icon: Pencil,
                             label: t('Edit'),
                         },
                         {
                             type: 'button',
-                            onClick: () => handleDeactivate(brand),
+                            onClick: () => openConfirm(brand, 'deactivate'),
                             variant: 'danger',
-                            icon: 'bx bx-hide',
+                            icon: EyeOff,
                             label: t('Deactivate'),
                         },
                     );
                 } else {
-                    // Inactive brand - show Restore
                     actions.push({
                         type: 'button',
-                        onClick: () => handleRestore(brand),
+                        onClick: () => openConfirm(brand, 'restore'),
                         variant: 'primary',
-                        icon: 'bx bx-revision',
+                        icon: RotateCcw,
                         label: t('Restore'),
                     });
                 }
@@ -285,10 +213,8 @@ export default function Index() {
         <AppLayout>
             <Head title={t('Brand Management')} />
 
-            {/* Toast notification */}
-            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Header và Bộ lọc */}
             <FilterPanel
                 title={t('Brand Management')}
                 breadcrumbs={[
@@ -315,29 +241,26 @@ export default function Index() {
                     {
                         href: '/admin/brands/create',
                         label: t('Create Brand'),
-                        icon: 'bx-plus',
+                        icon: Plus,
                         color: 'success',
                     },
                 ]}
                 onApplyFilters={applyFilters}
             />
 
-            {/* Bảng dữ liệu */}
             <DataTable
                 columns={brandColumns}
                 data={brands.data}
                 headerTitle={`${t('Brand List')} (${totalBrands})`}
-                headerIcon="bx-store"
+                headerIcon={Store}
                 emptyMessage={t('No brands found')}
             />
 
-            {/* Phân trang */}
             <Pagination links={brands.links} />
 
-            {/* Confirmation Modal */}
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
-                onClose={handleCloseModal}
+                onClose={() => setConfirmModal({ isOpen: false, brandId: null, action: null, title: '', message: '' })}
                 onConfirm={handleConfirmAction}
                 title={confirmModal.title}
                 message={confirmModal.message}

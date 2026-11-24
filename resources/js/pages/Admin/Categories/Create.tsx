@@ -1,10 +1,11 @@
+import { Head, useForm, usePage } from '@inertiajs/react';
+import React from 'react';
+
 import CategoryForm from '@/components/admin/categories/CategoryForm';
 import Toast from '@/components/admin/users/Toast';
 import Header from '@/components/ui/header';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import React from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 
 interface Category {
     category_id: number;
@@ -32,8 +33,8 @@ export default function Create() {
         image: null,
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         post('/admin/categories');
     };
 
@@ -41,7 +42,6 @@ export default function Create() {
         <AppLayout>
             <Head title={t('Create Category')} />
 
-            {/* Toast notification */}
             {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
             <Header

@@ -1,31 +1,21 @@
-import '@/../css/Page.css';
-import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
-import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
-import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
-import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertTriangle, Boxes, ListChecks, Package, PackageX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import Toast from '@/components/admin/users/Toast';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Badge } from '@/components/ui/badge';
+import DataTable from '@/components/ui/data-table';
+import FilterPanel from '@/components/ui/filter-panel';
+import Insights from '@/components/ui/insights';
+import Pagination from '@/components/ui/pagination';
+import AppLayout from '@/layouts/app/AppLayout';
+import { formatNumber, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
+
 const LOW_STOCK_THRESHOLD = 10;
-
-const toLocaleTag = (locale: string): string => {
-    if (!locale) {
-        return 'en-US';
-    }
-
-    if (locale === 'vi') {
-        return 'vi-VN';
-    }
-
-    if (locale === 'en') {
-        return 'en-US';
-    }
-
-    return locale;
-};
 
 const resolveText = (value: unknown, locale: string, fallback: string): string => {
     if (!value) {
@@ -186,16 +176,16 @@ const getStockStatusValue = (stockQuantity?: number): 'in_stock' | 'low_stock' |
     return 'in_stock';
 };
 
-const getStockStatusClass = (status: 'in_stock' | 'low_stock' | 'out_of_stock'): string => {
+const getStockTone = (status: 'in_stock' | 'low_stock' | 'out_of_stock') => {
     if (status === 'in_stock') {
-        return 'status completed';
+        return 'success' as const;
     }
 
     if (status === 'low_stock') {
-        return 'status process';
+        return 'warning' as const;
     }
 
-    return 'status danger';
+    return 'danger' as const;
 };
 
 export default function Index() {
@@ -210,8 +200,6 @@ export default function Index() {
         flash = {},
         locale,
     } = usePage<InventoryIndexPageProps>().props;
-
-    const localeTag = toLocaleTag(locale);
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [sellerId, setSellerId] = useState(filters.seller_id ?? '');
@@ -233,7 +221,6 @@ export default function Index() {
         stockStatuses.forEach((status) => {
             map[status.value] = status.label;
         });
-
         return map;
     }, [stockStatuses]);
 
@@ -277,132 +264,126 @@ export default function Index() {
         );
     };
 
-    const clearToast = () => setToast(null);
-
     const columns = useMemo(
         () => [
             {
+                key: 'product',
                 header: t('Product'),
                 cell: (variant: InventoryVariant) => {
                     const productName = resolveText(variant.product?.name, locale, t('Unnamed Product'));
                     const productId = variant.product?.product_id;
+
                     return productId ? (
-                        <Link href={`/admin/inventory/${productId}`} className="inventory-product-name">
+                        <Link href={`/admin/inventory/${productId}`} className={styles.linkCell}>
                             {productName}
                         </Link>
                     ) : (
-                        <span className="inventory-product-name">{productName}</span>
+                        <span>{productName}</span>
                     );
                 },
             },
             {
+                key: 'sku',
                 header: t('SKU'),
-                cell: (variant: InventoryVariant) => variant.sku ?? '-',
+                cell: (variant: InventoryVariant) => <span className={styles.numeric}>{variant.sku ?? '-'}</span>,
             },
             {
+                key: 'seller',
                 header: t('Seller'),
-                cell: (variant: InventoryVariant) => resolvePersonName(variant.product?.seller, locale, t('Unknown Seller')),
+                cell: (variant: InventoryVariant) => (
+                    <span className={styles.muted}>{resolvePersonName(variant.product?.seller, locale, t('Unknown Seller'))}</span>
+                ),
             },
             {
+                key: 'category',
                 header: t('Category'),
-                cell: (variant: InventoryVariant) => resolveText(variant.product?.category?.name, locale, t('No Category')),
+                cell: (variant: InventoryVariant) => (
+                    <span className={styles.muted}>{resolveText(variant.product?.category?.name, locale, t('No Category'))}</span>
+                ),
             },
             {
+                key: 'brand',
                 header: t('Brand'),
-                cell: (variant: InventoryVariant) => resolveText(variant.product?.brand?.name, locale, t('No Brand')),
+                cell: (variant: InventoryVariant) => (
+                    <span className={styles.muted}>{resolveText(variant.product?.brand?.name, locale, t('No Brand'))}</span>
+                ),
             },
             {
+                key: 'price',
                 header: t('Price'),
-                cell: (variant: InventoryVariant) =>
-                    variant.price !== undefined && variant.price !== null ? `${variant.price.toLocaleString(localeTag)} VND` : t('N/A'),
+                align: 'right' as const,
+                cell: (variant: InventoryVariant) => (
+                    <span className={styles.price}>
+                        {variant.price !== undefined && variant.price !== null ? formatVnd(variant.price) : t('N/A')}
+                    </span>
+                ),
             },
             {
+                key: 'discount',
                 header: t('Discount'),
-                cell: (variant: InventoryVariant) =>
-                    variant.discount_price !== undefined && variant.discount_price !== null
-                        ? `${variant.discount_price.toLocaleString(localeTag)} VND`
-                        : '-',
+                align: 'right' as const,
+                cell: (variant: InventoryVariant) => (
+                    <span className={styles.numeric}>
+                        {variant.discount_price !== undefined && variant.discount_price !== null ? formatVnd(variant.discount_price) : '-'}
+                    </span>
+                ),
             },
             {
+                key: 'quantity',
                 header: t('Qty'),
-                cell: (variant: InventoryVariant) => (variant.stock_quantity ?? 0).toLocaleString(localeTag),
+                align: 'right' as const,
+                cell: (variant: InventoryVariant) => <span className={styles.numeric}>{formatNumber(variant.stock_quantity ?? 0)}</span>,
             },
             {
+                key: 'status',
                 header: t('Status'),
                 cell: (variant: InventoryVariant) => {
                     const statusValue = getStockStatusValue(variant.stock_quantity);
                     const label = stockStatusLabelMap[statusValue] ?? t('Unknown');
-                    return <span className={getStockStatusClass(statusValue)}>{label}</span>;
+
+                    return <Badge tone={getStockTone(statusValue)}>{label}</Badge>;
                 },
             },
             {
+                key: 'actions',
                 header: t('Actions'),
                 cell: (variant: InventoryVariant) => {
                     const productId = variant.product?.product_id;
                     if (!productId) return null;
+
                     const actions: ActionConfig[] = [
-                        { type: 'link', href: `/admin/inventory/${productId}`, icon: 'bx bx-show', label: t('View'), variant: 'primary' },
-                        {
-                            type: 'link',
-                            href: `/admin/inventory/${productId}/history`,
-                            icon: 'bx bx-history',
-                            label: t('History'),
-                            variant: 'primary',
-                        },
+                        { type: 'link', href: `/admin/inventory/${productId}`, icon: Package, label: t('View'), variant: 'primary' },
+                        { type: 'link', href: `/admin/inventory/${productId}/history`, icon: ListChecks, label: t('History'), variant: 'primary' },
                     ];
+
                     return <ActionButtons actions={actions} />;
                 },
             },
         ],
-        [t, locale, localeTag, stockStatusLabelMap],
-    );
-
-    const paginationFilters = useMemo(
-        () => ({
-            search,
-            seller_id: sellerId,
-            category_id: categoryId,
-            brand_id: brandId,
-            stock_status: stockStatus,
-        }),
-        [search, sellerId, categoryId, brandId, stockStatus],
+        [locale, stockStatusLabelMap, t],
     );
 
     const summaryItems = [
-        {
-            icon: 'bx bx-cube',
-            value: totalVariants.toLocaleString(localeTag),
-            label: t('Total Variants'),
-        },
-        {
-            icon: 'bx bx-list-check',
-            value: displayedVariants.length.toLocaleString(localeTag),
-            label: t('Variants on Page'),
-        },
-        {
-            icon: 'bx bx-error',
-            value: statusBreakdown.lowStock.toLocaleString(localeTag),
-            label: t('Low Stock (page)'),
-        },
-        {
-            icon: 'bx bx-block',
-            value: statusBreakdown.outOfStock.toLocaleString(localeTag),
-            label: t('Out of Stock (page)'),
-        },
+        { icon: Boxes, value: formatNumber(totalVariants), label: t('Total Variants') },
+        { icon: ListChecks, value: formatNumber(displayedVariants.length), label: t('Variants on Page') },
+        { icon: AlertTriangle, value: formatNumber(statusBreakdown.lowStock), label: t('Low Stock (page)') },
+        { icon: PackageX, value: formatNumber(statusBreakdown.outOfStock), label: t('Out of Stock (page)') },
     ];
+
+    const paginationFilters = { search, seller_id: sellerId, category_id: categoryId, brand_id: brandId, stock_status: stockStatus };
 
     return (
         <AppLayout>
             <Head title={t('Inventory Management')} />
 
-            {toast && <Toast type={toast.type} message={toast.message} onClose={clearToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <div className="inventory-page">
+            <div className={styles.stack}>
                 <FilterPanel
                     title={t('Inventory Management')}
                     breadcrumbs={[
-                        { label: 'Dashboard', href: '/admin/dashboard' },
-                        { label: 'Inventory', href: '/admin/inventory', active: true },
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Inventory'), href: '/admin/inventory', active: true },
                     ]}
                     onApplyFilters={applyFilters}
                     searchConfig={{
@@ -442,37 +423,19 @@ export default function Index() {
                             value: stockStatus,
                             onChange: setStockStatus,
                             label: t('-- All Stock Statuses --'),
-                            options: stockStatuses.map((status) => ({
-                                value: status.value,
-                                label: status.label,
-                            })),
+                            options: stockStatuses.map((status) => ({ value: status.value, label: status.label })),
                         },
                     ]}
-                    reportButtonConfig={{
-                        label: t('Inventory Reports'),
-                        icon: 'bx bx-bar-chart-alt',
-                        onClick: () => router.get('/admin/inventory/report'),
-                    }}
                 />
 
-                <ul className="insights">
-                    {summaryItems.map((item, index) => (
-                        <li key={index}>
-                            <i className={item.icon}></i>
-                            <div className="info">
-                                <h3>{item.value}</h3>
-                                <p>{item.label}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                <Insights items={summaryItems} />
 
                 <DataTable
                     columns={columns}
                     data={displayedVariants}
-                    headerTitle="Inventory Overview"
-                    headerIcon="bx bx-package"
-                    emptyMessage="No inventory records found"
+                    headerTitle={t('Inventory Overview')}
+                    headerIcon={Package}
+                    emptyMessage={t('No inventory records found')}
                 />
 
                 <Pagination links={variants?.links ?? []} filters={paginationFilters} />

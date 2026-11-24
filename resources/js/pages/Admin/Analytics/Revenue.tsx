@@ -1,15 +1,21 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { BarChart3, DollarSign, Filter } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
 import AnalyticsCard from '@/components/admin/analytics/AnalyticsCard';
 import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/analytics/AnalyticsChart';
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
 import ExportButton from '@/components/admin/analytics/ExportButton';
+import { Button } from '@/components/ui/button';
+import Header from '@/components/ui/header';
 import AppLayout from '@/layouts/app/AppLayout';
+import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+
+import styles from '@/components/admin/admin.module.css';
 
 type RevenueBreakdownPoint = {
     label: string;
@@ -64,22 +70,14 @@ function normalizeFilterValue(value: unknown, fallback: AnalyticsFilterValue = '
     return fallback;
 }
 
-const formatCurrency = (value: number, locale = 'vi-VN'): string => {
-    return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0,
-    }).format(value);
-};
-
 const Revenue: React.FC = () => {
     const { props } = usePage<RevenuePageProps>();
     const { t } = useTranslation();
     const revenue = props.revenue ?? { timeSeries: [], byCategory: [], bySeller: [], topProducts: [] };
     const initialFilters = props.filters ?? {};
-    const locale = typeof props.locale === 'string' ? props.locale : 'en';
+    const pageDescription = t('Analyze revenue trends, track top-performing segments, and export financial insights.');
 
-    const [filters, setFilters] = useState<AnalyticsFilterState>((): AnalyticsFilterState => ({
+    const [filters, setFilters] = useState<AnalyticsFilterState>(() => ({
         period: normalizeFilterValue(initialFilters.period, '30days'),
         date_from: normalizeFilterValue(initialFilters.date_from, ''),
         date_to: normalizeFilterValue(initialFilters.date_to, ''),
@@ -88,9 +86,7 @@ const Revenue: React.FC = () => {
         brand_id: normalizeFilterValue(initialFilters.brand_id, ''),
     }));
 
-    const totalRevenue = useMemo(() => {
-        return revenue.timeSeries?.reduce((sum, point) => sum + (point.value ?? 0), 0);
-    }, [revenue.timeSeries]);
+    const totalRevenue = useMemo(() => (revenue.timeSeries ?? []).reduce((sum, point) => sum + (point.value ?? 0), 0), [revenue.timeSeries]);
 
     const topProducts: TopProductRow[] = useMemo(() => {
         const total = totalRevenue > 0 ? totalRevenue : revenue.topProducts.reduce((sum, product) => sum + product.revenue, 0);
@@ -98,10 +94,7 @@ const Revenue: React.FC = () => {
             return revenue.topProducts.map((product) => ({ ...product, share: 0 }));
         }
 
-        return revenue.topProducts.map((product) => ({
-            ...product,
-            share: product.revenue / total,
-        }));
+        return revenue.topProducts.map((product) => ({ ...product, share: product.revenue / total }));
     }, [revenue.topProducts, totalRevenue]);
 
     const averageOrderValue = useMemo(() => {
@@ -127,11 +120,7 @@ const Revenue: React.FC = () => {
 
     const tableColumns: AnalyticsTableColumn<TopProductRow>[] = useMemo(
         () => [
-            {
-                key: 'label',
-                label: t('Product'),
-                sortable: false,
-            },
+            { key: 'label', label: t('Product'), sortable: false },
             {
                 key: 'sku',
                 label: t('SKU'),
@@ -142,25 +131,25 @@ const Revenue: React.FC = () => {
                 key: 'quantity',
                 label: t('Quantity Sold'),
                 sortable: false,
-                render: (value) => Number(value ?? 0).toLocaleString(locale),
                 align: 'right',
+                render: (value) => formatNumber(Number(value ?? 0)),
             },
             {
                 key: 'revenue',
                 label: t('Revenue'),
                 sortable: false,
-                render: (_, row) => formatCurrency(row.revenue, locale),
                 align: 'right',
+                render: (_, row) => formatVnd(Number(row.revenue ?? 0)),
             },
             {
                 key: 'share',
                 label: t('% of Total'),
                 sortable: false,
-                render: (value) => `${(Number(value ?? 0) * 100).toFixed(1)}%`,
                 align: 'right',
+                render: (value) => `${(Number(value ?? 0) * 100).toFixed(1)}%`,
             },
         ],
-        [locale, t],
+        [t],
     );
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
@@ -168,10 +157,7 @@ const Revenue: React.FC = () => {
     };
 
     const handleApplyFilters = () => {
-        router.get('/admin/analytics/revenue', cleanupFilters(filters), {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/revenue', cleanupFilters(filters), { preserveState: true, preserveScroll: true });
     };
 
     const handleResetFilters = () => {
@@ -184,13 +170,10 @@ const Revenue: React.FC = () => {
             brand_id: '',
         };
         setFilters(resetState);
-        router.get('/admin/analytics/revenue', cleanupFilters(resetState), {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/revenue', cleanupFilters(resetState), { preserveState: true, preserveScroll: true });
     };
 
-    const handleExport = (format: 'csv' | 'json' | 'pdf') => {
+    const handleExport = (format: 'csv' | 'json') => {
         router.get(
             '/admin/analytics/reports',
             {
@@ -199,9 +182,7 @@ const Revenue: React.FC = () => {
                 download: true,
                 ...cleanupFilters(filters),
             },
-            {
-                preserveScroll: true,
-            },
+            { preserveScroll: true },
         );
     };
 
@@ -220,22 +201,31 @@ const Revenue: React.FC = () => {
     return (
         <AppLayout>
             <Head title={t('Revenue Analytics')} />
-            <div className="inventory-page analytics-page analytics-page--revenue">
-                <section className="inventory-section analytics-page__header">
-                    <div className="analytics-page__heading">
-                        <h1>{t('Revenue Analytics')}</h1>
-                        <p className="analytics-page__subtitle">
-                            {t('Analyze revenue trends, track top-performing segments, and export financial insights.')}
-                        </p>
-                    </div>
+            <Header
+                title={t('Revenue Analytics')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Analytics'), href: '/admin/analytics' },
+                    { label: t('Revenue Analytics'), href: '/admin/analytics/revenue', active: true },
+                ]}
+            />
 
-                    <div className="analytics-page__header-actions">
-                        <ExportButton label={t('Export CSV')} onClick={() => handleExport('csv')} />
-                        <ExportButton label={t('Export JSON')} variant="secondary" onClick={() => handleExport('json')} />
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>
+                            <DollarSign aria-hidden="true" className={styles.sectionIcon} />
+                            {t('Revenue Analytics')}
+                        </h2>
+                        <div className={styles.actions}>
+                            <ExportButton label={t('Export CSV')} onClick={() => handleExport('csv')} />
+                            <ExportButton label={t('Export JSON')} variant="secondary" onClick={() => handleExport('json')} />
+                        </div>
                     </div>
+                    <p className={styles.muted}>{pageDescription}</p>
                 </section>
 
-                <section className="inventory-section analytics-page__filters">
+                <section className={styles.section}>
                     <AnalyticsFilters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -245,22 +235,20 @@ const Revenue: React.FC = () => {
                         quickRanges={quickRanges}
                         onReset={handleResetFilters}
                     >
-                        <div className="analytics-filters__actions-row">
-                            <button type="button" className="inventory-link-button" onClick={handleApplyFilters}>
-                                <i className="bx bx-filter"></i>
+                        <div className={styles.filterActions}>
+                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                                <Filter aria-hidden="true" />
                                 {t('Apply Filters')}
-                            </button>
+                            </Button>
                         </div>
                     </AnalyticsFilters>
                 </section>
 
-                <section className="inventory-section analytics-page__kpis">
-                    <ul className="insights analytics-page__insights-grid">
+                <section className={styles.section}>
+                    <ul className={styles.kpiList}>
                         <AnalyticsCard
                             title={t('Total Revenue')}
-                            value={formatCurrency(totalRevenue, locale)}
-                            icon="bx bx-line-chart"
-                            color="blue"
+                            value={formatVnd(totalRevenue)}
                             tooltip={t('Aggregate revenue within the selected filter range.')}
                         />
                         <AnalyticsCard
@@ -268,66 +256,55 @@ const Revenue: React.FC = () => {
                             value={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`}
                             change={growthRate}
                             changeLabel={t('vs previous data point')}
-                            icon="bx bx-trending-up"
-                            color={growthRate >= 0 ? 'green' : 'red'}
                             tooltip={t('Change compared to the previous data point in the series.')}
                         />
                         <AnalyticsCard
                             title={t('Average Order Value')}
-                            value={formatCurrency(averageOrderValue, locale)}
-                            icon="bx bx-dollar"
-                            color="yellow"
+                            value={formatVnd(averageOrderValue)}
                             tooltip={t('Approximate average revenue per order based on available data.')}
                         />
                     </ul>
                 </section>
 
-                <section className="inventory-section analytics-page__charts">
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--two">
-                        <AnalyticsChart
-                            type="line"
-                            data={revenue.timeSeries ?? []}
-                            title={t('Revenue Over Time')}
-                            description={t('Track revenue fluctuations throughout the selected period.')}
-                            legend={false}
-                        />
-                        <AnalyticsChart
-                            type="pie"
-                            data={revenue.byCategory ?? []}
-                            title={t('Revenue by Category')}
-                            description={t('Compare revenue contribution across product categories.')}
-                            legend
-                        />
-                    </div>
-
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--two">
-                        <AnalyticsChart
-                            type="bar"
-                            data={revenue.bySeller ?? []}
-                            title={t('Top Sellers by Revenue')}
-                            description={t('Identify sellers driving the highest revenue.')}
-                            legend={false}
-                        />
-                        <AnalyticsChart
-                            type="bar"
-                            data={revenue.topProducts.slice(0, 10).map((product) => ({ label: product.label, value: product.revenue }))}
-                            title={t('Top Products Revenue')}
-                            description={t('Revenue distribution of leading products.')}
-                            legend={false}
-                        />
-                    </div>
-                </section>
-
-                <section className="inventory-section analytics-page__table">
-                    <AnalyticsTable
-                        data={topProducts}
-                        columns={tableColumns}
-                        headerTitle={t('Top Products Breakdown')}
-                        headerIcon="bx bx-star"
-                        emptyMessage={t('No product revenue data available for the selected filters.')}
-                        rowKey={(row) => `${row.productId}-${row.variantId}`}
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="line"
+                        data={revenue.timeSeries ?? []}
+                        title={t('Revenue Over Time')}
+                        description={t('Track revenue fluctuations throughout the selected period.')}
+                    />
+                    <AnalyticsChart
+                        type="pie"
+                        data={revenue.byCategory ?? []}
+                        title={t('Revenue by Category')}
+                        description={t('Compare revenue contribution across product categories.')}
+                        legend
                     />
                 </section>
+
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="bar"
+                        data={revenue.bySeller ?? []}
+                        title={t('Top Sellers by Revenue')}
+                        description={t('Identify sellers driving the highest revenue.')}
+                    />
+                    <AnalyticsChart
+                        type="bar"
+                        data={revenue.topProducts.slice(0, 10).map((product) => ({ label: product.label, value: product.revenue }))}
+                        title={t('Top Products Revenue')}
+                        description={t('Revenue distribution of leading products.')}
+                    />
+                </section>
+
+                <AnalyticsTable
+                    data={topProducts}
+                    columns={tableColumns}
+                    headerTitle={t('Top Products Breakdown')}
+                    headerIcon={<BarChart3 aria-hidden="true" />}
+                    emptyMessage={t('No product revenue data available for the selected filters.')}
+                    rowKey={(row) => `${row.productId}-${row.variantId}`}
+                />
             </div>
         </AppLayout>
     );

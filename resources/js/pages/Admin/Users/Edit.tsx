@@ -1,12 +1,13 @@
 import { Head, usePage } from '@inertiajs/react';
-import UserEditForm from '../../../components/admin/users/UserEditForm';
-import Header from '../../../components/ui/header';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import UserEditForm from '@/components/admin/users/UserEditForm';
+import Header from '@/components/ui/header';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 
 interface Role {
     id: number;
-    name: Record<string, string>; // Translation object with locale keys
+    name: Record<string, string>;
 }
 
 interface User {
@@ -33,7 +34,6 @@ export default function Edit() {
         <AppLayout>
             <Head title={`${t('Edit User')} - ${user.first_name} ${user.last_name}`} />
 
-            {/* Header */}
             <Header
                 title={t('Edit User')}
                 breadcrumbs={[
@@ -42,7 +42,6 @@ export default function Edit() {
                 ]}
             />
 
-            {/* Form chỉnh sửa */}
             <UserEditForm user={user} roles={roles} errors={errors} />
         </AppLayout>
     );

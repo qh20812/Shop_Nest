@@ -1,10 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
-import CategoryForm from '../../../components/admin/categories/CategoryForm';
-import Toast from '../../../components/admin/users/Toast';
-import Header from '../../../components/ui/header';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import CategoryForm from '@/components/admin/categories/CategoryForm';
+import Toast from '@/components/admin/users/Toast';
+import Header from '@/components/ui/header';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
 
 interface Category {
     category_id: number;
@@ -39,8 +40,8 @@ export default function Edit() {
         image_url: category.image_url || '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         post(`/admin/categories/${category.category_id}`);
     };
 
@@ -48,7 +49,6 @@ export default function Edit() {
         <AppLayout>
             <Head title={t('Edit Category')} />
 
-            {/* Toast notification */}
             {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
             <Header

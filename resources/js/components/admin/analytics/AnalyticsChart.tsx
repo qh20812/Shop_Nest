@@ -1,5 +1,4 @@
-import '@/../css/Page.css';
-import { useTranslation } from '@/lib/i18n';
+import { BarChart3, Loader2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 import {
     Area,
@@ -21,6 +20,10 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './analytics.module.css';
 
 export type AnalyticsChartType = 'line' | 'bar' | 'pie' | 'area' | 'funnel';
 
@@ -45,7 +48,25 @@ export interface AnalyticsChartProps {
     className?: string;
 }
 
-const defaultColors = ['#1976D2', '#26A69A', '#EF5350', '#FFB300', '#6D4C41', '#7E57C2'];
+const defaultColors = [
+    'var(--sn-color-accent)',
+    'var(--sn-color-success)',
+    'var(--sn-color-warning)',
+    'var(--sn-color-danger)',
+    'var(--sn-color-text-muted)',
+    'var(--sn-color-border-strong)',
+];
+
+const axisTick = { fill: 'var(--sn-color-text-muted)', fontSize: 12 };
+const axisLine = { stroke: 'var(--sn-color-border)' };
+const gridStroke = 'var(--sn-color-border)';
+const tooltipStyle = {
+    borderRadius: 8,
+    border: '1px solid var(--sn-color-border)',
+    background: 'var(--sn-color-surface)',
+    color: 'var(--sn-color-text)',
+    boxShadow: 'var(--sn-shadow-popover)',
+};
 
 const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     type,
@@ -66,11 +87,20 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     const palette = useMemo(() => (colors.length ? colors : defaultColors), [colors]);
     const hasData = Array.isArray(data) && data.length > 0;
 
+    const tooltipContent = (
+        <Tooltip
+            formatter={(value, name, entry) =>
+                tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
+            }
+            contentStyle={tooltipStyle}
+        />
+    );
+
     const renderChart = () => {
         if (!hasData) {
             return (
-                <div className="analytics-chart__empty">
-                    <i className="bx bx-bar-chart-alt"></i>
+                <div className={styles.chartEmpty}>
+                    <BarChart3 aria-hidden="true" className={styles.chartEmptyIcon} />
                     <p>{t('No data available for the selected filters')}</p>
                 </div>
             );
@@ -81,23 +111,18 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(25, 118, 210, 0.2)" />
-                            <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <Tooltip
-                                formatter={(value, name, entry) =>
-                                    tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-                                }
-                                contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
-                            />
-                            {legend ? <Legend /> : null}
+                            <CartesianGrid stroke={gridStroke} strokeWidth={1} />
+                            <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            {tooltipContent}
+                            {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Line
                                 type="monotone"
                                 dataKey={valueKey}
                                 stroke={palette[0]}
-                                strokeWidth={3}
-                                dot={{ r: 4, strokeWidth: 2, stroke: 'var(--light)' }}
-                                activeDot={{ r: 6 }}
+                                strokeWidth={2}
+                                dot={{ r: 3, strokeWidth: 2, stroke: 'var(--sn-color-surface)' }}
+                                activeDot={{ r: 5 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>
@@ -106,17 +131,12 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(25,118,210,0.12)" />
-                            <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <Tooltip
-                                formatter={(value, name, entry) =>
-                                    tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-                                }
-                                contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
-                            />
-                            {legend ? <Legend /> : null}
-                            <Bar dataKey={valueKey} radius={[8, 8, 0, 0]}>
+                            <CartesianGrid stroke={gridStroke} strokeWidth={1} />
+                            <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            {tooltipContent}
+                            {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
+                            <Bar dataKey={valueKey} radius={[4, 4, 0, 0]}>
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${entry[categoryKey]}-${index}`} fill={palette[index % palette.length]} />
                                 ))}
@@ -128,20 +148,15 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <PieChart>
-                            <Tooltip
-                                formatter={(value, name, entry) =>
-                                    tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-                                }
-                                contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
-                            />
-                            {legend ? <Legend /> : null}
+                            {tooltipContent}
+                            {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Pie
                                 data={data}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={100}
-                                paddingAngle={4}
+                                innerRadius={56}
+                                outerRadius={96}
+                                paddingAngle={2}
                                 dataKey={valueKey}
                                 nameKey={categoryKey}
                             >
@@ -156,29 +171,18 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                            <defs>
-                                <linearGradient id="analyticsAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={palette[0]} stopOpacity={0.35} />
-                                    <stop offset="95%" stopColor={palette[0]} stopOpacity={0.05} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(25,118,210,0.12)" />
-                            <XAxis dataKey={categoryKey} tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <YAxis tick={{ fill: 'var(--dark)' }} stroke="var(--grey)" />
-                            <Tooltip
-                                formatter={(value, name, entry) =>
-                                    tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-                                }
-                                contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
-                            />
-                            {legend ? <Legend /> : null}
+                            <CartesianGrid stroke={gridStroke} strokeWidth={1} />
+                            <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            {tooltipContent}
+                            {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Area
                                 type="monotone"
                                 dataKey={valueKey}
                                 stroke={palette[0]}
-                                strokeWidth={3}
-                                fill="url(#analyticsAreaGradient)"
-                                activeDot={{ r: 6 }}
+                                strokeWidth={2}
+                                fill="var(--sn-color-accent-wash)"
+                                activeDot={{ r: 5 }}
                             />
                         </AreaChart>
                     </ResponsiveContainer>
@@ -187,14 +191,9 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <FunnelChart>
-                            <Tooltip
-                                formatter={(value, name, entry) =>
-                                    tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-                                }
-                                contentStyle={{ borderRadius: 12, border: '1px solid var(--grey)' }}
-                            />
-                            <Funnel dataKey={valueKey} data={data} isAnimationActive fill={palette[0]}>
-                                <LabelList position="right" fill="var(--dark)" stroke="none" dataKey={categoryKey} formatter={(label) => label} />
+                            {tooltipContent}
+                            <Funnel dataKey={valueKey} data={data} isAnimationActive={false} fill={palette[0]}>
+                                <LabelList position="right" fill="var(--sn-color-text-muted)" stroke="none" dataKey={categoryKey} />
                             </Funnel>
                         </FunnelChart>
                     </ResponsiveContainer>
@@ -205,18 +204,18 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     };
 
     return (
-        <div className={`analytics-chart chart-card ${className}`.trim()}>
-            <div className="chart-header">
+        <div className={`${styles.chartCard} ${className}`.trim()}>
+            <div className={styles.chartHead}>
                 <div>
-                    <h3>{title}</h3>
-                    {description ? <span>{description}</span> : null}
+                    <h3 className={styles.chartTitle}>{title}</h3>
+                    {description ? <span className={styles.chartDescription}>{description}</span> : null}
                 </div>
             </div>
 
-            <div className="chart-body">
+            <div className={styles.chartBody}>
                 {loading ? (
-                    <div className="analytics-chart__loading">
-                        <i className="bx bx-loader-circle bx-spin"></i>
+                    <div className={styles.chartLoading}>
+                        <Loader2 aria-hidden="true" className={styles.spin} />
                         <p>{t('Loading chart data...')}</p>
                     </div>
                 ) : (

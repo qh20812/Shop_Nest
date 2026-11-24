@@ -1,5 +1,11 @@
+import { Filter, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from '../../../lib/i18n';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '../admin.module.css';
 
 interface OrderFilterPanelProps {
     fromDate: string;
@@ -8,6 +14,10 @@ interface OrderFilterPanelProps {
     onReset: () => void;
 }
 
+/**
+ * Advanced date filters for the admin order list. Rendered inside the single
+ * `FilterPanel` bar so the page does not stack two filter strips.
+ */
 export default function OrderFilterPanel({ fromDate: initialFromDate, toDate: initialToDate, onApply, onReset }: OrderFilterPanelProps) {
     const { t } = useTranslation();
     const [fromDate, setFromDate] = useState(initialFromDate);
@@ -24,107 +34,29 @@ export default function OrderFilterPanel({ fromDate: initialFromDate, toDate: in
     };
 
     return (
-        <div
-            style={{
-                background: 'var(--light)',
-                padding: '16px 24px',
-                borderRadius: '20px',
-                marginBottom: '24px',
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-            }}
-        >
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <label
-                    style={{
-                        fontSize: '14px',
-                        color: 'var(--dark)',
-                        fontWeight: '500',
-                        minWidth: '60px',
-                    }}
-                >
-                    {t('From')}:
-                </label>
-                <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    style={{
-                        padding: '8px 12px',
-                        border: '1px solid var(--grey)',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        background: 'var(--light)',
-                        color: 'var(--dark)',
-                    }}
-                />
+        <div className={styles.filterAdvanced}>
+            <div className={styles.filterRow}>
+                <div className={styles.filterField}>
+                    <span className={styles.filterLabel}>{t('From')}</span>
+                    <Input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} aria-label={t('From date')} />
+                </div>
+
+                <div className={styles.filterField}>
+                    <span className={styles.filterLabel}>{t('To')}</span>
+                    <Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label={t('To date')} />
+                </div>
+
+                <div className={styles.filterActions}>
+                    <Button type="button" variant="secondary" size="md" onClick={handleApply}>
+                        <Filter aria-hidden="true" />
+                        {t('Apply')}
+                    </Button>
+                    <Button type="button" variant="ghost" size="md" onClick={handleReset}>
+                        <RotateCcw aria-hidden="true" />
+                        {t('Reset')}
+                    </Button>
+                </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <label
-                    style={{
-                        fontSize: '14px',
-                        color: 'var(--dark)',
-                        fontWeight: '500',
-                        minWidth: '60px',
-                    }}
-                >
-                    {t('To')}:
-                </label>
-                <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    style={{
-                        padding: '8px 12px',
-                        border: '1px solid var(--grey)',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        background: 'var(--light)',
-                        color: 'var(--dark)',
-                    }}
-                />
-            </div>
-
-            <button
-                onClick={handleApply}
-                style={{
-                    padding: '8px 16px',
-                    background: 'var(--primary)',
-                    color: 'var(--light)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                }}
-            >
-                <i className="bx bx-filter"></i>
-                {t('Apply')}
-            </button>
-
-            <button
-                onClick={handleReset}
-                style={{
-                    padding: '8px 16px',
-                    background: 'var(--grey)',
-                    color: 'var(--dark)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                }}
-            >
-                <i className="bx bx-reset"></i>
-                {t('Reset')}
-            </button>
         </div>
     );
 }

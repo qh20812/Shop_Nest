@@ -47,6 +47,8 @@ interface FilterPanelProps {
         icon: IconProp;
         onClick: () => void;
     };
+    /** Extra controls rendered inside the same bar (e.g. an advanced filter block). */
+    children?: React.ReactNode;
 }
 
 const buttonVariant = (color: ActionButtonConfig['color']) => (color === 'danger' ? 'destructive' : 'primary');
@@ -67,6 +69,7 @@ export default function FilterPanel({
     filterConfigs = [],
     buttonConfigs = [],
     reportButtonConfig,
+    children,
 }: FilterPanelProps) {
     const { t } = useTranslation();
 
@@ -129,6 +132,8 @@ export default function FilterPanel({
                             </Link>
                         </Button>
                     ))}
+
+                    {children}
                 </div>
             </form>
         </>

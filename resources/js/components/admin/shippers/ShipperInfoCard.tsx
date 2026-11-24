@@ -1,21 +1,27 @@
 import { ReactNode } from 'react';
 
+import { renderIcon, type IconProp } from '@/lib/icon';
+
+import styles from './shippers.module.css';
+
 interface ShipperInfoCardProps {
     title: string;
-    icon: string;
+    icon?: IconProp;
     children: ReactNode;
     actionButtons?: ReactNode;
 }
 
 export default function ShipperInfoCard({ title, icon, children, actionButtons }: ShipperInfoCardProps) {
     return (
-        <div className="orders">
-            <div className="header">
-                <i className={icon}></i>
-                <h3>{title}</h3>
-                {actionButtons && <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>{actionButtons}</div>}
+        <section className={styles.card}>
+            <div className={styles.cardHead}>
+                <h2 className={styles.cardTitle}>
+                    {icon ? <span className={styles.cardIcon}>{renderIcon(icon)}</span> : null}
+                    {title}
+                </h2>
+                {actionButtons ? <div className={styles.cardActions}>{actionButtons}</div> : null}
             </div>
             {children}
-        </div>
+        </section>
     );
 }

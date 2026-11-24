@@ -1,9 +1,13 @@
 import { Head, usePage } from '@inertiajs/react';
-import ProductImageGallery from '../../../components/admin/products/ProductImageGallery';
-import ProductInfo from '../../../components/admin/products/ProductInfo';
-import ProductTabs from '../../../components/admin/products/ProductTabs';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import ProductImageGallery from '@/components/admin/products/ProductImageGallery';
+import ProductInfo from '@/components/admin/products/ProductInfo';
+import ProductTabs from '@/components/admin/products/ProductTabs';
+import Header from '@/components/ui/header';
+import AppLayout from '@/layouts/app/AppLayout';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
 
 interface AttributeValue {
     attribute_value_id: number;
@@ -67,10 +71,8 @@ export default function Show() {
     const { t, locale } = useTranslation();
     const { product } = usePage<PageProps>().props;
 
-    // Get current locale for prop passing
     const currentLocale = locale as 'en' | 'vi';
 
-    // Helper function to get localized product name
     const getProductName = (): string => {
         if (!product.name) return t('Unnamed Product');
         if (typeof product.name === 'string') return product.name;
@@ -81,21 +83,24 @@ export default function Show() {
         <AppLayout>
             <Head title={`${getProductName()} - ${t('Product Details')}`} />
 
-            <div className="product-detail">
-                {/* Main Product Details Section */}
-                <div className="product-detail__main">
-                    <div className="product-detail__gallery-container">
-                        <ProductImageGallery images={product.images} />
-                    </div>
-                    <div className="product-detail__info-container">
-                        <ProductInfo product={product} currentLocale={currentLocale} />
-                    </div>
+            <Header
+                title={t('Product Details')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Products'), href: '/admin/products' },
+                    { label: getProductName(), href: `/admin/products/${product.product_id}`, active: true },
+                ]}
+            />
+
+            <div className={styles.stack}>
+                <div className={styles.gridTwo}>
+                    <ProductImageGallery images={product.images} />
+                    <ProductInfo product={product} currentLocale={currentLocale} />
                 </div>
 
-                {/* Description and Reviews Section */}
-                <div className="product-detail__tabs-container">
+                <section className={styles.section}>
                     <ProductTabs description={product.description} reviews={product.reviews} />
-                </div>
+                </section>
             </div>
         </AppLayout>
     );

@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 hoàn tất** (2026-11-24) — email presentation chuẩn hoá hex + bỏ dash, 6 error page self-contained + test; PDF defer theo #70; chi tiết ở §15.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 hoàn tất** (2026-11-24) — email presentation chuẩn hoá hex + bỏ dash, 6 error page self-contained + test; PDF defer theo #70; chi tiết ở §15. **Phase 11 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.13; đã chốt lại wrapper/AppLayout/reset/workspace trước khi xoá.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -59,7 +59,7 @@
 | 8     | Admin                                     |  XL |       ~60 |
 | 9     | Shipper                                   |   S |        ~6 |
 | 10    | Email, error pages, PDF                   |   M |       ~22 |
-| 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~15 |
+| 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~30 |
 | 12    | QA sweep                                  |   L |   toàn bộ |
 
 ### 0.5 Design read & dials
@@ -155,6 +155,15 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 68  | Phase 10 email scope | Bám code thực tế: **8 template** (`welcome`, `welcome_google_user`, `verify`, `reset_password`, `low_stock`, `order_status`, `shop_status`, `google_account_linked`), theme `resources/views/vendor/mail/html/themes/shopnest.css` + override `vendor/mail/html/{header,footer,message}.blade.php`, `config/mail.php` `markdown.theme = shopnest`, `lang/{vi,en}/mail.php` (188/189 dòng), 10 test. **Bỏ** `emails/partials/theme.blade.php` khỏi spec. Giữ **system font stack** thay Be Vietnam Pro vì email client không tải woff2 self-host ổn định. Chuẩn hoá 5 hex lệch (`#2f6e4f`, `#a5241b`, `#f7f1ea`, `#e6e6df`, `#6b6e61`) về primitive. Chỉ sửa trình bày; không sửa mail class/notification/listener/observer/migration |
 | 69  | Phase 10 error pages | Tạo **6 file**: `resources/views/errors/layout.blade.php` + `{404,419,429,500,503}.blade.php`. Self-contained: CSS trong `<style>`, hex literal, không Vite/React/CSS var; dark mode bằng `@media (prefers-color-scheme: dark)`. Font `'Be Vietnam Pro', Arial, sans-serif` qua `@font-face` trỏ `/fonts/be-vietnam-pro/*.woff2`, fallback Arial nếu 404. **Copy tiếng Việt hardcode**, không dùng `__()` vì error page phải render khi session/locale/translation lỗi. Thêm `tests/Feature/Errors/ErrorPageTest.php` (404 thật + render 419/429/500/503). Không thêm route/Vite entry |
 | 70  | Phase 10 PDF | **Defer, không làm trong Phase 10.** `barryvdh/laravel-dompdf ^3.1` đã cài, nhưng `routes/user.php` có `GET user/orders/{order}/invoice` → `OrderController@downloadInvoice` **không tồn tại** nên route 500; không có `resources/views/pdf`, không có link invoice trong `resources/js`. Spec cũ ghi “chỉ có comment” là sai. Không tạo view/controller PDF trong refactor UI; ghi backlog backend. Commit §13 đổi thành chỉ email + error pages |
+| 71  | Phase 11 pre-flight | Cây sạch tại `0aa386c`; full test **473 test / 2.100 assertion** (469 DEPRECATION + 4 pass, 0 fail); `types` + `format:check` pass; `check:css` **293 checked / 5 allowlisted**; `check:css:all` **72 vi phạm / 5 file** (UtilityStrip 39, LoadingOverlay 16, base.css 8, navbar 8, sidebar 1). Số đo lại: `Page.css` **62.988 bytes**, **79 dòng selector `.content`** (không phải 66); `AppLayout` **45 importer** (34 Admin + 10 Seller + 1 Shipper), không phải 44/39. `Page.css` chỉ còn **3 importer** (`WorkspaceLayout`, `navbar`, `sidebar`); 2 file sau dead |
+| 72  | Phase 11 wrapper scope | **Không xoá toàn bộ wrapper như checklist cũ.** Chỉ xoá file thật sự dead: `action-button` (0 importer), `navbar` (0), `sidebar` (0), `LoadingOverlay` (0), `UtilityStrip` (0). **Giữ** các composition wrapper sạch `sn-*`/module: `header` (32 importer), `data-table` (21), `status-badge` (15), `filter-panel` (13), `insights` (11), `action-buttons` (10), `confirmation-modal` (9), `action-dropdown` (2), `primary-input` (2); `insights` không có primitive thay thế, `data-table`/`filter-panel` chính là composition đích. Xoá hết sẽ là ~100 sửa import, không phải “~15 file” |
+| 73  | Phase 11 AppLayout | **Giữ** `layouts/app/AppLayout.tsx` (re-export một dòng) trong Phase 11 vì **45 page** vẫn import; không xoá trước khi codemod. Ghi backlog Phase 12 hoặc một commit riêng `chore(ui): point pages at WorkspaceLayout`. Không coi việc giữ re-export là nợ chặn Tailwind |
+| 74  | Phase 11 workspace CSS | Trước khi xoá `Page.css`, thêm vào `layouts/workspace.css`: `.sn-workspace__content` offset `var(--sn-sidebar)` (232) + mobile 0; `.sn-workspace__main` padding **36px 24px**, `min-height`/`overflow` thay `.content main`; sidebar dùng `var(--sn-sidebar)` (232) thay 230. `WorkspaceLayout` bỏ class `.content`, bỏ inline `style` mobile và `useIsMobile`, đổi sang `.sn-workspace__content`. Đổi mốc `min-width: 769px` về 768 sau khi `Page.css` không còn. Cập nhật comment 66 → 79 |
+| 75  | Phase 11 reset parity | `base/reset.css` hiện **chưa thay được Tailwind preflight + 6 block `sn-legacy-reset`**. Phải bổ sung trước khi xoá: `a { color: inherit; text-decoration: inherit }` (hiện 44 `<Link>` không className; `ProductCard` title sẽ luôn gạch chân), `h1-h6 { font-size/weight: inherit }`, `ul/ol/menu { list-style:none; margin:0; padding:0 }`, `img/svg/video/canvas { vertical-align: middle }`, `hr/table/fieldset` reset, `button/input` background/color. Test lại Storefront + Workspace trước khi xoá Tailwind/Page.css |
+| 76  | Phase 11 strict gate | Plan cũ ghi “strict lần cuối (không `--all`)”, nhưng normal run **bỏ qua allowlist**. Dùng `npm run check:css:all` để xác nhận **0 vi phạm**, hoặc để allowlist rỗng rồi chạy normal; sau đó mới xoá `scripts/token-allowlist.json`. Sau khi xoá 5 file allowlist, strict phải 0 |
+| 77  | Phase 11 blade/package cleanup | Ngoài checklist cũ: xoá `@fortawesome/fontawesome-free` (0 usage) và `postcss` (0 usage ngoài `postcss.config.js`); bỏ inline `<style> html { background:#f6f1e6 }` + `html.dark { oklch(...) }` trong `app.blade.php`; bỏ `.dark` mirror trong `useTheme` và inline script; bỏ Boxicons CDN + `body class="font-sans antialiased"`; sửa `eslint.config.js` ignore `tailwind.config.js` (file thật là `.ts`) |
+| 78  | Phase 11 docs | `AGENTS.md`/`README.md` đang lệch nặng: 104 allowlist (thực 5), 39 AppLayout (thực 45), 40 Page.css (thực 3), ~230 Boxicons (thực 7 trong 2 file dead), Account/Chat “còn Nếp” (thực 0 Tailwind ngoài allowlist). Cập nhật trong Phase 11. `DESIGN.md`/`COMPONENTS.md` vẫn là Nếp: để Phase 12 rewrite, ghi rõ để không đọc nhầm |
+| 79  | Phase 11 pinLight | Bỏ prop `pinLight` khỏi `StorefrontLayout` + `AccountLayout` và **15 chỗ truyền** ở 11 page (`Cart` 2, `Checkout` 2, `PaymentResult`, `ProductDetail`, `About`, `Contact`, `Home/Index` 2, `Search`, `Legal/*` 3). Default đã là `false` từ Phase 6 nên hành vi không đổi; bỏ `data-theme={pinLight ? 'light' : undefined}`. Không đổi route/props Inertia |
 
 ---
 
@@ -206,7 +215,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `STITCH-DESIGN.md`                | 11.325 dòng HTML dùng Tailwind CDN                                                                                   | Archived Phase 11                                         |
 | `PROMPT.md`, `PLAN.md`            | Kế hoạch Nếp cũ                                                                                                      | Archived Phase 11                                         |
 | `useTheme.ts`                     | Đã set `data-theme` + mirror `.dark` từ Phase 1                                                                      | Bỏ mirror `.dark` Phase 11                                |
-| `AppLayout.tsx`                   | Re-export `WorkspaceLayout` từ Phase 3                                                                               | Xoá Phase 11                                              |
+| `AppLayout.tsx`                   | Re-export `WorkspaceLayout` từ Phase 3                                                                               | **Giữ** re-export Phase 11; codemod 45 page Phase 12 (#73) |
 
 ### 2.4 Trang thiếu (backlog, không tạo trong refactor)
 
@@ -423,6 +432,32 @@ Rà soát read-only trên working tree sau commit Phase 9 `40dd881` để đối
 - Chưa có xác nhận Gmail/Outlook thật; test hiện chỉ kiểm nội dung/localization.
 
 **Kết luận:** Phase 10 gồm (1) commit cụm mail/locale trước, (2) rà soát/chuẩn hoá trình bày email hiện có, (3) tạo 6 file error page + test, (4) defer PDF và ghi backlog. Không tạo route/page/endpoint mới.
+
+### 2.13 Rà soát trước Phase 11 (2026-11-24)
+
+Rà soát read-only trên cây sạch tại `0aa386c` để đối chiếu checklist Phase 11 với code thật:
+
+| Chỉ số / hạng mục | Hiện trạng |
+|---|---|
+| Working tree | **Sạch**, HEAD `0aa386c` (`feat(ui): restyle email templates and error pages`) |
+| Test | **473 test / 2.100 assertion**, 0 fail (469 DEPRECATION PDO 8.5 + 4 pass) |
+| Gate | `types` + `format:check` pass; `check:css` **293 checked / 5 allowlisted**; `check:css:all` **72 vi phạm / 5 file** |
+| 5 file allowlist | `base.css` 8, `LoadingOverlay` 16, `UtilityStrip` 39, `navbar` 8, `sidebar` 1 |
+| `Page.css` | **62.988 bytes**, 2.928 dòng, **79 dòng selector `.content`** (plan ghi 66); chỉ **3 importer**: `WorkspaceLayout`, `navbar`, `sidebar` |
+| `AppLayout` | **45 importer**: 34 Admin + 10 Seller + 1 Shipper (plan ghi 44, AGENTS ghi 39) |
+| Dead code | `action-button` 0, `navbar` 0, `sidebar` 0, `LoadingOverlay` 0, `UtilityStrip` 0 importer |
+| Wrapper còn dùng | `header` 32, `data-table` 21, `status-badge` 15, `filter-panel` 13, `insights` 11, `action-buttons` 10, `confirmation-modal` 9, `action-dropdown` 2, `primary-input` 2 |
+| TSX | **0 hex**, **0 `dark:`**; `cva` 0 import; `clsx`/`tailwind-merge` chỉ trong `lib/utils.ts` |
+| `.dark` | `app.css` custom-variant, `legacy-tokens.css`, `Page.css` (`body.dark`, `html.dark`), `base.css`, `useTheme`, `app.blade.php` inline |
+| `app.blade.php` | Boxicons CDN, `body class="font-sans antialiased"`, inline `html { background:#f6f1e6 }`, `html.dark { oklch(...) }` |
+| `app.css` | Import `tailwindcss`, `legacy-tokens.css`, `tokens.css`, `base.css`; `@custom-variant`, 2 `@source` |
+| Workspace CSS | `sn-workspace__main` **không có rule**; content dựa `.content { width:calc(...-230px); left:230px }` và `.content main { padding:36px 24px; height:calc(100vh-56px) }`; sidebar hard-code 230, token đích 232 |
+| Reset | `base/reset.css` thiếu `a` text-decoration, heading inherit, list reset, replaced `vertical-align`; **44 `<Link>` không className**, `ProductCard` title sẽ gạch chân nếu bỏ preflight |
+| Package | Tailwind + plugin + `cva`/`clsx`/`tailwind-merge` + `prettier-plugin-tailwindcss` còn; thêm `@fortawesome` và `postcss` 0 usage |
+| `pinLight` | Còn prop ở `StorefrontLayout`/`AccountLayout` + **15 chỗ truyền** ở 11 page; default `false` từ Phase 6 |
+| Docs | `AGENTS.md`/`README.md` lệch nặng; `DESIGN.md`/`COMPONENTS.md` vẫn Nếp |
+
+**Kết luận:** Phase 11 khả thi nhưng phải đổi thứ tự và scope: (1) bổ sung reset parity + workspace CSS trước, (2) mới xoá `Page.css`, (3) chỉ xoá dead files, **giữ wrapper sạch + `AppLayout`**, (4) gỡ Tailwind, (5) strict bằng `--all`, (6) docs. Checklist cũ xoá toàn bộ wrapper sẽ vỡ ~100 import.
 
 ---
 
@@ -2111,45 +2146,73 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ### Phase 11 — Gỡ Tailwind và dọn nợ
 
-**Checklist xoá**
+**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.13; đã chốt lại wrapper/AppLayout/reset/workspace/pinLight theo #71–#79.
 
-| File / mục                                                 | Hành động                                                                                                                                                                                                                                                              |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `package.json`                                             | Xoá `tailwindcss`, `@tailwindcss/vite`, `@tailwindcss/postcss`, `@tailwindcss/forms`, `@tailwindcss/container-queries`, `@tailwindcss/oxide-linux-x64-gnu`, `tailwind-merge`, `tailwindcss-animate`, `class-variance-authority`, `clsx`, `prettier-plugin-tailwindcss` |
-| `vite.config.ts`                                           | Bỏ `import tailwindcss` + `tailwindcss()`                                                                                                                                                                                                                              |
-| `postcss.config.js`                                        | Xoá                                                                                                                                                                                                                                                                    |
-| `tailwind.config.ts`                                       | Xoá                                                                                                                                                                                                                                                                    |
-| `components.json`                                          | Xoá                                                                                                                                                                                                                                                                    |
-| `resources/css/app.css`                                    | Bỏ `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                                                                                                                                                               |
-| `resources/css/tokens.css`                                 | Xoá                                                                                                                                                                                                                                                                    |
-| `resources/css/legacy-tokens.css`                          | Xoá                                                                                                                                                                                                                                                                    |
-| `resources/css/Page.css`                                   | Xoá **sau khi** wrapper legacy + `AppLayout` đã bị xoá (Phase 11)                                                                                                                                                                                                      |
-| `resources/css/base.css`                                   | Xoá (Phase 1 giữ nguyên, không xoá sớm)                                                                                                                                                                                                                                |
-| `resources/views/app.blade.php`                            | Bỏ Boxicons link, bỏ `class="font-sans antialiased"`, bỏ `@class(['dark' => ...])` nếu còn, xác nhận không còn link Google Fonts                                                                                                                                       |
-| `resources/js/app.tsx`                                     | Xác nhận `progress.color` đã là token, không còn `#4B5563`                                                                                                                                                                                                             |
-| `.prettierrc`                                              | Bỏ plugin + `tailwindFunctions` + `tailwindStylesheet`                                                                                                                                                                                                                 |
-| `eslint.config.js`                                         | Bỏ `tailwind.config.js` khỏi ignores                                                                                                                                                                                                                                   |
-| `scripts/token-allowlist.json`                             | Chạy strict lần cuối (không `--all`), xác nhận 0 vi phạm rồi xoá file                                                                                                                                                                                                  |
-| `resources/js/components/ui/*` wrapper legacy              | Xoá `action-button`, `action-buttons`, `action-dropdown`, `confirmation-modal`, `data-table`, `filter-panel`, `header`, `insights`, `primary-input`, `status-badge` sau khi page cuối migrate                                                                          |
-| `layouts/app/AppLayout.tsx`                                | Xoá sau khi mọi page dùng `WorkspaceLayout`                                                                                                                                                                                                                            |
-| `@/lib/utils.ts`                                           | Chỉ xoá `cn` + `twMerge`; giữ `formatCurrency` và các helper khác, chuyển sang `cx`                                                                                                                                                                                    |
-| `.dark` selectors                                          | Xoá toàn bộ                                                                                                                                                                                                                                                            |
-| `DESIGN-02.md`, `STITCH-DESIGN.md`, `PROMPT.md`, `PLAN.md` | Chuyển `docs/archive/` hoặc xoá                                                                                                                                                                                                                                        |
-| `README.md`, `AGENTS.md`                                   | Cập nhật mô tả stack, bỏ Tailwind/Boxicons                                                                                                                                                                                                                             |
-| `docs/ui/BASELINE.md`                                      | Giữ làm lịch sử                                                                                                                                                                                                                                                        |
+**Pre-flight (bắt buộc, #71)**
 
-**Thứ tự thực hiện trong Phase 11:** xoá wrapper legacy và `AppLayout` trước → xoá `Page.css` → xoá `legacy-tokens.css`/`tokens.css` → gỡ Tailwind khỏi build → chạy strict check → xoá allowlist.
+- Cây sạch tại `0aa386c`; full test **473 test / 2.100 assertion** (469 DEPRECATION PDO 8.5 + 4 pass, 0 fail); `types` + `format:check` pass.
+- `check:css` **293 checked / 5 allowlisted**; `check:css:all` **72 vi phạm / 5 file**. Sau khi xoá 5 file allowlist, strict phải **0**.
+- Số đo lại: `Page.css` **62.988 bytes**, **79 dòng selector `.content`** (không phải 66), chỉ **3 importer**; `AppLayout` **45 importer** (34 Admin + 10 Seller + 1 Shipper).
+- Không còn Tailwind/hex trong TSX ngoài 5 file allowlist; `cva` 0 import; `clsx`/`tailwind-merge` chỉ trong `lib/utils.ts`.
+
+**Phạm vi chốt (#72–#75)**
+
+| Nhóm | Quyết định |
+|---|---|
+| Wrapper dead — xoá | `action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip` (0 importer) |
+| Wrapper sạch — giữ | `header` 32, `data-table` 21, `status-badge` 15, `filter-panel` 13, `insights` 11, `action-buttons` 10, `confirmation-modal` 9, `action-dropdown` 2, `primary-input` 2. Đều đã `sn-*`/module; `insights` không có primitive thay thế |
+| `AppLayout` | **Giữ** re-export một dòng vì 45 page import; codemod sang `WorkspaceLayout` ghi backlog Phase 12, không chặn Tailwind |
+| Workspace CSS | Thêm `.sn-workspace__content` (offset 232) + `.sn-workspace__main` (padding 36/24, min-height/overflow), sidebar dùng `var(--sn-sidebar)` 232, bỏ `.content` + inline mobile style + `useIsMobile`, đổi 769 → 768 |
+| Reset parity | Mở rộng `base/reset.css` trước khi xoá Tailwind/Page.css: `a` color/text-decoration, heading inherit, list reset, replaced `vertical-align`, `hr/table/fieldset`, button/input background/color |
+
+**Thứ tự thực hiện**
+
+1. **Reset + workspace CSS** (chưa xoá gì): sửa `base/reset.css`, `layouts/workspace.css`; `types` + `build` + test workspace.
+2. **Chuyển `.content`**: `WorkspaceLayout` dùng `.sn-workspace__content`; bỏ import `Page.css`; xoá `Page.css`; verify Admin/Seller/Shipper ở 375/390/768/1024/1440.
+3. **Xoá dead files**: 5 file ở #72; xoá entry allowlist tương ứng; `check:css:all` phải 0.
+4. **Bỏ mirror `.dark`**: `useTheme`, inline script; bỏ inline `html` background/`html.dark` trong `app.blade.php`; bỏ Boxicons CDN + body class; bỏ `pinLight` khỏi 2 layout + 11 page.
+5. **Gỡ Tailwind khỏi build**: `app.css`, `vite.config.ts`, `package.json`, `postcss.config.js`, `tailwind.config.ts`, `components.json`, `.prettierrc`, `eslint.config.js`; xoá `tokens.css`/`legacy-tokens.css`/`base.css`; `npm install` để cập nhật lock.
+6. **Dọn `cn`**: xoá `cn`/`clsx`/`twMerge` khỏi `lib/utils.ts` (giữ `formatCurrency` và helper khác); xoá dependency `clsx`/`tailwind-merge`/`cva`.
+7. **Strict gate**: `check:css:all` 0 → xoá `scripts/token-allowlist.json`; chạy `npm ci`, `build`, `build:ssr`, full test.
+8. **Docs**: cập nhật `README.md` + `AGENTS.md`; archive `PLAN.md`/`PROMPT.md`/`DESIGN-02.md`/`STITCH-DESIGN.md` vào `docs/archive/`.
+
+**Checklist xoá/sửa**
+
+| File / mục | Hành động |
+|---|---|
+| `resources/css/base/reset.css` | Bổ sung reset parity (#75); test 44 `<Link>` không className + `ProductCard` title |
+| `resources/css/layouts/workspace.css` | Thêm `.sn-workspace__content` + `.sn-workspace__main`; sidebar 232; mobile; bỏ ngoại lệ 769 |
+| `components/layout/WorkspaceLayout.tsx` | Bỏ `LEGACY_CONTENT_CLASS`, inline style, `useIsMobile`, import `Page.css`; đổi comment 66 → 79 |
+| `hooks/useTheme.ts` | Bỏ `root.classList.toggle('dark', …)`; giữ `data-theme` + `colorScheme` |
+| `views/app.blade.php` | Bỏ Boxicons CDN, body class, inline `html` background `#f6f1e6` + `html.dark` oklch; giữ script `data-theme` |
+| `StorefrontLayout`, `AccountLayout` + 11 page | Bỏ prop `pinLight` và 15 chỗ truyền (#79); default đã `false` từ Phase 6 |
+| `resources/css/app.css` | Bỏ `@import 'tailwindcss'`, `legacy-tokens.css`, `tokens.css`, `base.css`, `@custom-variant`, 2 `@source`; bỏ `sn-legacy-reset` khỏi layer line |
+| `package.json` | Xoá `tailwindcss`, `@tailwindcss/vite`, `@tailwindcss/postcss`, `@tailwindcss/forms`, `@tailwindcss/container-queries`, `@tailwindcss/oxide-linux-x64-gnu`, `tailwind-merge`, `tailwindcss-animate`, `class-variance-authority`, `clsx`, `prettier-plugin-tailwindcss`, **`@fortawesome/fontawesome-free`**, **`postcss`** |
+| `vite.config.ts` | Bỏ `import tailwindcss` + `tailwindcss()` |
+| `postcss.config.js`, `tailwind.config.ts`, `components.json` | Xoá |
+| `resources/css/Page.css`, `base.css`, `tokens.css`, `legacy-tokens.css` | Xoá **sau** bước 1–2; không còn import |
+| Dead TSX | Xoá `ui/action-button.tsx`, `ui/navbar.tsx`, `ui/sidebar.tsx`, `feedback/LoadingOverlay.tsx`, `storefront/UtilityStrip.tsx` |
+| Wrapper giữ | Không xoá `header`, `data-table`, `insights`, `filter-panel`, `action-buttons`, `confirmation-modal`, `status-badge`, `primary-input`, `action-dropdown` |
+| `layouts/app/AppLayout.tsx` | **Giữ** re-export đến Phase 12; 45 import chưa chuyển |
+| `@/lib/utils.ts` | Xoá `cn` + `clsx`/`twMerge`; giữ helper format |
+| `.prettierrc` | Bỏ `prettier-plugin-tailwindcss`, `tailwindFunctions`, `tailwindStylesheet` |
+| `eslint.config.js` | Bỏ `tailwind.config.js` khỏi ignores (file thật là `.ts`, sắp xoá) |
+| `scripts/token-allowlist.json` | `check:css:all` = 0 rồi xoá; **không** dùng normal run khi allowlist còn |
+| `README.md`, `AGENTS.md` | Cập nhật stack thật: bỏ Tailwind/Boxicons/FontAwesome, 5 → 0 allowlist, 3 Page.css importer, 45 AppLayout |
+| `DESIGN.md`, `COMPONENTS.md` | Để Phase 12 rewrite; không coi là blocker Phase 11 |
+| `docs/ui/BASELINE.md` | Giữ làm lịch sử |
 
 **Kiểm tra sau khi xoá**
 
-1. `npm ci` sạch.
+1. `npm ci` sạch; `package-lock.json` không còn Tailwind/`cva`/`clsx`/`tailwind-merge`/`@fortawesome`.
 2. `npm run build` + `npm run build:ssr`.
-3. `npm run types`, `npm run format:check`, `npm run lint`, `npm run check:css`.
+3. `npm run types`, `npm run format:check`, `npm run lint`, `npm run check:css`, `npm run check:css:all` → **0**.
 4. `rg -n "tailwind|@apply|@theme|bx-|fa-" resources package.json vite.config.ts` → rỗng (trừ docs archive).
 5. `rg -n "#[0-9a-fA-F]{3,8}" resources/js resources/css --glob '!resources/css/tokens/**'` → rỗng.
-6. `php artisan test` (targeted + full nếu thời gian cho phép).
+6. `php artisan test` full; smoke 3 role workspace.
+7. Manual: 375/390/768/1024/1440; light + dark; `.sn-workspace__main` có padding; sidebar 232 không đè content; modal trên sidebar; link/heading/list không bị underline/bullet mặc định.
 
-**DoD:** không còn dependency Tailwind trong `package-lock.json`; bundle CSS giảm; không file nào import CSS đã xoá.
+**DoD:** không còn dependency Tailwind trong `package-lock.json`; `check:css:all` **0**; không còn `Page.css`/`tokens.css`/`legacy-tokens.css`/`base.css`; không còn `.dark` mirror/selector; workspace không còn `.content` và có `.sn-workspace__main` padding; reset parity đạt (0 hex/Tailwind/Boxicons ngoài tokens); không còn `pinLight`; `build` + `build:ssr` + full test pass; wrapper sạch + `AppLayout` vẫn giữ; `README`/`AGENTS` đã cập nhật; docs cũ đã archive.
 
 ---
 
@@ -2407,6 +2470,14 @@ php artisan test --filter=<area>
 | Phase 10 email scope lỗi thời                                           | Trung bình | **Phase 10 (#68):** bám 8 template + vendor theme + `lang/*/mail.php`; bỏ `partials/theme.blade.php`; giữ system font stack; chuẩn hoá 5 hex lệch; không sửa mail logic                                                                                                                                                |
 | Error page phụ thuộc asset/font/Vite                                    | Trung bình | **Phase 10 (#69):** CSS inline hex, không CSS var, không bundle React; `@font-face` có fallback Arial; copy tiếng Việt hardcode để render cả khi session/locale lỗi                                                                                                                                                    |
 | Route invoice PDF hỏng nhưng plan ghi “chưa có”                          | Trung bình | **Phase 10 (#70):** dompdf đã cài nhưng `OrderController@downloadInvoice` không tồn tại nên `GET user/orders/{order}/invoice` 500; không tạo view/controller PDF trong refactor UI; ghi backlog backend, không tạo file chết                                                                                                                                                        |
+| Phase 11 reset thiếu so với Tailwind preflight                          | Cao        | **Phase 11 (#75):** `base/reset.css` chưa có `a` text-decoration, heading inherit, list reset, replaced `vertical-align`; 44 `<Link>` không className, `ProductCard` title sẽ gạch chân. Mở rộng reset + test trước khi xoá Tailwind/Page.css |
+| Phase 11 workspace mất layout khi xoá Page.css                          | Cao        | **Phase 11 (#74):** thêm `.sn-workspace__content` (offset 232) + `.sn-workspace__main` (padding 36/24, min-height); bỏ `.content`, inline style, `useIsMobile`; sidebar 230 → 232; đổi 769 → 768 |
+| Phase 11 xoá wrapper làm vỡ ~100 import                                 | Cao        | **Phase 11 (#72):** chỉ xoá dead `action-button`/`navbar`/`sidebar`/`LoadingOverlay`/`UtilityStrip`; giữ `header` 32, `data-table` 21, `status-badge` 15, `filter-panel` 13, `insights` 11, `action-buttons` 10, `confirmation-modal` 9, `action-dropdown` 2, `primary-input` 2 |
+| `AppLayout` còn 45 importer                                             | Trung bình | **Phase 11 (#73):** giữ re-export trong Phase 11; codemod 45 page sang `WorkspaceLayout` ghi backlog Phase 12, không chặn gỡ Tailwind |
+| Strict gate chạy sai mode                                               | Trung bình | **Phase 11 (#76):** normal run bỏ qua allowlist; dùng `check:css:all` (hoặc allowlist rỗng) để xác nhận 0 rồi mới xoá `scripts/token-allowlist.json` |
+| Docs lệch nặng trước Phase 11                                           | Trung bình | **Phase 11 (#78):** `AGENTS`/`README` ghi 104 allowlist/39 AppLayout/40 Page.css/230 Boxicons; cập nhật theo thực tế 5/45/3/7. `DESIGN`/`COMPONENTS` để Phase 12 |
+| Blade/package còn sót ngoài checklist cũ                                | Thấp       | **Phase 11 (#77):** bỏ inline `html` background + `html.dark` trong `app.blade.php`, `.dark` mirror trong `useTheme`, Boxicons CDN/body class; xoá `@fortawesome` + `postcss`; sửa `eslint` ignore `.js`/`.ts` |
+| `pinLight` còn 15 chỗ truyền                                            | Thấp       | **Phase 11 (#79):** bỏ prop ở `StorefrontLayout`/`AccountLayout` + 15 chỗ ở 11 page; default đã `false`, không đổi hành vi |
 
 ---
 
@@ -2427,13 +2498,15 @@ php artisan test --filter=<area>
 - **Pre-flight Phase 9 (ngoài UI code):** commit/stash cụm mail/locale đang dở (27 file sửa + 24 file mới) và chạy lại test Admin trước khi build; không trộn vào commit Phase 9.
 - **Ngoại lệ Phase 10:** được sửa **trình bày** trong 8 template `resources/views/emails/*`, `resources/views/vendor/mail/html/{header,footer,message}.blade.php` và `themes/shopnest.css` (chuẩn hoá hex, format); được tạo **6 file** `resources/views/errors/*` và `tests/Feature/Errors/ErrorPageTest.php`. Không sửa mail class/notification/listener/observer/migration, không tạo view/controller PDF, không đổi route.
 - **Pre-flight Phase 10 (ngoài UI code):** commit cụm mail/locale (35 file sửa + 29 file mới) thành commit `feat(mail)` riêng trước khi build Phase 10; không trộn vào commit UI.
+- **Ngoại lệ Phase 11:** được xoá **5 file dead** (`action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip`), sửa `base/reset.css`, `layouts/workspace.css`, `WorkspaceLayout`, `useTheme`, `app.blade.php`, `app.css`, config Tailwind; bỏ prop `pinLight` khỏi 2 layout + 11 page; **giữ** các composition wrapper `header`/`data-table`/`insights`/`filter-panel`/`action-buttons`/`confirmation-modal`/`status-badge`/`primary-input`/`action-dropdown` và `AppLayout`; không đổi route/controller/props Inertia.
+- **Pre-flight Phase 11 (ngoài UI code):** không cần commit/stash vì cây sạch tại `0aa386c`; chỉ cần chạy lại full test + `check:css:all` trước khi bắt đầu.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá.
 - Không xoá `storefront/UtilityStrip.tsx` trước Phase 11; Phase 4 chỉ bỏ nó khỏi Home.
 - Không thêm voucher band, số liệu `1.200+`/`100%`/`299k`, badge “Shop Việt”/“Đã mua” nếu không có props/DB xác thực.
 - Không đưa các xoá `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md` vào Phase 3; khôi phục và để Phase 11.
-- Không xoá wrapper legacy (`action-button`, `action-buttons`, `confirmation-modal`, `data-table`, `filter-panel`, `status-badge`, …) trước khi page cuối cùng dùng nó đã migrate.
+- Không xoá wrapper sạch (`header`, `data-table`, `filter-panel`, `insights`, `action-buttons`, `confirmation-modal`, `status-badge`, `primary-input`, `action-dropdown`) hay `AppLayout` trong Phase 11; chỉ xoá 5 file dead đã chốt ở #72.
 - Không sửa email/PDF logic nghiệp vụ, chỉ trình bày; Phase 10 **không** tạo PDF view/controller, route invoice hỏng ghi backlog backend.
 - **Ngoại lệ thứ hai (Phase 3):** được sửa `resources/css/Page.css` **đúng 6 block toàn cục** (`*`, `a`, `li`, `html`, `body`, `body.dark`) để bọc vào `@layer sn-legacy-reset`. Không sửa bất kỳ selector component nào trong file này; không xoá file trước Phase 11.
 
@@ -2477,6 +2550,7 @@ refactor(admin): migrate shops pages and admin i18n keys
 docs(ui): log phase 8 admin migration
 fix(shipper): correct middleware alias and migrate dashboard shell
 feat(ui): restyle email templates and error pages
+chore(ui): add reset parity and workspace shell css
 chore(ui): remove tailwind, legacy css and boxicons
 test(ui): responsive, dark mode and accessibility sweep
 docs(ui): rewrite design system and component rules
@@ -2489,6 +2563,8 @@ docs(ui): rewrite design system and component rules
 > **Trước Phase 9 (quyết định #63):** working tree có **27 file sửa + 24 file mới** thuộc mail/locale, không phải Phase 8/9. Commit/stash riêng, chạy lại `php artisan test tests/Feature/Admin` (hiện **19 failed** do mail thiếu `To`) rồi mới sửa `routes/shipper.php` và build page. Không trộn cụm mail/locale vào commit shipper.
 
 > **Trước Phase 10 (quyết định #67):** working tree có **35 file sửa + 29 file mới = 64 file** thuộc mail/locale backend (`app/Mail/*`, `app/Notifications/*`, listener, observer, 2 migration, `config/{auth,mail}`, `routes/web.php`, `resources/views/emails/*`, `resources/views/vendor/mail/*`, `lang/{vi,en}/mail.php`, `tests/Feature/{Mail,Auth}`). Commit thành `feat(mail): …` riêng, không trộn vào commit `feat(ui): restyle email templates and error pages`. Test hiện xanh; chỉ cần format `shopnest.css`. PDF/invoice **không** nằm trong Phase 10 (#70).
+
+> **Trước Phase 11 (quyết định #71–#79):** cây sạch tại `0aa386c`, full test **473/2.100** pass; `check:css` 293/5, strict **72/5**. Tách 2 commit: `chore(ui): add reset parity and workspace shell css` (reset + `.sn-workspace__content`/`__main`, chưa xoá gì) rồi `chore(ui): remove tailwind, legacy css and boxicons`. Chỉ xoá 5 file dead; **giữ** wrapper sạch + `AppLayout`; strict phải 0 trước khi xoá allowlist; bỏ `pinLight`.
 
 ---
 
@@ -2525,6 +2601,15 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — rà soát trước Phase 11 và chốt scope (chưa build):**
+
+- **Cây sạch** tại `0aa386c`; full test **473 test / 2.100 assertion** (469 DEPRECATION PDO 8.5 + 4 pass, 0 fail); `types` + `format:check` pass; `check:css` **293/5**; `check:css:all` **72 vi phạm / 5 file**.
+- **Đo lại:** `Page.css` 62.988 bytes, **79 dòng selector `.content`** (plan 66), chỉ **3 importer**; `AppLayout` **45 importer** (34 Admin + 10 Seller + 1 Shipper); 0 hex/`dark:` trong TSX; `cva` 0; `clsx`/`twMerge` chỉ ở `lib/utils.ts`.
+- **Dead vs sống:** dead 0 importer — `action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip`; còn dùng — `header` 32, `data-table` 21, `status-badge` 15, `filter-panel` 13, `insights` 11, `action-buttons` 10, `confirmation-modal` 9, `action-dropdown` 2, `primary-input` 2.
+- **Lỗ hổng Phase 11:** `base/reset.css` chưa thay preflight (44 `<Link>` không className, `ProductCard` title sẽ gạch chân); `sn-workspace__main` không có CSS, content dựa `.content`/`.content main`; sidebar 230 vs token 232; `app.blade.php` còn inline `#f6f1e6`/`html.dark`/Boxicons/body class; `useTheme` còn mirror `.dark`.
+- **Quyết định #71–#79:** giữ wrapper sạch + `AppLayout`; chỉ xoá 5 file dead; thêm reset parity + workspace CSS trước khi xoá `Page.css`; strict bằng `check:css:all`; xoá `@fortawesome`/`postcss`; bỏ `pinLight`; cập nhật `AGENTS`/`README`; `DESIGN`/`COMPONENTS` để Phase 12.
+- **Cập nhật tài liệu:** header status, §0.4 (`~30`), §1 (#71–#79), **§2.13 (mới)**, Phase 11 (viết lại pre-flight + phạm vi + thứ tự + checklist + DoD), §11 (8 rủi ro Phase 11), §12 (ngoại lệ + pre-flight Phase 11), §13 (2 commit Phase 11 + note), §15.
 
 **2026-11-24 — Phase 10 hoàn tất (email + error pages):**
 

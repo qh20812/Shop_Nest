@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 đã rà soát và chốt scope** (2026-11-24, quyết định #55–#62): 34 file Admin (29 page thật + 5 stub Shops), 17 component, allowlist target **5**; **chưa build**. Chi tiết ở §2.9 và §15.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -191,7 +191,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; 57 sau Phase 6; **42 sau Phase 7; target 5 sau Phase 8**        | Giữ làm ratchet đến Phase 11                              |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; 57 sau Phase 6; 42 sau Phase 7; **5 sau Phase 8**        | Giữ làm ratchet đến Phase 11                              |
 | `app.blade.php`                   | Còn Boxicons CDN + `class="font-sans antialiased"`; Google Fonts đã bỏ ở Phase 1; favicon chỉ còn `/favicon.ico?v=3` | Bỏ Boxicons/body class Phase 11 |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
@@ -334,6 +334,29 @@ Số liệu đo trực tiếp trên working tree sau Phase 7 + commit favicon `6
 - **Dead action/link:** Dashboard + Users “Download CSV” (`console.log`); Orders “Export Orders” (`alert`) + `orders/{id}` show thiếu page, assign-shipper GET sai method, update-status/invoice/cancel không route; Returns edit/delete không route; Inventory Report thiếu page; `ProductInfo` add-to-cart `alert`; Analytics quick range chỉ đổi state local.
 - **Asset regression:** `public/image/default-product.png` bị xoá ở `685cb8b` nhưng còn fallback ở 10+ component Phase 4/6.
 - **Tài liệu cũ:** §3.5 nói blade link SVG không tồn tại (nay chỉ link favicon.ico); §15 ghi favicon ngoài phạm vi (nay đã commit).
+
+### 2.10 Kết quả Phase 8 (2026-11-24)
+
+Số liệu sau khi build Phase 8 trên working tree:
+
+| Chỉ số | Giá trị |
+|---|---|
+| Page Admin migrate | **29 page có UI + 5 stub Shops hoàn thiện read-only** (34 file) |
+| Component Admin | **17 component + `ui/action-dropdown`**; `Toast`/`ProductInfoCell` đã xong từ Phase 7 |
+| CSS Modules mới | **5**: `components/admin/admin.module.css`, `analytics/analytics.module.css`, `forms.module.css`, `products/products.module.css`, `shippers/shippers.module.css` |
+| File Admin import `Page.css` | **0** (trước Phase 8: 28) |
+| Boxicons / hex / `$` / `en-US` / em-dash trong Admin | **0 / 0 / 0 / 0 / 0** |
+| Key `t()` trong Admin | **555**; thiếu `vi` **0**, thiếu `en` **0** |
+| Key i18n thêm | **280 `vi` + 282 `en`** (nhiều hơn 204/206 do rewrite dùng thêm nhãn mới) |
+| Allowlist | **42 → 5** (chỉ còn `base.css`, `LoadingOverlay`, `UtilityStrip`, `navbar`, `sidebar`) |
+| `check:css` | pass **293 file checked, 5 allowlisted** |
+| Gate | `format:check`, `types`, `check:css`, `build`, ESLint sạch |
+| Test Admin | **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5) |
+| Asset | `public/image/default-product.png` đã khôi phục |
+
+**Đã làm:** `AnalyticsCard` thành KPI trung tính (bỏ 5 màu/icon tile); `AnalyticsChart` dùng token, grid 1 px, bỏ gradient; `AnalyticsTable` sort trong module trên `Table`; `AnalyticsFilters` bỏ vỏ card; `QuickFilter` → `Tabs variant="filter"`; `ExportButton` → `Button`; Orders gộp `OrderFilterPanel` vào một filter bar; Shops có bulk approve/reject thật + `Dialog`/`ConfirmDialog` thay `window.confirm/prompt/alert`; 5 stub Shops render đúng props; dead action CSV/export/Returns edit-delete/Inventory Report/ProductInfo add-to-cart/Analytics quick range đã bỏ; link tới page thiếu đã ẩn/disable.
+
+**Chưa làm:** CDP/Edge 29 page + 5 stub ở 5 breakpoint light/dark vì cần phiên Admin trên DB remote; ghi lại cho Phase 12 hoặc lần review có phiên.
 
 ---
 
@@ -1924,12 +1947,12 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - 29 page thật + 5 Shop stub render đúng props; không thêm tính năng/route/page mới; `Page.css` không còn cần cho Admin (trừ layout).
 - 17 component + `action-dropdown` migrate; `AnalyticsChart`/`AnalyticsCard`/`AnalyticsTable` đúng luật #60.
 - Không còn bulk action ngoài Shops; Shops bulk dùng endpoint thật; filter 1 dòng + panel phụ.
-- 0 `t()` key thiếu cho Admin (204 `vi`/206 `en` đã thêm); 0 `$`/`en-US`/em-dash/copy tiếng Anh hardcode.
+- 0 `t()` key thiếu cho Admin (280 `vi`/282 `en` đã thêm); 0 `$`/`en-US`/em-dash/copy tiếng Anh hardcode.
 - Không còn dead action/link 500; 5 stub không còn rỗng.
 - Allowlist **5**; `types` + `format:check` + `build` + `check:css` + ESLint sạch.
 - Không đổi route/controller/payload backend; `public/image/default-product.png` đã khôi phục hoặc fallback đã đổi.
 
-> **Trạng thái 2026-11-24:** đã rà soát và chốt scope (#55–#62), **chưa build**. Blocker/pre-flight: khôi phục `default-product.png`, commit/stash 2 file bẩn ngoài phạm vi, và cần phiên Admin cho CDP. Không bắt đầu build khi chưa chốt #56 (5 stub) và #57 (bulk Shops-only).
+> **Trạng thái 2026-11-24 — hoàn tất:** 29 page Admin + 5 stub Shops migrate sang `sn-*` + module CSS; 17 component + `action-dropdown`; 5 module CSS mới. `AnalyticsCard`/`AnalyticsChart`/`AnalyticsTable`/`AnalyticsFilters`/`QuickFilter`/`ExportButton` đúng #60. Orders gộp một filter bar; Shops bulk approve/reject dùng endpoint thật và `Dialog`/`ConfirmDialog`; dead action/link đã bỏ hoặc ẩn. i18n Admin: 555 key, 0 thiếu, thêm **280 `vi` + 282 `en`**. Allowlist **42 → 5**; `check:css` pass **293 checked / 5 allowlisted**; `format:check`, `types`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5). `public/image/default-product.png` đã khôi phục. Chưa chụp CDP 29 page + 5 stub vì cần phiên Admin; ghi lại cho Phase 12.
 
 ---
 
@@ -2139,7 +2162,7 @@ Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộ
 | Cũ                                | Mới                                  | Ghi chú                                                                                      |
 | --------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
 | `action-button`, `action-buttons` | `Button` + module group | **Phase 7**; `ButtonGroup` **không tồn tại** trong `components/ui`, dùng `Button`/`IconButton` + module flex. Giữ type `ActionConfig` đến khi page migrate |
-| `action-dropdown`                 | `DropdownMenu`                       | **Phase 8**; dùng ở `Admin/Shops/Index` và `components/admin/orders/OrderTable`; xoá entry allowlist |
+| `action-dropdown`                 | `DropdownMenu`                       | **Phase 8 done**; đã là wrapper `DropdownMenu`; `OrderTable` bỏ action menu, `Shops/Index` dùng `ActionDropdown`; xoá entry allowlist |
 | `primary-input`                   | `Input` / `FormField`                | Wrapper giữ path, Phase 2                                                                    |
 | `data-table`                      | `DataTable` (wrap `Table`)           | **Phase 7 done**; API thực tế `columns/data/headerTitle/headerIcon`, thêm `key`/`align`; `headerIcon` nhận `LucideIcon` hoặc `string` đến Phase 8 |
 | `confirmation-modal`              | wrapper của `feedback/ConfirmDialog` | **Phase 7 done**; đã là wrapper giữ API `isOpen/onClose/onConfirm/title/message` |
@@ -2149,13 +2172,13 @@ Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộ
 | `navbar`                          | `WorkspaceTopbar`                    | **Defer Phase 3**; giữ đủ chuông + polling, LanguageSwitcher, avatar menu, logout            |
 | `sidebar`                         | `WorkspaceSidebar`                   | **Defer Phase 3**                                                                            |
 | `insights`                        | KPI list (`StatCard` chưa tồn tại)   | **Phase 7 done**; KPI `sn-*`, prop `columns`; icon `LucideIcon` hoặc `string` |
-| `AnalyticsCard`                   | KPI trung tính (`Insights`/module)   | **Phase 8**; bỏ 5 màu + icon tile, 1 hàng 4 ô |
-| `AnalyticsChart`                  | recharts + token                     | **Phase 8**; grid 1 px, bỏ gradient, palette accent/success/warning |
-| `AnalyticsTable`                  | `Table` + module sort                | **Phase 8**; giữ sort trong module hoặc mở rộng `Table` additive |
-| `AnalyticsFilters`                | `FilterPanel`/module collapsible     | **Phase 8**; bỏ vỏ card, giữ “thêm filter” |
-| `QuickFilter`                     | `Tabs variant="filter"`              | **Phase 8**; bỏ button tự viết |
-| `ExportButton`                    | `Button`                             | **Phase 8**; bỏ class `analytics-export-button` |
-| `ShipperInfoCard`                 | module CSS                           | **Phase 8**; blind spot, không nằm trong allowlist |
+| `AnalyticsCard`                   | KPI trung tính (`Insights`/module)   | **Phase 8 done**; bỏ 5 màu + icon tile, KPI trung tính, giữ API |
+| `AnalyticsChart`                  | recharts + token                     | **Phase 8 done**; grid 1 px, bỏ gradient, palette accent/success/warning, tooltip surface |
+| `AnalyticsTable`                  | `Table` + module sort                | **Phase 8 done**; sort trong module trên `Table` primitive; `Table.rowKey` nhận thêm index |
+| `AnalyticsFilters`                | `FilterPanel`/module collapsible     | **Phase 8 done**; bỏ vỏ card, giữ collapsible, dùng `FormField`/`Input`/`Select` |
+| `QuickFilter`                     | `Tabs variant="filter"`              | **Phase 8 done**; wrapper `Tabs variant="filter"`; bỏ khỏi Analytics/Index + Users vì chỉ đổi state local |
+| `ExportButton`                    | `Button`                             | **Phase 8 done**; wrapper `Button`, bỏ class `analytics-export-button` |
+| `ShipperInfoCard`                 | module CSS                           | **Phase 8 done**; module `shippers.module.css`, icon `IconProp` |
 | `search-input`                    | `SearchInput`                        | Phase 2                                                                                      |
 | `toast` + `toaster`               | `Toast` + `Toaster`                  | Phase 2; giữ API hiện tại                                                                    |
 | `typography`                      | Giữ component, đổi ruột sang `sn-*`  | Phase 2; xoá component ở Phase 11 khi pages đã migrate                                       |
@@ -2380,6 +2403,18 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — Phase 8 hoàn tất (Admin):**
+
+- **Code:** migrate **29 page Admin + 5 stub Shops** sang `sn-*` + CSS Modules; 5 module mới (`admin`, `analytics`, `forms`, `products`, `shippers`). Không còn page/component Admin import `Page.css`; 0 Boxicons, hex, `$`, `en-US`, em/en-dash.
+- **Component:** 17 component + `ui/action-dropdown` migrate. `AnalyticsCard` thành KPI trung tính; `AnalyticsChart` token + grid 1 px + bỏ gradient; `AnalyticsTable` sort trong module; `AnalyticsFilters` bỏ vỏ card; `QuickFilter` → `Tabs`; `ExportButton` → `Button`; `ShipperInfoCard`/`DocumentViewer` module hoá.
+- **Hành vi:** Orders gộp `OrderFilterPanel` vào một filter bar qua slot `children` của `FilterPanel`; bỏ export + 4 action hỏng, bỏ action column của `OrderTable`. Shops có bulk approve/reject thật (`bulkApprove`/`bulkReject`), thanh bulk chỉ hiện khi có selection, thay `window.confirm/prompt/alert` bằng `Dialog`/`ConfirmDialog`. 5 stub Shops render read-only từ props (`metrics`, `trend`, `shops`, `statistics`, `violations`).
+- **Dead action/link:** bỏ CSV Dashboard/Users, Orders export, Returns edit/delete, Inventory Report, `ProductInfo` add-to-cart, Analytics quick range; ẩn link tới `Orders/Show`, `Inventory/Report`, `Returns/Show`.
+- **i18n/format:** 555 key `t()` trong Admin, **0 thiếu**; thêm **280 key `vi` + 282 key `en`**. Màn VND dùng `formatVnd`/`vi-VN`; Dashboard/Analytics/Shops giữ `formatCurrency` khi có prop currency.
+- **Allowlist:** 42 → **5**; `check:css` pass **293 checked / 5 allowlisted**.
+- **Gate:** `format:check`, `types`, `check:css`, `build`, ESLint sạch; `php artisan test tests/Feature/Admin` **134 test / 671 assertion** (chỉ DEPRECATION PDO PHP 8.5).
+- **Asset:** khôi phục `public/image/default-product.png` (placeholder 400×500) để fallback Phase 4/6 không 404.
+- **Chưa làm:** CDP/Edge 29 page + 5 stub ở 375/390/768/1024/1440 light + dark vì cần phiên Admin trên DB remote; ghi lại cho Phase 12.
 
 **2026-11-24 — rà soát trước Phase 8 và chốt scope (chưa build):**
 

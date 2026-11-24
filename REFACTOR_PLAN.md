@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper dùng chung, allowlist **57 → 42**, 139 key `vi` + 101 key `en` mới. Phase 8 chưa build. Chi tiết ở §15.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 đã rà soát và chốt scope** (2026-11-24, quyết định #55–#62): 34 file Admin (29 page thật + 5 stub Shops), 17 component, allowlist target **5**; **chưa build**. Chi tiết ở §2.9 và §15.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -56,7 +56,7 @@
 | 5     | Auth                                      |   M |       ~14 |
 | 6     | Customer + Settings                       |  XL |       ~66 |
 | 7     | Seller                                    |   L |       ~29 |
-| 8     | Admin                                     |  XL |       ~55 |
+| 8     | Admin                                     |  XL |       ~60 |
 | 9     | Shipper                                   |   S |        ~4 |
 | 10    | Email, error pages, PDF                   |   M |       ~12 |
 | 11    | Gỡ Tailwind + dọn nợ                      |   M |       ~15 |
@@ -139,10 +139,20 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | 52  | Phase 7 allowlist | 57 → **42** (10 page Seller + `action-button` + `action-buttons` + `data-table` + `admin/users/Toast` + `utils/tinymce.ts`). Kết quả: `check:css` pass **251 checked / 42 allowlisted** |
 | 53  | Git trước Phase 7 | Commit **tách riêng toàn bộ thay đổi ngoài refactor** trong working tree (hiện là cụm chatbot/Markdown: dependency, `ChatDock`/`MarkdownText`, service/controller, route, migration); kiểm tra `git status` lại ngay trước khi build vì cây đang thay đổi. Không trộn dependency/tính năng mới vào commit Seller |
 | 54  | Phase 7 implementation | `DataTable` mở rộng thêm `key` + `align` (additive, Admin không phải sửa); `Insights` thêm prop `columns` (3/4); `lib/icon.tsx` chuẩn hoá `LucideIcon` hoặc Boxicons string (`bx x`); bỏ action chết “Download Report” + “Product Guidelines”; Shop hint trung tính; thêm 6 module CSS (`seller`, `insights`, `data-table`, `action-buttons`, `toast`, `product-info-cell`) |
+| 55  | Phase 8 scope | **Bám code thực tế**: 34 file `.tsx` nhưng chỉ **29 page có UI**; **5 page `Shops/{Dashboard,Pending,Show,Statistics,Violations}` là stub `<div></div>`**. Còn **17 component** (19 tổng trừ `Toast` + `ProductInfoCell` đã migrate Phase 7), không phải 18. Bổ sung blind spot: `Promotions/{Create,Edit,Show}`, `Products/Show`, `ShipperInfoCard`, 6 component analytics |
+| 56  | Phase 8 Shop stubs | **Hoàn thiện 5 file stub read-only từ props controller đã truyền** (`metrics`, `trend`, `shops`, `statistics`, `violations`); không tạo file/page mới, không thêm route/endpoint/tính năng. Ghi là ngoại lệ “hoàn thiện UI còn thiếu” ở §12 |
+| 57  | Phase 8 bulk/filter | **Bulk chỉ ở Shops** vì chỉ `ShopController` có `bulkApprove`/`bulkReject`; Products/Orders/Returns/Users ghi backlog (không có endpoint). Shops dùng checkbox + bulk approve/reject, chỉ hiện khi có selection. **Orders gộp `OrderFilterPanel` vào panel “thêm filter” của một filter bar**; không dựng hệ filter mới |
+| 58  | Phase 8 i18n/format/copy | Thêm **204 key `vi` + 206 key `en`** còn thiếu (21 file, nặng nhất Analytics/Inventory/Shops); audit cả `header:`/`label:`. Màn chỉ VND dùng `formatVnd` + `vi-VN`; giữ `formatCurrency` ở Dashboard/Analytics/Shops nơi có prop currency. Xoá toàn bộ `$`, `en-US`, **11 em/en-dash** trong Admin |
+| 59  | Phase 8 dead action | **Xoá/disable, không tạo page/route mới**: Dashboard + Users “Download CSV” (`console.log`), Orders “Export Orders” (`alert`) và 4 action hỏng (`orders/{id}` show, assign-shipper GET, update-status, invoice, cancel), Returns edit/delete, Inventory Report, `ProductInfo` add-to-cart, Analytics quick range. Ẩn/disable link tới `Admin/Orders/Show`, `Admin/Inventory/Report`, `Admin/Returns/Show`; thay `window.confirm/prompt/alert` của Shops bằng `Dialog`/`ConfirmDialog` cho hành động còn route |
+| 60  | Phase 8 KPI/chart/table | `AnalyticsCard` bỏ 5 màu + icon tile, thành KPI trung tính (hoặc `Insights`); `AnalyticsChart` dùng token accent/success/warning, grid 1 px, **bỏ `linearGradient`**, tooltip surface; `AnalyticsTable` giữ sort trong module hoặc mở rộng `Table` additive; `QuickFilter` → `Tabs variant="filter"`; `ExportButton` → `Button` |
+| 61  | Phase 8 allowlist | 42 → **5**: xoá 36 entry Admin + `action-dropdown`; còn `base.css`, `feedback/LoadingOverlay`, `storefront/UtilityStrip`, `ui/navbar`, `ui/sidebar` đến Phase 11 |
+| 62  | Phase 8 pre-flight | Khôi phục `public/image/default-product.png` (đã bị xoá, còn fallback ở 10+ component Phase 4/6) hoặc đổi path; commit/stash 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`); cập nhật §3.5/§15 đã cũ; build trên cây sạch |
 
 ---
 
 ## 2. Hiện trạng đo được
+
+> Các bảng §2.1–§2.8 là ảnh chụp tại thời điểm ghi (baseline/phase tương ứng), không phải hiện trạng sau Phase 7. **§2.9 là số đo hiện tại trước Phase 8.**
 
 ### 2.1 Số liệu
 
@@ -181,20 +191,22 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `.prettierrc`                     | `prettier-plugin-tailwindcss`, `tailwindStylesheet`                                                                  | Sửa Phase 11                                              |
 | `eslint.config.js`                | Ignore `tailwind.config.js`                                                                                          | Sửa Phase 11                                              |
 | `scripts/check-tokens.mjs`        | Regex token + allowlist file-level                                                                                   | Viết lại Phase 0, giữ ratchet                             |
-| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; 57 sau Phase 6; **42 sau Phase 7**        | Giữ làm ratchet đến Phase 11                              |
-| `app.blade.php`                   | `class="font-sans antialiased"`, Boxicons CDN, Google Fonts link weight 300–800                                      | Self-host font + sửa Phase 1, bỏ Boxicons Phase 11        |
+| `scripts/token-allowlist.json`    | 65 trước Phase 0; 187 sau baseline; 186 sau Phase 1; 175 sau Phase 2A; 168 sau Phase 2B; 156 sau Phase 2C; 143 sau Phase 3; 112 sau Phase 4; 104 sau Phase 5; 57 sau Phase 6; **42 sau Phase 7; target 5 sau Phase 8**        | Giữ làm ratchet đến Phase 11                              |
+| `app.blade.php`                   | Còn Boxicons CDN + `class="font-sans antialiased"`; Google Fonts đã bỏ ở Phase 1; favicon chỉ còn `/favicon.ico?v=3` | Bỏ Boxicons/body class Phase 11 |
 | `app.css`                         | `@import 'tailwindcss'`, `@custom-variant`, `@source`                                                                | Sửa Phase 1                                               |
 | `DESIGN-02.md`                    | Fraunces + JetBrains Mono (trái quyết định)                                                                          | Xoá/archived Phase 11                                     |
 | `STITCH-DESIGN.md`                | 11.325 dòng HTML dùng Tailwind CDN                                                                                   | Archived Phase 11                                         |
 | `PROMPT.md`, `PLAN.md`            | Kế hoạch Nếp cũ                                                                                                      | Archived Phase 11                                         |
-| `useTheme.ts`                     | Dùng `.dark` class                                                                                                   | Sửa Phase 1                                               |
-| `AppLayout.tsx`                   | Sidebar Boxicons hardcode                                                                                            | Thay Phase 3                                              |
+| `useTheme.ts`                     | Đã set `data-theme` + mirror `.dark` từ Phase 1                                                                      | Bỏ mirror `.dark` Phase 11                                |
+| `AppLayout.tsx`                   | Re-export `WorkspaceLayout` từ Phase 3                                                                               | Xoá Phase 11                                              |
 
 ### 2.4 Trang thiếu (backlog, không tạo trong refactor)
 
 `Admin/CustomerSegments/*` (4), `Admin/Inventory/Report`, `Admin/Orders/Show`, `Admin/Returns/Show`, `Seller/Promotions/Edit`, `Seller/Promotions/Show`, `Seller/Reports/*` (2), `Seller/Wallet/*` (3), `Product/Index`, `Product/Show` — **16 render target**.
 
 Các `Inertia::render` này đang trỏ file không tồn tại. **Không sửa trong refactor UI**; ghi nhận để không bị hiểu là regression.
+
+**Bổ sung sau rà soát Phase 8:** 5 page `Admin/Shops/{Dashboard,Pending,Show,Statistics,Violations}` **tồn tại nhưng rỗng** (`<div></div>`), không nằm trong 16 target thiếu; Phase 8 hoàn thiện read-only từ props (#56). `Admin/CustomerSegments/*` có controller nhưng **không có route**, nên 4 target này không truy cập được; vẫn giữ backlog.
 
 **Ngoại lệ Phase 5:** `Auth/ConfirmPassword` đã được đưa **vào** Phase 5 (quyết định #32) vì route `password.confirm` đã đăng ký (`ConfirmablePasswordController::show`) và page thiếu làm truy cập trực tiếp hỏng ở client. 16 target còn lại vẫn giữ backlog.
 
@@ -292,6 +304,37 @@ Số liệu đo trực tiếp trên working tree sau Phase 6 để chốt scope 
 - `Products/Create|Edit` có SEO preview dùng hex Google (`#1a0dab`, `#006621`, …) và copy “Sample previews…”.
 - `utils/tinymce.ts` nằm trong allowlist vì `style_formats` có `#ff0000`.
 
+### 2.9 Đo lại trước Phase 8 (2026-11-24)
+
+Số liệu đo trực tiếp trên working tree sau Phase 7 + commit favicon `685cb8b` để chốt scope Phase 8:
+
+| Chỉ số | Giá trị đo được |
+|---|---|
+| File Admin | **34 page `.tsx`**, trong đó **29 page có UI** và **5 stub rỗng** (`Shops/Dashboard`, `Pending`, `Show`, `Statistics`, `Violations`) |
+| Component Admin | **19 tổng**, còn **17** sau Phase 7 (`Toast`, `ProductInfoCell` đã migrate) |
+| Trang Admin import `Page.css` | **22 page** + **6 component analytics** = **28 file Admin** (tổng 31 gồm `WorkspaceLayout`, `navbar`, `sidebar`) |
+| Vi phạm guardrail Admin | **259**: `tailwind-utility` 87, **`legacy-icon` 154**, **`raw-hex` 18** |
+| `className=` / token lớp legacy | **582** / **312** lượt token (unique theo file) trên 31 file |
+| i18n Admin | **498 key `t()`**; thiếu **204 `vi`**, **206 `en`**, 21 file |
+| Em/en-dash Admin | **11** (`Shops/Index`, `Inventory/*`, `Shippers/Show`) |
+| `rgba()` không bị guardrail bắt | 3 file (`AnalyticsChart`, `Shippers/Show`, `DocumentViewer`) |
+| Gradient | 1 component (`AnalyticsChart`, area chart) |
+| Allowlist | **42** = 36 entry Admin + 6 ngoài Admin; target Phase 8 **5** |
+| Test Admin | 9 file; **không có** test Shops, Analytics, Admin Orders, Admin Promotions |
+| Render target thiếu | **16** đúng plan, 7 của Admin (`CustomerSegments/*` 4, `Inventory/Report`, `Orders/Show`, `Returns/Show`); `CustomerSegments` **không có route** |
+| Working tree | **2 file bẩn** ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx` đổi địa chỉ) |
+
+**Sai biệt phát hiện khi đo:**
+- **5 page Shops là stub `<div></div>`**, không layout, không render props; controller đã truyền `metrics`, `trend`, `shops`, `statistics`, `violations`.
+- Plan ghi **18 component** nhưng thực tế còn **17**; `ShipperInfoCard` không nằm trong allowlist nhưng còn 2 token legacy.
+- **Guardrail blind spot:** `Promotions/{Create,Edit,Show}` (12/13/6 token), `Products/Show` (5 token `product-detail*`), `ShipperInfoCard` 2 token; `check:css` pass nên không phát hiện.
+- **Bulk action** chỉ có backend ở Shops (`bulkApprove`/`bulkReject`); UI selection đang comment; Products/Orders/Returns/Users không có endpoint.
+- **Filter bar:** `Admin/Orders/Index` render 2 bar (`FilterPanel` + `OrderFilterPanel` inline style); `AnalyticsFilters` là section/card collapsible.
+- **KPI/chart:** `AnalyticsCard` có 5 màu + icon tile; `AnalyticsChart` dùng palette 6 màu, `rgba`, `linearGradient`; Dashboard hard-code `#1976D2`, `#388E3C`; `AnalyticsTable` sortable tự viết, `Table` primitive chưa có sort.
+- **Dead action/link:** Dashboard + Users “Download CSV” (`console.log`); Orders “Export Orders” (`alert`) + `orders/{id}` show thiếu page, assign-shipper GET sai method, update-status/invoice/cancel không route; Returns edit/delete không route; Inventory Report thiếu page; `ProductInfo` add-to-cart `alert`; Analytics quick range chỉ đổi state local.
+- **Asset regression:** `public/image/default-product.png` bị xoá ở `685cb8b` nhưng còn fallback ở 10+ component Phase 4/6.
+- **Tài liệu cũ:** §3.5 nói blade link SVG không tồn tại (nay chỉ link favicon.ico); §15 ghi favicon ngoài phạm vi (nay đã commit).
+
 ---
 
 ## 3. Direction: BẢNG HIỆU
@@ -351,7 +394,8 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 
 - **Lucide only**, stroke 1.75, size 14/16/20/24. Xoá Boxicons khỏi `app.blade.php` ở Phase 11.
 - Ảnh sản phẩm 4:5, radius 2 px, `object-fit: cover`. Không overlay card lên ảnh.
-- Logo dùng asset thật đang có: `public/image/ShopnestLogo.png` (logo ngang, kèm chữ) và `public/image/ShopnestLogoIcon.ico`; không đổi màu. **Lưu ý:** `app.blade.php` đang link favicon `/image/ShopnestLogoSVG.svg` — file này **không tồn tại**; sửa link trong Phase 11 cùng lúc dọn blade (hoặc thêm asset SVG nếu muốn giữ tên).
+- Logo dùng asset thật đang có: `public/image/ShopnestLogo.png` (logo ngang, kèm chữ) và `public/image/ShopnestLogoIcon.ico`; không đổi màu. `app.blade.php` hiện chỉ link `/favicon.ico?v=3`; `public/image/ShopnestLogoSVG.svg` vẫn không tồn tại nhưng không còn được tham chiếu, nên không phải blocker.
+- **Asset cần khôi phục:** `public/image/default-product.png` đã bị xoá ở commit `685cb8b` nhưng còn fallback ở `ProductCard`, `ProductGallery`, `Cart`, `Checkout`, `OrderItemRow`, `ReturnItemPicker`, `ChatMessage`, `Search`; phải khôi phục asset hoặc đổi toàn bộ path trước QA (quyết định #62).
 - Không icon tự vẽ SVG, không emoji trong UI/alt/filename.
 
 ### 3.6 Copy
@@ -1829,7 +1873,9 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ---
 
-### Phase 8 — Admin (34 page)
+### Phase 8 — Admin (34 file: 29 page + 5 stub)
+
+**Trạng thái file:** **34 file `.tsx`**, nhưng chỉ **29 page có UI**; **5 page `Shops/{Dashboard,Pending,Show,Statistics,Violations}` là stub `<div></div>`**, không layout, không render props. Controller đã truyền đủ props (`metrics`, `trend`, `shops`, `statistics`, `violations`). Không tạo file/page mới; hoàn thiện 5 stub read-only theo #56.
 
 | Nhóm       | Page                                                         |
 | ---------- | ------------------------------------------------------------ |
@@ -1841,23 +1887,49 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 | Promotions | `Promotions/{Index,Create,Edit,Show}`                        |
 | Categories | `Categories/{Index,Create,Edit}`                             |
 | Brands     | `Brands/{Index,Create,Edit}`                                 |
-| Shops      | `Shops/{Index,Pending,Show,Dashboard,Statistics,Violations}` |
+| Shops      | `Shops/Index` + **5 stub** `{Pending,Show,Dashboard,Statistics,Violations}` |
 | Shippers   | `Shippers/Index`, `Show`                                     |
 | Returns    | `Returns/Index`                                              |
 | Analytics  | `Analytics/{Index,Orders,Products,Reports,Revenue,Users}`    |
 
-**Component:** `admin/*` (18 file) + `AnalyticsChart` (recharts) dùng token màu qua `var(...)`.
+**Component (17 file còn lại sau Phase 7):** `analytics/{AnalyticsCard,AnalyticsChart,AnalyticsFilters,AnalyticsTable,ExportButton,QuickFilter}`; `brands/BrandForm`; `categories/CategoryForm`; `orders/{OrderFilterPanel,OrderSummaryCards,OrderTable}`; `products/{ProductImageGallery,ProductInfo,ProductTabs}`; `shippers/{DocumentViewer,ShipperInfoCard}`; `users/UserEditForm`; thêm wrapper `ui/action-dropdown`. `AnalyticsChart` dùng recharts + token.
+
+**Quyết định áp dụng:** #55 scope thực tế; #56 Shop stubs; #57 bulk/filter; #58 i18n/format/copy; #59 dead action; #60 KPI/chart/table; #61 allowlist 5; #62 pre-flight.
 
 **Luật riêng**
 
-- Bảng là trung tâm; filter bar gọn 1 dòng + "thêm filter" mở panel.
-- Không card cho từng nhóm filter.
-- Chart: lưới 1 px, không gradient, tooltip surface.
-- Bulk action hiện khi có selection, không chiếm chỗ thường trực.
-- Số liệu KPI: 1 hàng 4 ô, không icon tile màu.
-- Dọn nốt wrapper legacy còn lại sau Phase 7; xoá entry allowlist tương ứng.
+- **Shop stubs (#56):** hoàn thiện read-only từ props: `Dashboard` metrics + trend chart; `Pending` dùng lại listing với filter pending; `Show` tổng quan shop + statistics + recent orders/violations/audit; `Statistics` bảng/bộ lọc ngày; `Violations` bảng paginator. Không thêm action ngoài route đã có; `Shops/Index` render `metrics` đang bị bỏ quên.
+- **Bảng/filter (#57):** `DataTable`/`Table` là trung tâm, row 48 px, số căn phải. `FilterPanel` 1 dòng; `Orders/Index` gộp `OrderFilterPanel` vào panel “thêm filter” thay vì 2 bar; `AnalyticsFilters` bỏ vỏ card, giữ collapsible; không card cho từng nhóm filter.
+- **Chart (#60):** token `accent`/`success`/`warning`, lưới 1 px, **bỏ `linearGradient`** (area → line/bar), tooltip surface, số tabular. Xoá `#1976D2`, `#388E3C`, `rgba(...)` và palette 6 màu.
+- **KPI (#60):** 1 hàng 4 ô trung tính; `AnalyticsCard` bỏ 5 màu + icon tile; Shops dùng `metrics`; Dashboard giữ 4 `Insights`.
+- **Bulk (#57):** chỉ Shops dùng checkbox + `bulkApprove`/`bulkReject` hiện có, thanh bulk chỉ hiện khi có selection. Products/Orders/Returns/Users ghi backlog vì không có endpoint.
+- **i18n/format/copy (#58):** thêm **204 key `vi` + 206 key `en`**; audit cả `header:`/`label:`; màn chỉ VND dùng `formatVnd`/`vi-VN`; giữ `formatCurrency` ở Dashboard/Analytics/Shops nơi có prop currency; xoá 11 em/en-dash, `$`, `en-US`, copy tiếng Anh hardcode.
+- **Dead action (#59):** xoá/disable Dashboard + Users “Download CSV”, Orders “Export Orders” + 4 action hỏng, Returns edit/delete, Inventory Report, `ProductInfo` add-to-cart, Analytics quick range; ẩn link tới `Orders/Show`, `Inventory/Report`, `Returns/Show`; thay `window.confirm/prompt/alert` của Shops bằng `Dialog`/`ConfirmDialog` cho hành động còn route. Không tạo page/route mới.
+- **Wrapper/blind spot:** migrate `action-dropdown` → `DropdownMenu`; `QuickFilter` → `Tabs variant="filter"`; `ExportButton` → `Button`; `AnalyticsTable` giữ sort trong module hoặc mở rộng `Table` additive. Migrate tay `Promotions/{Create,Edit,Show}`, `Products/Show`, `ShipperInfoCard` dù `check:css` không bắt.
+- **CSS:** bỏ `import '@/../css/Page.css'` khỏi **22 page + 6 component analytics**; tạo module cho page/component; giữ `Page.css` ở `WorkspaceLayout`/`navbar`/`sidebar` đến Phase 11.
+- **Không đổi** route/controller/payload; không tạo `CustomerSegments/*`, `Inventory/Report`, `Orders/Show`, `Returns/Show`; không thêm endpoint.
+- Giữ `AppLayout` re-export đến Phase 11.
 
-**DoD:** không còn page Admin/Seller nào import `Page.css`; các wrapper legacy và `AppLayout` vẫn còn import (sẽ xoá ở Phase 11). `Page.css` chỉ bị xoá ở Phase 11.
+**Allowlist:** 42 → **5**. Xoá 36 entry Admin + `action-dropdown`; còn `base.css`, `feedback/LoadingOverlay`, `storefront/UtilityStrip`, `ui/navbar`, `ui/sidebar`.
+
+**Kiểm chứng**
+
+1. `npm run format` → `format:check`; `types`; `check:css`; `build`; `npm run lint`.
+2. `php artisan test tests/Feature/Admin` (9 file hiện có); smoke route Dashboard/Users/Products/Inventory/Orders/Promotions/Categories/Brands/Shops/Shippers/Returns/Analytics; thêm test/smoke cho Shops/Analytics/Orders/Promotions nếu có phiên.
+3. CDP/Edge (cần phiên Admin): 29 page thật + 5 stub; 375/390/768/1024/1440; light + dark; `scrollWidth === innerWidth`; bảng 48 px.
+4. Kiểm riêng: 0 Boxicons/hex/`$`/`en-US`/em-dash; 0 `Page.css` trong page + 6 component analytics; 0 `action-dropdown`; 0 `AnalyticsCard` màu/icon tile; 0 gradient; 204/206 key đã có; link tới 3 page thiếu bị ẩn/disable.
+
+**DoD**
+
+- 29 page thật + 5 Shop stub render đúng props; không thêm tính năng/route/page mới; `Page.css` không còn cần cho Admin (trừ layout).
+- 17 component + `action-dropdown` migrate; `AnalyticsChart`/`AnalyticsCard`/`AnalyticsTable` đúng luật #60.
+- Không còn bulk action ngoài Shops; Shops bulk dùng endpoint thật; filter 1 dòng + panel phụ.
+- 0 `t()` key thiếu cho Admin (204 `vi`/206 `en` đã thêm); 0 `$`/`en-US`/em-dash/copy tiếng Anh hardcode.
+- Không còn dead action/link 500; 5 stub không còn rỗng.
+- Allowlist **5**; `types` + `format:check` + `build` + `check:css` + ESLint sạch.
+- Không đổi route/controller/payload backend; `public/image/default-product.png` đã khôi phục hoặc fallback đã đổi.
+
+> **Trạng thái 2026-11-24:** đã rà soát và chốt scope (#55–#62), **chưa build**. Blocker/pre-flight: khôi phục `default-product.png`, commit/stash 2 file bẩn ngoài phạm vi, và cần phiên Admin cho CDP. Không bắt đầu build khi chưa chốt #56 (5 stub) và #57 (bulk Shops-only).
 
 ---
 
@@ -2055,6 +2127,8 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 > **Ghi chú Phase 6:** 18 dòng trong bảng gồm **16 page + 2 component** (`Address/AddressForm`, `Settings/SettingsTabs`); `Customer/Chat/Index` đã sạch (chỉ layout, không nằm trong allowlist). `BuyBox`/`ProductDetail` là file Phase 4 nhưng được sửa trong Phase 6 để bỏ claim trái #28 (quyết định #42).
 >
 > **Ghi chú Phase 7:** 10 dòng Seller đúng code hiện tại; `Promotions/Edit` và `Promotions/Show`, `Reports/*`, `Wallet/*` vẫn là backlog (7 render target) và **không tạo** trong Phase 7. `Promotions/Index` phải ẩn link Xem/Sửa để không trỏ page thiếu.
+>
+> **Ghi chú Phase 8:** 34 file = **29 page có UI + 5 stub Shops** (`Pending`, `Show`, `Dashboard`, `Statistics`, `Violations`). 5 stub được hoàn thiện read-only từ props, không tạo page mới. Các render target thiếu vẫn backlog; mọi link tới `Orders/Show`, `Inventory/Report`, `Returns/Show` phải ẩn/disable (#59).
 
 Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộc trước; trang nhiều state sau**. Với Admin, thứ tự nội bộ: Dashboard → Users → Categories/Brands → Products → Inventory → Orders → Promotions → Shops → Shippers → Returns → Analytics.
 
@@ -2065,16 +2139,23 @@ Quy tắc trong mỗi phase: **layout trước, page sau; trang ít phụ thuộ
 | Cũ                                | Mới                                  | Ghi chú                                                                                      |
 | --------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
 | `action-button`, `action-buttons` | `Button` + module group | **Phase 7**; `ButtonGroup` **không tồn tại** trong `components/ui`, dùng `Button`/`IconButton` + module flex. Giữ type `ActionConfig` đến khi page migrate |
-| `action-dropdown`                 | `DropdownMenu`                       | **Defer Phase 8**; không page Seller nào dùng, chỉ Admin |
+| `action-dropdown`                 | `DropdownMenu`                       | **Phase 8**; dùng ở `Admin/Shops/Index` và `components/admin/orders/OrderTable`; xoá entry allowlist |
 | `primary-input`                   | `Input` / `FormField`                | Wrapper giữ path, Phase 2                                                                    |
-| `data-table`                      | `DataTable` (wrap `Table`)           | **Phase 7/8**; API thực tế `columns/data/headerTitle/headerIcon`, không có sort/select; `headerIcon` nhận `LucideIcon` hoặc `string` đến Phase 8 |
-| `confirmation-modal`              | wrapper của `feedback/ConfirmDialog` | **Phase 7**; hiện **không phải** wrapper (modal tự viết, inline style), sẽ viết lại giữ API `isOpen/onClose/onConfirm/title/message` |
+| `data-table`                      | `DataTable` (wrap `Table`)           | **Phase 7 done**; API thực tế `columns/data/headerTitle/headerIcon`, thêm `key`/`align`; `headerIcon` nhận `LucideIcon` hoặc `string` đến Phase 8 |
+| `confirmation-modal`              | wrapper của `feedback/ConfirmDialog` | **Phase 7 done**; đã là wrapper giữ API `isOpen/onClose/onConfirm/title/message` |
 | `status-badge`                    | `Badge` với `tone`                   | Phase 2; map status → tone, bỏ class `Page.css`                                              |
-| `filter-panel`                    | `FilterPanel`                        | **Phase 3/7**; icon truyền qua prop cần đổi sang `LucideIcon` hoặc `string` |
-| `header`                          | `PageHeader` / `WorkspaceTopbar`     | **Phase 3/7**; `reportButton.icon` cần `LucideIcon` hoặc `string` (Seller dùng Lucide) |
+| `filter-panel`                    | `FilterPanel`                        | **Phase 3/7 done**; icon truyền qua prop nhận `LucideIcon` hoặc `string` |
+| `header`                          | `PageHeader` / `WorkspaceTopbar`     | **Phase 3/7 done**; `reportButton.icon` nhận `LucideIcon` hoặc `string` |
 | `navbar`                          | `WorkspaceTopbar`                    | **Defer Phase 3**; giữ đủ chuông + polling, LanguageSwitcher, avatar menu, logout            |
 | `sidebar`                         | `WorkspaceSidebar`                   | **Defer Phase 3**                                                                            |
-| `insights`                        | KPI list (`StatCard` chưa tồn tại)   | **Phase 7/8**; giữ API `Insights` và restyle `sn-*`, hoặc tách `StatCard` mới; icon `LucideIcon` hoặc `string` |
+| `insights`                        | KPI list (`StatCard` chưa tồn tại)   | **Phase 7 done**; KPI `sn-*`, prop `columns`; icon `LucideIcon` hoặc `string` |
+| `AnalyticsCard`                   | KPI trung tính (`Insights`/module)   | **Phase 8**; bỏ 5 màu + icon tile, 1 hàng 4 ô |
+| `AnalyticsChart`                  | recharts + token                     | **Phase 8**; grid 1 px, bỏ gradient, palette accent/success/warning |
+| `AnalyticsTable`                  | `Table` + module sort                | **Phase 8**; giữ sort trong module hoặc mở rộng `Table` additive |
+| `AnalyticsFilters`                | `FilterPanel`/module collapsible     | **Phase 8**; bỏ vỏ card, giữ “thêm filter” |
+| `QuickFilter`                     | `Tabs variant="filter"`              | **Phase 8**; bỏ button tự viết |
+| `ExportButton`                    | `Button`                             | **Phase 8**; bỏ class `analytics-export-button` |
+| `ShipperInfoCard`                 | module CSS                           | **Phase 8**; blind spot, không nằm trong allowlist |
 | `search-input`                    | `SearchInput`                        | Phase 2                                                                                      |
 | `toast` + `toaster`               | `Toast` + `Toaster`                  | Phase 2; giữ API hiện tại                                                                    |
 | `typography`                      | Giữ component, đổi ruột sang `sn-*`  | Phase 2; xoá component ở Phase 11 khi pages đã migrate                                       |
@@ -2179,6 +2260,16 @@ php artisan test --filter=<area>
 | 16 render target thiếu (gồm `Admin/Inventory/Report`) bị báo regression | Thấp       | Ghi rõ trong baseline và PR description; `Auth/ConfirmPassword` đã được tạo ở Phase 5 nên chỉ còn 16                                                                                                                    |
 | Tailwind còn trong `node_modules` sau khi xoá                           | Thấp       | `npm ci` + kiểm tra `package-lock.json`                                                                                                                                                                                                                                                 |
 | Bundle CSS phình do module trùng lặp                                    | Trung bình | Primitive dùng global; module chỉ layout; đo ở Phase 12                                                                                                                                                                                                                                 |
+| Phase 8: 5/34 page Admin là stub rỗng                                  | Cao        | **Phase 8 (#56):** hoàn thiện read-only từ props controller; không tạo route/page mới; nếu không chốt thì chỉ migrate 29 page thật và ghi backlog                                                                                                                                     |
+| Guardrail bỏ sót file Admin legacy                                     | Cao        | `Promotions/{Create,Edit,Show}`, `Products/Show`, `ShipperInfoCard` dùng class `Page.css` nhưng không vi phạm rule; **Phase 8:** audit tay + migrate, không tin `check:css`                                                                                                            |
+| Admin thiếu i18n và dùng `$`/`en-US`                                   | Cao        | **Phase 8 (#58):** thêm 204 `vi` + 206 `en`; `formatVnd`/`vi-VN` cho màn VND; xoá `$`, `en-US`, 11 em-dash                                                                                                                                                                             |
+| Dead action/link Admin                                                 | Cao        | **Phase 8 (#59):** xoá/disable CSV/export, 4 action Orders hỏng, Returns edit/delete, Inventory Report, ProductInfo add-to-cart, Analytics quick range; ẩn link tới page thiếu                                                                                                                                 |
+| Bulk action không có dữ liệu                                            | Trung bình | Chỉ Shops có `bulkApprove`/`bulkReject`; **Phase 8 (#57):** chỉ làm Shops, còn lại backlog; không dựng bulk giả                                                                                                                                                                        |
+| Orders có 2 filter bar                                                  | Trung bình | **Phase 8:** gộp `OrderFilterPanel` vào panel “thêm filter” của `FilterPanel`; không thêm state/filter mới                                                                                                                                                                              |
+| `AnalyticsCard`/`AnalyticsChart` trái direction                         | Cao        | **Phase 8 (#60):** bỏ 5 màu/icon tile; token palette, grid 1 px, bỏ `linearGradient`, tooltip surface; `AnalyticsTable` giữ sort trong module                                                                                                                                          |
+| `default-product.png` bị xoá                                            | Cao        | **Pre-flight (#62):** khôi phục asset hoặc đổi path ở 10+ component Phase 4/6 trước QA; không để ảnh 404                                                                                                                                                                                |
+| Admin thiếu test Shops/Analytics/Orders/Promotions                      | Trung bình | **Phase 8:** chạy 9 test Admin hiện có + smoke route; thêm test nếu có phiên; ghi backlog nếu không                                                                                                                                                                                      |
+| Working tree bẩn từ việc khác trước Phase 8                             | Trung bình | **Trước Phase 8 (#62):** commit/stash `StorefrontFooter.tsx`, `Home/Contact.tsx`; kiểm tra `git status` lại                                                                                                                                                                              |
 
 ---
 
@@ -2193,6 +2284,8 @@ php artisan test --filter=<area>
 - **Ngoại lệ Phase 5:** được tạo `Auth/ConfirmPassword` (quyết định #32) vì route `password.confirm` đã có và page thiếu làm hỏng truy cập trực tiếp. Không đổi route, controller hay props.
 - **Ngoại lệ Phase 6:** được sửa `commerce/BuyBox.tsx` và `Customer/ProductDetail.tsx` (file Phase 4) để bỏ claim trái #28; được migrate `feedback/ConfirmDialog` và `PaymentMarks`. Không xoá 3 file commerce dead, chỉ migrate (quyết định #44).
 - **Ngoại lệ Phase 7:** được migrate `ui/{insights,confirmation-modal}`, `admin/users/Toast`, `admin/products/ProductInfoCell`, `utils/tinymce.ts` và mở rộng API icon `LucideIcon` hoặc `string` cho `Header`/`FilterPanel`/`DataTable`/`ActionButton(s)`; được ẩn action Xem/Sửa trong `Promotions/Index`. Không tạo page mới, không thêm tính năng.
+- **Ngoại lệ Phase 8:** được hoàn thiện **5 file stub Shop read-only** từ props controller (không tạo file/route/endpoint mới); được mở rộng `Table` sort additive hoặc giữ sort trong module; được thay `AnalyticsCard` màu/icon tile bằng KPI trung tính; được xoá/disable dead action và ẩn link tới page thiếu. Không tạo page mới, không thêm tính năng.
+- **Pre-flight Phase 8 (ngoài UI code):** được khôi phục `public/image/default-product.png` hoặc đổi fallback path; không đổi nghiệp vụ.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
 - Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá.
@@ -2234,7 +2327,13 @@ refactor(seller): migrate dashboard and orders pages
 refactor(seller): migrate products pages
 refactor(seller): migrate promotions, shop and seller i18n keys
 docs(ui): log phase 7 seller migration
-refactor(admin): migrate admin workspace
+chore(ui): restore default product fallback asset
+refactor(admin): migrate analytics and action wrappers
+refactor(admin): migrate dashboard, orders and returns pages
+refactor(admin): migrate users, products, categories, brands and promotions pages
+refactor(admin): migrate inventory and shipper pages
+refactor(admin): migrate shops pages and admin i18n keys
+docs(ui): log phase 8 admin migration
 fix(shipper): register middleware alias and migrate dashboard shell
 feat(ui): restyle email, error pages and invoice print
 chore(ui): remove tailwind, legacy css and boxicons
@@ -2243,6 +2342,8 @@ docs(ui): rewrite design system and component rules
 ```
 
 > **Trước Phase 5 (quyết định #39):** working tree đang có 52 file backend/route/test chưa commit (gồm `routes/{web,user}.php`, controllers, factories, seeders, 2 page Phase 4, 1 migration untracked). Commit phần này thành commit riêng (`chore(repo): …`) trước khi build Phase 5 để phase UI vẫn là một đơn vị merge sạch; không trộn vào commit `refactor(auth)`.
+
+> **Trước Phase 8 (quyết định #62):** khôi phục `public/image/default-product.png` hoặc đổi fallback path; commit/stash 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`); chạy lại `git status` và gate trước khi bắt đầu. Commit Phase 8 tách theo §13, không trộn asset/favicon.
 
 ---
 
@@ -2280,6 +2381,22 @@ docs(ui): rewrite design system and component rules
 
 ## 15. Nhật ký cập nhật
 
+**2026-11-24 — rà soát trước Phase 8 và chốt scope (chưa build):**
+
+- **Đo lại** (ghi §2.9): **34 file Admin** nhưng chỉ **29 page có UI**, **5 stub Shops**; **17 component** còn lại; **28 file Admin import `Page.css`** (22 page + 6 analytics); **259 vi phạm** (87 Tailwind, **154 Boxicons**, **18 hex**); 582 `className`; 312 lượt token legacy; i18n **498 key**, thiếu **204 `vi` / 206 `en`**; 11 em-dash; 3 file `rgba`; 1 gradient; allowlist 42 = 36 Admin + 6 ngoài.
+- **Sai biệt với plan:**
+    - 5/34 page Shops là stub `<div></div>` dù controller đã truyền props.
+    - Plan ghi 18 component, thực tế 17; `ShipperInfoCard` là blind spot không allowlist.
+    - Guardrail bỏ sót `Promotions/{Create,Edit,Show}`, `Products/Show`, `ShipperInfoCard`.
+    - Bulk chỉ có backend Shops; UI selection đang comment.
+    - Orders có 2 filter bar; `AnalyticsCard` 5 màu/icon tile; `AnalyticsChart` gradient + 6 màu; `AnalyticsTable` sortable; Dashboard hex.
+    - Dead action: CSV Dashboard/Users, Orders export + 4 action hỏng, Returns edit/delete, Inventory Report, ProductInfo add-to-cart, Analytics quick range.
+    - `public/image/default-product.png` bị xoá ở `685cb8b` nhưng còn fallback ở 10+ component Phase 4/6.
+    - Working tree có 2 file bẩn ngoài phạm vi (`StorefrontFooter.tsx`, `Home/Contact.tsx`).
+- **Quyết định #55–#62:** scope 34 file/29 page + 5 stub; hoàn thiện stub read-only; bulk Shops-only; i18n/format/copy đầy đủ; xoá dead action; KPI/chart/table đúng direction; allowlist 42 → 5; pre-flight asset + dọn cây.
+- **Cập nhật tài liệu:** header status, §0.4 (`~60`), §1 (#55–#62), §2.9 (mới), §3.5 (favicon/asset), Phase 8 (viết lại đầy đủ), §8 (ghi chú 29+5), §9 (mapping Analytics/action-dropdown), §11 (10 rủi ro Phase 8), §12 (ngoại lệ Phase 8), §13 (commit Phase 8 tách nhỏ), §15.
+- **Phase 7 xác nhận:** 10 page Seller, allowlist 42, `check:css` 251/42; favicon đã commit riêng `685cb8b`; không còn working tree Phase 7.
+
 **2026-11-24 — Phase 7 hoàn tất (Seller):**
 
 - **Code:** migrate 10 page (`Dashboard/Index`, `Products/{Index,Create,Edit,Show}`, `Orders/{Index,Show}`, `Promotions/{Index,Create}`, `Shop/Edit`) sang `sn-*` + `pages/Seller/seller.module.css`; bỏ import `Page.css` khỏi toàn bộ Seller. Không còn `bx-*`, hex hay `$`/`en-US` trong vùng này.
@@ -2290,7 +2407,7 @@ docs(ui): rewrite design system and component rules
 - **Gate:** `format:check`, `types`, `check:css`, `build`, ESLint (file Phase 7) sạch; `php artisan test tests/Feature/Seller` 17 test / 91 assertions (chỉ DEPRECATION PDO PHP 8.5).
 - **Chưa làm:** CDP/Edge 10 page ở 5 breakpoint light + dark vì cần phiên Seller trên DB remote; ghi lại cho Phase 12 hoặc lần review có phiên.
 - **Quyết định #54:** `DataTable` thêm `key`/`align` (additive); `Insights` thêm `columns`; `renderIcon` chuẩn hoá Boxicons string; bỏ action chết; Shop hint trung tính; thêm 6 module CSS.
-- **Working tree ngoài phạm vi:** favicon/`app.blade.php` và asset favicon đang do việc khác; **không** đưa vào commit Phase 7.
+- **Working tree ngoài phạm vi:** favicon/`app.blade.php` và asset favicon đã được commit riêng ở `685cb8b refactor(ui): update favicon links in app layout`; commit này cũng xoá `public/image/default-product.png` (xem #62). Không nằm trong commit Phase 7.
 
 **2026-11-24 — rà soát trước Phase 7 và chốt scope (chưa build):**
 

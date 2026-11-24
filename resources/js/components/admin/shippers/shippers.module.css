@@ -59,6 +59,10 @@
     object-fit: contain;
 }
 
+.viewerImage[hidden] {
+    display: none;
+}
+
 .viewerStatus {
     display: flex;
     flex-direction: column;

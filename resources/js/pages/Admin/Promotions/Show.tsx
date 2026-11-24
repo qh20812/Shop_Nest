@@ -61,6 +61,11 @@ const toNumber = (value?: number | string | null): number | null => {
     return Number.isNaN(numeric) ? null : numeric;
 };
 
+const formatBudget = (value?: number | string | null): string => {
+    const numeric = toNumber(value);
+    return numeric === null ? '-' : formatVnd(numeric);
+};
+
 export default function Show() {
     const { t } = useTranslation();
     const { promotion } = usePage<PageProps>().props;
@@ -105,7 +110,7 @@ export default function Show() {
                             <span className={styles.detailValue}>
                                 {promotion.type === 'percentage'
                                     ? `${Number(promotion.value).toLocaleString('vi-VN')}%`
-                                    : formatVnd(toNumber(promotion.value))}
+                                    : formatBudget(promotion.value)}
                             </span>
                         </div>
                         <div className={styles.detailItem}>
@@ -141,11 +146,11 @@ export default function Show() {
                     <div className={styles.detailGrid}>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>{t('Allocated Budget')}</span>
-                            <span className={styles.detailValue}>{formatVnd(toNumber(promotion.allocated_budget))}</span>
+                            <span className={styles.detailValue}>{formatBudget(promotion.allocated_budget)}</span>
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>{t('Spent Budget')}</span>
-                            <span className={styles.detailValue}>{formatVnd(toNumber(promotion.spent_budget))}</span>
+                            <span className={styles.detailValue}>{formatBudget(promotion.spent_budget)}</span>
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>{t('ROI')}</span>

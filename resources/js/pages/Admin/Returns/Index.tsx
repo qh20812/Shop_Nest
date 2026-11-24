@@ -93,7 +93,7 @@ export default function Index() {
                 key: 'status',
                 header: t('Status'),
                 cell: (request: ReturnRequest) => {
-                    const meta = statusMeta[request.status] ?? { label: 'Unknown', tone: 'neutral' as const };
+                    const meta = statusMeta[Number(request.status)] ?? { label: 'Unknown', tone: 'neutral' as const };
                     return <Badge tone={meta.tone}>{t(meta.label)}</Badge>;
                 },
             },
@@ -110,8 +110,8 @@ export default function Index() {
         <AppLayout>
             <Head title={t('Return Management')} />
 
-            {flash?.success && <Alert tone="success" title={flash.success} className={styles.stackTight} />}
-            {flash?.error && <Alert tone="danger" title={flash.error} className={styles.stackTight} />}
+            {flash?.success && <Alert tone="success" title={flash.success} />}
+            {flash?.error && <Alert tone="danger" title={flash.error} />}
 
             <FilterPanel
                 title={t('Return Management')}

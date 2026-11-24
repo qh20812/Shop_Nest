@@ -66,6 +66,11 @@ const toNumber = (value?: number | string | null): number | null => {
     return Number.isNaN(numeric) ? null : numeric;
 };
 
+const formatBudget = (value?: number | string | null): string => {
+    const numeric = toNumber(value);
+    return numeric === null ? '-' : formatVnd(numeric);
+};
+
 export default function Index() {
     const { t } = useTranslation();
     const { promotions, typeOptions, statusFilters, filters = {}, flash } = usePage<PageProps>().props;
@@ -141,9 +146,7 @@ export default function Index() {
                 header: t('Discount Value'),
                 cell: (promotion: Promotion) => (
                     <span className={styles.priceAccent}>
-                        {promotion.type === 'percentage'
-                            ? `${Number(promotion.value).toLocaleString('vi-VN')}%`
-                            : formatVnd(toNumber(promotion.value))}
+                        {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString('vi-VN')}%` : formatBudget(promotion.value)}
                     </span>
                 ),
             },
@@ -152,9 +155,9 @@ export default function Index() {
                 header: t('Budget'),
                 cell: (promotion: Promotion) => (
                     <div className={styles.cellStack}>
-                        <span className={styles.price}>{formatVnd(toNumber(promotion.allocated_budget))}</span>
+                        <span className={styles.price}>{formatBudget(promotion.allocated_budget)}</span>
                         <span className={styles.cellMeta}>
-                            {t('Spent')}: {formatVnd(toNumber(promotion.spent_budget))}
+                            {t('Spent')}: {formatBudget(promotion.spent_budget)}
                         </span>
                     </div>
                 ),

@@ -439,6 +439,11 @@ a.tag:hover {
     background: var(--sn-color-surface-sunken);
 }
 
+.placeholderIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+}
+
 .brandCell {
     display: flex;
     min-width: 0;
@@ -494,6 +499,7 @@ a.tag:hover {
 
 .filterAdvanced {
     display: flex;
+    grid-column: 1 / -1;
     flex-direction: column;
     gap: var(--sn-space-3);
     padding-top: var(--sn-space-3);

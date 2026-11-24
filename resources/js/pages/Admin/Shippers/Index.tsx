@@ -163,7 +163,7 @@ export default function Index() {
                         value: status,
                         onChange: setStatus,
                         label: t('-- All Statuses --'),
-                        options: Object.entries(statusOptions).map(([value, label]) => ({ value, label })),
+                        options: Object.entries(statusOptions).map(([value]) => ({ value, label: t(ucfirst(value)) })),
                     },
                 ]}
             />

@@ -285,7 +285,7 @@ export default function Index() {
             key: 'revenue',
             header: t('Revenue'),
             align: 'right' as const,
-            cell: (shop: Shop) => <span className={styles.price}>{formatVnd(shop.total_revenue)}</span>,
+            cell: (shop: Shop) => <span className={styles.price}>{formatVnd(Number(shop.total_revenue ?? 0))}</span>,
         },
         {
             key: 'violations',

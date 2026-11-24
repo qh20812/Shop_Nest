@@ -36,9 +36,7 @@
 
     <title data-inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    <link rel="icon" href="/image/ShopnestLogoIcon.ico" sizes="any">
-    <link rel="icon" href="/image/ShopnestLogoSVG.svg" type="image/svg+xml">
-    <link rel="shopnest-icon" href="/image/ShopnestLogo.png">
+    <link rel="icon" href="/favicon.ico?v=3">
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     @routes

@@ -5,7 +5,7 @@ return [
 
     'footer' => [
         'rights' => 'Bảo lưu mọi quyền.',
-        'support' => 'Cần hỗ trợ? Hãy trả lời email này — đội ngũ ShopNest sẽ giúp bạn.',
+        'support' => 'Cần hỗ trợ? Hãy trả lời email này - đội ngũ ShopNest sẽ giúp bạn.',
         'reason' => 'Bạn nhận được email này vì có liên quan tới tài khoản ShopNest của bạn.',
     ],
 
@@ -19,11 +19,11 @@ return [
         'greeting' => 'Xin chào :name,',
         'intro' => 'Email :email đã được xác thực. Tài khoản ShopNest của bạn đã sẵn sàng sử dụng.',
         'next_title' => 'Bạn có thể bắt đầu ngay',
-        'step_profile' => '**Hoàn thiện hồ sơ** – thêm họ tên, số điện thoại và ảnh đại diện.',
-        'step_shopping' => '**Mua sắm** – xem sản phẩm từ những shop đã được duyệt.',
-        'step_seller' => '**Mở shop** – đăng ký làm người bán nếu bạn muốn kinh doanh.',
+        'step_profile' => '**Hoàn thiện hồ sơ** - thêm họ tên, số điện thoại và ảnh đại diện.',
+        'step_shopping' => '**Mua sắm** - xem sản phẩm từ những shop đã được duyệt.',
+        'step_seller' => '**Mở shop** - đăng ký làm người bán nếu bạn muốn kinh doanh.',
         'cta' => 'Vào ShopNest',
-        'username_tip' => 'Tên đăng nhập của bạn là :username — bạn có thể đổi trong Cài đặt → Hồ sơ.',
+        'username_tip' => 'Tên đăng nhập của bạn là :username - bạn có thể đổi trong Cài đặt → Hồ sơ.',
         'closing' => 'Chúc bạn mua sắm vui vẻ!',
     ],
 
@@ -58,7 +58,7 @@ return [
         'cta' => 'Xác thực email',
         'expiry' => 'Liên kết này có hiệu lực trong :minutes phút.',
         'resend' => 'Nếu liên kết đã hết hạn, hãy đăng nhập và bấm “Gửi lại email xác thực” trên trang xác thực email.',
-        'ignore' => 'Nếu bạn không tạo tài khoản này, hãy bỏ qua email — không cần làm gì thêm.',
+        'ignore' => 'Nếu bạn không tạo tài khoản này, hãy bỏ qua email - không cần làm gì thêm.',
     ],
 
     'reset' => [
@@ -68,7 +68,7 @@ return [
         'intro' => 'Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản :email.',
         'cta' => 'Đặt lại mật khẩu',
         'expiry' => 'Liên kết này có hiệu lực trong :minutes phút.',
-        'ignore' => 'Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email — mật khẩu hiện tại vẫn dùng được.',
+        'ignore' => 'Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email - mật khẩu hiện tại vẫn dùng được.',
         'google_note' => 'Bạn đăng ký bằng Google? Bạn có thể đặt mật khẩu tại đây, hoặc tiếp tục đăng nhập bằng Google như trước.',
     ],
 

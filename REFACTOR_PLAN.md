@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.12; email presentation nằm trong cụm mail/locale chưa commit, error pages chưa có, PDF defer.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 hoàn tất** (2026-11-24) — email presentation chuẩn hoá hex + bỏ dash, 6 error page self-contained + test; PDF defer theo #70; chi tiết ở §15.
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -2049,7 +2049,7 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ### Phase 10 — Email, error pages, PDF
 
-**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.12; email presentation đã có trong cụm mail/locale chưa commit, error pages chưa có, PDF defer.
+**Trạng thái:** **hoàn tất** (2026-11-24). Rà soát pre-flight ghi §2.12; kết quả build ghi cuối phase và §15.
 
 **Pre-flight (bắt buộc, #67)**
 
@@ -2096,6 +2096,16 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 - **Không tạo view PDF, không thêm controller method** trong refactor UI. Route hỏng ghi backlog backend; nếu muốn bật thì làm task riêng (controller + authorization + view + test).
 
 **DoD:** 8 email template render đúng theme, hex khớp primitive, không gradient/dark mode, text/plain có tiếng Việt; 6 file error page self-contained, không cần JS/Vite, 404 thật trả layout mới, dark mode theo OS; không tạo route/page/endpoint mới; không sửa mail logic nghiệp vụ; `format:check` + `types` + `check:css` + `build` + `php artisan test tests/Feature/Mail tests/Feature/Errors` sạch; PDF ghi backlog, không tạo file chết.
+
+> **Trạng thái 2026-11-24 — hoàn tất phần UI:**
+>
+> - **Pre-flight (#67):** commit `feat(mail): add localized transactional email and account locale` gồm **66 file** cụm mail/locale; test Mail **10/40**, Console **7/26**, Admin **135/681**, Auth **27/97** xanh (chỉ DEPRECATION PDO 8.5).
+> - **Email (#68):** chuẩn hoá 5 hex lệch trong `shopnest.css` về primitive (`#1f6f4a`, `#b3261e`, `#f7f7f4`, `#ecece7`, `#6b6e62`); Prettier pass; `renderText()` xác nhận text/plain đúng tiếng Việt; xoá **11 em/en-dash** khỏi `lang/{vi,en}/mail.php`; giữ system font stack, không gradient/dark mode.
+> - **Error pages (#69):** tạo **6 file** `resources/views/errors/{layout,404,419,429,500,503}.blade.php`; CSS inline hex, `@font-face` Be Vietnam Pro + fallback Arial, dark mode `prefers-color-scheme`, copy tiếng Việt hardcode, 1 CTA 44 px về `/`.
+> - **Test:** `tests/Feature/Errors/ErrorPageTest.php` **5 test / 32 assertion** pass (404 thật + 419/429/500/503 render); `tests/Feature/Mail` + `Console` **17 test / 66 assertion** pass.
+> - **Gate:** `format:check`, `types`, `check:css` (**293 checked / 5 allowlisted**), `build` sạch.
+> - **PDF (#70):** defer; không tạo view/controller, route `user.orders.invoice` hỏng ghi backlog backend.
+> - **Chưa làm:** test thủ công Gmail/Outlook web; ghi backlog Phase 12/lần review có hộp thư.
 
 ---
 
@@ -2515,6 +2525,17 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-24 — Phase 10 hoàn tất (email + error pages):**
+
+- **Pre-flight (#67):** commit `feat(mail): add localized transactional email and account locale` gồm **66 file** (9 mailable, 9 notification, listener, observer, 2 migration, `config/{auth,mail}`, `routes/web.php`, 8 email template, vendor mail theme, `lang/{vi,en}/mail.php`, test Mail/Console/Auth). Không trộn vào commit Phase 10.
+- **Email (#68):** giữ 8 template + vendor theme; chuẩn hoá 5 hex lệch về primitive; Prettier `shopnest.css`; xác nhận `renderText()` trả tiếng Việt; xoá 11 em/en-dash khỏi lang mail; không sửa mail class/notification/observer/migration.
+- **Error pages (#69):** thêm `resources/views/errors/layout.blade.php` + `{404,419,429,500,503}.blade.php`; self-contained hex CSS, `@font-face` Be Vietnam Pro, dark mode theo OS, copy tiếng Việt hardcode, CTA 44 px.
+- **Test:** `tests/Feature/Errors/ErrorPageTest.php` 5 test / 32 assertion; 404 thật trả layout mới, 4 view còn lại render đúng marker.
+- **Gate:** `format:check`, `types`, `check:css` (293/5), `build` sạch; `tests/Feature/Mail` 10/40 + `Console` 7/26 pass.
+- **PDF (#70):** defer; không tạo `resources/views/pdf` hay method `downloadInvoice`; route invoice hỏng ghi backlog backend.
+- **Chưa làm:** test thủ công Gmail/Outlook web.
+- **Cập nhật tài liệu:** header status, Phase 10 (trạng thái + kết quả), §15.
 
 **2026-11-24 — rà soát trước Phase 10 và chốt scope (chưa build):**
 

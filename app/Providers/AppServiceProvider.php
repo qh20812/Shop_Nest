@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Http\Middleware\IsSeller;
+use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Observers\OrderObserver;
 use App\Observers\ProductVariantObserver;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('isSeller', IsSeller::class);
 
         ProductVariant::observe(ProductVariantObserver::class);
+        Order::observe(OrderObserver::class);
 
         // Disable SSL verification for local development (Google OAuth).
         // Guzzle 8 không cho truyền CURLOPT_SSL_VERIFYPEER trong option "curl";

@@ -4,16 +4,21 @@ namespace App\Notifications;
 
 class ShopReactivatedNotification extends AbstractShopStatusNotification
 {
-    protected function subjectLine(): string
+    protected function subjectKey(): string
     {
-        return 'Your Shop Has Been Reactivated';
+        return 'mail.shop.reactivated.subject';
+    }
+
+    protected function headingKey(): string
+    {
+        return 'mail.shop.reactivated.heading';
     }
 
     protected function messageLines(): array
     {
         return [
-            'Your shop has been reactivated and is now visible to customers again.',
-            'Thank you for working with our team to resolve the previous issues.'
+            __('mail.shop.reactivated.line_1', ['shop' => $this->shopName()]),
+            __('mail.shop.reactivated.line_2'),
         ];
     }
 }

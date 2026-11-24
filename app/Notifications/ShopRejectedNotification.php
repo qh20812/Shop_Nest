@@ -4,19 +4,24 @@ namespace App\Notifications;
 
 class ShopRejectedNotification extends AbstractShopStatusNotification
 {
-    protected function subjectLine(): string
+    protected function subjectKey(): string
     {
-        return 'Update on Your Shop Application';
+        return 'mail.shop.rejected.subject';
+    }
+
+    protected function headingKey(): string
+    {
+        return 'mail.shop.rejected.heading';
     }
 
     protected function messageLines(): array
     {
-        $reason = $this->context['reason'] ?? 'Your application did not meet our requirements at this time.';
+        $reason = (string) ($this->context['reason'] ?? __('mail.shop.rejected.line_2'));
 
         return [
-            'We regret to inform you that your shop application has been rejected.',
-            'Reason: ' . $reason,
-            'Please review your details and resubmit the application if appropriate.'
+            __('mail.shop.rejected.line_1', ['shop' => $this->shopName()]),
+            __('mail.shop.rejected.reason', ['reason' => $reason]),
+            __('mail.shop.rejected.line_2'),
         ];
     }
 }

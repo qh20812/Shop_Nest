@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\GoogleAccountLinkedMail;
 use App\Mail\WelcomeGoogleUserMail;
 use App\Models\Role;
 use App\Models\User;
@@ -46,9 +47,10 @@ class GoogleController extends Controller
                 ->withErrors(['google' => 'Cannot verify with Google. Please try again.']);
         }
 
-        // Google đã xác thực quyền sở hữu email; chỉ mark verified khi claim này đúng.
+        // Google đã xác thực quyền sở hữu email; chỉ mark verified / cho phép
+        // liên kết khi claim này đúng. Thiếu claim → coi như chưa xác thực.
         $emailVerifiedByGoogle = filter_var(
-            $googleUser->getRaw()['email_verified'] ?? true,
+            $googleUser->getRaw()['email_verified'] ?? false,
             FILTER_VALIDATE_BOOL
         );
 
@@ -57,18 +59,50 @@ class GoogleController extends Controller
             ->where('provider_id', $googleUser->getId())
             ->first();
 
-        // If not found, check by email (for linking existing accounts)
+        $linkedNow = false;
+        $passwordWasReset = false;
+
+        // If not found, check by email (for linking existing accounts).
+        // Chỉ liên kết khi Google xác nhận email này thuộc về người đăng nhập.
         if (! $user && $googleUser->getEmail()) {
-            $existingUser = User::where('email', $googleUser->getEmail())->first();
+            $existingUser = User::whereRaw('LOWER(email) = ?', [strtolower((string) $googleUser->getEmail())])->first();
 
             if ($existingUser) {
-                // Link existing account with Google
-                $existingUser->update([
+                if (! $emailVerifiedByGoogle) {
+                    Log::warning('Google login rejected: email not verified by Google', [
+                        'user_id' => $existingUser->id,
+                        'email' => $existingUser->email,
+                    ]);
+
+                    return redirect()
+                        ->route('login')
+                        ->withErrors(['google' => 'Google chưa xác thực email này. Hãy đăng nhập bằng mật khẩu hoặc dùng chức năng Quên mật khẩu.']);
+                }
+
+                // Tài khoản email/mật khẩu chưa xác thực: người tạo mật khẩu không
+                // chứng minh được quyền sở hữu email → coi Google là chủ thật và
+                // vô hiệu hoá mật khẩu cũ để tránh bị chiếm tài khoản.
+                $passwordWasReset = ! $existingUser->hasVerifiedEmail();
+
+                $attributes = [
                     'provider' => 'google',
                     'provider_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
-                ]);
+                ];
+
+                if ($passwordWasReset) {
+                    $attributes['password'] = Hash::make(Str::random(40));
+                }
+
+                $existingUser->update($attributes);
+
                 $user = $existingUser;
+                $linkedNow = true;
+
+                Log::info('Google account linked to existing email', [
+                    'user_id' => $user->id,
+                    'password_reset' => $passwordWasReset,
+                ]);
             }
         }
 
@@ -85,8 +119,9 @@ class GoogleController extends Controller
                     'username' => $username,
                     'first_name' => $this->extractFirstName($googleUser->getName()),
                     'last_name' => $this->extractLastName($googleUser->getName()),
-                    'email' => $googleUser->getEmail(),
-                    'password' => Hash::make($password), // Random password
+                    'email' => strtolower((string) $googleUser->getEmail()),
+                    'locale' => app()->getLocale(),
+                    'password' => Hash::make($password), // Random, không gửi cho người dùng
                     'provider' => 'google',
                     'provider_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
@@ -112,9 +147,9 @@ class GoogleController extends Controller
                 event(new Registered($user));
                 Log::info('Registered event fired for user:', ['user_id' => $user->id]);
 
-                // Send Google-specific welcome email with temporary password
+                // Send Google-specific welcome email (không chứa mật khẩu).
                 try {
-                    Mail::to($user->email)->send(new WelcomeGoogleUserMail($user, $password));
+                    Mail::to($user->email)->send(new WelcomeGoogleUserMail($user));
                     Log::info('Google welcome email sent successfully to: '.$user->email);
                 } catch (\Exception $e) {
                     Log::error('Failed to send Google welcome email to: '.$user->email.' - Error: '.$e->getMessage());
@@ -130,7 +165,7 @@ class GoogleController extends Controller
                     ->route('login')
                     ->withErrors(['google' => 'Failed to create user account. Please try again.']);
             }
-        } else {
+        } elseif (! $linkedNow) {
             // Update existing user's Google info
             $user->update([
                 'avatar' => $googleUser->getAvatar(),
@@ -142,6 +177,28 @@ class GoogleController extends Controller
         // Áp dụng cho cả user đã tồn tại (provider google hoặc link theo email)
         // vì email_verified_at không nằm trong $fillable nên update() ở trên bị bỏ qua.
         $this->markGoogleEmailAsVerified($user, $emailVerifiedByGoogle);
+
+        // Không cho tài khoản đã bị vô hiệu hoá đăng nhập bằng Google
+        // (luồng email/mật khẩu đã kiểm tra việc này ở AuthenticatedSessionController).
+        if (! $user->is_active) {
+            Log::warning('Google login rejected: inactive account', ['user_id' => $user->id]);
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['google' => 'Tài khoản đã bị vô hiệu hoá. Vui lòng liên hệ bộ phận hỗ trợ.']);
+        }
+
+        // Thông báo cho chủ tài khoản khi email/mật khẩu vừa được liên kết Google.
+        if ($linkedNow) {
+            try {
+                Mail::to($user->email)->send(new GoogleAccountLinkedMail($user, $passwordWasReset));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send Google account linked email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         // Log the user in
         Auth::login($user, true);

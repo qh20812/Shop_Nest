@@ -40,6 +40,7 @@ class ShipperRegistrationController extends Controller
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'email' => $request->email,
+                    'locale' => app()->getLocale(),
                     'phone_number' => $request->phone_number,
                     'password' => Hash::make($request->password),
                     'username' => $this->generateUsername($request->first_name, $request->last_name),
@@ -119,15 +120,15 @@ class ShipperRegistrationController extends Controller
      */
     private function generateUsername(string $firstName, string $lastName): string
     {
-        $baseUsername = strtolower($firstName . '.' . $lastName);
+        $baseUsername = strtolower($firstName.'.'.$lastName);
         $baseUsername = preg_replace('/[^a-z0-9.]/', '', $baseUsername);
-        
+
         $username = $baseUsername;
         $counter = 1;
 
         // Ensure username is unique
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            $username = $baseUsername.$counter;
             $counter++;
         }
 

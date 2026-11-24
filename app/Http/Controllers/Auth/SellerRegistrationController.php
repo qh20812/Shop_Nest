@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Role;
-use App\Providers\RouteServiceProvider;
+use App\Models\Shop;
+use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Shop;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,10 +32,13 @@ class SellerRegistrationController extends Controller
     /**
      * Handle an incoming seller registration request.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
+        // Chuẩn hoá email để không tạo tài khoản trùng chỉ khác hoa/thường.
+        $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -55,6 +59,7 @@ class SellerRegistrationController extends Controller
                 'last_name' => $request->last_name,
                 'username' => $request->username,
                 'email' => $request->email,
+                'locale' => app()->getLocale(),
                 'phone_number' => $request->phone_number,
                 'password' => Hash::make($request->password),
             ]);
@@ -65,7 +70,7 @@ class SellerRegistrationController extends Controller
             // This keeps the user->shop storefront in sync with the seller profile.
             if ($request->filled('shop_name')) {
                 $shopName = $request->input('shop_name');
-                $slugBase = \Illuminate\Support\Str::slug($shopName);
+                $slugBase = Str::slug($shopName);
                 // make slug unique by appending user id if necessary
                 $slug = $slugBase;
                 if (Shop::where('slug', $slug)->exists()) {
@@ -91,7 +96,8 @@ class SellerRegistrationController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Seller registration failed: ' . $e->getMessage());
+            Log::error('Seller registration failed: '.$e->getMessage());
+
             return back()->with('error', 'An unexpected error occurred during registration. Please try again.');
         }
     }

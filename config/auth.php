@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
 
     /*
@@ -62,7 +64,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\User::class,
+            'model' => User::class,
         ],
 
         // 'users' => [
@@ -97,6 +99,20 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification Expiry
+    |--------------------------------------------------------------------------
+    |
+    | How long the signed verification link stays valid (minutes). The value
+    | is quoted in the verification email, so keep both in sync.
+    |
+    */
+
+    'verification' => [
+        'expire' => 60,
     ],
 
     /*

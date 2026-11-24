@@ -205,6 +205,23 @@ export default function RegisterPage() {
                     <Button type="submit" size="lg" loading={processing} className="sn-auth-page__submit">
                         Đăng ký
                     </Button>
+
+                    <div className="sn-auth-page__divider" aria-hidden="true">
+                        <span>hoặc</span>
+                    </div>
+
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="lg"
+                        className="sn-auth-page__google"
+                        onClick={() => {
+                            window.location.href = '/auth/google';
+                        }}
+                    >
+                        <img src="/google-color-svgrepo-com.svg" alt="" className="sn-auth-page__google-logo" />
+                        Đăng ký bằng Google
+                    </Button>
                 </form>
 
                 <p className="sn-auth-page__footnote">

@@ -51,8 +51,12 @@ if (app()->environment(['local', 'testing']) || config('app.debug')) {
 Route::post('/language', function () {
     $locale = request('locale');
 
-    if (in_array($locale, ['vi', 'en'])) {
+    if (in_array($locale, User::SUPPORTED_LOCALES, true)) {
         session(['locale' => $locale]);
+
+        // Lưu lựa chọn lên tài khoản để email/thông báo và lần đăng nhập
+        // trên thiết bị khác dùng đúng ngôn ngữ này.
+        request()->user()?->update(['locale' => $locale]);
     }
 
     return redirect()->back();

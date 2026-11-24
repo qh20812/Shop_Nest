@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,10 +17,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Locales the application and its emails support.
+     *
+     * @var list<string>
+     */
+    public const SUPPORTED_LOCALES = ['vi', 'en'];
 
     /**
      * The attributes that are mass assignable.
@@ -30,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_name',
         'phone_number',
         'email',
+        'locale',
         'is_active',
         'default_address_id',
         'password',
@@ -443,11 +454,45 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Send the email verification notification.
      * Only send if user has an email address.
+     *
+     * Notification được queue để SMTP không chặn/làm hỏng request đăng ký.
      */
     public function sendEmailVerificationNotification(): void
     {
         if ($this->email) {
-            parent::sendEmailVerificationNotification();
+            $this->notify(new VerifyEmailNotification);
         }
+    }
+
+    /**
+     * Send the password reset notification (queued).
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Locale used for outgoing email/notifications.
+     *
+     * Users can switch language at /language; the choice is stored on the
+     * account so mails sent from another device (or from a queue worker
+     * without a session) still use the same language.
+     */
+    public function preferredLocale(): string
+    {
+        $locale = $this->getAttribute('locale');
+
+        return in_array($locale, self::SUPPORTED_LOCALES, true) ? $locale : config('app.locale', 'vi');
+    }
+
+    /**
+     * Name used in email greetings, falling back to the username.
+     */
+    public function mailName(): string
+    {
+        $name = trim((string) ($this->first_name ?? '').' '.(string) ($this->last_name ?? ''));
+
+        return $name !== '' ? $name : (string) ($this->username ?? '');
     }
 }

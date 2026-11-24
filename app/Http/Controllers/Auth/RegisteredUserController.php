@@ -4,15 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Mail\WelcomeEmail;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -74,6 +71,7 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'username' => $username,
             'email' => $email,
+            'locale' => app()->getLocale(),
             'password' => Hash::make($request->password),
             'is_active' => true,
             'first_name' => null, // Will be null initially
@@ -88,13 +86,10 @@ class RegisteredUserController extends Controller
         // Gán role Customer qua bảng pivot (cột role_id không tồn tại trên users).
         $user->roles()->attach($customerRole->id);
 
-        // Fire the registered event
+        // Fire the registered event (gửi mail xác thực email).
+        // Mail chào mừng chỉ gửi sau khi email được xác thực — xem
+        // App\Listeners\Auth\SendWelcomeEmail.
         event(new Registered($user));
-
-        // Send welcome email only if user has email
-        if ($email) {
-            Mail::to($user->email)->send(new WelcomeEmail($user));
-        }
 
         // Log in the user
         Auth::login($user);

@@ -4,9 +4,15 @@ namespace App\Services\Admin;
 
 use App\Enums\NotificationType;
 use App\Models\User;
+use App\Notifications\ShopApprovedNotification;
+use App\Notifications\ShopReactivatedNotification;
+use App\Notifications\ShopRejectedNotification;
+use App\Notifications\ShopSuspendedNotification;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 
 class ShopManagementService
 {
@@ -22,7 +28,7 @@ class ShopManagementService
     public function approve(User $shop, ?string $ip = null, ?string $notes = null): void
     {
         if ($shop->shop_status === 'active') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'shop_status' => 'Shop is already active.',
             ]);
         }
@@ -45,12 +51,16 @@ class ShopManagementService
             NotificationType::SELLER_ACCOUNT_STATUS,
             $shop
         );
+
+        $this->notifyByMail($shop, new ShopApprovedNotification([
+            'shop_name' => $this->shopName($shop),
+        ]));
     }
 
     public function reject(User $shop, string $reason, ?string $ip = null, ?string $notes = null): void
     {
-        if (!in_array($shop->shop_status, ['pending', 'active'], true)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+        if (! in_array($shop->shop_status, ['pending', 'active'], true)) {
+            throw ValidationException::withMessages([
                 'shop_status' => 'Only pending or active shops can be rejected.',
             ]);
         }
@@ -73,6 +83,11 @@ class ShopManagementService
             NotificationType::SELLER_ACCOUNT_STATUS,
             $shop
         );
+
+        $this->notifyByMail($shop, new ShopRejectedNotification([
+            'shop_name' => $this->shopName($shop),
+            'reason' => $reason,
+        ]));
     }
 
     public function suspend(
@@ -84,7 +99,7 @@ class ShopManagementService
         ?string $notes = null
     ): void {
         if ($shop->shop_status === 'suspended') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'shop_status' => 'Shop is already suspended.',
             ]);
         }
@@ -110,13 +125,19 @@ class ShopManagementService
                 NotificationType::SELLER_ACCOUNT_STATUS,
                 $shop
             );
+
+            $this->notifyByMail($shop, new ShopSuspendedNotification([
+                'shop_name' => $this->shopName($shop),
+                'reason' => $reason,
+                'until' => $until,
+            ]));
         }
     }
 
     public function reactivate(User $shop, ?string $ip = null, ?string $notes = null): void
     {
         if ($shop->shop_status !== 'suspended') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'shop_status' => 'Only suspended shops can be reactivated.',
             ]);
         }
@@ -139,6 +160,32 @@ class ShopManagementService
             NotificationType::SELLER_ACCOUNT_STATUS,
             $shop
         );
+
+        $this->notifyByMail($shop, new ShopReactivatedNotification([
+            'shop_name' => $this->shopName($shop),
+        ]));
+    }
+
+    /**
+     * Tên shop hiển thị trong email; fallback về username của chủ shop.
+     */
+    private function shopName(User $shop): string
+    {
+        $name = $shop->ownedShops()->value('name');
+
+        return $name !== null && $name !== '' ? (string) $name : (string) $shop->username;
+    }
+
+    /**
+     * Chỉ gửi mail khi tài khoản có email.
+     */
+    private function notifyByMail(User $shop, Notification $notification): void
+    {
+        if (! $shop->email) {
+            return;
+        }
+
+        $shop->notify($notification);
     }
 
     private function snapshot(User $shop): array

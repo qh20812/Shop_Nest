@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -21,7 +23,7 @@ class LoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -47,7 +49,7 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function authenticate(): void
     {
@@ -64,12 +66,14 @@ class LoginRequest extends FormRequest
             // Remove spaces, convert leading 0 to +84, ensure starts with +
             $identifier = str_replace(' ', '', $identifier);
             if (str_starts_with($identifier, '0')) {
-                $identifier = '+84' . substr($identifier, 1);
+                $identifier = '+84'.substr($identifier, 1);
             }
-            if (!str_starts_with($identifier, '+')) {
-                $identifier = '+' . $identifier;
+            if (! str_starts_with($identifier, '+')) {
+                $identifier = '+'.$identifier;
             }
         } elseif ($field === 'username') {
+            $identifier = strtolower($identifier);
+        } elseif ($field === 'email') {
             $identifier = strtolower($identifier);
         }
 
@@ -77,7 +81,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'identifier' => __('auth.failed'),
+                'identifier' => $this->failureMessage($field, $identifier),
             ]);
         }
 
@@ -85,9 +89,25 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Gợi ý đúng hướng khi tài khoản được tạo bằng Google (không có mật khẩu).
+     */
+    private function failureMessage(string $field, string $identifier): string
+    {
+        if ($field === 'email') {
+            $user = User::whereRaw('LOWER(email) = ?', [$identifier])->first();
+
+            if ($user?->provider === 'google') {
+                return 'Tài khoản này đăng nhập bằng Google. Hãy chọn “Tiếp tục với Google”, hoặc dùng Quên mật khẩu nếu bạn muốn đặt mật khẩu.';
+            }
+        }
+
+        return __('auth.failed');
+    }
+
+    /**
      * Ensure the login request is not rate limited.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {

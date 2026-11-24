@@ -21,6 +21,7 @@ use Throwable;
 class InventoryService
 {
     public const LOW_STOCK_THRESHOLD = 10;
+
     public const IN_STOCK_THRESHOLD = 10;
 
     private const REPORT_CACHE_KEYS = [
@@ -32,9 +33,7 @@ class InventoryService
         'forecast' => 'inventory_report_forecast',
     ];
 
-    public function __construct(private ProductCacheService $productCacheService)
-    {
-    }
+    public function __construct(private ProductCacheService $productCacheService) {}
 
     /**
      * Adjust inventory for an order after successful payment.
@@ -48,7 +47,7 @@ class InventoryService
         foreach ($order->items as $item) {
             $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
 
-            if (!$variant) {
+            if (! $variant) {
                 Log::error('inventory.variant_not_found', [
                     'order_id' => $order->order_id,
                     'order_item_id' => $item->order_item_id,
@@ -57,7 +56,7 @@ class InventoryService
                 throw new RuntimeException("Variant not found for order item {$item->order_item_id}");
             }
 
-            if ($variant->track_inventory && !$variant->allow_backorder) {
+            if ($variant->track_inventory && ! $variant->allow_backorder) {
                 $available = $variant->available_quantity
                     ?? max(0, (int) $variant->stock_quantity - (int) $variant->reserved_quantity);
 
@@ -94,11 +93,12 @@ class InventoryService
             foreach ($order->items as $item) {
                 $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
 
-                if (!$variant) {
+                if (! $variant) {
                     Log::warning('inventory.restore_variant_not_found', [
                         'order_id' => $order->order_id,
                         'variant_id' => $item->variant_id,
                     ]);
+
                     continue;
                 }
 
@@ -146,7 +146,7 @@ class InventoryService
     /**
      * Bulk adjust multiple variants in a single transaction.
      *
-     * @param array<int, array<string, mixed>> $payload
+     * @param  array<int, array<string, mixed>>  $payload
      * @return Collection<int, InventoryLog>
      */
     public function bulkAdjust(array $payload, string $reason, ?int $userId = null): Collection
@@ -321,14 +321,36 @@ class InventoryService
 
     private function dispatchAlerts(?ProductVariant $variant): void
     {
-        if (!$variant || app()->environment('testing')) {
+        if (! $variant) {
             return;
         }
 
         $variant->refresh();
 
-        if ($variant->stock_quantity <= self::LOW_STOCK_THRESHOLD && $variant->product && $variant->product->seller) {
-            $variant->product->seller->notify(new LowStockNotification($variant));
+        $quantity = (int) $variant->stock_quantity;
+        $threshold = (int) self::LOW_STOCK_THRESHOLD;
+
+        // Đã nhập thêm hàng lên trên ngưỡng → mở lại chu kỳ cảnh báo.
+        if ($quantity > $threshold) {
+            if ($variant->low_stock_notified_at !== null) {
+                $variant->forceFill(['low_stock_notified_at' => null])->saveQuietly();
+            }
+
+            return;
         }
+
+        // Mỗi lần "sắp hết hàng" chỉ gửi 1 email (trước đây gửi mỗi đơn hàng).
+        if ($variant->low_stock_notified_at !== null) {
+            return;
+        }
+
+        $seller = $variant->product?->seller;
+
+        if (! $seller || ! $seller->email) {
+            return;
+        }
+
+        $variant->forceFill(['low_stock_notified_at' => now()])->saveQuietly();
+        $seller->notify(new LowStockNotification($variant));
     }
 }

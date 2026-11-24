@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\DetectRoleLayout;
 use App\Http\Middleware\EnsureEmailIsVerifiedIfProvided;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -11,6 +10,7 @@ use App\Http\Middleware\SetLocale;
 use App\Providers\AppServiceProvider;
 use App\Providers\AuthServiceProvider;
 use App\Providers\EventServiceProvider;
+use App\Providers\MailServiceProvider;
 use Illuminate\Broadcasting\BroadcastServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,13 +19,14 @@ use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Support\Facades\Route;
 
 // Load cURL configuration for SSL settings
-require_once __DIR__ . '/curl_config.php';
+require_once __DIR__.'/curl_config.php';
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
-        App\Providers\AppServiceProvider::class,
-        App\Providers\AuthServiceProvider::class,
-        App\Providers\EventServiceProvider::class,
+        AppServiceProvider::class,
+        AuthServiceProvider::class,
+        EventServiceProvider::class,
+        MailServiceProvider::class,
         BroadcastServiceProvider::class,
     ])
     ->withRouting(
@@ -34,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
-        then: function(){
+        then: function () {
             Route::middleware('web')->group(base_path('routes/admin.php'));
             Route::middleware('web')->group(base_path('routes/user.php'));
             Route::middleware('web')->group(base_path('routes/seller.php'));
@@ -65,7 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'is_admin' => IsAdmin::class,
             'isSeller' => IsSeller::class,
-            'isShipper'=> IsShipper::class,
+            'isShipper' => IsShipper::class,
             'verified' => EnsureEmailIsVerifiedIfProvided::class, // Override default verified middleware
             'verified.optional' => EnsureEmailIsVerifiedIfProvided::class,
         ]);

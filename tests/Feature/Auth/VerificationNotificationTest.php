@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -24,7 +24,7 @@ class VerificationNotificationTest extends TestCase
             ->post(route('verification.send'))
             ->assertRedirect(route('home', absolute: false));
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 
     public function test_khong_gui_thong_bao_xac_minh_neu_email_da_duoc_xac_minh(): void

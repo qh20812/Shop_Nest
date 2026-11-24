@@ -62,7 +62,7 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                         <div className="sn-footer__contact">
                             <span className="sn-footer__contact-line">
                                 <MapPin aria-hidden="true" className="sn-footer__contact-icon" />
-                                Số 18, Ngõ 42, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội
+                                Tầng 5 Tòa nhà Emporium, 184 Lê Đại Hành, Phường 15, Quận 11, TP. Hồ Chí Minh
                             </span>
                             <a href="tel:19006886" className="sn-footer__contact-line">
                                 <Phone aria-hidden="true" className="sn-footer__contact-icon" />

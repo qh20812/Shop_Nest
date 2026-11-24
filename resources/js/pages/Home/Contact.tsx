@@ -16,7 +16,7 @@ import { Heading, Text } from '@/components/ui/typography';
 import styles from './Contact.module.css';
 
 const contactItems = [
-    { icon: MapPin, title: 'Địa chỉ', value: 'Số 18, Ngõ 42, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội' },
+    { icon: MapPin, title: 'Địa chỉ', value: 'Tầng 5 Tòa nhà Emporium, 184 Lê Đại Hành, Phường 15, Quận 11, TP. Hồ Chí Minh' },
     { icon: Phone, title: 'Điện thoại', value: '1900 6886', href: 'tel:19006886' },
     { icon: Mail, title: 'Email', value: 'hotro@shopnest.vn', href: 'mailto:hotro@shopnest.vn' },
     { icon: Clock, title: 'Giờ làm việc', value: 'Thứ 2 - Thứ 6: 8:00 - 18:00, Thứ 7 - CN: 9:00 - 17:00' },

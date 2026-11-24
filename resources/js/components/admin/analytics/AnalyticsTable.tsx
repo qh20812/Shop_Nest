@@ -116,7 +116,7 @@ const AnalyticsTable = <T extends Record<string, unknown>>({
             ),
             cell: (row: T) => {
                 const rawValue = row[columnKey];
-                return column.render ? column.render(rawValue, row, index) : (rawValue as React.ReactNode);
+                return column.render ? column.render(rawValue, row, sortedData.indexOf(row)) : (rawValue as React.ReactNode);
             },
         };
     });

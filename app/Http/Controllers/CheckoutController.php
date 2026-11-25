@@ -344,14 +344,16 @@ class CheckoutController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($address) {
+                $locale = app()->getLocale();
+
                 return [
                     'id' => $address->id,
                     'name' => $address->full_name ?? 'Recipient',
                     'phone' => $address->phone_number ?? '',
                     'address' => $address->street_address ?? '',
-                    'province' => $address->province->name ?? '',
-                    'district' => $address->district->name ?? '',
-                    'ward' => $address->ward->name ?? '',
+                    'province' => Localization::resolveField($address->province->name ?? '', $locale, ''),
+                    'district' => Localization::resolveField($address->district->name ?? '', $locale, ''),
+                    'ward' => Localization::resolveField($address->ward->name ?? '', $locale, ''),
                     'province_id' => $address->province_id,
                     'district_id' => $address->district_id,
                     'ward_id' => $address->ward_id,

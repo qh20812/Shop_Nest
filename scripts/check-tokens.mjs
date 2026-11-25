@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 
 /*
- * Phase 0 guardrail for the CSS refactor.
+ * Strict CSS guardrail for the Bảng Hiệu design system.
  *
- * Ratchet model:
- * - `--write-baseline` records every file that still has a violation.
- * - Normal runs skip allowlisted files and fail on anything new.
- * - Remove a file from the allowlist as soon as it is migrated.
- * - Phase 11 flips to strict and deletes the allowlist.
+ * Every scanned file must pass. There is no allowlist; `--all` is kept only
+ * for backwards compatibility with the old `check:css:all` script.
  */
 
 import { promises as fs } from 'node:fs';
@@ -17,11 +14,9 @@ const ROOT = process.cwd();
 const JS_SCAN_ROOT = 'resources/js';
 const CSS_SCAN_ROOT = 'resources/css';
 const MODULE_CSS_SCAN_ROOT = 'resources/js';
-const ALLOWLIST_PATH = 'scripts/token-allowlist.json';
 const JS_EXTENSIONS = new Set(['.ts', '.tsx']);
 const CSS_EXTENSIONS = new Set(['.css']);
 const GENERATED_PREFIXES = ['resources/js/actions/', 'resources/js/routes/', 'resources/js/wayfinder/'];
-const ARBITRARY_ALLOWLIST = new Set(['min-h-[100dvh]', 'max-h-[100dvh]']);
 const IMPORTANT_ALLOWED = new Set(['resources/css/utilities.css', 'resources/css/base/a11y.css']);
 
 const CLASS_HINT = /\bclassName\s*=|\b(?:cn|cx|clsx)\s*\(/;
@@ -271,10 +266,6 @@ function isTailwindToken(rawToken) {
         return false;
     }
 
-    if (ARBITRARY_ALLOWLIST.has(token)) {
-        return false;
-    }
-
     token = token.replace(/^!/, '').replace(VARIANT_PREFIX, '');
 
     if (token.startsWith('-')) {
@@ -304,35 +295,6 @@ function extractQuotedStrings(line) {
     }
 
     return values;
-}
-
-async function loadAllowlist() {
-    try {
-        const raw = await fs.readFile(path.join(ROOT, ALLOWLIST_PATH), 'utf8');
-        const parsed = JSON.parse(raw);
-
-        return new Set(Array.isArray(parsed.files) ? parsed.files : []);
-    } catch (error) {
-        if (error?.code === 'ENOENT') {
-            return new Set();
-        }
-
-        throw error;
-    }
-}
-
-async function writeAllowlist(files) {
-    const sorted = [...files].sort();
-    const payload = {
-        description:
-            'Legacy files that still contain Tailwind utilities or raw values during the CSS refactor. Remove each entry as soon as the file is migrated. This file is deleted in Phase 11.',
-        files: sorted,
-    };
-
-    await fs.mkdir(path.join(ROOT, 'scripts'), { recursive: true });
-    await fs.writeFile(path.join(ROOT, ALLOWLIST_PATH), `${JSON.stringify(payload, null, 4)}\n`, 'utf8');
-
-    return sorted.length;
 }
 
 async function collectFiles(directory, extensions) {
@@ -459,14 +421,11 @@ async function scanFile(file, relativePath) {
 
 async function main() {
     const args = new Set(process.argv.slice(2));
-    const writeBaseline = args.has('--write-baseline');
-    const scanAll = args.has('--all');
 
     if (args.has('--help')) {
-        console.log(`Usage: node scripts/check-tokens.mjs [--all] [--write-baseline]
+        console.log(`Usage: node scripts/check-tokens.mjs [--all]
 
-  --all             Scan every file, ignoring the legacy allowlist.
-  --write-baseline  Rewrite scripts/token-allowlist.json with current violations.
+  --all  Accepted for backwards compatibility; strict mode always scans every file.
 `);
         return;
     }
@@ -478,40 +437,11 @@ async function main() {
     ];
     const files = [...jsFiles, ...cssFiles];
 
-    if (writeBaseline) {
-        const offenders = new Set();
-        const violations = [];
-
-        for (const file of files) {
-            const relativePath = relativeToRoot(file);
-            const fileViolations = await scanFile(file, relativePath);
-
-            if (fileViolations.length > 0) {
-                offenders.add(relativePath);
-                violations.push(...fileViolations);
-            }
-        }
-
-        const count = await writeAllowlist(offenders);
-
-        console.log(`Wrote ${count} legacy file(s) to ${ALLOWLIST_PATH}.`);
-        console.log(`Current violations: ${violations.length}.`);
-
-        return;
-    }
-
-    const allowlist = scanAll ? new Set() : await loadAllowlist();
     const violations = [];
     let checked = 0;
-    let skipped = 0;
 
     for (const file of files) {
         const relativePath = relativeToRoot(file);
-
-        if (!scanAll && allowlist.has(relativePath)) {
-            skipped += 1;
-            continue;
-        }
 
         checked += 1;
         violations.push(...(await scanFile(file, relativePath)));
@@ -526,16 +456,12 @@ async function main() {
             console.error(`${violation.file}:${violation.line}:${violation.column} [${violation.rule}] ${violation.value}`);
         }
 
-        console.error(
-            '\nUse --sn-* tokens and sn-* primitives instead of Tailwind or raw values. Never add a new file to scripts/token-allowlist.json; remove entries as files are migrated.',
-        );
+        console.error('\nUse --sn-* tokens and sn-* primitives instead of Tailwind or raw values.');
         process.exitCode = 1;
         return;
     }
 
-    const suffix = skipped > 0 ? `, ${skipped} legacy file(s) allowlisted` : '';
-
-    console.log(`CSS check passed: ${checked} file(s) checked${suffix}.`);
+    console.log(`CSS check passed: ${checked} file(s) checked.`);
 }
 
 main().catch((error) => {

@@ -28,7 +28,7 @@
 | CSS runtime | 1 entry `resources/css/app.css`, không Tailwind, không `@apply`, không `@theme`                 |
 | Token       | `--sn-*` 2 tầng, đầy đủ trong `resources/css/tokens/`                                           |
 | Component   | 47 primitive toàn cục (37 ở Phase 2 + 10 legacy defer), dùng class `sn-*`, variant qua `data-*` |
-| Page        | 79 page dùng `*.module.css`, không còn class Tailwind                                           |
+| Page        | 77 page + 2 page-component; 61/79 file import `*.module.css`, 18 file chỉ dùng class global; không còn class Tailwind |
 | Dark mode   | `[data-theme='dark']`, đủ token, không FOUC                                                     |
 | Workspace   | `WorkspaceLayout` mới thay `layouts/app/AppLayout`, icon Lucide                                 |
 | Tooling     | `scripts/check-tokens.mjs` viết lại thành guardrail CSS thuần                                   |
@@ -215,7 +215,7 @@ Khác biệt so với baseline `8 / 6 / 4` của skill: **motion thấp hơn** v
 | `STITCH-DESIGN.md`                | 11.325 dòng HTML dùng Tailwind CDN                                                                                   | Archived Phase 11                                         |
 | `PROMPT.md`, `PLAN.md`            | Kế hoạch Nếp cũ                                                                                                      | Archived Phase 11                                         |
 | `useTheme.ts`                     | Đã set `data-theme` + mirror `.dark` từ Phase 1                                                                      | Bỏ mirror `.dark` Phase 11                                |
-| `AppLayout.tsx`                   | Re-export `WorkspaceLayout` từ Phase 3                                                                               | **Giữ** re-export Phase 11; codemod 45 page Phase 12 (#73) |
+| `AppLayout.tsx`                   | Re-export `WorkspaceLayout` từ Phase 3                                                                               | **Đã xoá ở Phase 12**; 45 page chuyển sang `WorkspaceLayout` (commit `69d240b`) |
 
 ### 2.4 Trang thiếu (backlog, không tạo trong refactor)
 
@@ -476,7 +476,7 @@ Số liệu sau khi build Phase 11:
 | Gate | `types`, `format:check`, `lint`, `build`, `build:ssr`, `php artisan test` — **473 test / 2.100 assertion**, 0 fail |
 | Docs | `README` UI table + `AGENTS.md` cập nhật; `PLAN.md`/`PROMPT.md`/`DESIGN-02.md`/`STITCH-DESIGN.md` chuyển `docs/archive/` |
 
-**Chưa làm:** QA responsive/dark/a11y toàn bộ page (Phase 12); codemod 45 page từ `AppLayout` sang `WorkspaceLayout`; Gmail/Outlook thật.
+**Chưa làm:** QA responsive/dark/a11y toàn bộ page (Phase 12); Gmail/Outlook thật. **Đã xong ở Phase 12:** codemod 45 page `AppLayout` → `WorkspaceLayout`, xoá re-export (commit `69d240b`).
 
 ---
 
@@ -1485,7 +1485,7 @@ Ba override có chủ đích, ghi để không ai "sửa" ngược:
 - [ ] Không class Tailwind mới.
 - [ ] Không hex/rgb trong `.tsx` hoặc component CSS.
 - [ ] Không `@apply`, không `!important` ngoài `utilities.css` và `base/a11y.css` (reduced motion).
-- [ ] Không Boxicons/FontAwesome trong file đã migrate; file legacy defer vẫn nằm trong allowlist.
+- [ ] Không Boxicons/FontAwesome trong file đã migrate; allowlist đã xoá nên mọi file đều bị kiểm tra.
 - [ ] `npm run types` sạch.
 - [ ] `npm run build` sạch.
 - [ ] `node scripts/check-tokens.mjs` sạch, **bao gồm `resources/js/**/*.module.css`**.
@@ -2203,7 +2203,7 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 | `resources/css/Page.css`, `base.css`, `tokens.css`, `legacy-tokens.css` | Xoá **sau** bước 1–2; không còn import |
 | Dead TSX | Xoá `ui/action-button.tsx`, `ui/navbar.tsx`, `ui/sidebar.tsx`, `feedback/LoadingOverlay.tsx`, `storefront/UtilityStrip.tsx` |
 | Wrapper giữ | Không xoá `header`, `data-table`, `insights`, `filter-panel`, `action-buttons`, `confirmation-modal`, `status-badge`, `primary-input`, `action-dropdown` |
-| `layouts/app/AppLayout.tsx` | **Giữ** re-export đến Phase 12; 45 import chưa chuyển |
+| `layouts/app/AppLayout.tsx` | **Đã xoá ở Phase 12**; 45 import đã chuyển sang `components/layout/WorkspaceLayout` (commit `69d240b`) |
 | `@/lib/utils.ts` | Xoá `cn` + `clsx`/`twMerge`; giữ helper format |
 | `.prettierrc` | Bỏ `prettier-plugin-tailwindcss`, `tailwindFunctions`, `tailwindStylesheet` |
 | `eslint.config.js` | Bỏ `tailwind.config.js` khỏi ignores (file thật là `.ts`, sắp xoá) |
@@ -2395,7 +2395,7 @@ php artisan test --filter=<area>
 ### 10.2 Kiểm tra thủ công mỗi page
 
 1. `composer run dev` (PHP 9999 + Vite + queue).
-2. Mở route ở 375, 390, 768, 1024, 1440.
+2. Mở route ở 375, 390, 480, 768, 1024, 1280, 1440.
 3. Toggle `data-theme` light/dark.
 4. Tab qua toàn bộ control.
 5. Thử trạng thái rỗng/lỗi nếu có.
@@ -2407,7 +2407,7 @@ php artisan test --filter=<area>
 - [ ] Không còn class Tailwind trong file.
 - [ ] Không hex/rgb trong file.
 - [ ] Dùng primitive cho mọi control.
-- [ ] Layout 375/390/768/1024/1440 không tràn, zoom 200% không vỡ.
+- [ ] Layout 375/390/480/768/1024/1280/1440 không tràn, zoom 200% không vỡ.
 - [ ] Light + dark đạt.
 - [ ] Loading / empty / error / success đủ.
 - [ ] Copy đã rà, không slop, không em-dash.
@@ -2493,7 +2493,7 @@ php artisan test --filter=<area>
 | Phase 11 reset thiếu so với Tailwind preflight                          | Cao        | **Phase 11 (#75):** `base/reset.css` chưa có `a` text-decoration, heading inherit, list reset, replaced `vertical-align`; 44 `<Link>` không className, `ProductCard` title sẽ gạch chân. Mở rộng reset + test trước khi xoá Tailwind/Page.css |
 | Phase 11 workspace mất layout khi xoá Page.css                          | Cao        | **Phase 11 (#74):** thêm `.sn-workspace__content` (offset 232) + `.sn-workspace__main` (padding 36/24, min-height); bỏ `.content`, inline style, `useIsMobile`; sidebar 230 → 232; đổi 769 → 768 |
 | Phase 11 xoá wrapper làm vỡ ~100 import                                 | Cao        | **Phase 11 (#72):** chỉ xoá dead `action-button`/`navbar`/`sidebar`/`LoadingOverlay`/`UtilityStrip`; giữ `header` 32, `data-table` 21, `status-badge` 15, `filter-panel` 13, `insights` 11, `action-buttons` 10, `confirmation-modal` 9, `action-dropdown` 2, `primary-input` 2 |
-| `AppLayout` còn 45 importer                                             | Trung bình | **Phase 11 (#73):** giữ re-export trong Phase 11; codemod 45 page sang `WorkspaceLayout` ghi backlog Phase 12, không chặn gỡ Tailwind |
+| `AppLayout` còn 45 importer                                             | Đã xử lý   | Phase 12 codemod 45 page sang `WorkspaceLayout`, xoá re-export (commit `69d240b`) |
 | Strict gate chạy sai mode                                               | Trung bình | **Phase 11 (#76):** normal run bỏ qua allowlist; dùng `check:css:all` (hoặc allowlist rỗng) để xác nhận 0 rồi mới xoá `scripts/token-allowlist.json` |
 | Docs lệch nặng trước Phase 11                                           | Trung bình | **Phase 11 (#78):** `AGENTS`/`README` ghi 104 allowlist/39 AppLayout/40 Page.css/230 Boxicons; cập nhật theo thực tế 5/45/3/7. `DESIGN`/`COMPONENTS` để Phase 12 |
 | Blade/package còn sót ngoài checklist cũ                                | Thấp       | **Phase 11 (#77):** bỏ inline `html` background + `html.dark` trong `app.blade.php`, `.dark` mirror trong `useTheme`, Boxicons CDN/body class; xoá `@fortawesome` + `postcss`; sửa `eslint` ignore `.js`/`.ts` |

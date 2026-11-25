@@ -336,10 +336,6 @@ function scanJsLine(line, lineNumber, file) {
         for (const match of line.matchAll(rule.pattern)) {
             const value = match[0];
 
-            if (rule.name === 'arbitrary-value' && ARBITRARY_ALLOWLIST.has(value)) {
-                continue;
-            }
-
             pushViolation(violations, seen, {
                 file,
                 line: lineNumber,

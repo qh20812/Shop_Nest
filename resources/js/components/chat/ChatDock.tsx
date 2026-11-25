@@ -3,7 +3,6 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as React from 'react';
 
 import { ChatbotLauncher } from '@/components/chat/ChatbotLauncher';
-import { ChatbotPanel } from '@/components/chat/ChatbotPanel';
 import { MarkdownText } from '@/components/chat/MarkdownText';
 import type { MessageListItem } from '@/components/chat/MessageList';
 import type { ChatbotHistoryTurn, ChatProduct } from '@/components/chat/types';
@@ -11,7 +10,9 @@ import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/com
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
 import { cx } from '@/lib/cx';
 
-import styles from './chat.module.css';
+import shellStyles from './chat-launcher.module.css';
+
+const ChatbotPanel = React.lazy(() => import('./ChatbotPanel'));
 
 type StoredMessage = {
     id: number;
@@ -369,23 +370,25 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             </DialogTrigger>
 
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Content className={cx(styles.dockContent)}>
-                    <DialogTitle className={styles.visuallyHidden}>Trợ lý ShopNest</DialogTitle>
-                    <DialogDescription className={styles.visuallyHidden}>
+                <DialogPrimitive.Content className={cx(shellStyles.dockContent)}>
+                    <DialogTitle className="sn-visually-hidden">Trợ lý ShopNest</DialogTitle>
+                    <DialogDescription className="sn-visually-hidden">
                         Cửa sổ trò chuyện với trợ lý ảo ShopNest. Nhấn Escape để đóng.
                     </DialogDescription>
 
-                    <ChatbotPanel
-                        messages={panelMessages}
-                        onSend={handleSend}
-                        onClose={() => handleOpenChange(false)}
-                        onMinimize={() => handleOpenChange(false)}
-                        typing={typing}
-                        error={error}
-                        onDismissError={() => setError(null)}
-                        onClearHistory={handleClearHistory}
-                        clearing={clearing}
-                    />
+                    <React.Suspense fallback={<div className={shellStyles.dockLoading} aria-busy="true" />}>
+                        <ChatbotPanel
+                            messages={panelMessages}
+                            onSend={handleSend}
+                            onClose={() => handleOpenChange(false)}
+                            onMinimize={() => handleOpenChange(false)}
+                            typing={typing}
+                            error={error}
+                            onDismissError={() => setError(null)}
+                            onClearHistory={handleClearHistory}
+                            clearing={clearing}
+                        />
+                    </React.Suspense>
                 </DialogPrimitive.Content>
             </DialogPrimitive.Portal>
         </DialogRoot>

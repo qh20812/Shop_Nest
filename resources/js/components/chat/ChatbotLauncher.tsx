@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { cx } from '@/lib/cx';
 
-import styles from './chat.module.css';
+import styles from './chat-launcher.module.css';
 
 type ChatbotLauncherProps = React.ComponentPropsWithoutRef<'button'> & {
     unreadCount?: number;

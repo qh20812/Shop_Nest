@@ -1,0 +1,29 @@
+/* Footer payment marks. Tokens only. */
+
+.paymentMarks {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-1);
+}
+
+.paymentMark {
+    display: inline-flex;
+    min-width: 2.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    padding-inline: var(--sn-space-2);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-sm);
+    background: var(--sn-color-surface);
+    color: var(--sn-color-text-muted);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.paymentMarkIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+}

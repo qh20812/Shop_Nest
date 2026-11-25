@@ -1,0 +1,99 @@
+/* Chat launcher and dock shell — loaded with the storefront layout. Tokens only. */
+
+.launcher {
+    position: fixed;
+    right: var(--sn-space-4);
+    bottom: var(--sn-space-4);
+    z-index: var(--sn-z-chat);
+    display: inline-flex;
+    width: var(--sn-chat-launcher);
+    height: var(--sn-chat-launcher);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sn-color-accent-hover);
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-color-accent);
+    color: var(--sn-color-on-accent);
+    box-shadow: var(--sn-shadow-popover);
+    transition:
+        background-color var(--sn-dur-fast) var(--sn-ease-standard),
+        transform var(--sn-dur-instant) var(--sn-ease-standard);
+}
+
+.launcher:hover {
+    background: var(--sn-color-accent-hover);
+}
+
+.launcher:active {
+    transform: scale(0.96);
+}
+
+.launcherIcon {
+    width: var(--sn-icon-lg);
+    height: var(--sn-icon-lg);
+}
+
+.launcher[data-open='true'] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.launcherBadge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    display: inline-flex;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    padding-inline: var(--sn-space-1);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-color-surface);
+    color: var(--sn-color-accent-text);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+}
+
+@media (min-width: 768px) {
+    .launcher {
+        right: var(--sn-space-6);
+        bottom: var(--sn-space-6);
+    }
+}
+
+/* Dock panel shell. The panel body is lazy-loaded. */
+.dockContent {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--sn-z-chat);
+    width: 100%;
+    max-width: none;
+    height: var(--sn-chat-sheet-height);
+    overflow: hidden;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-xl) var(--sn-radius-xl) 0 0;
+    background: var(--sn-color-surface);
+    box-shadow: var(--sn-shadow-overlay);
+}
+
+.dockContent:focus {
+    outline: none;
+}
+
+@media (min-width: 768px) {
+    .dockContent {
+        inset: auto var(--sn-space-6) var(--sn-space-6) auto;
+        width: var(--sn-chat-panel);
+        height: var(--sn-chat-panel-height);
+        border-radius: var(--sn-radius-lg);
+    }
+}
+
+.dockLoading {
+    height: 100%;
+    background: var(--sn-color-surface);
+}

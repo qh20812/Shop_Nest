@@ -2,7 +2,7 @@ import { Banknote } from 'lucide-react';
 
 import { cx } from '@/lib/cx';
 
-import styles from './commerce.module.css';
+import styles from './payment-marks.module.css';
 
 type PaymentMethod = 'visa' | 'mastercard' | 'jcb' | 'stripe' | 'cod';
 

@@ -60,6 +60,12 @@ const defaultColors = [
 const axisTick = { fill: 'var(--sn-color-text-muted)', fontSize: 12 };
 const axisLine = { stroke: 'var(--sn-color-border)' };
 const gridStroke = 'var(--sn-color-border)';
+const compactTickFormatter = (value: number | string) =>
+    new Intl.NumberFormat('vi-VN', {
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1,
+    }).format(Number(value));
 const tooltipStyle = {
     borderRadius: 8,
     border: '1px solid var(--sn-color-border)',
@@ -113,7 +119,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                             <CartesianGrid stroke={gridStroke} strokeWidth={1} />
                             <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
-                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} width={64} tickFormatter={compactTickFormatter} />
                             {tooltipContent}
                             {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Line
@@ -133,7 +139,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                         <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                             <CartesianGrid stroke={gridStroke} strokeWidth={1} />
                             <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
-                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} width={64} tickFormatter={compactTickFormatter} />
                             {tooltipContent}
                             {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Bar dataKey={valueKey} radius={[4, 4, 0, 0]}>
@@ -173,7 +179,7 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
                         <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                             <CartesianGrid stroke={gridStroke} strokeWidth={1} />
                             <XAxis dataKey={categoryKey} tick={axisTick} stroke={axisLine.stroke} />
-                            <YAxis tick={axisTick} stroke={axisLine.stroke} />
+                            <YAxis tick={axisTick} stroke={axisLine.stroke} width={64} tickFormatter={compactTickFormatter} />
                             {tooltipContent}
                             {legend ? <Legend wrapperStyle={{ color: 'var(--sn-color-text-muted)' }} /> : null}
                             <Area

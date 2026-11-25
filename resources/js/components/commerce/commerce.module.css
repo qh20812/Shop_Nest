@@ -1696,6 +1696,13 @@ a.orderItemTitle:hover {
     font-weight: var(--sn-weight-semibold);
 }
 
+.orderCardMeta {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+}
+
 .orderCardDate {
     color: var(--sn-color-text-faint);
     font-family: var(--sn-font-numeric);

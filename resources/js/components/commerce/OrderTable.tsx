@@ -118,7 +118,7 @@ export function OrderTable({
                         <li key={order.id}>
                             <Link href={`/user/orders/${order.id}`} className={styles.orderCard}>
                                 <div className={styles.orderCardTop}>
-                                    <div>
+                                    <div className={styles.orderCardMeta}>
                                         <span className={styles.orderCardCode}>{order.code}</span>
                                         <span className={styles.orderCardDate}>{order.createdAt ?? '-'}</span>
                                     </div>

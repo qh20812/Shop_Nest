@@ -174,13 +174,18 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
     return (
         <div className="sn-shell sn-workspace">
+            <a href="#main-content" className="sn-skip-link">
+                {t('Skip to main content')}
+            </a>
             <WorkspaceSidebar items={items[role]} open={isSidebarOpen} roleLabel={ROLE_LABELS[role]} onNavigate={closeSidebar} />
 
             {isSidebarOpen && <button type="button" className="sn-workspace__overlay" aria-label="Đóng menu" onClick={closeSidebar} />}
 
             <div className="sn-workspace__content">
                 <WorkspaceTopbar onToggleSidebar={() => setIsSidebarOpen((open) => !open)} />
-                <main className="sn-workspace__main">{children}</main>
+                <main id="main-content" tabIndex={-1} className="sn-workspace__main">
+                    {children}
+                </main>
             </div>
         </div>
     );

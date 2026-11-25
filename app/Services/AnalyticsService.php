@@ -37,9 +37,13 @@ class AnalyticsService
     use AnalyticsQueryTrait;
 
     private const KPI_CACHE_TTL = 600;
+
     private const REVENUE_CACHE_TTL = 900;
+
     private const USER_CACHE_TTL = 600;
+
     private const PRODUCT_CACHE_TTL = 300;
+
     private const ORDER_CACHE_TTL = 600;
 
     /**
@@ -124,15 +128,15 @@ class AnalyticsService
             'date_to' => $filters['date_to'] ?? $end,
         ]);
 
-        $cacheKey = $this->buildCacheKey('analytics:revenue:' . $period, $filters);
+        $cacheKey = $this->buildCacheKey('analytics:revenue:'.$period, $filters);
 
         return $this->remember($cacheKey, self::REVENUE_CACHE_TTL, function () use ($filters, $groupBy, $start, $end) {
             $baseQuery = $this->scopeRevenueQueries($filters);
             $monetaryExpression = 'COALESCE(total_amount_base, total_amount)';
 
             $timeSeriesRaw = (clone $baseQuery)
-                ->selectRaw($this->timeGroupingExpression($groupBy) . ' as period')
-                ->selectRaw('SUM(' . $monetaryExpression . ') as revenue')
+                ->selectRaw($this->timeGroupingExpression($groupBy).' as period')
+                ->selectRaw('SUM('.$monetaryExpression.') as revenue')
                 ->groupBy('period')
                 ->orderBy('period')
                 ->get()
@@ -166,13 +170,13 @@ class AnalyticsService
             'date_to' => $filters['date_to'] ?? $end,
         ]);
 
-        $cacheKey = $this->buildCacheKey('analytics:users:' . $groupBy, $filters);
+        $cacheKey = $this->buildCacheKey('analytics:users:'.$groupBy, $filters);
 
         return $this->remember($cacheKey, self::USER_CACHE_TTL, function () use ($filters, $groupBy, $start, $end) {
             $userQuery = $this->scopeUserQueries($filters);
 
             $growthRows = (clone $userQuery)
-                ->selectRaw($this->timeGroupingExpression($groupBy, 'created_at') . ' as period')
+                ->selectRaw($this->timeGroupingExpression($groupBy, 'created_at').' as period')
                 ->selectRaw('COUNT(*) as total')
                 ->groupBy('period')
                 ->orderBy('period')
@@ -245,11 +249,15 @@ class AnalyticsService
                 ->selectRaw('COUNT(*) as total')
                 ->groupBy('status')
                 ->get()
-                ->map(fn ($row) => [
-                    'status' => (string) $row->status,
-                    'label' => $this->formatOrderStatus((string) $row->status),
-                    'value' => (int) $row->total,
-                ])->values()->all();
+                ->map(function ($row) {
+                    $status = $row->status instanceof \BackedEnum ? $row->status->value : (string) $row->status;
+
+                    return [
+                        'status' => $status,
+                        'label' => $this->formatOrderStatus($status),
+                        'value' => (int) $row->total,
+                    ];
+                })->values()->all();
 
             $averageOrderValue = (float) (clone $orderQuery)
                 ->selectRaw('AVG(COALESCE(total_amount_base, total_amount)) as average_value')
@@ -286,13 +294,13 @@ class AnalyticsService
             AnalyticsReport::TYPE_CUSTOM => [
                 'message' => 'Custom reports are not implemented yet.',
             ],
-            default => throw new RuntimeException('Unsupported report type: ' . $type),
+            default => throw new RuntimeException('Unsupported report type: '.$type),
         };
 
         $exportPath = null;
         $exportFormat = null;
 
-        if (!empty($filters['export_format'])) {
+        if (! empty($filters['export_format'])) {
             $exportFormat = strtolower((string) $filters['export_format']);
             if ($exportFormat === 'csv') {
                 $exportPath = $this->generateCsvExport($type, $data);
@@ -318,7 +326,7 @@ class AnalyticsService
     private function remember(string $key, int $ttl, callable $callback, array $tags = []): mixed
     {
         $store = Cache::getStore();
-        if (!empty($tags) && $store instanceof TaggableStore) {
+        if (! empty($tags) && $store instanceof TaggableStore) {
             return Cache::tags($tags)->remember($key, $ttl, $callback);
         }
 
@@ -462,7 +470,7 @@ class AnalyticsService
             ->limit(20)
             ->get()
             ->map(function ($row) {
-                $label = trim(($row->first_name ?? '') . ' ' . ($row->last_name ?? ''));
+                $label = trim(($row->first_name ?? '').' '.($row->last_name ?? ''));
                 $label = $label !== '' ? $label : ($row->username ?? 'Unknown Seller');
 
                 return [
@@ -519,7 +527,7 @@ class AnalyticsService
      */
     private function buildSegmentDistribution(array $filters): array
     {
-        if (!Schema::hasTable('customer_segment_memberships') || !Schema::hasTable('customer_segments')) {
+        if (! Schema::hasTable('customer_segment_memberships') || ! Schema::hasTable('customer_segments')) {
             return [];
         }
 
@@ -527,7 +535,7 @@ class AnalyticsService
             ->select(['segment_id'])
             ->selectRaw('COUNT(*) as total');
 
-        if (!empty($filters['segment_id'])) {
+        if (! empty($filters['segment_id'])) {
             $query->where('segment_id', (int) $filters['segment_id']);
         }
 
@@ -545,9 +553,10 @@ class AnalyticsService
         return $rows
             ->map(function ($row) use ($segments) {
                 $segment = $segments->get($row->segment_id);
+
                 return [
                     'segmentId' => (int) $row->segment_id,
-                    'label' => $segment?->name ?? 'Segment #' . $row->segment_id,
+                    'label' => $segment?->name ?? 'Segment #'.$row->segment_id,
                     'value' => (int) $row->total,
                 ];
             })
@@ -659,11 +668,11 @@ class AnalyticsService
             ->orderBy('stock_quantity')
             ->limit(20);
 
-        if (!empty($filters['seller_id'])) {
+        if (! empty($filters['seller_id'])) {
             $query->whereHas('product', fn ($q) => $q->where('seller_id', (int) $filters['seller_id']));
         }
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->whereHas('product', fn ($q) => $q->where('category_id', (int) $filters['category_id']));
         }
 
@@ -683,13 +692,32 @@ class AnalyticsService
      */
     private function buildFulfillmentMetrics(array $filters): array
     {
-        $query = DB::table('orders')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, shipped_at)) as avg_to_ship')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, shipped_at, delivered_at)) as avg_ship_to_deliver')
-            ->whereNotNull('shipped_at')
-            ->whereNotNull('delivered_at');
+        $query = DB::table('orders as o')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, o.created_at, o.shipped_at)) as avg_to_ship')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, o.shipped_at, o.delivered_at)) as avg_ship_to_deliver')
+            ->whereNotNull('o.shipped_at')
+            ->whereNotNull('o.delivered_at');
 
-        $this->applyOrderFilters($query, $filters);
+        if (! empty($filters['date_from'])) {
+            $query->where('o.created_at', '>=', Carbon::parse($filters['date_from'])->startOfDay());
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->where('o.created_at', '<=', Carbon::parse($filters['date_to'])->endOfDay());
+        }
+
+        foreach (['seller_id' => 'seller_id', 'category_id' => 'category_id'] as $filter => $column) {
+            if (! empty($filters[$filter])) {
+                $query->whereExists(function ($subQuery) use ($filters, $filter, $column) {
+                    $subQuery->selectRaw('1')
+                        ->from('order_items as oi')
+                        ->join('product_variants as pv', 'pv.variant_id', '=', 'oi.variant_id')
+                        ->join('products as p', 'p.product_id', '=', 'pv.product_id')
+                        ->whereColumn('oi.order_id', 'o.order_id')
+                        ->where('p.'.$column, (int) $filters[$filter]);
+                });
+            }
+        }
 
         $row = $query->first();
 
@@ -789,7 +817,7 @@ class AnalyticsService
     private function formatDisplayLabel(CarbonImmutable $date, string $groupBy): string
     {
         return match ($groupBy) {
-            'week' => 'W' . $date->format('W') . ' ' . $date->format('Y'),
+            'week' => 'W'.$date->format('W').' '.$date->format('Y'),
             'month' => $date->format('M Y'),
             default => $date->format('d M'),
         };
@@ -800,19 +828,19 @@ class AnalyticsService
      */
     private function applyOrderFilters(QueryBuilder $query, array $filters): void
     {
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->where('o.created_at', '>=', Carbon::parse($filters['date_from'])->startOfDay());
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->where('o.created_at', '<=', Carbon::parse($filters['date_to'])->endOfDay());
         }
 
-        if (!empty($filters['seller_id'])) {
+        if (! empty($filters['seller_id'])) {
             $query->where('p.seller_id', (int) $filters['seller_id']);
         }
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('p.category_id', (int) $filters['category_id']);
         }
     }
@@ -822,19 +850,19 @@ class AnalyticsService
      */
     private function applyInventoryFilters(QueryBuilder $query, array $filters): void
     {
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->where('il.created_at', '>=', Carbon::parse($filters['date_from'])->startOfDay());
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->where('il.created_at', '<=', Carbon::parse($filters['date_to'])->endOfDay());
         }
 
-        if (!empty($filters['seller_id'])) {
+        if (! empty($filters['seller_id'])) {
             $query->where('p.seller_id', (int) $filters['seller_id']);
         }
 
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('p.category_id', (int) $filters['category_id']);
         }
     }
@@ -876,7 +904,7 @@ class AnalyticsService
         $normalized = $this->stringifyFilters($filters);
         ksort($normalized);
 
-        return $prefix . ':' . md5(json_encode($normalized));
+        return $prefix.':'.md5(json_encode($normalized));
     }
 
     /**
@@ -891,6 +919,7 @@ class AnalyticsService
         $decoded = json_decode($value, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             $locale = app()->getLocale();
+
             return $decoded[$locale] ?? $decoded['en'] ?? reset($decoded) ?? $default;
         }
 
@@ -921,7 +950,7 @@ class AnalyticsService
      */
     private function generateCsvExport(string $type, array $data): string
     {
-        $path = 'reports/' . $type . '_report_' . now()->format('Ymd_His') . '.csv';
+        $path = 'reports/'.$type.'_report_'.now()->format('Ymd_His').'.csv';
         $handle = fopen('php://temp', 'w+');
 
         if ($handle === false) {
@@ -943,7 +972,7 @@ class AnalyticsService
      */
     private function generateJsonExport(string $type, array $data): string
     {
-        $path = 'reports/' . $type . '_report_' . now()->format('Ymd_His') . '.json';
+        $path = 'reports/'.$type.'_report_'.now()->format('Ymd_His').'.json';
         Storage::disk('local')->put($path, json_encode($data, JSON_PRETTY_PRINT));
 
         return $path;
@@ -955,7 +984,7 @@ class AnalyticsService
     private function writeFlattenedCsv(mixed $handle, array $data, string $prefix = ''): void
     {
         foreach ($data as $key => $value) {
-            $composedKey = $prefix !== '' ? $prefix . '.' . $key : (string) $key;
+            $composedKey = $prefix !== '' ? $prefix.'.'.$key : (string) $key;
 
             if (is_array($value)) {
                 if ($this->isAssoc($value)) {
@@ -963,9 +992,9 @@ class AnalyticsService
                 } else {
                     foreach ($value as $index => $item) {
                         if (is_array($item)) {
-                            $this->writeFlattenedCsv($handle, $item, $composedKey . '[' . $index . ']');
+                            $this->writeFlattenedCsv($handle, $item, $composedKey.'['.$index.']');
                         } else {
-                            fputcsv($handle, [$composedKey . '[' . $index . ']', (string) $item]);
+                            fputcsv($handle, [$composedKey.'['.$index.']', (string) $item]);
                         }
                     }
                 }

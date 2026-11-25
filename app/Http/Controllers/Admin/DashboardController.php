@@ -21,9 +21,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly AnalyticsService $analyticsService)
-    {
-    }
+    public function __construct(private readonly AnalyticsService $analyticsService) {}
 
     public function index(Request $request): Response
     {
@@ -93,7 +91,7 @@ class DashboardController extends Controller
     private function getRecentOrders(): Collection
     {
         try {
-            return Order::query()
+            $orders = Order::query()
                 ->select([
                     'order_id',
                     'order_number',
@@ -104,11 +102,15 @@ class DashboardController extends Controller
                     'created_at',
                 ])
                 ->with([
-                    'customer:id,username,first_name,last_name,email,avatar,avatar_url',
+                    'customer:id,username,first_name,last_name,email,avatar',
                 ])
                 ->orderByDesc('created_at')
                 ->limit(5)
                 ->get();
+
+            $orders->each(fn ($order) => $order->customer?->append('avatar_url'));
+
+            return $orders;
         } catch (\Throwable $throwable) {
             Log::error('Failed to fetch admin recent orders', [
                 'error' => $throwable->getMessage(),
@@ -195,7 +197,7 @@ class DashboardController extends Controller
 
                 $weeks[] = [
                     'week' => $key,
-                    'label' => $weekStart->format('d/m') . ' - ' . $weekEnd->format('d/m'),
+                    'label' => $weekStart->format('d/m').' - '.$weekEnd->format('d/m'),
                     'users' => (int) ($rawResults->get($key, 0)),
                 ];
             }

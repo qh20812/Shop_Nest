@@ -344,7 +344,7 @@ export default function Checkout() {
 
     if (items.length === 0) {
         return (
-            <StorefrontLayout compactFooter pinLight={false}>
+            <StorefrontLayout compactFooter>
                 <Head title="Thanh toán" />
                 <PageContainer className={styles.pageTight}>
                     <EmptyState
@@ -372,7 +372,7 @@ export default function Checkout() {
     }));
 
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Thanh toán" />
 
             <PageContainer className={styles.page}>

@@ -40,7 +40,7 @@ export default function Contact() {
     };
 
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Liên hệ ShopNest" />
 
             <PageContainer className={styles.page}>

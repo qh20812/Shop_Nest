@@ -5,7 +5,7 @@ import { LegalDocument } from '@/components/storefront/LegalDocument';
 
 export default function Terms() {
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Điều khoản sử dụng" />
 
             <LegalDocument

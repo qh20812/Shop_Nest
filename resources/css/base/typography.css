@@ -2,7 +2,8 @@
  * Bảng Hiệu — element typography.
  * Only body, links and labels are scoped to `.sn-shell` until Phase 11; heading
  * and metadata styles belong to the typography primitives. This keeps the 41
- * legacy workspace pages on their own Page.css typography.
+ * Element typography is scoped to `.sn-shell`; the legacy workspace CSS
+ * (Page.css) was removed in Phase 11.
  */
 
 @layer sn-base {

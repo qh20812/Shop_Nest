@@ -1,17 +1,15 @@
-@layer sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;
+@layer sn-reset, sn-base, sn-components, sn-layouts, sn-utilities;
 
-@import 'tailwindcss';
-@import './legacy-tokens.css';
-@import './tokens.css';
 @import './tokens/primitive.css';
 @import './tokens/semantic.css';
 @import './tokens/scale.css';
 @import './fonts.css';
-@import './base.css';
+
 @import './base/reset.css';
 @import './base/typography.css';
 @import './base/forms.css';
 @import './base/a11y.css';
+
 @import './components/button.css';
 @import './components/field.css';
 @import './components/file-dropzone.css';
@@ -21,13 +19,10 @@
 @import './components/data.css';
 @import './components/status.css';
 @import './components/typography.css';
+
 @import './layouts/storefront.css';
 @import './layouts/auth.css';
 @import './layouts/account.css';
 @import './layouts/workspace.css';
+
 @import './utilities.css';
-
-@custom-variant dark (&:is(.dark *));
-
-@source '../views';
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

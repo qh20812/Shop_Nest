@@ -5,7 +5,7 @@ import { LegalDocument } from '@/components/storefront/LegalDocument';
 
 export default function PrivacyPolicy() {
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Chính sách bảo mật" />
 
             <LegalDocument

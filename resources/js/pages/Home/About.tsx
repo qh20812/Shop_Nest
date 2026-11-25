@@ -19,7 +19,7 @@ const reasons = [
 
 export default function About() {
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Về ShopNest" />
 
             <PageContainer size="prose" className={styles.page}>

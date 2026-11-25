@@ -29,7 +29,6 @@ export function useTheme() {
 
         const applyTheme = (isDark: boolean) => {
             root.dataset.theme = isDark ? 'dark' : 'light';
-            root.classList.toggle('dark', isDark);
             root.style.colorScheme = isDark ? 'dark' : 'light';
             setResolvedTheme(isDark ? 'dark' : 'light');
         };

@@ -2,7 +2,7 @@
 
 > **Direction:** BẢNG HIỆU (signage / industrial catalog)
 > **Branch:** `refactor/ui-web`
-> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 hoàn tất** (2026-11-24) — email presentation chuẩn hoá hex + bỏ dash, 6 error page self-contained + test; PDF defer theo #70; chi tiết ở §15. **Phase 11 chưa build**: rà soát pre-flight 2026-11-24 ghi ở §2.13; đã chốt lại wrapper/AppLayout/reset/workspace trước khi xoá.
+> **Trạng thái:** Phase 0, 1, 2A, 2B, 2C, 3, 4, 5, 6, 7 hoàn tất; **Phase 7 hoàn tất** (2026-11-24) — 10 page Seller + 7 wrapper, allowlist **57 → 42**, 139 key `vi` + 101 key `en`. **Phase 8 hoàn tất** (2026-11-24) — 29 page Admin + 5 stub Shops, 17 component + `action-dropdown`, allowlist **42 → 5**, 0 key Admin thiếu; chi tiết ở §2.10 và §15. **Phase 9 hoàn tất** (2026-11-24) — 1 page Shipper, middleware `shipper` → `isShipper`, 3 key i18n + feature test; chi tiết ở §15. **Phase 10 hoàn tất** (2026-11-24) — email presentation chuẩn hoá hex + bỏ dash, 6 error page self-contained + test; PDF defer theo #70; chi tiết ở §15. **Phase 11 hoàn tất** (2026-11-25) — gỡ Tailwind/Page.css/base/tokens/legacy, strict `check:css` 289/0, workspace CSS thay `.content`, bỏ `.dark`/`pinLight`; build + build:ssr + 473 test pass; chi tiết §2.14 và §15. **Phase 12 QA là bước tiếp theo.**
 > **Phạm vi:** toàn bộ UI React/Inertia + email template + error pages + PDF/invoice (tạo mới có điều kiện)
 > **Ngoài phạm vi:** backend, route, props Inertia, nghiệp vụ, schema, seed, API
 
@@ -459,6 +459,25 @@ Rà soát read-only trên cây sạch tại `0aa386c` để đối chiếu check
 
 **Kết luận:** Phase 11 khả thi nhưng phải đổi thứ tự và scope: (1) bổ sung reset parity + workspace CSS trước, (2) mới xoá `Page.css`, (3) chỉ xoá dead files, **giữ wrapper sạch + `AppLayout`**, (4) gỡ Tailwind, (5) strict bằng `--all`, (6) docs. Checklist cũ xoá toàn bộ wrapper sẽ vỡ ~100 import.
 
+### 2.14 Kết quả Phase 11 (2026-11-25)
+
+Số liệu sau khi build Phase 11:
+
+| Chỉ số | Giá trị |
+|---|---|
+| Tailwind | **0** dependency trực tiếp trong `package.json`; `package-lock` chỉ còn `clsx` transitive của `@react-aria`/recharts |
+| CSS legacy | `Page.css`, `base.css`, `tokens.css`, `legacy-tokens.css` **đã xoá**; `app.css` chỉ còn `tokens/*`, `base/*`, `components/*`, `layouts/*`, `utilities.css` |
+| Guardrail | `scripts/token-allowlist.json` **đã xoá**; `check:css` + `check:css:all` pass **289 file checked / 0 allowlisted** |
+| Workspace | `.sn-workspace__content` + `.sn-workspace__main` (padding 36/24); sidebar `var(--sn-sidebar)` 232; bỏ `.content`, inline mobile style, `useIsMobile`, import `Page.css` |
+| Reset parity | `base/reset.css` phủ `a`, heading, list, replaced `vertical-align`, `button/input`, `hr/table/fieldset`; body dùng token canvas/text/font |
+| Dark mode | Bỏ mirror `.dark` khỏi `useTheme` + `app.blade.php`; chỉ còn `[data-theme='dark']`; bỏ inline `html` background/`html.dark` và Boxicons CDN/body class |
+| `pinLight` | Bỏ prop ở `StorefrontLayout`/`AccountLayout` + **15 chỗ** ở 11 page |
+| Dead files | Xoá `action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip`; giữ toàn bộ composition wrapper sạch + `AppLayout` |
+| Gate | `types`, `format:check`, `lint`, `build`, `build:ssr`, `php artisan test` — **473 test / 2.100 assertion**, 0 fail |
+| Docs | `README` UI table + `AGENTS.md` cập nhật; `PLAN.md`/`PROMPT.md`/`DESIGN-02.md`/`STITCH-DESIGN.md` chuyển `docs/archive/` |
+
+**Chưa làm:** QA responsive/dark/a11y toàn bộ page (Phase 12); codemod 45 page từ `AppLayout` sang `WorkspaceLayout`; Gmail/Outlook thật.
+
 ---
 
 ## 3. Direction: BẢNG HIỆU
@@ -489,7 +508,7 @@ Từ khoá: **rõ, rắn, thẳng, đáng tin, không trang trí thừa**.
 | Admin            | 232 px sidebar               | Dày nhất   | 16–20 px       | Bảng ledger, filter bar, bulk action                                               |
 | Shipper          | 232 px sidebar               | Vừa        | 20 px          | Shell + empty state; danh sách chuyến chỉ khi backend có dữ liệu, tap target 44 px |
 
-> **Sidebar 230 vs 232:** `--sn-sidebar` = 232px là giá trị đích. Trong giai đoạn chuyển đổi, `Page.css` hard-code `.content { width: calc(100% - 230px); left: 230px }` ở unlayered nên Phase 3 dùng **230px** cho khớp; đổi về 232 khi xoá `Page.css` (Phase 11).
+> **Sidebar 230 vs 232:** `--sn-sidebar` = 232px là giá trị đích. Giai đoạn chuyển đổi dùng **230px** cho khớp `Page.css` `.content`; Phase 11 đã xoá `Page.css` và chuyển sang **232px** qua `var(--sn-sidebar)`.
 
 ### 3.4 Anatomy component
 
@@ -1014,12 +1033,12 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
 
 > `sm = 640px` là mốc kế thừa từ Tailwind (`sm:` cũ) và đang được dùng ở `overlay.css`, `feedback.css`, `navigation.css`. Không đổi các media query này sang 768; mọi layout mới dùng đúng bảng trên.
 >
-> **Ngoại lệ Phase 3:** `layouts/workspace.css` dùng `@media (min-width: 769px)` để bật sidebar, vì `Page.css` đang có `@media (max-width: 768px)` kéo `.content` sang `left: 200px`. 769 là chủ đích để hai mốc không chồng nhau; xoá ngoại lệ này khi bỏ `Page.css` ở Phase 11.
+> **Ngoại lệ Phase 3 (đã xoá ở Phase 11):** `layouts/workspace.css` từng dùng `@media (min-width: 769px)` để bật sidebar vì `Page.css` có `@media (max-width: 768px)` kéo `.content` sang `left: 200px`. Sau khi xoá `Page.css`, Phase 11 dùng mốc **768** và `.sn-workspace__content` margin 232.
 
 ### 4.9 Dark mode mechanics
 
 - `<html data-theme="light|dark">`; `data-theme` do JS resolve từ `localStorage('theme')` (`light|dark|system`) + `prefers-color-scheme`.
-- **Mirror `.dark` trong giai đoạn chuyển đổi:** Phase 1–10 vẫn set thêm class `.dark` trên `<html>` để `Page.css` (`html.dark`, `body.dark`), `base.css` (`.dark body`) và `legacy-tokens.css` (`.dark`) tiếp tục hoạt động. Phase 11 xoá mirror cùng toàn bộ `.dark` selectors.
+- **Mirror `.dark` (Phase 1–10, đã xoá ở Phase 11):** từng set thêm class `.dark` trên `<html>` để `Page.css`/`base.css`/`legacy-tokens` hoạt động. Phase 11 đã xoá mirror cùng toàn bộ `.dark` selectors; chỉ còn `[data-theme='dark']`.
 - Inline script trong `<head>` của `app.blade.php` để set trước paint, tránh FOUC:
 
 ```html
@@ -1030,7 +1049,6 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
             var dark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             var root = document.documentElement;
             root.dataset.theme = dark ? 'dark' : 'light';
-            root.classList.toggle('dark', dark);
             root.style.colorScheme = dark ? 'dark' : 'light';
         } catch (error) {
             document.documentElement.dataset.theme = 'light';
@@ -1040,9 +1058,8 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
 ```
 
 - Script phải nằm **trước** `@vite` và trước mọi stylesheet trong `<head>`.
-- `useTheme.ts` đổi sang `data-theme` **và** giữ mirror:
+- `useTheme.ts` chỉ dùng `data-theme` (mirror `.dark` đã xoá ở Phase 11):
     - `root.dataset.theme = isDark ? 'dark' : 'light'`
-    - `root.classList.toggle('dark', isDark)`
     - `root.style.colorScheme = isDark ? 'dark' : 'light'` (nếu không, inline `color-scheme` từ script sẽ thắng CSS `[data-theme='dark']`).
     - Giữ API `theme / resolvedTheme / changeTheme`.
     - **SSR-safe:** `config/inertia.php` đang bật SSR; không đọc `localStorage` khi `typeof window === 'undefined'`, và bọc try/catch.
@@ -1056,10 +1073,6 @@ Quy ước mobile-first: viết mặc định cho 375, thêm `@media (min-width:
 resources/css/
 ├── app.css                     # entry: layer order + import
 ├── fonts.css                   # @font-face self-host Be Vietnam Pro
-├── base.css                    # legacy Nếp, @apply — xoá Phase 11
-├── legacy-tokens.css           # legacy shadcn alias — xoá Phase 11
-├── tokens.css                  # legacy Tailwind @theme — xoá Phase 11
-├── Page.css                    # legacy workspace; 6 block toàn cục nằm trong @layer sn-legacy-reset
 ├── tokens/
 │   ├── primitive.css           # màu gốc
 │   ├── semantic.css            # light + dark + fallback
@@ -1088,16 +1101,13 @@ resources/css/
 └── utilities.css               # .sn-container, .sn-numeric, .sn-visually-hidden, .sn-stack
 ```
 
-> Danh sách trên là **hiện trạng sau Phase 2** (9 file `components/*`, không phải 18 file như bản kế hoạch ban đầu). Phase 3 thêm `layouts/*.css`; không tách lại các file `components/*` đã gộp.
+> Danh sách trên là **hiện trạng sau Phase 11**. Phase 3 thêm `layouts/*.css`; các file `components/*` đã gộp không tách lại. `Page.css`, `base.css`, `legacy-tokens.css`, `tokens.css` đã bị xoá.
 
 `app.css`:
 
 ```css
-@layer sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities;
+@layer sn-reset, sn-base, sn-components, sn-layouts, sn-utilities;
 
-@import 'tailwindcss';
-@import './legacy-tokens.css';
-@import './tokens.css';
 @import './tokens/primitive.css';
 @import './tokens/semantic.css';
 @import './tokens/scale.css';
@@ -1119,15 +1129,15 @@ resources/css/
 @import './utilities.css';
 ```
 
-> **Layer naming:** dùng `sn-*` để không trùng `base/components/utilities` của Tailwind v4 trong giai đoạn chuyển đổi. Mỗi file CSS tự khai layer bên trong (`@layer sn-base { … }`, `@layer sn-components { … }`, `@layer sn-layouts { … }`, `@layer sn-utilities { … }`); **không** dùng `layer()` trong `@import` để tránh layer lồng nhau.
+> **Layer naming:** chỉ còn layer `sn-*` sau Phase 11. Mỗi file CSS tự khai layer bên trong (`@layer sn-base { … }`, `@layer sn-components { … }`, `@layer sn-layouts { … }`, `@layer sn-utilities { … }`); **không** dùng `layer()` trong `@import` để tránh layer lồng nhau.
 >
-> **Thứ tự bắt buộc:** `sn-legacy-reset, sn-reset, theme, base, sn-base, components, sn-components, sn-layouts, sn-utilities, utilities`. Phải chen `sn-components` **sau** Tailwind `base`/`components` (nếu không preflight reset input/button) và **trước** Tailwind `utilities` (để `className` utility của page vẫn thắng). Đây là lỗi đã gặp ở 2A và đã sửa.
+> **Thứ tự bắt buộc:** `sn-reset, sn-base, sn-components, sn-layouts, sn-utilities`. Không còn Tailwind preflight; `base/reset.css` đã thay các reset toàn cục + `a`/heading/list/replaced element.
 >
-> **`sn-legacy-reset` (thêm ở Phase 3):** layer **yếu nhất**, chỉ để chứa 6 block toàn cục của `Page.css` (`*`, `a`, `li`, `html`, `body`, `body.dark`). Vì CSS xếp layer thấp hơn specificity, `Page.css` unlayered hiện đang thắng cả `sn-*` lẫn Tailwind utilities; đưa 6 block đó vào layer yếu làm `sn-*` và utility hoạt động trở lại mà **không** đổi phần còn lại của Page.css. Layer này khai báo **đầu tiên** trong `app.css` để `app.css` (load trước) quyết định thứ tự; nếu chỉ khai trong `Page.css` (load sau) nó sẽ bị chèn vào cuối và mạnh hơn `sn-*`.
+> **`sn-legacy-reset` (Phase 3–10, đã xoá):** layer yếu nhất từng chứa 6 block toàn cục của `Page.css`. Phase 11 xoá `Page.css` nên layer này cũng bị bỏ; reset nằm trong `base/reset.css`.
 >
-> **Giai đoạn chuyển đổi (Phase 1–10):** giữ thêm `@import 'tailwindcss';` và `@import './tokens.css';` để các trang chưa migrate không vỡ. Hai dòng này bị xoá ở Phase 11, cùng lúc với `Page.css`.
+> **Giai đoạn chuyển đổi (Phase 1–10, đã kết thúc):** từng giữ `@import 'tailwindcss';` và `@import './tokens.css';`; Phase 11 đã xoá cùng `Page.css`.
 >
-> **Thứ tự kích hoạt:** Phase 1 chỉ import 3 file token và `fonts.css`. Phase 2 thêm khai báo layer (lúc đó chưa có `sn-legacy-reset`) và import từng `components/*.css` khi primitive xong; **chưa** import `base/*`, `layouts/*`, `utilities.css`. Phase 3 thêm `sn-legacy-reset`, tách reset của `Page.css`, rồi import `base/*.css`, `layouts/*.css`, `utilities.css`. Không import trước, tránh đổi giao diện toàn cục khi trang cũ còn chạy.
+> **Thứ tự kích hoạt:** Phase 1 chỉ import 3 file token và `fonts.css`. Phase 2 thêm layer + `components/*`; Phase 3 thêm `base/*`, `layouts/*`, `utilities.css`; Phase 11 bỏ legacy.
 
 ### 4.11 Utilities tối thiểu
 
@@ -1400,7 +1410,7 @@ Chỉ cho giá trị động:
 
 Không: `style={{ color: '#b23a2f' }}`, `style={{ marginTop: 16 }}`.
 
-**Ngoại lệ Phase 3:** `WorkspaceLayout` dùng inline `style={{ width: '100%', left: 0 }}` ở mobile để vượt `.content { left: 230px }` unlayered của `Page.css`. Đây là geometry động theo viewport, không phải màu/spacing tĩnh; xoá cùng `Page.css` ở Phase 11.
+**Ngoại lệ Phase 3 (đã xoá ở Phase 11):** `WorkspaceLayout` từng dùng inline `style={{ width: '100%', left: 0 }}` ở mobile để vượt `.content { left: 230px }` của `Page.css`. Phase 11 đã thay bằng `.sn-workspace__content` + media 768, không còn inline geometry.
 
 ---
 
@@ -2146,7 +2156,7 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 
 ### Phase 11 — Gỡ Tailwind và dọn nợ
 
-**Trạng thái:** **chưa build** (2026-11-24). Rà soát pre-flight ghi §2.13; đã chốt lại wrapper/AppLayout/reset/workspace/pinLight theo #71–#79.
+**Trạng thái:** **hoàn tất** (2026-11-25). Rà soát pre-flight ghi §2.13; kết quả build ghi §2.14 và cuối phase.
 
 **Pre-flight (bắt buộc, #71)**
 
@@ -2213,6 +2223,16 @@ Các mục dưới đây phát hiện khi rà soát sau Phase 3; đã xử lý t
 7. Manual: 375/390/768/1024/1440; light + dark; `.sn-workspace__main` có padding; sidebar 232 không đè content; modal trên sidebar; link/heading/list không bị underline/bullet mặc định.
 
 **DoD:** không còn dependency Tailwind trong `package-lock.json`; `check:css:all` **0**; không còn `Page.css`/`tokens.css`/`legacy-tokens.css`/`base.css`; không còn `.dark` mirror/selector; workspace không còn `.content` và có `.sn-workspace__main` padding; reset parity đạt (0 hex/Tailwind/Boxicons ngoài tokens); không còn `pinLight`; `build` + `build:ssr` + full test pass; wrapper sạch + `AppLayout` vẫn giữ; `README`/`AGENTS` đã cập nhật; docs cũ đã archive.
+
+> **Trạng thái 2026-11-25 — hoàn tất:**
+>
+> - **Reset/workspace:** mở rộng `base/reset.css` (a/heading/list/replaced/button/input/table/fieldset); thêm `.sn-workspace__content` + `.sn-workspace__main` (36/24), sidebar 232; `WorkspaceLayout` bỏ `.content`, inline style, `useIsMobile`, import `Page.css`.
+> - **Xoá:** `Page.css`, `base.css`, `tokens.css`, `legacy-tokens.css`, `postcss.config.js`, `tailwind.config.ts`, `components.json`, allowlist; 5 dead TSX (`action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip`).
+> - **Tailwind/deps:** bỏ `tailwindcss`, toàn bộ `@tailwindcss/*`, `tailwind-merge`, `tailwindcss-animate`, `cva`, `clsx`, `prettier-plugin-tailwindcss`, `@fortawesome`, `postcss`; `vite.config`/`.prettierrc`/`eslint` sạch.
+> - **Dark/blade:** bỏ mirror `.dark` khỏi `useTheme` + inline script; bỏ inline `html` background/`html.dark`, Boxicons CDN, body class; `pinLight` bỏ khỏi 2 layout + 11 page.
+> - **Gate:** `check:css` + `check:css:all` **289/0**; `types`, `format:check`, `lint`, `build`, `build:ssr` pass; `php artisan test` **473/2.100**, 0 fail.
+> - **Docs:** `README` + `AGENTS` cập nhật; 4 tài liệu Nếp chuyển `docs/archive/`.
+> - **Giữ:** composition wrapper sạch + `AppLayout` (45 import) theo #72/#73; codemod để Phase 12.
 
 ---
 
@@ -2370,7 +2390,7 @@ npm run check:css
 php artisan test --filter=<area>
 ```
 
-`npm run lint` hiện là `--fix`, nên chạy trước `format:check` để tránh false diff. `check:css` chạy ở chế độ **ratchet** (allowlist) đến hết Phase 10; Phase 11 mới bật strict và xoá allowlist.
+`npm run lint` hiện là `--fix`, nên chạy trước `format:check` để tránh false diff. Sau Phase 11, `check:css` là **strict** (allowlist đã xoá); `check:css:all` tương đương.
 
 ### 10.2 Kiểm tra thủ công mỗi page
 
@@ -2395,7 +2415,7 @@ php artisan test --filter=<area>
 - [ ] Page có `*.module.css` (nếu cần layout) và module đã qua `check:css`.
 - [ ] `types` + `build` + `check:css` sạch.
 - [ ] Route + props không đổi.
-- [ ] Trên workspace: `.sn-btn`, `.sn-input`, `.sn-badge`, `.sn-card` còn padding (không bị `Page.css` reset về 0).
+- [ ] Trên workspace: `.sn-btn`, `.sn-input`, `.sn-badge`, `.sn-card` còn padding; `.sn-workspace__content` offset 232 và `.sn-workspace__main` padding 36/24 (không còn `Page.css`).
 
 ---
 
@@ -2502,8 +2522,8 @@ php artisan test --filter=<area>
 - **Pre-flight Phase 11 (ngoài UI code):** không cần commit/stash vì cây sạch tại `0aa386c`; chỉ cần chạy lại full test + `check:css:all` trước khi bắt đầu.
 - Không nâng version dependency (chỉ gỡ).
 - Không xoá `resources/js/components/ui/{table,switch,error-state}.tsx` — đây là primitive dự phòng có chủ đích.
-- Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}`, `feedback/LoadingOverlay` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá.
-- Không xoá `storefront/UtilityStrip.tsx` trước Phase 11; Phase 4 chỉ bỏ nó khỏi Home.
+- Không xoá `chat`, `commerce/{ReturnItemPicker,RefundOption,PreferenceRow}` khi chưa xác nhận là dead code. Phase 6 **migrate** 3 file commerce này, không xoá; Phase 11 đã xoá `feedback/LoadingOverlay` (dead).
+- `storefront/UtilityStrip.tsx` đã xoá ở Phase 11 (dead code); Phase 4 chỉ bỏ nó khỏi Home.
 - Không thêm voucher band, số liệu `1.200+`/`100%`/`299k`, badge “Shop Việt”/“Đã mua” nếu không có props/DB xác thực.
 - Không đưa các xoá `PROMPT.md`, `STITCH-DESIGN.md`, `DESIGN-02.md` vào Phase 3; khôi phục và để Phase 11.
 - Không xoá wrapper sạch (`header`, `data-table`, `filter-panel`, `insights`, `action-buttons`, `confirmation-modal`, `status-badge`, `primary-input`, `action-dropdown`) hay `AppLayout` trong Phase 11; chỉ xoá 5 file dead đã chốt ở #72.
@@ -2590,7 +2610,7 @@ docs(ui): rewrite design system and component rules
 
 **Sau khi sửa**
 
-1. Xoá file vừa migrate khỏi `scripts/token-allowlist.json`.
+1. `npm run check:css` strict (allowlist đã xoá).
 2. `npm run types`
 3. `npm run build`
 4. `npm run check:css` (đã bao gồm `resources/js/**/*.module.css`)
@@ -2601,6 +2621,17 @@ docs(ui): rewrite design system and component rules
 ---
 
 ## 15. Nhật ký cập nhật
+
+**2026-11-25 — Phase 11 hoàn tất (gỡ Tailwind + dọn nợ):**
+
+- **Reset/workspace:** mở rộng `base/reset.css` thay Tailwind preflight + 6 block `sn-legacy-reset`; thêm `.sn-workspace__content` + `.sn-workspace__main` (padding 36/24), sidebar `var(--sn-sidebar)` 232; `WorkspaceLayout` bỏ `.content`, inline mobile style, `useIsMobile`, import `Page.css`.
+- **Xoá:** `Page.css`, `base.css`, `tokens.css`, `legacy-tokens.css`, `postcss.config.js`, `tailwind.config.ts`, `components.json`, `scripts/token-allowlist.json`; dead TSX `action-button`, `navbar`, `sidebar`, `LoadingOverlay`, `UtilityStrip`.
+- **Tailwind/deps:** bỏ `tailwindcss`, `@tailwindcss/{vite,postcss,forms,container-queries,oxide-linux-x64-gnu}`, `tailwind-merge`, `tailwindcss-animate`, `class-variance-authority`, `clsx`, `prettier-plugin-tailwindcss`, `@fortawesome/fontawesome-free`, `postcss`; `vite.config.ts`, `.prettierrc`, `eslint.config.js` sạch. `clsx` chỉ còn transitive của `@react-aria`/recharts.
+- **Dark/blade:** bỏ `.dark` mirror khỏi `useTheme` + inline script; bỏ inline `html` background/`html.dark`, Boxicons CDN, `body class`; bỏ `pinLight` ở `StorefrontLayout`/`AccountLayout` + 15 chỗ/11 page.
+- **Gate:** `check:css` + `check:css:all` **289 file checked / 0 allowlisted**; `types`, `format:check`, `lint`, `build`, `build:ssr` pass; `php artisan test` **473 test / 2.100 assertion**, 0 fail.
+- **Giữ:** composition wrapper sạch + `AppLayout` (45 import) theo #72/#73; codemod `AppLayout` để Phase 12.
+- **Docs:** `README` UI table + `AGENTS.md` cập nhật; `PLAN.md`, `PROMPT.md`, `DESIGN-02.md`, `STITCH-DESIGN.md` → `docs/archive/`.
+- **Cập nhật tài liệu:** header status, §2.14 (mới), Phase 11 status + kết quả, §15.
 
 **2026-11-24 — rà soát trước Phase 11 và chốt scope (chưa build):**
 

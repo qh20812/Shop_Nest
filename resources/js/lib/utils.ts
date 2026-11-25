@@ -1,10 +1,3 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
-
 export function resolveCurrencyCode(value: unknown, fallback: string = 'VND'): string {
     if (typeof value === 'string' && value.trim() !== '') {
         return value.toUpperCase();

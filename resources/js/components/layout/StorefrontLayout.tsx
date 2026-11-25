@@ -10,17 +10,12 @@ type StorefrontLayoutProps = {
     children: React.ReactNode;
     compactFooter?: boolean;
     showChatDock?: boolean;
-    /**
-     * Escape hatch kept until Phase 11. Storefront, auth and account shells
-     * all follow `data-theme` after Phase 6, so the default is `false`.
-     */
-    pinLight?: boolean;
     className?: string;
 };
 
-export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, pinLight = false, className }: StorefrontLayoutProps) {
+export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, className }: StorefrontLayoutProps) {
     return (
-        <div className={cx('sn-shell sn-storefront', className)} data-theme={pinLight ? 'light' : undefined}>
+        <div className={cx('sn-shell sn-storefront', className)}>
             <StorefrontHeader />
             <main className="sn-storefront__main">{children}</main>
             <StorefrontFooter compact={compactFooter} />

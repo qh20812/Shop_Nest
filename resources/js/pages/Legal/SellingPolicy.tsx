@@ -5,7 +5,7 @@ import { LegalDocument } from '@/components/storefront/LegalDocument';
 
 export default function SellingPolicy() {
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Chính sách người bán" />
 
             <LegalDocument

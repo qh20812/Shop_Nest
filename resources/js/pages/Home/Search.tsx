@@ -286,7 +286,7 @@ export default function SearchPage() {
     );
 
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title={query ? `Tìm kiếm: ${query}` : 'Tìm sản phẩm'} />
 
             <PageContainer className={styles.page}>

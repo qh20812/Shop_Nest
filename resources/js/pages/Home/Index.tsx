@@ -226,14 +226,14 @@ export default function Index() {
 
     if (isLoading) {
         return (
-            <StorefrontLayout pinLight={false}>
+            <StorefrontLayout>
                 <HomeSkeleton />
             </StorefrontLayout>
         );
     }
 
     return (
-        <StorefrontLayout pinLight={false}>
+        <StorefrontLayout>
             <Head title="ShopNest. Mọi thứ cho tổ ấm Việt" />
 
             <HeroEditorial

@@ -8,7 +8,7 @@ ShopNest là nền tảng thương mại điện tử được xây dựng bằn
 |---|---|
 | Backend | Laravel 13.42, PHP >= 8.3 |
 | Frontend | Inertia.js 3, React 19, TypeScript 5.9, Vite 8 |
-| UI | Tailwind CSS 4, Radix UI / shadcn-style components, lucide-react, Font Awesome |
+| UI | CSS thuần (token `--sn-*` + CSS Modules), Radix UI, lucide-react |
 | Database | MySQL 8 (SQLite in-memory khi chạy test) |
 | Authentication | Session-based, Google OAuth qua Laravel Socialite |
 | Realtime | Laravel Reverb + Laravel Echo |

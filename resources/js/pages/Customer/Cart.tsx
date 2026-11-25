@@ -179,7 +179,7 @@ export default function Cart() {
 
     if (cartItems.length === 0) {
         return (
-            <StorefrontLayout compactFooter pinLight={false}>
+            <StorefrontLayout compactFooter>
                 <Head title="Giỏ hàng" />
                 <PageContainer className={styles.pageTight}>
                     <EmptyState
@@ -207,7 +207,7 @@ export default function Cart() {
     }));
 
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Giỏ hàng" />
 
             <PageContainer className={styles.page}>

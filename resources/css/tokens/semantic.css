@@ -2,8 +2,8 @@
  * Bảng Hiệu — semantic tokens.
  *
  * Components use these roles only. Primitive values live in primitive.css.
- * `[data-theme='dark']` is the source for the new system; `.dark` remains a
- * legacy mirror until Phase 11 so Page.css / base.css keep working.
+ * `[data-theme='dark']` is the only dark selector; the legacy `.dark` mirror
+ * was removed in Phase 11 together with Page.css/base.css/legacy-tokens.
  */
 
 :root,

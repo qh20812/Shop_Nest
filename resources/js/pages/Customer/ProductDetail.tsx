@@ -316,7 +316,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
     }));
 
     return (
-        <StorefrontLayout pinLight={false}>
+        <StorefrontLayout>
             <Head title={product.name} />
 
             <PageContainer className={styles.page}>

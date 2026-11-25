@@ -95,7 +95,7 @@ export default function PaymentResult({ status, message, order, actions }: Payme
     const resolvedActions = actions && actions.length > 0 ? actions : fallbackActions;
 
     return (
-        <StorefrontLayout compactFooter pinLight={false}>
+        <StorefrontLayout compactFooter>
             <Head title="Kết quả thanh toán" />
 
             <PageContainer size="narrow" className={styles.pageTight}>

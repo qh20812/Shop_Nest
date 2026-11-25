@@ -1,14 +1,24 @@
 /*
  * Bảng Hiệu — workspace shell for seller, admin and shipper.
  *
- * Page.css owns `.content` (66 selectors) and keeps the legacy `left: 230px`
- * geometry. This file only styles the new sidebar/topbar so dialogs (z-modal 60)
- * stay above the sidebar (z-overlay + 1 = 51).
+ * Page.css used to own `.content` (79 selectors) with `left: 230px` geometry.
+ * Phase 11 replaces that with `.sn-workspace__content` + `.sn-workspace__main`
+ * so dialogs (z-modal 60) stay above the sidebar (z-overlay + 1 = 51).
  */
 
 @layer sn-layouts {
     .sn-workspace {
         background: var(--sn-color-canvas);
+    }
+
+    .sn-workspace__content {
+        min-height: 100dvh;
+    }
+
+    .sn-workspace__main {
+        width: 100%;
+        min-height: calc(100dvh - var(--sn-header));
+        padding: 2.25rem var(--sn-space-6);
     }
 
     /* Sidebar */
@@ -18,7 +28,7 @@
         inset-inline-start: 0;
         z-index: calc(var(--sn-z-overlay) + 1);
         display: flex;
-        width: 230px;
+        width: var(--sn-sidebar);
         flex-direction: column;
         gap: var(--sn-space-1);
         padding: var(--sn-space-4) var(--sn-space-3);
@@ -258,7 +268,11 @@
         min-width: 0;
     }
 
-    @media (min-width: 769px) {
+    @media (min-width: 768px) {
+        .sn-workspace__content {
+            margin-inline-start: var(--sn-sidebar);
+        }
+
         .sn-workspace__sidebar {
             transform: none;
         }
@@ -270,9 +284,7 @@
         .sn-workspace__toggle {
             display: none;
         }
-    }
 
-    @media (min-width: 768px) {
         .sn-workspace__search {
             display: block;
         }

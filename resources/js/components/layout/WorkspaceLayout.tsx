@@ -2,7 +2,6 @@ import { usePage } from '@inertiajs/react';
 import { Boxes, Gift, LayoutDashboard, Package, Receipt, Settings, ShoppingBag, Store, Tags, Users } from 'lucide-react';
 import * as React from 'react';
 
-import '@/../css/Page.css';
 import { useTranslation } from '@/lib/i18n';
 
 import { WorkspaceSidebar, type WorkspaceNavItem } from './WorkspaceSidebar';
@@ -38,9 +37,6 @@ interface PageProps extends Record<string, unknown> {
 
 const VALID_ROLES: RoleKey[] = ['admin', 'seller', 'shipper'];
 const ROLE_FALLBACK: RoleKey = 'admin';
-
-// Page.css still scopes 66 selectors to `.content`; keep it until Phase 11.
-const LEGACY_CONTENT_CLASS = 'content';
 
 const ROLE_LABELS: Record<RoleKey, string> = {
     admin: 'Quản trị',
@@ -130,22 +126,6 @@ function resolveRoleKey(user: WorkspaceUser | null | undefined): RoleKey {
     return ROLE_FALLBACK;
 }
 
-function useIsMobile(maxWidth = 768): boolean {
-    const [isMobile, setIsMobile] = React.useState(false);
-
-    React.useEffect(() => {
-        const mediaQuery = window.matchMedia(`(max-width: ${maxWidth}px)`);
-        const update = () => setIsMobile(mediaQuery.matches);
-
-        update();
-        mediaQuery.addEventListener('change', update);
-
-        return () => mediaQuery.removeEventListener('change', update);
-    }, [maxWidth]);
-
-    return isMobile;
-}
-
 type WorkspaceLayoutProps = {
     children: React.ReactNode;
 };
@@ -155,7 +135,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     const { props, url } = usePage<PageProps>();
     const user = props.auth?.user ?? null;
     const role = resolveRoleKey(user);
-    const isMobile = useIsMobile();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
     const items = React.useMemo<Record<RoleKey, WorkspaceNavItem[]>>(
@@ -199,12 +178,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
             {isSidebarOpen && <button type="button" className="sn-workspace__overlay" aria-label="Đóng menu" onClick={closeSidebar} />}
 
-            {/*
-             * Page.css owns `.content` unlayered with `left: 230px`. On mobile that
-             * offset would push the new shell off-screen, so override only the
-             * geometry here while the drawer is closed. Removed with Page.css in Phase 11.
-             */}
-            <div className={LEGACY_CONTENT_CLASS} style={isMobile ? { width: '100%', left: 0 } : undefined}>
+            <div className="sn-workspace__content">
                 <WorkspaceTopbar onToggleSidebar={() => setIsSidebarOpen((open) => !open)} />
                 <main className="sn-workspace__main">{children}</main>
             </div>

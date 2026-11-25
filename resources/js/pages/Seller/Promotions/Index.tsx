@@ -1,4 +1,5 @@
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
@@ -12,7 +13,6 @@ import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Gift, Pause, Play, PlayCircle, Plus, Target, Trash2, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
 
 import styles from '../seller.module.css';
 
@@ -484,7 +484,7 @@ export default function Index() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('My Promotions')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={closeToast} />}
@@ -571,6 +571,6 @@ export default function Index() {
                 title={confirmModal.title}
                 message={confirmModal.message}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

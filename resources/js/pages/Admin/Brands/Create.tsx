@@ -2,8 +2,8 @@ import { Head, useForm } from '@inertiajs/react';
 import React from 'react';
 
 import BrandForm from '@/components/admin/brands/BrandForm';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 interface BrandFormData {
@@ -28,7 +28,7 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Create Brand')} />
 
             <Header
@@ -41,6 +41,6 @@ export default function Create() {
             />
 
             <BrandForm data={data} setData={setData} errors={errors} processing={processing} onSubmit={handleSubmit} submitLabel="Create Brand" />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

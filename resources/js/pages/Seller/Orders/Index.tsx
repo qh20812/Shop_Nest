@@ -1,10 +1,10 @@
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -125,7 +125,7 @@ export default function Index() {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Orders List')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -177,6 +177,6 @@ export default function Index() {
             />
 
             <Pagination links={orders?.links || []} filters={{ search, status }} />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

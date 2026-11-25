@@ -1,10 +1,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Tag } from 'lucide-react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -74,7 +74,7 @@ export default function Show() {
     const roi = toNumber(promotion.roi_percentage);
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${t('Promotion Details')} - ${promotion.name}`} />
 
             <Header
@@ -205,6 +205,6 @@ export default function Show() {
                     </Button>
                 </div>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

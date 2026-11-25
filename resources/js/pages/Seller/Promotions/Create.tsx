@@ -1,4 +1,5 @@
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import EmptyState from '@/components/ui/empty-state';
@@ -6,7 +7,6 @@ import { FormField } from '@/components/ui/form-field';
 import Header from '@/components/ui/header';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -171,7 +171,7 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Create Promotion')} />
 
             <Header
@@ -406,6 +406,6 @@ export default function Create() {
                 loading={isSubmitting}
                 onConfirm={handleConfirmSubmit}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

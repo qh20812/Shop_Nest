@@ -1,3 +1,4 @@
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -5,7 +6,6 @@ import Header from '@/components/ui/header';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/Contexts/ToastContext';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
@@ -65,7 +65,7 @@ export default function ShopEdit() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Shop Profile')} />
 
             <Header
@@ -125,6 +125,6 @@ export default function ShopEdit() {
                     </Button>
                 </div>
             </form>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

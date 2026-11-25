@@ -2,16 +2,16 @@ import { Head, router } from '@inertiajs/react';
 import { RefreshCw, Truck } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 export default function Index() {
     const { t } = useTranslation();
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Shipper Dashboard')} />
 
             <div className="sn-stack">
@@ -34,6 +34,6 @@ export default function Index() {
                     }
                 />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

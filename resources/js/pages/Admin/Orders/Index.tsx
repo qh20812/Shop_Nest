@@ -4,9 +4,9 @@ import { useState } from 'react';
 import OrderFilterPanel from '@/components/admin/orders/OrderFilterPanel';
 import OrderSummaryCards from '@/components/admin/orders/OrderSummaryCards';
 import OrderTable from '@/components/admin/orders/OrderTable';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from '@/components/admin/admin.module.css';
@@ -131,7 +131,7 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Orders Management')} />
 
             <div className={styles.stack}>
@@ -182,6 +182,6 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
                     preserveScroll
                 />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

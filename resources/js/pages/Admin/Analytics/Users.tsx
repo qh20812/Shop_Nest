@@ -8,10 +8,10 @@ import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
 import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
@@ -314,7 +314,7 @@ const Users: React.FC = () => {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('User Analytics')} />
             <Header
                 title={t('User Analytics')}
@@ -408,7 +408,7 @@ const Users: React.FC = () => {
                     rowKey={(row) => row.id}
                 />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

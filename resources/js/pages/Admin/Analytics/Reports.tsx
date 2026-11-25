@@ -6,10 +6,10 @@ import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue 
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
 import ExportButton from '@/components/admin/analytics/ExportButton';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import { Select } from '@/components/ui/select';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -206,7 +206,7 @@ const Reports: React.FC = () => {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Analytics Reports')} />
             <Header
                 title={t('Analytics Reports')}
@@ -336,7 +336,7 @@ const Reports: React.FC = () => {
                     </p>
                 </section>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

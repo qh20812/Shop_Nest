@@ -3,12 +3,12 @@ import { CheckCircle2, Clock, PauseCircle, Store, Wallet, XCircle } from 'lucide
 import { useMemo } from 'react';
 
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge } from '@/components/ui/badge';
 import DataTable from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
 import { Select } from '@/components/ui/select';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -78,7 +78,7 @@ export default function Dashboard() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Shop Dashboard')} />
 
             <Header
@@ -116,7 +116,7 @@ export default function Dashboard() {
                 headerIcon={Store}
                 emptyMessage={t('No shop revenue recorded')}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }
 

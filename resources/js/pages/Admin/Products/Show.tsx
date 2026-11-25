@@ -3,8 +3,8 @@ import { Head, usePage } from '@inertiajs/react';
 import ProductImageGallery from '@/components/admin/products/ProductImageGallery';
 import ProductInfo from '@/components/admin/products/ProductInfo';
 import ProductTabs from '@/components/admin/products/ProductTabs';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from '@/components/admin/admin.module.css';
@@ -80,7 +80,7 @@ export default function Show() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${getProductName()} - ${t('Product Details')}`} />
 
             <Header
@@ -102,6 +102,6 @@ export default function Show() {
                     <ProductTabs description={product.description} reviews={product.reviews} />
                 </section>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

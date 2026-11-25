@@ -1,10 +1,10 @@
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
 import PrimaryInput from '@/components/ui/primary-input';
 import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/Contexts/ToastContext';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Image as ImageIcon, Package, Save, Search, Tag, UploadCloud, X } from 'lucide-react';
@@ -567,8 +567,8 @@ function CreateContent() {
 
 export default function Create() {
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <CreateContent />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

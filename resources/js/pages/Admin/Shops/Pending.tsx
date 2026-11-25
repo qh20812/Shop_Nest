@@ -2,6 +2,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Check, Clock, Eye, Store, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionDropdown from '@/components/ui/action-dropdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import { Dialog } from '@/components/ui/dialog';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDate, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -145,7 +145,7 @@ export default function Pending() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Pending Shops')} />
 
             <Header
@@ -215,6 +215,6 @@ export default function Pending() {
                 </div>
                 {reasonError && <p className={styles.fileError}>{reasonError}</p>}
             </Dialog>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

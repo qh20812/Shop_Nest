@@ -3,13 +3,13 @@ import { AlertTriangle, Boxes, ListChecks, Package, PackageX } from 'lucide-reac
 import { useEffect, useMemo, useState } from 'react';
 
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import { Badge } from '@/components/ui/badge';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Insights from '@/components/ui/insights';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -373,7 +373,7 @@ export default function Index() {
     const paginationFilters = { search, seller_id: sellerId, category_id: categoryId, brand_id: brandId, stock_status: stockStatus };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Inventory Management')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -440,6 +440,6 @@ export default function Index() {
 
                 <Pagination links={variants?.links ?? []} filters={paginationFilters} />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

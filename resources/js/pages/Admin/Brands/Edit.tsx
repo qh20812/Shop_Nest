@@ -2,8 +2,8 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
 
 import BrandForm from '@/components/admin/brands/BrandForm';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 interface Brand {
@@ -45,7 +45,7 @@ export default function Edit() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Edit Brand')} />
 
             <Header
@@ -58,6 +58,6 @@ export default function Edit() {
             />
 
             <BrandForm data={data} setData={setData} errors={errors} processing={processing} onSubmit={handleSubmit} submitLabel="Update Brand" />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

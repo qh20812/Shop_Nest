@@ -3,8 +3,8 @@ import React from 'react';
 
 import CategoryForm from '@/components/admin/categories/CategoryForm';
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 interface Category {
@@ -39,7 +39,7 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Create Category')} />
 
             {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
@@ -62,6 +62,6 @@ export default function Create() {
                 onSubmit={handleSubmit}
                 submitLabel={t('Create Category')}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

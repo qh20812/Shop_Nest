@@ -3,13 +3,13 @@ import { EyeOff, ImageOff, ListTree, Pencil, Plus, RotateCcw, Trash2 } from 'luc
 import { useEffect, useState } from 'react';
 
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDate } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { htmlToPlainText } from '@/utils/htmlUtils';
@@ -204,7 +204,7 @@ export default function Index() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Category Management')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -261,6 +261,6 @@ export default function Index() {
                 title={confirmModal.title}
                 message={confirmModal.message}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

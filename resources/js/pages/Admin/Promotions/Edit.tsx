@@ -2,12 +2,12 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import FormField from '@/components/ui/form-field';
 import Header from '@/components/ui/header';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from '@/components/admin/admin.module.css';
@@ -140,7 +140,7 @@ export default function Edit() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${t('Edit Promotion')} - ${promotion.name}`} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -348,6 +348,6 @@ export default function Edit() {
                     </Button>
                 </div>
             </form>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

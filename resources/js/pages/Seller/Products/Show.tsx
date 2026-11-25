@@ -1,8 +1,8 @@
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge, type BadgeTone } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -297,8 +297,8 @@ function ShowContent() {
 
 export default function Show() {
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <ShowContent />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

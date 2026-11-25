@@ -9,9 +9,9 @@ import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue 
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
 import ExportButton from '@/components/admin/analytics/ExportButton';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -199,7 +199,7 @@ const Revenue: React.FC = () => {
     }, [props.availablePeriods, t]);
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Revenue Analytics')} />
             <Header
                 title={t('Revenue Analytics')}
@@ -306,7 +306,7 @@ const Revenue: React.FC = () => {
                     rowKey={(row) => `${row.productId}-${row.variantId}`}
                 />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

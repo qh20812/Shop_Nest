@@ -1,12 +1,12 @@
 import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -253,7 +253,7 @@ export default function Index() {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Seller Product Management')} />
 
             <FilterPanel
@@ -326,6 +326,6 @@ export default function Index() {
                 cancelLabel={t('Cancel')}
                 onConfirm={handleDelete}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

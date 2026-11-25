@@ -3,12 +3,12 @@ import { Clock, HeartPulse, Receipt, TrendingUp, UserPlus, Wallet } from 'lucide
 import { useMemo } from 'react';
 
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Avatar from '@/components/ui/avatar';
 import DataTable from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDate } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatCurrency, resolveCurrencyCode } from '@/lib/utils';
@@ -211,7 +211,7 @@ export default function Index() {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Dashboard')} />
             <Header title={t('Dashboard')} breadcrumbs={breadcrumbs} />
 
@@ -252,6 +252,6 @@ export default function Index() {
                     <p className={styles.muted}>{t('No new users')}</p>
                 )}
             </section>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

@@ -2,12 +2,12 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Alert from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -107,7 +107,7 @@ export default function Index() {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Return Management')} />
 
             {flash?.success && <Alert tone="success" title={flash.success} />}
@@ -150,6 +150,6 @@ export default function Index() {
             />
 
             <Pagination links={returns.links} filters={{ search, status }} preserveState preserveScroll />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

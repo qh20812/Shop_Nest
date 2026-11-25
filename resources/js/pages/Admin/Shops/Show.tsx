@@ -1,12 +1,12 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, BarChart3, Package, ShoppingBag, Store, Users } from 'lucide-react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDate, formatDateTime, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -127,7 +127,7 @@ export default function Show() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${shopName} - ${t('Shop Details')}`} />
 
             <Header
@@ -298,7 +298,7 @@ export default function Show() {
                     <p className={styles.muted}>{t('No audit entries recorded')}</p>
                 )}
             </section>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }
 

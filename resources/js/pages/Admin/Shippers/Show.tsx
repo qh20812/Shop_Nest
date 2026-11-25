@@ -5,11 +5,11 @@ import { useEffect, useState } from 'react';
 import DocumentViewer from '@/components/admin/shippers/DocumentViewer';
 import ShipperInfoCard from '@/components/admin/shippers/ShipperInfoCard';
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from '@/components/admin/admin.module.css';
@@ -123,7 +123,7 @@ export default function Show() {
     const fullName = `${shipper.first_name} ${shipper.last_name}`.trim() || shipper.username;
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${t('Shipper')}: ${shipper.first_name} ${shipper.last_name}`} />
 
             <Header
@@ -283,7 +283,7 @@ export default function Show() {
                     onClose={() => setDocumentViewer({ isOpen: false, imageUrl: '', documentName: '' })}
                 />
             )}
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }
 

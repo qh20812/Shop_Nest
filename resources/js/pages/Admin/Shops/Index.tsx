@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { BarChart3, Check, CheckCircle2, Clock, Eye, PauseCircle, RotateCcw, Store, X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionDropdown from '@/components/ui/action-dropdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import { Dialog } from '@/components/ui/dialog';
 import FilterPanel from '@/components/ui/filter-panel';
 import Insights from '@/components/ui/insights';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDate, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -344,7 +344,7 @@ export default function Index() {
     }, [filters]);
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Shop Management')} />
 
             <FilterPanel
@@ -474,6 +474,6 @@ export default function Index() {
 
                 {reasonError && <p className={styles.fileError}>{reasonError}</p>}
             </Dialog>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

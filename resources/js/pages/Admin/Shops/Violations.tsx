@@ -2,13 +2,13 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { AlertTriangle, Filter } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Pagination from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -111,7 +111,7 @@ export default function Violations() {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${shopName} - ${t('Violations')}`} />
 
             <Header
@@ -171,7 +171,7 @@ export default function Violations() {
             />
 
             <Pagination links={violations.links} filters={{ status, severity }} />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }
 

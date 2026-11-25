@@ -1,11 +1,11 @@
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
 import { Select } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/status-badge';
 import { Table, type ColumnDef } from '@/components/ui/table';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -114,7 +114,7 @@ export default function Show() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${t('Order')} #${order.order_number}`} />
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
@@ -283,6 +283,6 @@ export default function Show() {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

@@ -3,6 +3,7 @@ import { Lock, LockOpen, Pencil, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import Toast from '@/components/admin/users/Toast';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,6 @@ import DataTable from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from '@/components/admin/admin.module.css';
@@ -209,7 +209,7 @@ export default function Index() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('User Management')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -262,6 +262,6 @@ export default function Index() {
                 title={t('Confirm User Status Change')}
                 message={`${t('Are you sure you want to change the status of user')} "${confirmModal.userName}"?`}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

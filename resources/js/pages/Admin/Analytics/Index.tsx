@@ -7,9 +7,9 @@ import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/a
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDecimal, formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { resolveCurrencyCode } from '@/lib/utils';
@@ -222,7 +222,7 @@ const Index: React.FC = () => {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Analytics Overview')} />
             <Header
                 title={t('Analytics Overview')}
@@ -294,7 +294,7 @@ const Index: React.FC = () => {
                     rowKey={(row) => row.id}
                 />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

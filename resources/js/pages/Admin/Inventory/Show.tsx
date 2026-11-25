@@ -2,13 +2,13 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, Boxes, History, Layers, Package, PackageX } from 'lucide-react';
 import { useMemo } from 'react';
 
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatDateTime, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -270,7 +270,7 @@ export default function Show() {
     const hasAnyLogs = useMemo(() => variants.some((variant) => getVariantLogs(variant).length > 0), [variants]);
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${productName} - ${t('Inventory')}`} />
 
             <Header
@@ -409,6 +409,6 @@ export default function Show() {
                     <div className={styles.emptyBox}>{t('No inventory activity recorded yet.')}</div>
                 )}
             </section>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

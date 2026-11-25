@@ -1,8 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
 
 import UserEditForm from '@/components/admin/users/UserEditForm';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Header from '@/components/ui/header';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 
 interface Role {
@@ -31,7 +31,7 @@ export default function Edit() {
     const { t } = useTranslation();
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${t('Edit User')} - ${user.first_name} ${user.last_name}`} />
 
             <Header
@@ -43,6 +43,6 @@ export default function Edit() {
             />
 
             <UserEditForm user={user} roles={roles} errors={errors} />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

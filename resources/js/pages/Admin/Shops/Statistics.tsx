@@ -3,11 +3,11 @@ import { BarChart3, Filter, Package, ShoppingBag, Store, Users } from 'lucide-re
 import { useMemo, useState } from 'react';
 
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import { Input } from '@/components/ui/input';
 import Insights from '@/components/ui/insights';
-import AppLayout from '@/layouts/app/AppLayout';
 import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -67,7 +67,7 @@ export default function Statistics() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={`${shopName} - ${t('Shop Statistics')}`} />
 
             <Header
@@ -164,6 +164,6 @@ export default function Statistics() {
                     <p className={styles.muted}>{t('No customer activity recorded')}</p>
                 )}
             </section>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

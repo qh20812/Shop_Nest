@@ -1,13 +1,13 @@
 # AGENTS.md
 
-ShopNest is a Laravel 13 + Inertia 3 + React 19 marketplace with four roles (admin, seller, customer, shipper). `README.md`, `DESIGN*.md`, `COMPONENTS.md`, `PLAN.md`, `PROMPT.md` and `STITCH-DESIGN.md` describe the old/aspirational "Nếp" UI and features that do not exist; trust `composer.json`, `package.json`, `routes/`, `bootstrap/app.php`, and `REFACTOR_PLAN.md`.
+ShopNest is a Laravel 13 + Inertia 3 + React 19 marketplace with four roles (admin, seller, customer, shipper). Trust `composer.json`, `package.json`, `routes/`, `bootstrap/app.php`, `REFACTOR_PLAN.md`, `DESIGN.md` and `COMPONENTS.md`; `PLAN.md`, `PROMPT.md`, `DESIGN-02.md` and `STITCH-DESIGN.md` are archived under `docs/archive/`.
 
 ## Run & verify
 
 - `composer run dev` = `php -S 127.0.0.1:9999` + `queue:listen` + Vite. `npm run dev` is Vite only. Reverb (`php artisan reverb:start`, port 8080) is separate, so queues/broadcasts idle without it (`SESSION_DRIVER=database`, `QUEUE_CONNECTION=database`, `BROADCAST_CONNECTION=reverb`).
 - `npm run build` runs the Wayfinder Vite plugin, which shells out to `php artisan wayfinder:generate`; PHP must be on PATH. Generated `resources/js/{actions,routes,wayfinder}` are gitignored — never edit them.
 - SSR: `config/inertia.php` has `ssr.enabled = true`, but `npm run dev`/`npm run build` do not build `resources/js/ssr.tsx`. Use `composer run dev:ssr` (`build:ssr` + `inertia:start-ssr`) or Inertia silently falls back to client rendering.
-- Tests: `php artisan test` (or `composer test`, which clears config first). Single test: `php artisan test tests/Feature/Seller/ProductControllerTest.php --filter=test_name`. Dusk is separate: `php artisan dusk` (`tests/Browser`, not in `phpunit.xml`).
+- Tests: `php artisan test` (or `composer test`, which clears config first). Single test: `php artisan test tests/Feature/Seller/ProductControllerTest.php --filter=test_name`. Dusk is separate: `php artisan dusk` (`tests/Browser`, not in `phpunit.xml`). **Dusk QA:** `php artisan dusk --filter=Phase12QaTest` with `.env.dusk.local` (Docker MySQL `3307`, database `shopnest_qa`) and `php artisan serve --env=dusk.local`. Never run `php artisan dusk` without `.env.dusk.local`; it would use `.env` (Aiven) and `DatabaseMigrations` would `migrate:fresh` the remote DB.
 - PHP 8.5 locally prints a `PDO::MYSQL_ATTR_SSL_CA` DEPRECATION on every test run; noise, not a failure. CI uses PHP 8.4.
 - Formatting/lint: `vendor/bin/pint`; `npm run format` (Prettier **write**, `resources/` only); `npm run format:check`; `npm run types` (`tsc --noEmit`); `npm run lint` (ESLint **with `--fix`**, not a check). CI runs pint/format/lint only, not `types` or `check:css` — run those locally.
 - CI (`.github/workflows/`) only fires for `develop`/`main`; pushes to `refactor/ui-web` skip it.
@@ -15,9 +15,9 @@ ShopNest is a Laravel 13 + Inertia 3 + React 19 marketplace with four roles (adm
 
 ## UI work (branch `refactor/ui-web`)
 
-- `REFACTOR_PLAN.md` owns status/scope: Phases 0–11 are complete (storefront, auth, customer/settings/chat, seller, admin, shipper, email + error pages, Tailwind cleanup); Phase 12 QA is next. Read it before restyling. `docs/ui/BASELINE.md` is a historical pre-refactor snapshot; `DESIGN.md`/`COMPONENTS.md` still document the abandoned Nếp system and are rewritten in Phase 12.
+- `REFACTOR_PLAN.md` owns status/scope: Phases 0–12 are complete (storefront, auth, customer/settings/chat, seller, admin, shipper, email + error pages, Tailwind cleanup, QA sweep). Read it before restyling. `docs/ui/BASELINE.md` is a historical pre-refactor snapshot; `docs/ui/PHASE-12-QA.md` has the current QA evidence and backlog. `DESIGN.md`/`COMPONENTS.md` describe the current Bảng Hiệu system.
 - Tailwind, `Page.css`, `legacy-tokens.css`, `tokens.css`, `base.css` and Boxicons are gone. UI uses `--sn-*` tokens, `sn-*` classes and CSS Modules (`*.module.css`, composed with `cx` from `@/lib/cx`). Do not add a new utility framework; keep element rules in `base/*` and component visuals in `components/*`.
-- `npm run check:css` (alias `check:tokens`) is now **strict**: **289 files checked, 0 allowlisted**, `scripts/token-allowlist.json` deleted. It fails on Tailwind utilities/arbitrary values, raw hex/rgba/hsl in TSX or `resources/css/{components,layouts}` + `resources/js/**/*.css`, `@apply`, `!important` outside `utilities.css`/`base/a11y.css`, and `bx-*` icons. `check:css:all` is equivalent now.
+- `npm run check:css` (alias `check:tokens`) is now **strict**: **290 files checked, 0 allowlisted**, `scripts/token-allowlist.json` deleted. It fails on Tailwind utilities/arbitrary values, raw hex/rgba/hsl in TSX or `resources/css/{components,layouts}` + `resources/js/**/*.css`, `@apply`, `!important` outside `utilities.css`/`base/a11y.css`, and `bx-*` icons. `check:css:all` is equivalent now.
 - Workspace shell: `components/layout/WorkspaceLayout.tsx` uses `.sn-workspace__content` + `.sn-workspace__main` (padding 36/24), sidebar `var(--sn-sidebar)` = 232 px. There is no `.content` wrapper or Page.css geometry; `.sn-workspace__main` owns its padding. `WorkspaceLayout` no longer imports Page.css.
 - Keep the single `@layer …` line in `resources/css/app.css`; only `sn-reset, sn-base, sn-components, sn-layouts, sn-utilities` remain. Input/button styling comes from primitives; there is no Tailwind preflight anymore.
 - `Pagination` renders `<div role="navigation">`, not `<nav>`; keep it that way for semantics and to avoid legacy topbar rules.

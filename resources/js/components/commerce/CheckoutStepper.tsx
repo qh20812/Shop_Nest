@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import * as React from 'react';
 
 import styles from './commerce.module.css';
@@ -14,8 +15,9 @@ type CheckoutStepperProps = {
 };
 
 export function CheckoutStepper({ steps, current, className }: CheckoutStepperProps) {
+    const { t } = useTranslation();
     return (
-        <nav aria-label="Tiến trình mua hàng" className={className}>
+        <nav aria-label={t('Checkout progress')} className={className}>
             <ol className={styles.stepper}>
                 {steps.map((step, index) => {
                     const state = step.state ?? (current === index ? 'active' : current !== undefined && index < current ? 'done' : 'upcoming');

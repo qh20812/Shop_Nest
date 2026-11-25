@@ -48,7 +48,7 @@ interface Product {
     product_id: number;
     name: { en: string; vi: string };
     description: { en: string; vi: string };
-    status: number;
+    status: string;
     category: {
         category_id: number;
         name: { en: string; vi: string };

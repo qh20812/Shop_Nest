@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { Sheet } from '@/components/ui/sheet';
+import { useTranslation } from '@/lib/i18n';
 
 type MobileNavItem = {
     label: string;
@@ -19,9 +20,10 @@ type MobileNavProps = {
 };
 
 export function MobileNav({ open, onOpenChange, items, footer }: MobileNavProps) {
+    const { t } = useTranslation();
     return (
-        <Sheet open={open} onOpenChange={onOpenChange} side="right" title="Danh mục" description="Chọn nơi bạn muốn đến.">
-            <nav className="sn-mobile-nav" aria-label="Điều hướng di động">
+        <Sheet open={open} onOpenChange={onOpenChange} side="right" title={t('Menu')} description={t('Choose where to go.')}>
+            <nav className="sn-mobile-nav" aria-label={t('Mobile navigation')}>
                 {items.map((item) => {
                     const Icon = item.icon;
 

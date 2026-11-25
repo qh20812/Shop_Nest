@@ -65,6 +65,20 @@
     --sn-color-overlay: rgb(21 22 15 / 0.52);
     --sn-color-selection: var(--sn-accent-100);
     --sn-color-scrim: rgb(21 22 15 / 0.08);
+
+    /* Glass dock */
+    --sn-color-canvas-deep: var(--sn-neutral-150);
+    --sn-glass-tint: rgb(255 255 255 / 0.78);
+    --sn-glass-field: var(--sn-color-surface);
+    --sn-glass-menu: rgb(255 255 255 / 0.92);
+    --sn-glass-hover: rgb(21 22 15 / 0.06);
+    --sn-glass-press: rgb(21 22 15 / 0.1);
+    --sn-glass-hairline: rgb(21 22 15 / 0.1);
+    --sn-glass-highlight: rgb(255 255 255 / 0.9);
+    --sn-glass-ring: rgb(255 255 255 / 0.92);
+    --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 44px -26px rgb(21 22 15 / 0.4), 0 4px 10px -6px rgb(21 22 15 / 0.14);
+    --sn-shadow-float: 0 1px 2px rgb(21 22 15 / 0.06), 0 6px 16px -10px rgb(21 22 15 / 0.3);
+    --sn-shadow-accent: 0 10px 20px -12px rgb(194 65 12 / 0.55);
 }
 
 [data-theme='dark'] {
@@ -125,6 +139,20 @@
     --sn-color-overlay: rgb(0 0 0 / 0.66);
     --sn-color-selection: #4a2a1e;
     --sn-color-scrim: rgb(0 0 0 / 0.32);
+
+    /* Glass dock */
+    --sn-color-canvas-deep: var(--sn-graphite-950);
+    --sn-glass-tint: rgb(28 32 26 / 0.62);
+    --sn-glass-field: rgb(255 255 255 / 0.07);
+    --sn-glass-menu: rgb(28 32 26 / 0.88);
+    --sn-glass-hover: rgb(255 255 255 / 0.07);
+    --sn-glass-press: rgb(255 255 255 / 0.11);
+    --sn-glass-hairline: rgb(255 255 255 / 0.12);
+    --sn-glass-highlight: rgb(255 255 255 / 0.08);
+    --sn-glass-ring: rgb(28 32 26 / 0.95);
+    --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+    --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+    --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
 }
 
 /* Fallback khi chưa có JS: theo hệ điều hành */
@@ -169,5 +197,17 @@
         --sn-color-overlay: rgb(0 0 0 / 0.66);
         --sn-color-selection: #4a2a1e;
         --sn-color-scrim: rgb(0 0 0 / 0.32);
+        --sn-color-canvas-deep: var(--sn-graphite-950);
+        --sn-glass-tint: rgb(28 32 26 / 0.62);
+        --sn-glass-field: rgb(255 255 255 / 0.07);
+        --sn-glass-menu: rgb(28 32 26 / 0.88);
+        --sn-glass-hover: rgb(255 255 255 / 0.07);
+        --sn-glass-press: rgb(255 255 255 / 0.11);
+        --sn-glass-hairline: rgb(255 255 255 / 0.12);
+        --sn-glass-highlight: rgb(255 255 255 / 0.08);
+        --sn-glass-ring: rgb(28 32 26 / 0.95);
+        --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+        --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+        --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
     }
 }

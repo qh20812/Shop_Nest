@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import { Heart, ShoppingCart } from 'lucide-react';
 import * as React from 'react';
@@ -21,10 +22,10 @@ type ProductCardProps = {
 };
 
 const badgeLabels = {
-    new: 'Mới',
-    'fast-ship': 'Giao nhanh',
-    official: 'Chính hãng',
-    'low-stock': 'Sắp hết',
+    new: 'New',
+    'fast-ship': 'Fast delivery',
+    official: 'Official',
+    'low-stock': 'Low stock',
 } as const;
 
 export function ProductCard({
@@ -36,6 +37,7 @@ export function ProductCard({
     onToggleWishlist,
     className,
 }: ProductCardProps) {
+    const { t } = useTranslation();
     const href = `/product/${product.id}`;
     const [imageSrc, setImageSrc] = React.useState(product.image);
     const isOutOfStock = product.stock === 'out';
@@ -67,9 +69,9 @@ export function ProductCard({
                 {(badgeItems.length > 0 || product.stock === 'low') && (
                     <div className={styles.productBadgeList}>
                         {badgeItems.map((badge) => (
-                            <span key={badge}>{badgeLabels[badge as keyof typeof badgeLabels]}</span>
+                            <span key={badge}>{t(badgeLabels[badge as keyof typeof badgeLabels])}</span>
                         ))}
-                        {product.stock === 'low' && !badgeItems.includes('low-stock') && <span>Sắp hết</span>}
+                        {product.stock === 'low' && !badgeItems.includes('low-stock') && <span>{t('Low stock')}</span>}
                     </div>
                 )}
 
@@ -87,7 +89,7 @@ export function ProductCard({
                     <div className={styles.productActions}>
                         {onToggleWishlist ? (
                             <IconButton
-                                label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
+                                label={wishlisted ? t('Remove from wishlist') : t('Save to wishlist')}
                                 size="sm"
                                 variant="secondary"
                                 onClick={() => onToggleWishlist(product)}
@@ -99,11 +101,11 @@ export function ProductCard({
                         {variant === 'wishlist' ? (
                             <button type="button" disabled={isOutOfStock} onClick={() => onAddToCart?.(product)} className={styles.productAdd}>
                                 <ShoppingCart aria-hidden="true" className={styles.productAddIcon} />
-                                Thêm vào giỏ
+                                {t('Add to cart')}
                             </button>
                         ) : (
                             <IconButton
-                                label={isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+                                label={isOutOfStock ? t('Out of stock') : t('Add to cart')}
                                 size="sm"
                                 variant="secondary"
                                 disabled={isOutOfStock}
@@ -115,7 +117,7 @@ export function ProductCard({
                     </div>
                 </div>
 
-                {isOutOfStock ? <span className={styles.productOut}>Hết hàng</span> : null}
+                {isOutOfStock ? <span className={styles.productOut}>{t('Out of stock')}</span> : null}
             </div>
         </article>
     );

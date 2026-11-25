@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { AccountLayout } from '@/components/layout/AccountLayout';
 import { Card } from '@/components/ui/card';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from '../customer.module.css';
 import { AddressForm, type AddressFormValue, type Division } from './AddressForm';
@@ -22,6 +23,7 @@ const emptyAddress: AddressFormValue = {
 };
 
 export default function AddressCreate() {
+    const { t } = useTranslation();
     const { provinces = [], errors = {} } = usePage<PageProps>().props;
     const [value, setValue] = React.useState<AddressFormValue>(emptyAddress);
     const [processing, setProcessing] = React.useState(false);
@@ -51,12 +53,12 @@ export default function AddressCreate() {
     return (
         <AccountLayout
             active="addresses"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Địa chỉ', href: '/user/addresses' }, { label: 'Thêm mới' }]}
-            eyebrow="Sổ địa chỉ"
-            title="Thêm địa chỉ giao hàng"
-            description="Địa chỉ rõ ràng giúp đơn hàng tới đúng nơi và đúng hẹn."
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Addresses'), href: '/user/addresses' }, { label: t('New address') }]}
+            eyebrow={t('Address book')}
+            title={t('Add a shipping address')}
+            description={t('An accurate address helps your order arrive on time.')}
         >
-            <Head title="Thêm địa chỉ" />
+            <Head title={t('Add address')} />
 
             <Card padding="lg" className={styles.cardWide}>
                 <AddressForm
@@ -65,7 +67,7 @@ export default function AddressCreate() {
                     provinces={provinces}
                     errors={errors}
                     processing={processing}
-                    submitLabel="Lưu địa chỉ"
+                    submitLabel={t('Save address')}
                     onSubmit={handleSubmit}
                     onCancel={() => router.visit('/user/addresses')}
                 />

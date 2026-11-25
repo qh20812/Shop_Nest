@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 import { formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './ProductDetail.module.css';
 
@@ -124,6 +125,7 @@ interface DetailProps {
 type DetailTab = 'description' | 'specs' | 'reviews';
 
 export default function Detail({ product, reviews, rating, sold_count }: DetailProps) {
+    const { t } = useTranslation();
     const [selectedVariant, setSelectedVariant] = React.useState<Variant | null>(
         product.variants.find((variant) => variant.variant_id === product.default_variant_id) || product.variants[0] || null,
     );
@@ -185,7 +187,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
 
     const handleAddToCart = async () => {
         if (!selectedVariant) {
-            toast.warning('Vui lòng chọn phiên bản sản phẩm');
+            toast.warning(t('Please choose a product variant'));
             return;
         }
 
@@ -203,7 +205,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
             const data = await response.json();
 
             if (data.success) {
-                toast.success(data.message || 'Đã thêm vào giỏ hàng');
+                toast.success(data.message || t('Added to cart'));
                 router.reload();
                 return;
             }
@@ -213,9 +215,9 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 return;
             }
 
-            toast.error(data.message || 'Không thể thêm vào giỏ hàng');
+            toast.error(data.message || t('Could not add to cart'));
         } catch {
-            toast.error('Đã xảy ra lỗi khi thêm vào giỏ hàng');
+            toast.error(t('Something went wrong while adding to cart'));
         } finally {
             setIsAddingToCart(false);
         }
@@ -223,7 +225,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
 
     const handleBuyNow = async () => {
         if (!selectedVariant) {
-            toast.warning('Vui lòng chọn phiên bản sản phẩm');
+            toast.warning(t('Please choose a product variant'));
             return;
         }
 
@@ -250,9 +252,9 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 return;
             }
 
-            toast.error(data.message || 'Không thể mua ngay');
+            toast.error(data.message || t('Could not buy now'));
         } catch {
-            toast.error('Đã xảy ra lỗi khi mua ngay');
+            toast.error(t('Something went wrong while buying now'));
         } finally {
             setIsBuyingNow(false);
         }
@@ -274,10 +276,10 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 return;
             }
 
-            toast.success(next ? 'Đã lưu sản phẩm' : 'Đã bỏ lưu sản phẩm', product.name);
+            toast.success(next ? t('Saved to your wishlist') : t('Removed from your wishlist'), product.name);
         } catch {
             setFavorited(!next);
-            toast.error('Không thể cập nhật danh sách yêu thích');
+            toast.error(t('Could not update your wishlist'));
         }
     };
 
@@ -298,16 +300,16 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
     }));
 
     if (product.brand) {
-        specRows.unshift({ label: 'Thương hiệu', value: product.brand.name });
+        specRows.unshift({ label: t('Brand'), value: product.brand.name });
     }
     if (product.category) {
-        specRows.unshift({ label: 'Danh mục', value: product.category.name });
+        specRows.unshift({ label: t('Category'), value: product.category.name });
     }
 
     const reviewItems = reviews.data.map((review) => ({
         id: review.id,
         user: {
-            name: review.user?.username ?? 'Khách hàng',
+            name: review.user?.username ?? t('Customer'),
             avatar: review.user?.avatar ?? null,
         },
         rating: review.rating,
@@ -323,7 +325,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                 <Breadcrumbs
                     className={styles.breadcrumbs}
                     items={[
-                        { label: 'Chợ', href: '/' },
+                        { label: t('Market'), href: '/' },
                         ...(product.category ? [{ label: product.category.name, href: `/search?category_ids[]=${product.category.id}` }] : []),
                         { label: product.name, current: true },
                     ]}
@@ -358,7 +360,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                             onBuyNow={handleBuyNow}
                             adding={isAddingToCart}
                             buying={isBuyingNow}
-                            trust={['Đổi trả theo chính sách', 'Bảo hành theo shop']}
+                            trust={[t('Returns per policy'), t('Warranty by the shop')]}
                         >
                             <VariantSelector
                                 groups={product.attributes.map((attribute) => ({
@@ -382,11 +384,11 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                         value={activeTab}
                         onValueChange={(value) => setActiveTab(value as DetailTab)}
                         variant="underline"
-                        ariaLabel="Thông tin sản phẩm"
+                        ariaLabel={t('Product information')}
                         items={[
-                            { value: 'description', label: 'Mô tả sản phẩm' },
-                            { value: 'specs', label: 'Thông số', count: specRows.length },
-                            { value: 'reviews', label: 'Đánh giá', count: rating.count },
+                            { value: 'description', label: t('Product description') },
+                            { value: 'specs', label: t('Specifications'), count: specRows.length },
+                            { value: 'reviews', label: t('Reviews'), count: rating.count },
                         ]}
                     />
                 </div>
@@ -414,8 +416,8 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                                 {reviewItems.length === 0 ? (
                                     <EmptyState
                                         icon={MessageCircle}
-                                        title="Chưa có đánh giá nào"
-                                        description="Sản phẩm này chưa có đánh giá từ khách hàng."
+                                        title={t('No reviews yet')}
+                                        description={t('This product has no customer reviews yet.')}
                                     />
                                 ) : (
                                     <div>
@@ -435,11 +437,11 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                                 <div className={styles.shopStats}>
                                     <div className={styles.shopStat}>
                                         <span className={styles.shopStatValue}>{product.shop.rating.toFixed(1)}</span>
-                                        <span className={styles.shopStatLabel}>Đánh giá shop</span>
+                                        <span className={styles.shopStatLabel}>{t('Shop rating')}</span>
                                     </div>
                                     <div className={styles.shopStat}>
                                         <span className={styles.shopStatValue}>{formatNumber(product.shop.total_products)}</span>
-                                        <span className={styles.shopStatLabel}>Sản phẩm</span>
+                                        <span className={styles.shopStatLabel}>{t('Products')}</span>
                                     </div>
                                 </div>
                                 <div className={styles.shopActions}>
@@ -447,17 +449,17 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                                         variant="secondary"
                                         size="sm"
                                         leftIcon={MessageCircle}
-                                        onClick={() => toast.info('Chat với shop sẽ sớm có mặt')}
+                                        onClick={() => toast.info(t('Shop chat is coming soon'))}
                                     >
-                                        Chat với shop
+                                        {t('Chat with the shop')}
                                     </Button>
                                     <Button variant="ghost" size="sm" leftIcon={ShoppingBag} onClick={() => router.visit('/search')}>
-                                        Xem thêm sản phẩm
+                                        {t('See more products')}
                                     </Button>
                                 </div>
                                 <div className={styles.shopNote}>
                                     <Package aria-hidden="true" className={styles.shopNoteIcon} />
-                                    Shop giao hàng toàn quốc
+                                    {t('The shop delivers nationwide')}
                                 </div>
                             </Card>
                         )}

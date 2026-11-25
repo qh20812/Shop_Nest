@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
 
 import styles from './commerce.module.css';
 
@@ -33,6 +33,7 @@ function normalizeImage(src?: string | null): string {
 }
 
 export function OrderItemRow({ item, className }: OrderItemRowProps) {
+    const { money } = useMoney();
     const total = item.price * item.quantity;
 
     return (
@@ -51,11 +52,11 @@ export function OrderItemRow({ item, className }: OrderItemRowProps) {
                     <span className={styles.orderItemTitle}>{item.name}</span>
                 )}
                 <span className={styles.orderItemMeta}>
-                    {formatVnd(item.price)} × {item.quantity}
+                    {money(item.price)} × {item.quantity}
                 </span>
             </div>
 
-            <span className={styles.orderItemTotal}>{formatVnd(total)}</span>
+            <span className={styles.orderItemTotal}>{money(total)}</span>
         </article>
     );
 }

@@ -1,10 +1,11 @@
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconButton } from '@/components/ui/icon-button';
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
 
 import { Price } from './Price';
 import { QuantityStepper } from './QuantityStepper';
@@ -34,12 +35,18 @@ type CartLineProps = {
 };
 
 export function CartLine({ item, selected, onSelect, onQuantityChange, onRemove, className }: CartLineProps) {
+    const { t } = useTranslation();
+    const { money } = useMoney();
     const total = item.price * item.quantity;
 
     return (
         <article className={cx(styles.cartLine, className)}>
             <div className={styles.cartLineCheck}>
-                <Checkbox checked={selected} onCheckedChange={(checked) => onSelect(checked === true)} aria-label={`Chọn ${item.name}`} />
+                <Checkbox
+                    checked={selected}
+                    onCheckedChange={(checked) => onSelect(checked === true)}
+                    aria-label={t('Select :name', { name: item.name })}
+                />
             </div>
 
             <div className={styles.cartLineMedia}>
@@ -67,8 +74,8 @@ export function CartLine({ item, selected, onSelect, onQuantityChange, onRemove,
                 <div className={styles.cartLineFooter}>
                     <QuantityStepper value={item.quantity} min={1} max={item.maxQuantity} onChange={onQuantityChange} size="sm" />
                     <div className={styles.cartLineActions}>
-                        <span className={styles.cartLineTotal}>{formatVnd(total)}</span>
-                        <IconButton label={`Xoá ${item.name}`} size="sm" variant="danger" onClick={onRemove}>
+                        <span className={styles.cartLineTotal}>{money(total)}</span>
+                        <IconButton label={`${t('Remove')} ${item.name}`} size="sm" variant="danger" onClick={onRemove}>
                             <Trash2 aria-hidden="true" />
                         </IconButton>
                     </div>

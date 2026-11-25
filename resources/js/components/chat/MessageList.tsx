@@ -7,6 +7,7 @@ import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import type { OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -31,15 +32,10 @@ type MessageListProps = {
     className?: string;
 };
 
-export function MessageList({
-    messages,
-    loading = false,
-    typing = false,
-    typingLabel = 'Đang soạn tin',
-    emptyTitle = 'Chưa có tin nhắn',
-    emptyDescription = 'Gửi lời chào để bắt đầu cuộc trò chuyện.',
-    className,
-}: MessageListProps) {
+export function MessageList({ messages, loading = false, typing = false, typingLabel, emptyTitle, emptyDescription, className }: MessageListProps) {
+    const { t } = useTranslation();
+    const resolvedEmptyTitle = emptyTitle ?? t('No messages yet');
+    const resolvedEmptyDescription = emptyDescription ?? t('Say hello to start the conversation.');
     const endRef = React.useRef<HTMLDivElement | null>(null);
 
     React.useEffect(() => {
@@ -62,8 +58,8 @@ export function MessageList({
                 <span className={styles.messagesEmptyIcon}>
                     <MessagesSquare aria-hidden="true" className={styles.headerIconSvg} />
                 </span>
-                <span className={styles.messagesEmptyTitle}>{emptyTitle}</span>
-                <span className={styles.messagesEmptyText}>{emptyDescription}</span>
+                <span className={styles.messagesEmptyTitle}>{resolvedEmptyTitle}</span>
+                <span className={styles.messagesEmptyText}>{resolvedEmptyDescription}</span>
             </div>
         );
     }
@@ -83,7 +79,7 @@ export function MessageList({
                         products={message.products}
                     />
                 ))}
-                {typing ? <TypingIndicator label={typingLabel} /> : null}
+                {typing ? <TypingIndicator label={typingLabel ?? t('Typing')} /> : null}
                 <div ref={endRef} />
             </div>
         </div>

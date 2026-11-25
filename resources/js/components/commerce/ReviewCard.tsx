@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { BadgeCheck } from 'lucide-react';
 
 import Avatar from '@/components/ui/avatar';
@@ -25,6 +26,7 @@ type ReviewCardProps = {
 };
 
 export function ReviewCard({ review, className }: ReviewCardProps) {
+    const { t } = useTranslation();
     return (
         <article className={cx(styles.reviewCard, className)}>
             <Avatar name={review.user.name} src={review.user.avatar} size="md" />
@@ -33,7 +35,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
                     <span className={styles.reviewName}>{review.user.name}</span>
                     {review.verified && (
                         <Badge tone="success" size="sm" icon={BadgeCheck}>
-                            Đã mua
+                            {t('Verified purchase')}
                         </Badge>
                     )}
                     <span className={styles.reviewDate}>{review.createdAt}</span>

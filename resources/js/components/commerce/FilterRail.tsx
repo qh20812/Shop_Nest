@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { SlidersHorizontal, X } from 'lucide-react';
 import * as React from 'react';
 
@@ -15,20 +16,22 @@ type FilterRailProps = {
     className?: string;
 };
 
-export function FilterRail({ children, onClear, activeCount = 0, title = 'Bộ lọc tuyển chọn', variant = 'default', className }: FilterRailProps) {
+export function FilterRail({ children, onClear, activeCount = 0, title, variant = 'default', className }: FilterRailProps) {
+    const { t } = useTranslation();
+    const resolvedTitle = title ?? t('Curated filters');
     return (
-        <aside aria-label="Bộ lọc sản phẩm" className={cx(styles.filterRail, className)} data-variant={variant}>
+        <aside aria-label={t('Product filters')} className={cx(styles.filterRail, className)} data-variant={variant}>
             <div className={styles.filterHead}>
                 <div className={styles.filterHeadTitle}>
                     <SlidersHorizontal aria-hidden="true" className={styles.filterHeadIcon} />
-                    <h2>{title}</h2>
+                    <h2>{resolvedTitle}</h2>
                 </div>
-                {activeCount > 0 && <span className={styles.filterActiveCount}>{activeCount} đang chọn</span>}
+                {activeCount > 0 && <span className={styles.filterActiveCount}>{t(':count selected', { count: activeCount })}</span>}
             </div>
             <div>{children}</div>
             {onClear && (
                 <Button variant="ghost" size="sm" className={styles.filterClear} leftIcon={X} onClick={onClear}>
-                    Xoá tất cả bộ lọc
+                    {t('Clear all filters')}
                 </Button>
             )}
         </aside>

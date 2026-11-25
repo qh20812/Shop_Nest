@@ -42,7 +42,12 @@ export default defineConfig({
         hmr: {
             host: 'localhost',
         },
-        host: 'localhost'
+        host: 'localhost',
+        /*
+         * Fail fast instead of silently drifting to :5174 (which leaves
+         * `public/hot` pointing at a dead port and breaks every asset URL).
+         */
+        strictPort: true,
     },
     resolve: {
         alias: {

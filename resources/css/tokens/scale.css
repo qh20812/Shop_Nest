@@ -87,6 +87,12 @@
     /* Shell */
     --sn-header: 3.5rem;
     --sn-topbar: 3.5rem;
+
+    /* Storefront glass dock */
+    --sn-header-storefront: 3.75rem;
+    --sn-header-inset: 0.625rem;
+    --sn-header-stuck: calc(var(--sn-header-storefront) + var(--sn-header-inset) * 2);
+
     --sn-sidebar: 14.5rem;
     --sn-account-rail: 13.75rem;
     --sn-filter-rail: 16.5rem;
@@ -109,11 +115,20 @@
     --sn-radius-md: 0.375rem;
     --sn-radius-lg: 0.5rem;
     --sn-radius-xl: 0.75rem;
+    --sn-radius-2xl: 1.25rem;
+    --sn-radius-3xl: 1.75rem;
     --sn-radius-pill: 9999px;
+
+    /* Radius cho overlay kính */
+    --sn-radius-menu: 1rem;
+    --sn-radius-item: 0.625rem;
 
     /* Shadow — chỉ cho lớp nổi */
     --sn-shadow-popover: 0 10px 30px -18px rgb(21 22 15 / 0.28);
     --sn-shadow-overlay: 0 24px 64px -32px rgb(21 22 15 / 0.42);
+
+    /* Glass */
+    --sn-blur-glass: blur(22px) saturate(170%);
 
     /* Motion */
     --sn-dur-instant: 90ms;

@@ -6,51 +6,55 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { Card } from '@/components/ui/card';
 import { Heading, Text } from '@/components/ui/typography';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './About.module.css';
 
-const reasons = [
-    'Sáu nhóm ngành thiết yếu cho tổ ấm và đời sống mỗi ngày',
-    'Nhà bán được kiểm duyệt hồ sơ và nguồn gốc',
-    'Giá và chính sách đổi trả hiển thị rõ trước khi mua',
-    'Giao hàng toàn quốc, hỗ trợ khi đơn hàng có vấn đề',
-    'Thanh toán Stripe hoặc khi nhận hàng',
+const reasonKeys = [
+    'Six essential categories for your home and everyday life',
+    'Sellers are vetted for profile and product origin',
+    'Prices and return policies are shown clearly before you buy',
+    'Nationwide delivery and support when an order has a problem',
+    'Pay with Stripe or cash on delivery',
 ];
 
 export default function About() {
+    const { t } = useTranslation();
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Về ShopNest" />
+            <Head title={t('About ShopNest')} />
 
             <PageContainer size="prose" className={styles.page}>
                 <PageHeader
-                    eyebrow="Về ShopNest"
-                    title="Một chợ nhỏ, vận hành như một cuốn sổ kỹ."
-                    description="ShopNest là sàn thương mại điện tử tuyển chọn cho tổ ấm Việt: đa ngành, nhưng không bán tràn lan."
+                    eyebrow={t('About ShopNest')}
+                    title={t('A small market, run like a careful notebook.')}
+                    description={t('ShopNest is a curated marketplace for Vietnamese homes: many categories, but nothing sold carelessly.')}
                 />
 
                 <div className={styles.content}>
                     <Card padding="lg">
                         <div className={styles.cardBody}>
                             <Heading level={2} size="headline-2">
-                                Sứ mệnh của chúng tôi
+                                {t('Our mission')}
                             </Heading>
                             <Text size="body-md" tone="muted">
-                                Giúp người Việt chọn đúng món đồ cho nhà mình mà không phải đánh đổi sự rõ ràng. Chúng tôi kết nối người mua với những
-                                nhà bán tử tế, minh bạch nguồn gốc và đồng hành đến khi kiện hàng tới tay.
+                                {t(
+                                    'Help Vietnamese shoppers choose the right item for their home without giving up clarity. We connect buyers with fair sellers who are transparent about origin and stay with you until the parcel arrives.',
+                                )}
                             </Text>
                         </div>
                     </Card>
 
                     <div>
                         <Heading level={2} size="headline-2">
-                            Vì sao chọn ShopNest?
+                            {t('Why ShopNest?')}
                         </Heading>
                         <ul className={styles.reasons}>
-                            {reasons.map((reason) => (
-                                <li key={reason} className={styles.reason}>
+                            {reasonKeys.map((key) => (
+                                <li key={key} className={styles.reason}>
                                     <CheckCircle2 aria-hidden="true" className={styles.reasonIcon} />
-                                    <span>{reason}</span>
+                                    <span>{t(key)}</span>
                                 </li>
                             ))}
                         </ul>
@@ -59,12 +63,12 @@ export default function About() {
                     <Card variant="inset" padding="lg">
                         <div className={styles.cardBody}>
                             <Heading level={3} size="headline-3">
-                                Cách chúng tôi tuyển chọn
+                                {t('How we curate')}
                             </Heading>
                             <Text size="body-md" tone="muted">
-                                Mỗi nhóm ngành có bộ tiêu chí riêng: điện tử cần bảo hành và cấu hình rõ; gia dụng cần công suất và dung tích; mẹ & bé
-                                cần tiêu chuẩn an toàn; thời trang và làm đẹp cần chất liệu, size và hạn dùng. Cùng một hệ thống, khác nhau ở thông
-                                tin cần thiết.
+                                {t(
+                                    'Each category has its own criteria: electronics need clear warranty and specs; appliances need capacity and power; mother & baby need safety standards; fashion and beauty need materials, sizing and shelf life. One system, different essentials.',
+                                )}
                             </Text>
                         </div>
                     </Card>

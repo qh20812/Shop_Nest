@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import axios from 'axios';
 import * as React from 'react';
 
@@ -30,6 +31,7 @@ interface CheckoutAddressFormProps {
 }
 
 export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddressFormProps) {
+    const { t } = useTranslation();
     const [formData, setFormData] = React.useState<NewAddress>({
         name: '',
         phone: '',
@@ -91,16 +93,16 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
     return (
         <form onSubmit={handleSubmit} className={styles.addressForm}>
             <div className={styles.addressFormGrid}>
-                <FormField label="Họ và tên" required>
+                <FormField label={t('Full name')} required>
                     <Input
                         value={formData.name}
                         onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-                        placeholder="Nguyễn Thu Hà"
+                        placeholder={t('e.g. Nguyen Thu Ha')}
                         autoComplete="name"
                         required
                     />
                 </FormField>
-                <FormField label="Số điện thoại" required>
+                <FormField label={t('Phone number')} required>
                     <Input
                         type="tel"
                         value={formData.phone}
@@ -112,18 +114,18 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
                 </FormField>
             </div>
 
-            <FormField label="Địa chỉ" required hint="Số nhà, tên đường, toà nhà, ghi chú giao hàng.">
+            <FormField label={t('Address')} required hint={t('House number, street, building, delivery notes.')}>
                 <Input
                     value={formData.address}
                     onChange={(event) => setFormData((current) => ({ ...current, address: event.target.value }))}
-                    placeholder="Số nhà, tên đường"
+                    placeholder={t('House number, street')}
                     autoComplete="street-address"
                     required
                 />
             </FormField>
 
             <div className={styles.addressFormGrid}>
-                <FormField label="Tỉnh/Thành phố" required>
+                <FormField label={t('Province/City')} required>
                     <Select
                         value={formData.province_id}
                         onChange={(event) => {
@@ -132,17 +134,17 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
                             setWards([]);
                             loadWards(provinceId);
                         }}
-                        placeholder={loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}
+                        placeholder={loadingProvinces ? t('Loading...') : t('Select province/city')}
                         options={provinces.map((province) => ({ value: String(province.id), label: province.name }))}
                         disabled={loadingProvinces}
                         required
                     />
                 </FormField>
-                <FormField label="Phường/Xã" required>
+                <FormField label={t('Ward')} required>
                     <Select
                         value={formData.ward_id}
                         onChange={(event) => setFormData((current) => ({ ...current, ward_id: event.target.value }))}
-                        placeholder={loadingWards ? 'Đang tải...' : 'Chọn phường/xã'}
+                        placeholder={loadingWards ? t('Loading...') : t('Select ward')}
                         options={wards.map((ward) => ({ value: String(ward.id), label: ward.name }))}
                         disabled={!formData.province_id || loadingWards}
                         required
@@ -153,15 +155,15 @@ export default function CheckoutAddressForm({ onSubmit, onCancel }: CheckoutAddr
             <Checkbox
                 checked={formData.is_default}
                 onCheckedChange={(checked) => setFormData((current) => ({ ...current, is_default: checked === true }))}
-                label="Đặt làm địa chỉ mặc định"
+                label={t('Set as default address')}
             />
 
             <div className={styles.addressFormActions}>
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
-                    Huỷ
+                    {t('Cancel')}
                 </Button>
                 <Button type="submit" loading={submitting}>
-                    Lưu địa chỉ
+                    {t('Save address')}
                 </Button>
             </div>
         </form>

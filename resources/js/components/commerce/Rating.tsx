@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Star, StarHalf } from 'lucide-react';
 
 import { cx } from '@/lib/cx';
@@ -14,13 +15,17 @@ type RatingProps = {
 };
 
 export function Rating({ value, count, compact = false, showValue = true, className }: RatingProps) {
+    const { t } = useTranslation();
     const safeValue = Math.min(Math.max(value, 0), 5);
 
     if (compact) {
         return (
             <span
                 className={cx(styles.rating, className)}
-                aria-label={`${formatDecimal(safeValue)} trên 5${typeof count === 'number' ? `, ${formatNumber(count)} đánh giá` : ''}`}
+                aria-label={
+                    t(':value out of 5', { value: formatDecimal(safeValue) }) +
+                    (typeof count === 'number' ? `, ${t(':count reviews', { count: formatNumber(count) })}` : '')
+                }
             >
                 <Star aria-hidden="true" className={cx(styles.star, styles.starFilled)} />
                 <span className={styles.ratingValue}>{formatDecimal(safeValue)}</span>
@@ -32,7 +37,10 @@ export function Rating({ value, count, compact = false, showValue = true, classN
     return (
         <span
             className={cx(styles.rating, className)}
-            aria-label={`${formatDecimal(safeValue)} trên 5${typeof count === 'number' ? `, ${formatNumber(count)} đánh giá` : ''}`}
+            aria-label={
+                t(':value out of 5', { value: formatDecimal(safeValue) }) +
+                (typeof count === 'number' ? `, ${t(':count reviews', { count: formatNumber(count) })}` : '')
+            }
         >
             <span className={styles.ratingStars} aria-hidden="true">
                 {[0, 1, 2, 3, 4].map((index) => {
@@ -48,7 +56,7 @@ export function Rating({ value, count, compact = false, showValue = true, classN
                 })}
             </span>
             {showValue && <span className={styles.ratingValue}>{formatDecimal(safeValue)}</span>}
-            {typeof count === 'number' && <span className={styles.ratingCount}>({formatNumber(count)} đánh giá)</span>}
+            {typeof count === 'number' && <span className={styles.ratingCount}>({t(':count reviews', { count: formatNumber(count) })})</span>}
         </span>
     );
 }

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { IconButton } from '@/components/ui/icon-button';
 import Textarea from '@/components/ui/textarea';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -25,11 +26,12 @@ export function ChatComposer({
     onSend,
     disabled = false,
     loading = false,
-    placeholder = 'Nhập tin nhắn...',
+    placeholder,
     maxLength = 500,
     onEmoji,
     className,
 }: ChatComposerProps) {
+    const { t } = useTranslation();
     const canSend = value.trim().length > 0 && !disabled && !loading;
 
     const submit = () => {
@@ -56,7 +58,7 @@ export function ChatComposer({
             }}
         >
             {onEmoji ? (
-                <IconButton label="Chèn biểu tượng" variant="ghost" size="sm" onClick={onEmoji} disabled={disabled}>
+                <IconButton label={t('Insert emoji')} variant="ghost" size="sm" onClick={onEmoji} disabled={disabled}>
                     <Smile aria-hidden="true" />
                 </IconButton>
             ) : null}
@@ -66,18 +68,18 @@ export function ChatComposer({
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={placeholder}
+                    placeholder={placeholder ?? t('Type a message...')}
                     rows={1}
                     maxLength={maxLength}
                     autoGrow
                     maxRows={4}
                     disabled={disabled}
                     className={styles.composerInput}
-                    aria-label="Nội dung tin nhắn"
+                    aria-label={t('Message content')}
                 />
             </div>
 
-            <IconButton label="Gửi tin nhắn" variant="primary" size="md" type="submit" disabled={!canSend}>
+            <IconButton label={t('Send message')} variant="primary" size="md" type="submit" disabled={!canSend}>
                 <Send aria-hidden="true" />
             </IconButton>
         </form>

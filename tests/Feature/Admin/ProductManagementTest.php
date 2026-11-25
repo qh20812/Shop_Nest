@@ -5,10 +5,12 @@ namespace Tests\Feature\Admin;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProductManagementTest extends TestCase
@@ -16,7 +18,9 @@ class ProductManagementTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $seller;
+
     protected User $customer;
 
     protected function setUp(): void
@@ -55,20 +59,20 @@ class ProductManagementTest extends TestCase
     {
         $product = Product::factory()->create([
             'seller_id' => $this->seller->id,
-            'status' => 1, // Pending
+            'status' => 'pending_approval',
         ]);
 
         $response = $this->actingAs($this->admin)
             ->patch(route('admin.products.updateStatus', $product), [
-                'status' => 2, // Active
+                'status' => 'published',
             ]);
 
         $response->assertRedirect(route('admin.products.index'));
         $response->assertSessionHas('success', 'Product approved and activated successfully.');
-        
+
         $this->assertDatabaseHas('products', [
             'product_id' => $product->product_id,
-            'status' => 2,
+            'status' => 'published',
         ]);
     }
 
@@ -76,20 +80,20 @@ class ProductManagementTest extends TestCase
     {
         $product = Product::factory()->create([
             'seller_id' => $this->seller->id,
-            'status' => 2, // Active
+            'status' => 'published',
         ]);
 
         $response = $this->actingAs($this->admin)
             ->patch(route('admin.products.updateStatus', $product), [
-                'status' => 3, // Inactive
+                'status' => 'hidden',
             ]);
 
         $response->assertRedirect(route('admin.products.index'));
         $response->assertSessionHas('success', 'Product deactivated successfully.');
-        
+
         $this->assertDatabaseHas('products', [
             'product_id' => $product->product_id,
-            'status' => 3,
+            'status' => 'hidden',
         ]);
     }
 
@@ -97,20 +101,41 @@ class ProductManagementTest extends TestCase
     {
         $product = Product::factory()->create([
             'seller_id' => $this->seller->id,
-            'status' => 2, // Active
+            'status' => 'published',
         ]);
 
         $response = $this->actingAs($this->admin)
             ->patch(route('admin.products.updateStatus', $product), [
-                'status' => 1, // Pending
+                'status' => 'pending_approval',
             ]);
 
         $response->assertRedirect(route('admin.products.index'));
-        $response->assertSessionHas('success', 'Product status changed to pending.');
-        
+        $response->assertSessionHas('success', 'Product status changed to pending approval.');
+
         $this->assertDatabaseHas('products', [
             'product_id' => $product->product_id,
-            'status' => 1,
+            'status' => 'pending_approval',
+        ]);
+    }
+
+    public function test_admin_can_use_legacy_numeric_status_values(): void
+    {
+        $product = Product::factory()->create([
+            'seller_id' => $this->seller->id,
+            'status' => 'draft',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->patch(route('admin.products.updateStatus', $product), [
+                'status' => 2,
+            ]);
+
+        $response->assertRedirect(route('admin.products.index'));
+
+        // Legacy integers follow ProductStatus::fromLegacyInt(): 2 = pending_approval.
+        $this->assertDatabaseHas('products', [
+            'product_id' => $product->product_id,
+            'status' => 'pending_approval',
         ]);
     }
 
@@ -133,6 +158,28 @@ class ProductManagementTest extends TestCase
         $response->assertRedirect(route('admin.products.index'));
         $response->assertSessionHas('success', 'Product removed successfully.');
         $this->assertSoftDeleted('products', ['product_id' => $product->product_id]);
+    }
+
+    public function test_admin_delete_removes_product_images(): void
+    {
+        Storage::fake('public');
+
+        $product = Product::factory()->create(['seller_id' => $this->seller->id]);
+
+        Storage::disk('public')->put('products/admin-delete.png', 'image-bytes');
+        ProductImage::create([
+            'product_id' => $product->product_id,
+            'image_url' => 'products/admin-delete.png',
+            'is_primary' => true,
+            'display_order' => 0,
+        ]);
+
+        $response = $this->actingAs($this->admin)->delete(route('admin.products.destroy', $product));
+
+        $response->assertRedirect(route('admin.products.index'));
+        $this->assertSoftDeleted('products', ['product_id' => $product->product_id]);
+        $this->assertDatabaseMissing('product_images', ['product_id' => $product->product_id]);
+        Storage::disk('public')->assertMissing('products/admin-delete.png');
     }
 
     public function test_admin_co_the_loc_san_pham_theo_danh_muc(): void
@@ -160,7 +207,7 @@ class ProductManagementTest extends TestCase
             ->get(route('admin.products.index', ['search' => 'Test Product']));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('products.data', 1)
             ->where('products.data.0.name', 'Test Product Name')
         );
@@ -184,14 +231,31 @@ class ProductManagementTest extends TestCase
     {
         Product::factory()->create([
             'seller_id' => $this->seller->id,
-            'status' => 2, // Active
+            'status' => 'pending_approval',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->get(route('admin.products.index', ['status' => 'pending_approval']));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->has('products.data', 1)
+            ->where('products.data.0.status', 'pending_approval')
+        );
+    }
+
+    public function test_admin_status_filter_accepts_legacy_numeric_values(): void
+    {
+        Product::factory()->create([
+            'seller_id' => $this->seller->id,
+            'status' => 'pending_approval',
         ]);
 
         $response = $this->actingAs($this->admin)
             ->get(route('admin.products.index', ['status' => 2]));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->has('products.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('products.data', 1));
     }
 
     public function test_validation_errors_on_update_status(): void
@@ -200,7 +264,7 @@ class ProductManagementTest extends TestCase
 
         $response = $this->actingAs($this->admin)
             ->patch(route('admin.products.updateStatus', $product), [
-                'status' => 4, // Invalid status
+                'status' => 'archived', // Invalid status
             ]);
 
         $response->assertSessionHasErrors('status');
@@ -213,7 +277,7 @@ class ProductManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.products.show', $product));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->component('Admin/Products/Show')
             ->has('product')
             ->where('product.product_id', $product->product_id)
@@ -229,7 +293,7 @@ class ProductManagementTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('admin.products.index'));
 
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('products.data', 1)
             ->where('products.data.0.name', 'English Product')
         );

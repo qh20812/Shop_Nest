@@ -20,7 +20,7 @@
 
 .tabsBar {
     position: sticky;
-    top: var(--sn-header);
+    top: var(--sn-header-stuck);
     z-index: var(--sn-z-sticky);
     margin-top: var(--sn-space-8);
     border-block: 1px solid var(--sn-color-border);

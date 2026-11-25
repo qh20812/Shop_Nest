@@ -5,6 +5,7 @@ import { cx } from '@/lib/cx';
 import { useTranslation } from '@/lib/i18n';
 
 import { AuthBrandPanel } from './AuthBrandPanel';
+import { BrandMark } from './BrandMark';
 
 type AuthLayoutProps = {
     children: React.ReactNode;
@@ -26,7 +27,7 @@ export function AuthLayout({ children, variant = 'split', width = 'default', bra
                 </a>
                 <div className="sn-auth__top">
                     <Link href="/" className="sn-brand">
-                        <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                        <BrandMark />
                         <span className="sn-brand__name">ShopNest</span>
                     </Link>
                 </div>
@@ -46,7 +47,7 @@ export function AuthLayout({ children, variant = 'split', width = 'default', bra
             <main id="main-content" tabIndex={-1} className="sn-auth__main">
                 <div className={formClassName}>
                     <div className="sn-auth__mobile-brand">
-                        <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                        <BrandMark />
                         <span className="sn-brand__name">ShopNest</span>
                     </div>
                     {children}

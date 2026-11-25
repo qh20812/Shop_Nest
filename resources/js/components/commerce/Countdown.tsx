@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import * as React from 'react';
 
 import { useCountdown } from '@/hooks/useCountdown';
@@ -20,10 +21,11 @@ function CountdownBox({ children }: { children: React.ReactNode }) {
 }
 
 export function Countdown({ endsAt, onEnd, className }: CountdownProps) {
+    const { t } = useTranslation();
     const countdown = useCountdown(endsAt, { onEnd });
 
     return (
-        <span className={cx(styles.countdownRoot, className)} aria-label="Thời gian còn lại">
+        <span className={cx(styles.countdownRoot, className)} aria-label={t('Time remaining')}>
             {countdown.days > 0 && (
                 <>
                     <CountdownBox>{pad(countdown.days)}</CountdownBox>

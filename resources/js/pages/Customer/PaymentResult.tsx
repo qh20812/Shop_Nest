@@ -5,6 +5,7 @@ import { ResultState } from '@/components/feedback/ResultState';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './customer.module.css';
 
@@ -48,34 +49,35 @@ interface PaymentResultProps {
 const statusConfig = {
     succeeded: {
         result: 'success' as const,
-        title: 'Đặt hàng thành công',
-        message: 'Shop sẽ sớm xác nhận đơn. Bạn có thể theo dõi đơn trong mục Đơn hàng.',
+        titleKey: 'Order placed successfully',
+        messageKey: 'The shop will confirm your order soon. You can track it under Orders.',
     },
     canceled: {
         result: 'pending' as const,
-        title: 'Thanh toán đã huỷ',
-        message: 'Đơn hàng chưa được thanh toán. Bạn có thể thử lại hoặc chọn phương thức khác.',
+        titleKey: 'Payment cancelled',
+        messageKey: 'The order has not been paid. You can try again or choose another method.',
     },
     failed: {
         result: 'failure' as const,
-        title: 'Thanh toán thất bại',
-        message: 'Giao dịch không thành công. Vui lòng kiểm tra lại thông tin hoặc liên hệ hỗ trợ.',
+        titleKey: 'Payment failed',
+        messageKey: 'The transaction did not go through. Check your details or contact support.',
     },
 };
 
 export default function PaymentResult({ status, message, order, actions }: PaymentResultProps) {
+    const { t } = useTranslation();
     const normalized = status?.toLowerCase?.() ?? 'failed';
     const config = statusConfig[normalized as keyof typeof statusConfig] ?? {
         result: 'pending' as const,
-        title: 'Đang xử lý thanh toán',
-        message: 'Chúng tôi đang kiểm tra giao dịch. Vui lòng quay lại sau ít phút.',
+        titleKey: 'Processing payment',
+        messageKey: 'We are checking the transaction. Please come back in a few minutes.',
     };
 
     const orderCode = order?.reference ?? order?.code ?? order?.id;
     const total = order?.total ?? order?.total_amount ?? 0;
     const items = (order?.items ?? []).map((item) => ({
         id: item.id ?? item.name ?? 'item',
-        name: item.product_name ?? item.name ?? 'Sản phẩm',
+        name: item.product_name ?? item.name ?? t('Product'),
         image: item.image,
         quantity: item.quantity ?? 1,
         price: item.unit_price ?? item.price ?? (item.total_price ? item.total_price / Math.max(1, item.quantity ?? 1) : 0),
@@ -84,26 +86,26 @@ export default function PaymentResult({ status, message, order, actions }: Payme
     const fallbackActions: PaymentResultAction[] =
         config.result === 'success'
             ? [
-                  { label: 'Xem đơn hàng', href: '/user/orders', primary: true },
-                  { label: 'Tiếp tục mua sắm', href: '/' },
+                  { label: t('View order'), href: '/user/orders', primary: true },
+                  { label: t('Continue shopping'), href: '/' },
               ]
             : [
-                  { label: 'Thử lại thanh toán', href: '/checkout', primary: true },
-                  { label: 'Về trang chủ', href: '/' },
+                  { label: t('Retry payment'), href: '/checkout', primary: true },
+                  { label: t('Back to home'), href: '/' },
               ];
 
     const resolvedActions = actions && actions.length > 0 ? actions : fallbackActions;
 
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Kết quả thanh toán" />
+            <Head title={t('Payment result')} />
 
             <PageContainer size="narrow" className={styles.pageTight}>
                 <ResultState
                     status={config.result}
                     orderCode={orderCode}
-                    title={config.title}
-                    message={message || config.message}
+                    title={t(config.titleKey)}
+                    message={message || t(config.messageKey)}
                     actions={resolvedActions.map((action) => (
                         <Button key={`${action.href}-${action.label}`} asChild variant={action.primary ? 'primary' : 'secondary'}>
                             <Link href={action.href}>{action.label}</Link>
@@ -118,8 +120,8 @@ export default function PaymentResult({ status, message, order, actions }: Payme
                             subtotal={total}
                             total={total}
                             showItems
-                            trust={order.payment_method ? [`Thanh toán: ${order.payment_method}`] : []}
-                            footerNote="Cảm ơn bạn đã mua sắm tại ShopNest."
+                            trust={order.payment_method ? [t('Payment: :method', { method: order.payment_method })] : []}
+                            footerNote={t('Thank you for shopping at ShopNest.')}
                         />
                     </div>
                 )}

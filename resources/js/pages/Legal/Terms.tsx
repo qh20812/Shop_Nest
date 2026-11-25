@@ -2,15 +2,18 @@ import { Head } from '@inertiajs/react';
 
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { LegalDocument } from '@/components/storefront/LegalDocument';
+import { useTranslation } from '@/lib/i18n';
 
 export default function Terms() {
+    const { t } = useTranslation();
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Điều khoản sử dụng" />
+            <Head title={t('Terms of Service')} />
 
             <LegalDocument
-                title="Điều khoản sử dụng"
-                description="Các quy định khi bạn dùng ShopNest để mua sắm hoặc bán hàng."
+                title={t('Terms of Service')}
+                description={t('Rules for buying or selling on ShopNest.')}
                 sections={[
                     {
                         heading: '1. Chấp nhận điều khoản',

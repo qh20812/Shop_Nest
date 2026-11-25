@@ -32,7 +32,7 @@ interface Product {
     category: { name: string };
     brand: { name: string };
     seller: { username: string; first_name: string; last_name: string };
-    status: number;
+    status: string;
     images?: Array<{ image_url: string; is_primary: boolean }>;
     variants?: Array<{ price: number }>;
     variants_count: number;
@@ -98,13 +98,14 @@ export default function Index() {
 
     const getProductName = (product: Product) => product.name || t('Unnamed Product');
 
-    const getProductStatus = (productStatus: number) => {
+    const getProductStatus = (productStatus: string) => {
         switch (productStatus) {
-            case 1:
+            case 'draft':
+            case 'pending_approval':
                 return 'pending';
-            case 2:
+            case 'published':
                 return 'active';
-            case 3:
+            case 'hidden':
                 return 'inactive';
             default:
                 return 'pending';
@@ -156,7 +157,12 @@ export default function Index() {
     const handleConfirmAction = () => {
         if (!confirmModal.productId || !confirmModal.action) return;
 
-        const statusMap: Record<StatusAction, number> = { approve: 2, reject: 3, deactivate: 3, activate: 2 };
+        const statusMap: Record<StatusAction, string> = {
+            approve: 'published',
+            reject: 'hidden',
+            deactivate: 'hidden',
+            activate: 'published',
+        };
 
         router.patch(`/admin/products/${confirmModal.productId}/status`, {
             status: statusMap[confirmModal.action],
@@ -209,7 +215,7 @@ export default function Index() {
             cell: (product: Product) => {
                 const actions: ActionConfig[] = [];
 
-                if (product.status === 1) {
+                if (product.status === 'draft' || product.status === 'pending_approval') {
                     actions.push(
                         {
                             type: 'button',
@@ -226,7 +232,7 @@ export default function Index() {
                             label: t('Reject'),
                         },
                     );
-                } else if (product.status === 2) {
+                } else if (product.status === 'published') {
                     actions.push(
                         {
                             type: 'link',
@@ -243,7 +249,7 @@ export default function Index() {
                             label: t('Deactivate'),
                         },
                     );
-                } else if (product.status === 3) {
+                } else if (product.status === 'hidden') {
                     actions.push(
                         {
                             type: 'link',
@@ -302,9 +308,10 @@ export default function Index() {
                         onChange: setStatus,
                         label: t('-- All Statuses --'),
                         options: [
-                            { value: '1', label: t('Pending Approval') },
-                            { value: '2', label: t('Active') },
-                            { value: '3', label: t('Inactive') },
+                            { value: 'draft', label: t('Draft') },
+                            { value: 'pending_approval', label: t('Pending Approval') },
+                            { value: 'published', label: t('Published') },
+                            { value: 'hidden', label: t('Hidden') },
                         ],
                     },
                 ]}

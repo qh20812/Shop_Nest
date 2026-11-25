@@ -1,5 +1,7 @@
 import type { OrderStatus, StatusTone, StockStatus } from '@/types/commerce';
 
+type Translator = (key: string) => string;
+
 const backendOrderStatusMap: Record<string, OrderStatus> = {
     pending_confirmation: 'pending',
     processing: 'confirmed',
@@ -15,19 +17,19 @@ const backendOrderStatusMap: Record<string, OrderStatus> = {
     returned_refunded: 'refunded',
 };
 
-const backendOrderStatusLabelMap: Record<string, string> = {
-    pending_confirmation: 'Chờ xác nhận',
-    processing: 'Đang xử lý',
-    pending_assignment: 'Chờ phân tài xế',
-    assigned_to_shipper: 'Đã giao tài xế',
-    delivering: 'Đang giao',
-    shipped: 'Đang giao',
-    delivered: 'Đã giao',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã huỷ',
-    canceled: 'Đã huỷ',
-    returned: 'Đã trả hàng',
-    returned_refunded: 'Đã hoàn tiền',
+const backendOrderStatusKeyMap: Record<string, string> = {
+    pending_confirmation: 'Pending confirmation',
+    processing: 'Processing',
+    pending_assignment: 'Awaiting driver assignment',
+    assigned_to_shipper: 'Handed to driver',
+    delivering: 'Delivering',
+    shipped: 'Delivering',
+    delivered: 'Delivered',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    canceled: 'Cancelled',
+    returned: 'Returned',
+    returned_refunded: 'Refunded',
 };
 
 /**
@@ -44,19 +46,25 @@ export function normalizeOrderStatus(status?: string | null): OrderStatus {
 /**
  * Human-readable label for a backend order status.
  */
-export function backendOrderStatusLabel(status?: string | null): string {
-    if (!status) {
-        return 'Không xác định';
+export function backendOrderStatusLabel(status?: string | null, t?: Translator): string {
+    const key = status ? backendOrderStatusKeyMap[status] : undefined;
+
+    if (key) {
+        return t ? t(key) : key;
     }
 
-    return backendOrderStatusLabelMap[status] ?? status.replace(/_/g, ' ');
+    if (!status) {
+        return t ? t('Unknown') : 'Unknown';
+    }
+
+    return status.replace(/_/g, ' ');
 }
 
-export const paymentStatusLabel: Record<string, string> = {
-    unpaid: 'Chưa thanh toán',
-    paid: 'Đã thanh toán',
-    failed: 'Thất bại',
-    refunded: 'Đã hoàn tiền',
+export const paymentStatusKey: Record<string, string> = {
+    unpaid: 'Unpaid',
+    paid: 'Paid',
+    failed: 'Failed',
+    refunded: 'Refunded',
 };
 
 export const paymentStatusTone: Record<string, StatusTone> = {
@@ -84,14 +92,14 @@ export const orderStatusTone: Record<OrderStatus, StatusTone> = {
     refunded: 'success',
 };
 
-export const orderStatusLabel: Record<OrderStatus, string> = {
-    pending: 'Chờ xác nhận',
-    confirmed: 'Đã xác nhận',
-    shipping: 'Đang giao',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã huỷ',
-    returned: 'Trả hàng',
-    refunded: 'Đã hoàn tiền',
+export const orderStatusKey: Record<OrderStatus, string> = {
+    pending: 'Pending confirmation',
+    confirmed: 'Confirmed',
+    shipping: 'Shipping',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    returned: 'Returned',
+    refunded: 'Refunded',
 };
 
 export const stockTone: Record<StockStatus, StatusTone> = {
@@ -100,8 +108,8 @@ export const stockTone: Record<StockStatus, StatusTone> = {
     out: 'danger',
 };
 
-export const stockLabel: Record<StockStatus, string> = {
-    in: 'Còn hàng',
-    low: 'Sắp hết',
-    out: 'Hết hàng',
+export const stockKey: Record<StockStatus, string> = {
+    in: 'In stock',
+    low: 'Low stock',
+    out: 'Out of stock',
 };

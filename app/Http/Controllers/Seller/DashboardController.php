@@ -2,12 +2,7 @@
 
 namespace App\Http\Controllers\Seller;
 
-use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Services\SellerDashboardService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class DashboardController extends Controller
 {
@@ -24,9 +21,9 @@ class DashboardController extends Controller
     /**
      * DashboardController constructor.
      *
-     * @param SellerDashboardService $dashboardService The service handling dashboard business logic
-     * Constructor của DashboardController.
-     * @param SellerDashboardService $dashboardService Dịch vụ xử lý logic nghiệp vụ của dashboard
+     * @param  SellerDashboardService  $dashboardService  The service handling dashboard business logic
+     *                                                    Constructor của DashboardController.
+     * @param  SellerDashboardService  $dashboardService  Dịch vụ xử lý logic nghiệp vụ của dashboard
      */
     public function __construct(SellerDashboardService $dashboardService)
     {
@@ -43,24 +40,24 @@ class DashboardController extends Controller
      * - Comprehensive error handling with fallback data
      *
      * @return Response Inertia response with dashboard data
-     *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException When user lacks seller privileges
-     * @throws \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException When rate limit exceeded
-     * Hiển thị dashboard của người bán với thống kê và dữ liệu toàn diện.
-     * Phương thức này xử lý view dashboard chính, bao gồm:
-     * - Kiểm tra xác thực và ủy quyền
-     * - Giới hạn tốc độ để ngăn chặn lạm dụng
-     * - Lưu cache để tối ưu hiệu suất
-     * - Xử lý lỗi toàn diện với dữ liệu dự phòng
      * @return Response Phản hồi Inertia với dữ liệu dashboard
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Khi người dùng thiếu quyền seller
-     * @throws \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException Khi vượt quá giới hạn tốc độ
+     *
+     * @throws HttpException When user lacks seller privileges
+     * @throws TooManyRequestsHttpException When rate limit exceeded
+     *                                      Hiển thị dashboard của người bán với thống kê và dữ liệu toàn diện.
+     *                                      Phương thức này xử lý view dashboard chính, bao gồm:
+     *                                      - Kiểm tra xác thực và ủy quyền
+     *                                      - Giới hạn tốc độ để ngăn chặn lạm dụng
+     *                                      - Lưu cache để tối ưu hiệu suất
+     *                                      - Xử lý lỗi toàn diện với dữ liệu dự phòng
+     * @throws HttpException Khi người dùng thiếu quyền seller
+     * @throws TooManyRequestsHttpException Khi vượt quá giới hạn tốc độ
      */
     public function index(): Response
     {
         $seller = Auth::user();
 
-        if (!$seller || !$seller->isSeller()) {
+        if (! $seller || ! $seller->isSeller()) {
             Log::warning('Dashboard access denied: User is not a seller', [
                 'user_id' => $seller?->id,
                 'ip' => request()->ip(),
@@ -69,7 +66,7 @@ class DashboardController extends Controller
             abort(403, 'Access denied. Seller privileges required.');
         }
 
-        $rateLimitKey = 'dashboard_access_' . $seller->id;
+        $rateLimitKey = 'dashboard_access_'.$seller->id;
         $rateLimitConfig = config('dashboard.rate_limiting.dashboard_access');
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, $rateLimitConfig['max_attempts'])) {
@@ -79,21 +76,27 @@ class DashboardController extends Controller
                 'seconds_until_available' => $secondsUntilAvailable,
                 'ip' => request()->ip(),
             ]);
-            abort(429, 'Too many dashboard requests. Please try again in ' . $secondsUntilAvailable . ' seconds.');
+            abort(429, 'Too many dashboard requests. Please try again in '.$secondsUntilAvailable.' seconds.');
         }
 
         RateLimiter::hit($rateLimitKey, $rateLimitConfig['decay_minutes'] * 60);
 
-        $cacheKey = config('dashboard.cache.key_prefix') . "_{$seller->id}";
+        $cacheKey = config('dashboard.cache.key_prefix')."_{$seller->id}";
 
         $dashboardData = Cache::remember($cacheKey, config('dashboard.cache.ttl'), function () use ($seller) {
             $stockAlerts = $this->dashboardService->getStockAlerts($seller->id);
             $stockAlertsCount = $this->dashboardService->getStockAlertsCount($seller->id);
+            $topSellingProducts = $this->getTopSellingProducts($seller->id);
 
             return [
-                'shopStats' => $this->getShopStats($seller->id, $stockAlertsCount),
+                'shopStats' => $this->getShopStats(
+                    $seller->id,
+                    $stockAlertsCount,
+                    $stockAlerts,
+                    $topSellingProducts,
+                ),
                 'recentOrders' => $this->getRecentShopOrders($seller->id),
-                'topSellingProducts' => $this->getTopSellingProducts($seller->id),
+                'topSellingProducts' => $topSellingProducts,
                 'stockAlerts' => $stockAlerts,
             ];
         });
@@ -102,32 +105,36 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build comprehensive shop statistics from various metric sources.
+     * Build comprehensive shop statistics from one aggregated metrics query.
      *
-     * Aggregates data from multiple metric methods to create a complete
-     * statistics array for the dashboard. Includes error handling with
-     * fallback to default values.
+     * The aggregated statistics and alert/product data are reused instead of
+     * re-querying them for each metric, which keeps the dashboard query count low
+     * even when the database is remote.
      *
-     * @param int $sellerId The authenticated seller's ID
-     * @param int $initialLowStockCount Initial count of low stock items
+     * @param  int  $sellerId  The authenticated seller's ID
+     * @param  int  $initialLowStockCount  Initial count of low stock items
+     * @param  Collection|null  $stockAlerts  Already-loaded low stock alerts
+     * @param  array  $topSellingProducts  Already-loaded top selling products
      * @return array Complete shop statistics array
-     * Xây dựng thống kê cửa hàng toàn diện từ các nguồn chỉ số khác nhau.
-     * Tổng hợp dữ liệu từ nhiều phương thức chỉ số để tạo mảng thống kê hoàn chỉnh
-     * cho dashboard. Bao gồm xử lý lỗi với giá trị mặc định dự phòng.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @param int $initialLowStockCount Số lượng hàng tồn kho thấp ban đầu
-     * @return array Mảng thống kê cửa hàng hoàn chỉnh
      */
-    private function getShopStats(int $sellerId, int $initialLowStockCount = 0): array
-    {
+    private function getShopStats(
+        int $sellerId,
+        int $initialLowStockCount = 0,
+        ?Collection $stockAlerts = null,
+        array $topSellingProducts = [],
+    ): array {
         try {
+            $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
+
             return [
-                ...$this->getRevenueMetrics($sellerId),
-                ...$this->getOrderMetrics($sellerId),
-                ...$this->getCustomerMetrics($sellerId),
-                ...$this->getGrowthMetrics($sellerId),
-                ...$this->getAlertMetrics($sellerId, $initialLowStockCount),
-                'top_selling_product' => $this->getTopSellingProductName($sellerId),
+                'total_revenue' => $aggregatedStats['total_revenue'],
+                'average_order_value' => $aggregatedStats['average_order_value'],
+                'total_orders' => $aggregatedStats['total_orders'],
+                'unique_customers' => $aggregatedStats['unique_customers'],
+                'monthly_revenue_growth' => $this->dashboardService->calculateMonthlyRevenueGrowth($sellerId),
+                'low_stock_alerts' => $initialLowStockCount ?: ($stockAlerts?->count() ?? 0),
+                'pending_orders_count' => $this->dashboardService->getPendingOrdersCount($sellerId),
+                'top_selling_product' => $topSellingProducts[0]['name'] ?? null,
             ];
         } catch (\Throwable $e) {
             Log::error('Failed to build seller stats', [
@@ -145,12 +152,12 @@ class DashboardController extends Controller
      * Fetches the most recent completed orders with full customer and product details.
      * Includes comprehensive error handling with logging.
      *
-     * @param int $sellerId The authenticated seller's ID
+     * @param  int  $sellerId  The authenticated seller's ID
+     * @param  int  $sellerId  ID của người bán đã xác thực
      * @return Collection Collection of recent orders with relationships loaded
-     * Lấy các đơn hàng đã hoàn thành gần đây cho dashboard của người bán.
-     * Lấy các đơn hàng đã hoàn thành gần đây nhất với chi tiết đầy đủ về khách hàng và sản phẩm.
-     * Bao gồm xử lý lỗi toàn diện với ghi log.
-     * @param int $sellerId ID của người bán đã xác thực
+     *                    Lấy các đơn hàng đã hoàn thành gần đây cho dashboard của người bán.
+     *                    Lấy các đơn hàng đã hoàn thành gần đây nhất với chi tiết đầy đủ về khách hàng và sản phẩm.
+     *                    Bao gồm xử lý lỗi toàn diện với ghi log.
      * @return Collection Bộ sưu tập các đơn hàng gần đây với quan hệ đã tải
      */
     private function getRecentShopOrders(int $sellerId): Collection
@@ -172,11 +179,11 @@ class DashboardController extends Controller
      *
      * Gets the best performing products by sales volume with error handling.
      *
-     * @param int $sellerId The authenticated seller's ID
+     * @param  int  $sellerId  The authenticated seller's ID
+     * @param  int  $sellerId  ID của người bán đã xác thực
      * @return array Array of top selling product data
-     * Lấy dữ liệu sản phẩm bán chạy nhất cho dashboard.
-     * Lấy các sản phẩm hoạt động tốt nhất theo khối lượng bán hàng với xử lý lỗi.
-     * @param int $sellerId ID của người bán đã xác thực
+     *               Lấy dữ liệu sản phẩm bán chạy nhất cho dashboard.
+     *               Lấy các sản phẩm hoạt động tốt nhất theo khối lượng bán hàng với xử lý lỗi.
      * @return array Mảng dữ liệu sản phẩm bán chạy nhất
      */
     private function getTopSellingProducts(int $sellerId): array
@@ -199,12 +206,12 @@ class DashboardController extends Controller
      * Provides safe default values when dashboard data cannot be retrieved
      * due to errors or missing data.
      *
-     * @param int $initialLowStockCount Initial low stock count value
+     * @param  int  $initialLowStockCount  Initial low stock count value
+     * @param  int  $initialLowStockCount  Giá trị số lượng hàng tồn kho thấp ban đầu
      * @return array Default statistics array
-     * Lấy giá trị thống kê mặc định cho các tình huống dự phòng lỗi.
-     * Cung cấp giá trị mặc định an toàn khi không thể lấy dữ liệu dashboard
-     * do lỗi hoặc dữ liệu thiếu.
-     * @param int $initialLowStockCount Giá trị số lượng hàng tồn kho thấp ban đầu
+     *               Lấy giá trị thống kê mặc định cho các tình huống dự phòng lỗi.
+     *               Cung cấp giá trị mặc định an toàn khi không thể lấy dữ liệu dashboard
+     *               do lỗi hoặc dữ liệu thiếu.
      * @return array Mảng thống kê mặc định
      */
     private function getDefaultStats(int $initialLowStockCount = 0): array
@@ -219,110 +226,5 @@ class DashboardController extends Controller
             'unique_customers' => config('dashboard.defaults.customers_count'),
             'top_selling_product' => null,
         ];
-    }
-
-    /**
-     * Extract revenue-related metrics from aggregated statistics.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @return array Revenue metrics (total_revenue, average_order_value)
-     * Trích xuất các chỉ số liên quan đến doanh thu từ thống kê tổng hợp.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @return array Các chỉ số doanh thu (total_revenue, average_order_value)
-     */
-    private function getRevenueMetrics(int $sellerId): array
-    {
-        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
-
-        return [
-            'total_revenue' => $aggregatedStats['total_revenue'],
-            'average_order_value' => $aggregatedStats['average_order_value'],
-        ];
-    }
-
-    /**
-     * Extract order-related metrics from aggregated statistics.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @return array Order metrics (total_orders)
-     * Trích xuất các chỉ số liên quan đến đơn hàng từ thống kê tổng hợp.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @return array Các chỉ số đơn hàng (total_orders)
-     */
-    private function getOrderMetrics(int $sellerId): array
-    {
-        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
-
-        return [
-            'total_orders' => $aggregatedStats['total_orders'],
-        ];
-    }
-
-    /**
-     * Extract customer-related metrics from aggregated statistics.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @return array Customer metrics (unique_customers)
-     * Trích xuất các chỉ số liên quan đến khách hàng từ thống kê tổng hợp.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @return array Các chỉ số khách hàng (unique_customers)
-     */
-    private function getCustomerMetrics(int $sellerId): array
-    {
-        $aggregatedStats = $this->dashboardService->getAggregatedSellerStats($sellerId);
-
-        return [
-            'unique_customers' => $aggregatedStats['unique_customers'],
-        ];
-    }
-
-    /**
-     * Calculate growth metrics for the seller.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @return array Growth metrics (monthly_revenue_growth)
-     * Tính toán các chỉ số tăng trưởng cho người bán.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @return array Các chỉ số tăng trưởng (monthly_revenue_growth)
-     */
-    private function getGrowthMetrics(int $sellerId): array
-    {
-        return [
-            'monthly_revenue_growth' => $this->dashboardService->calculateMonthlyRevenueGrowth($sellerId),
-        ];
-    }
-
-    /**
-     * Get alert-related metrics including stock alerts and pending orders.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @param int $initialLowStockCount Initial low stock count
-     * @return array Alert metrics (low_stock_alerts, pending_orders_count)
-     * Lấy các chỉ số liên quan đến cảnh báo bao gồm cảnh báo tồn kho và đơn hàng đang chờ.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @param int $initialLowStockCount Số lượng tồn kho thấp ban đầu
-     * @return array Các chỉ số cảnh báo (low_stock_alerts, pending_orders_count)
-     */
-    private function getAlertMetrics(int $sellerId, int $initialLowStockCount = 0): array
-    {
-        return [
-            'low_stock_alerts' => $initialLowStockCount ?: $this->dashboardService->getStockAlerts($sellerId),
-            'pending_orders_count' => $this->dashboardService->getPendingOrdersCount($sellerId),
-        ];
-    }
-
-    /**
-     * Get the name of the top-selling product for display.
-     *
-     * @param int $sellerId The authenticated seller's ID
-     * @return string|null Name of the top-selling product or null if none found
-     * Lấy tên của sản phẩm bán chạy nhất để hiển thị.
-     * @param int $sellerId ID của người bán đã xác thực
-     * @return string|null Tên của sản phẩm bán chạy nhất hoặc null nếu không tìm thấy
-     */
-    private function getTopSellingProductName(int $sellerId): ?string
-    {
-        $topProduct = $this->dashboardService->getTopSellingProductsData($sellerId, config('dashboard.limits.top_selling_product_single'))->first();
-        return $topProduct['name'] ?? null;
     }
 }

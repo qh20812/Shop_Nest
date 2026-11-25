@@ -2,15 +2,18 @@ import { Head } from '@inertiajs/react';
 
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { LegalDocument } from '@/components/storefront/LegalDocument';
+import { useTranslation } from '@/lib/i18n';
 
 export default function SellingPolicy() {
+    const { t } = useTranslation();
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Chính sách người bán" />
+            <Head title={t('Seller policy')} />
 
             <LegalDocument
-                title="Chính sách người bán"
-                description="Quy định dành cho nhà bán hoạt động trên ShopNest."
+                title={t('Seller policy')}
+                description={t('Rules for sellers operating on ShopNest.')}
                 sections={[
                     {
                         heading: '1. Điều kiện mở shop',

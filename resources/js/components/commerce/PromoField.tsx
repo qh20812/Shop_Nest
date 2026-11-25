@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Tag, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -19,10 +20,11 @@ type PromoFieldProps = {
 };
 
 export function PromoField({ value, onChange, onApply, onRemove, appliedCode, appliedLabel, error, loading = false, className }: PromoFieldProps) {
+    const { t } = useTranslation();
     return (
         <div className={cx(styles.promo, className)}>
             <label htmlFor="promo-code" className={styles.promoLabel}>
-                Ưu đãi và mã giảm giá
+                {t('Promotions and discount codes')}
             </label>
 
             {appliedCode ? (
@@ -33,7 +35,7 @@ export function PromoField({ value, onChange, onApply, onRemove, appliedCode, ap
                         {appliedLabel ? <span className={styles.promoLabelText}>{appliedLabel}</span> : null}
                     </div>
                     {onRemove ? (
-                        <button type="button" aria-label="Bỏ mã giảm giá" className={styles.promoRemove} onClick={onRemove}>
+                        <button type="button" aria-label={t('Remove discount code')} className={styles.promoRemove} onClick={onRemove}>
                             <X aria-hidden="true" className={styles.promoIcon} />
                         </button>
                     ) : null}
@@ -44,12 +46,12 @@ export function PromoField({ value, onChange, onApply, onRemove, appliedCode, ap
                         id="promo-code"
                         value={value}
                         onChange={(event) => onChange(event.target.value.toUpperCase())}
-                        placeholder="Nhập mã khuyến mãi"
+                        placeholder={t('Enter a promotion code')}
                         className={cx(styles.promoInput)}
                         invalid={Boolean(error)}
                     />
                     <Button type="button" variant="secondary" loading={loading} onClick={onApply}>
-                        Áp dụng
+                        {t('Apply')}
                     </Button>
                 </div>
             )}

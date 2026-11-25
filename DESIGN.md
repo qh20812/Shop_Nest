@@ -12,7 +12,7 @@ Bảng Hiệu lấy cảm hứng từ biển hiệu cửa hàng, catalogue in v�
 Ba nguyên tắc:
 
 1. **Tín hiệu, không trang trí.** Accent chỉ dùng cho hành động chính, trạng thái đang chọn và liên kết quan trọng.
-2. **Cấu trúc bằng đường kẻ và khoảng trắng.** Không dùng gradient, glow, glassmorphism, icon tile pastel hay card lồng card.
+2. **Cấu trúc bằng đường kẻ, khoảng trắng và một lớp kính.** Glass chỉ dành cho chrome nổi (navbar, dock, sheet, popover) qua token `--sn-glass-*`; không gradient trang trí, không glow, không icon tile pastel, không card lồng card.
 3. **Dữ liệu thật.** Không bịa số liệu, badge, tab, cột hay filter. Thiếu dữ liệu thì bỏ UI, không tạo placeholder giả.
 
 ## 2. Typography
@@ -48,6 +48,7 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 | Danger | `--sn-color-danger`, `--sn-color-danger-text`, `--sn-color-danger-wash`, `--sn-color-on-danger` |
 | Neutral badge | `--sn-color-neutral`, `--sn-color-neutral-text`, `--sn-color-neutral-wash` |
 | Utility | `--sn-color-overlay`, `--sn-color-selection`, `--sn-color-scrim` |
+| Glass chrome | `--sn-color-canvas-deep`, `--sn-glass-tint`, `--sn-glass-field`, `--sn-glass-menu`, `--sn-glass-hover`, `--sn-glass-press`, `--sn-glass-hairline`, `--sn-glass-highlight`, `--sn-glass-ring`, `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` |
 
 ### 3.3 Light / dark
 
@@ -65,12 +66,20 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 - Nền tối đa 2 tầng trong một vùng (canvas → surface). Không card lồng card.
 - Chart: dùng token (`var(--sn-color-accent)`…), grid 1px, không gradient, không glow.
 
+### 3.5 Brand lockup
+
+- Mark dùng `BrandMark` (`components/layout/BrandMark.tsx`): PNG `ShopnestLogo.png` làm alpha mask, tô `--sn-color-accent`, nên mark tự sáng đúng ở dark mode.
+- Wordmark `.sn-brand__name`: ink, weight 600, tracking snug. Không tô accent ở trạng thái nghỉ, để accent vẫn là tín hiệu hành động.
+- Hover/focus của link brand mới chuyển wordmark sang `--sn-color-accent-text`.
+- Mark là decorative (`aria-hidden`); accessible name lấy từ wordmark, không lặp `alt`.
+
 ## 4. Space & layout
 
 - Cơ số 4px: `--sn-space-1..32`.
 - Container: `--sn-container` 90rem, narrow 65rem, form 26.25rem / wide 37.5rem.
 - Section rhythm: `--sn-section` clamp(40–72px), tight clamp(24–40px).
-- Shell: header 56px, topbar 56px, sidebar 232px, account rail 220px, filter rail 264px.
+- Shell: header 56px (workspace), topbar 56px, sidebar 232px, account rail 220px, filter rail 264px.
+- Storefront dock: slab kính 60px + inset 10px, tổng `--sn-header-stuck` 80px. Mọi sticky offset trong storefront dùng `calc(var(--sn-header-stuck) + var(--sn-space-2))`, không dùng `--sn-header`.
 - Breakpoint dùng trong CSS: 640 / 768 / 1024 / 1280. QA chạy 375/390/480/768/1024/1280/1440.
 - Workspace: `.sn-workspace__content` offset sidebar; `.sn-workspace__main` padding 36/24; <768 sidebar off-canvas + overlay + toggle.
 - Storefront: header + `main` + footer; ChatDock mount một lần trong `StorefrontLayout`.
@@ -79,9 +88,12 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 
 ## 5. Shape & elevation
 
-- Radius: none 0 · xs 2px · sm 4px · md 6px · lg 8px · xl 12px · pill.
-- Card dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Không bo ≥16px cho card.
-- Shadow chỉ cho lớp nổi: `--sn-shadow-popover`, `--sn-shadow-overlay`. Không shadow trang trí cho card tĩnh.
+- Radius: none 0 · xs 2px · sm 4px · md 6px · lg 8px · xl 12px · 2xl 20px · 3xl 28px · pill.
+- Card nội dung dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Chỉ chrome nổi được dùng `2xl` 20px (slab kính) và `3xl` 28px (sheet).
+- Quy tắc shape của hệ glass: **slab 20px, menu 16px, control pill, media 12px**. Không trộn radius khác trong cùng một cụm.
+- Menu dùng `--sn-radius-menu` 16 cho panel và `--sn-radius-item` 10 cho từng item. Menu kính chỉ dành cho chrome nổi (`sn-dropdown--glass`), menu trong workspace giữ nền đặc.
+- Shadow chỉ cho lớp nổi: `--sn-shadow-popover`, `--sn-shadow-overlay` (popover/overlay), `--sn-shadow-glass` (dock kính), `--sn-shadow-float` (control nổi trong kính), `--sn-shadow-accent` (CTA accent). Không shadow cho card tĩnh.
+- Glass: một lớp `backdrop-filter: var(--sn-blur-glass)` trên đúng phần tử slab, không blur cho control con; luôn có hairline + inset highlight + fallback đặc (`@supports`, `prefers-reduced-transparency`, `forced-colors`).
 - Border 1px `--sn-color-border`; border mạnh cho hover/selected.
 
 ## 6. Motion
@@ -132,11 +144,11 @@ Không hiển thị `[object Object]`, `NaN`, `undefined`; QA Dusk kiểm tra c�
 
 ## 11. Anti-slop checklist
 
-- [ ] Không gradient (trừ skeleton shimmer có mục đích).
+- [ ] Không gradient trang trí (trừ layered tint của glass và skeleton shimmer có mục đích).
 - [ ] Không indigo/violet, không palette Tailwind mặc định.
 - [ ] Không serif, không italic nhấn mạnh, không highlight vàng.
-- [ ] Không glassmorphism/backdrop-blur/glow.
-- [ ] Không card bo ≥16px, shadow lớn tùy tiện.
+- [ ] Glass chỉ trên chrome nổi, không glass cho card nội dung, không glow, không blur lồng nhiều lớp.
+- [ ] Không card nội dung bo ≥16px; slab kính 20px là ngoại lệ duy nhất, shadow lớn chỉ cho lớp nổi.
 - [ ] Không badge/pill spam; không chip cho mọi nhãn.
 - [ ] Không icon tự vẽ/emoji/số thứ tự trang trí.
 - [ ] Không card lồng card; không card cho từng dòng bảng.

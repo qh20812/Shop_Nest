@@ -11,10 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
-
 class Product extends Model
 {
-    use HasFactory, SoftDeletes,HasTranslations;
+    use HasFactory, HasTranslations,SoftDeletes;
 
     protected $primaryKey = 'product_id';
 
@@ -36,7 +35,6 @@ class Product extends Model
         'is_active' => 'boolean',
         'name' => 'array',
         'description' => 'array',
-        // 'status' => ProductStatus::class,
     ];
 
     protected $translatable = ['name', 'description'];
@@ -104,14 +102,37 @@ class Product extends Model
         return $this->hasMany(WishlistItem::class, 'product_id', 'product_id');
     }
 
-    public function getStatusAttribute($value)
-{
-    // Nếu là số → map qua fromLegacyInt()
-    if (is_numeric($value)) {
-        return ProductStatus::fromLegacyInt((int)$value);
-    }
+    /**
+     * Normalise the status column to a ProductStatus enum.
+     *
+     * The database stores enum strings, but accepting legacy integers keeps
+     * older rows and imports readable without hiding bad values.
+     */
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value): ProductStatus {
+                if ($value instanceof ProductStatus) {
+                    return $value;
+                }
 
-    // Nếu đã là string hợp lệ → lấy enum trực tiếp
-    return ProductStatus::from($value);
-}
+                if (is_numeric($value)) {
+                    return ProductStatus::fromLegacyInt((int) $value);
+                }
+
+                return ProductStatus::from($value);
+            },
+            set: function ($value): string {
+                if ($value instanceof ProductStatus) {
+                    return $value->value;
+                }
+
+                if (is_numeric($value)) {
+                    return ProductStatus::fromLegacyInt((int) $value)->value;
+                }
+
+                return ProductStatus::from($value)->value;
+            },
+        );
+    }
 }

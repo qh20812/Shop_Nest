@@ -23,14 +23,14 @@ class PaymentService
         return [
             [
                 'id' => 'stripe',
-                'name' => 'Stripe (Thẻ quốc tế)',
-                'description' => 'Thanh toán bằng thẻ Visa, MasterCard hoặc JCB',
+                'name' => __('Stripe (International card)'),
+                'description' => __('Pay with Visa, MasterCard or JCB'),
                 'icon' => 'stripe',
             ],
             [
                 'id' => 'cod',
-                'name' => 'Thanh toán khi nhận hàng (COD)',
-                'description' => 'Thanh toán bằng tiền mặt khi nhận hàng',
+                'name' => __('Cash on delivery (COD)'),
+                'description' => __('Pay with cash when your order arrives'),
                 'icon' => 'cod',
             ],
         ];

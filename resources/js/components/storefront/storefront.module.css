@@ -3,7 +3,6 @@
 /* Hero */
 .hero {
     padding-block: var(--sn-space-8) var(--sn-space-12);
-    background: var(--sn-color-canvas);
 }
 
 .heroGrid {

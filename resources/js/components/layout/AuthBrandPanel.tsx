@@ -4,6 +4,8 @@ import { CheckCircle2, Headset, Mail } from 'lucide-react';
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
 
+import { BrandMark } from './BrandMark';
+
 type AuthRole = 'customer' | 'seller' | 'shipper';
 
 type AuthBrandPanelProps = {
@@ -41,7 +43,7 @@ export function AuthBrandPanel({ role = 'customer', eyebrow, headline, descripti
         <aside className={cx('sn-auth__panel-inner', className)}>
             <div className="sn-auth__panel-copy">
                 <Link href="/" className="sn-brand">
-                    <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                    <BrandMark />
                     <span className="sn-brand__name">ShopNest</span>
                 </Link>
 

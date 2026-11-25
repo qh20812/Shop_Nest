@@ -35,7 +35,7 @@ interface Product {
     name: string | Record<string, string>;
     category?: { category_id: number; name: string | Record<string, string> } | null;
     brand?: { brand_id: number; name: string | Record<string, string> } | null;
-    status: number;
+    status: string;
     variants?: ProductVariant[];
     variants_count?: number;
     variants_sum_stock_quantity?: number | string | null;
@@ -111,13 +111,14 @@ export default function Index() {
         return value[locale] || value['en'] || value['vi'] || Object.values(value)[0] || '';
     }, []);
 
-    const getProductStatus = useCallback((productStatus: number) => {
+    const getProductStatus = useCallback((productStatus: string) => {
         switch (productStatus) {
-            case 1:
+            case 'draft':
+            case 'pending_approval':
                 return 'pending';
-            case 2:
+            case 'published':
                 return 'active';
-            case 3:
+            case 'hidden':
                 return 'inactive';
             default:
                 return 'pending';
@@ -296,9 +297,10 @@ export default function Index() {
                         onChange: setStatus,
                         label: t('-- All Statuses --'),
                         options: [
-                            { value: '1', label: t('Pending Approval') },
-                            { value: '2', label: t('Active') },
-                            { value: '3', label: t('Inactive') },
+                            { value: 'draft', label: t('Draft') },
+                            { value: 'pending_approval', label: t('Pending Approval') },
+                            { value: 'published', label: t('Published') },
+                            { value: 'hidden', label: t('Hidden') },
                         ],
                     },
                 ]}

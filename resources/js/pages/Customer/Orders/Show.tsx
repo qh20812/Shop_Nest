@@ -16,9 +16,10 @@ import { FormField } from '@/components/ui/form-field';
 import Textarea from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Heading } from '@/components/ui/typography';
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
-import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusLabel, paymentStatusTone } from '@/lib/status';
+import { useTranslation } from '@/lib/i18n';
+import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusKey, paymentStatusTone } from '@/lib/status';
 
 import styles from '../customer.module.css';
 
@@ -63,11 +64,11 @@ interface ShowProps extends Record<string, unknown> {
     order: OrderDetail;
 }
 
-const stepDefinitions: TimelineStep[] = [
-    { key: 'placed', label: 'Đặt hàng', description: 'ShopNest đã nhận đơn của bạn.' },
-    { key: 'confirmed', label: 'Shop xác nhận', description: 'Người bán đang chuẩn bị món hàng.' },
-    { key: 'shipping', label: 'Đang giao', description: 'Đơn đã được giao cho đơn vị vận chuyển.' },
-    { key: 'delivered', label: 'Đã giao', description: 'Đơn đã tới địa chỉ giao hàng.' },
+const stepDefinitionKeys = [
+    { key: 'placed', labelKey: 'Order placed', descriptionKey: 'ShopNest received your order.' },
+    { key: 'confirmed', labelKey: 'Shop confirmed', descriptionKey: 'The seller is preparing your items.' },
+    { key: 'shipping', labelKey: 'Delivering', descriptionKey: 'The order has been handed to the carrier.' },
+    { key: 'delivered', labelKey: 'Delivered', descriptionKey: 'The order arrived at the shipping address.' },
 ];
 
 function currentStep(status: string): number {
@@ -78,6 +79,13 @@ function currentStep(status: string): number {
 }
 
 export default function OrderShow({ order }: ShowProps) {
+    const { money } = useMoney();
+    const { t } = useTranslation();
+    const resolvedSteps: TimelineStep[] = stepDefinitionKeys.map((step) => ({
+        key: step.key,
+        label: t(step.labelKey),
+        description: t(step.descriptionKey),
+    }));
     const { success, error: showError } = useToast();
     const [cancelOpen, setCancelOpen] = React.useState(false);
     const [cancelReason, setCancelReason] = React.useState('');
@@ -98,8 +106,8 @@ export default function OrderShow({ order }: ShowProps) {
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => success('Đã thêm lại món vào giỏ'),
-                onError: () => showError('Không thể mua lại đơn này'),
+                onSuccess: () => success(t('Items added back to your cart')),
+                onError: () => showError(t('Could not reorder this order')),
             },
         );
     };
@@ -114,9 +122,9 @@ export default function OrderShow({ order }: ShowProps) {
                 onSuccess: () => {
                     setCancelOpen(false);
                     setCancelReason('');
-                    success('Đã huỷ đơn hàng');
+                    success(t('Order cancelled'));
                 },
-                onError: () => showError('Không thể huỷ đơn hàng'),
+                onError: () => showError(t('Could not cancel the order')),
                 onFinish: () => setCancelProcessing(false),
             },
         );
@@ -132,9 +140,9 @@ export default function OrderShow({ order }: ShowProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setComment('');
-                    success('Cảm ơn bạn đã đánh giá đơn hàng');
+                    success(t('Thanks for reviewing your order'));
                 },
-                onError: () => showError('Không thể gửi đánh giá'),
+                onError: () => showError(t('Could not submit the review')),
                 onFinish: () => setReviewProcessing(false),
             },
         );
@@ -143,38 +151,38 @@ export default function OrderShow({ order }: ShowProps) {
     return (
         <AccountLayout
             active="orders"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Đơn hàng', href: '/user/orders' }, { label: order.code }]}
-            eyebrow="Chi tiết đơn hàng"
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Orders'), href: '/user/orders' }, { label: order.code }]}
+            eyebrow={t('Order details')}
             title={order.code}
-            description={order.created_at ? `Đặt lúc ${order.created_at}` : undefined}
+            description={order.created_at ? t('Placed at :time', { time: order.created_at }) : undefined}
             actions={
                 <div className={styles.badgeRow}>
                     <Button variant="secondary" size="sm" leftIcon={ArrowLeft} asChild>
-                        <Link href="/user/orders">Danh sách</Link>
+                        <Link href="/user/orders">{t('Order list')}</Link>
                     </Button>
                     <Button variant="outline" size="sm" leftIcon={RefreshCw} onClick={handleReorder}>
-                        Mua lại
+                        {t('Reorder')}
                     </Button>
                     {order.can_cancel ? (
                         <Button variant="destructive" size="sm" leftIcon={XCircle} onClick={() => setCancelOpen(true)}>
-                            Huỷ đơn
+                            {t('Cancel order')}
                         </Button>
                     ) : null}
                 </div>
             }
         >
-            <Head title={`Đơn hàng ${order.code}`} />
+            <Head title={t('Order :code', { code: order.code })} />
 
             <div className={styles.orderGrid}>
                 <div className={styles.orderMain}>
                     {isCancelled || isReturned ? (
                         <Alert
                             tone={isCancelled ? 'danger' : 'warning'}
-                            title={isCancelled ? 'Đơn hàng đã huỷ' : 'Đơn hàng đang trả hàng'}
+                            title={isCancelled ? t('Order cancelled') : t('Order is being returned')}
                             description={
                                 isCancelled
-                                    ? 'Đơn này không thể tiếp tục giao. Nếu đã thanh toán, khoản hoàn tiền sẽ được xử lý theo chính sách.'
-                                    : 'Yêu cầu trả hàng đang được shop xử lý. Bạn sẽ nhận thông báo khi có cập nhật.'
+                                    ? t('This order cannot be delivered. If you already paid, the refund follows policy.')
+                                    : t('Your return request is being handled by the shop. We will notify you when it changes.')
                             }
                         />
                     ) : null}
@@ -182,25 +190,25 @@ export default function OrderShow({ order }: ShowProps) {
                     <Card padding="lg" className={styles.cardStack}>
                         <div className={styles.cardHead}>
                             <Heading level={2} size="headline-3">
-                                Tiến trình đơn hàng
+                                {t('Order progress')}
                             </Heading>
                             <div className={styles.badgeRow}>
-                                <OrderStatusBadge status={normalizedStatus} label={backendOrderStatusLabel(order.status)} />
+                                <OrderStatusBadge status={normalizedStatus} label={backendOrderStatusLabel(order.status, t)} />
                                 <Badge tone={paymentStatusTone[order.payment_status] ?? 'neutral'} dot>
-                                    {paymentStatusLabel[order.payment_status] ?? order.payment_status}
+                                    {t(paymentStatusKey[order.payment_status] ?? order.payment_status)}
                                 </Badge>
                             </div>
                         </div>
 
-                        <OrderTimeline steps={stepDefinitions} current={currentStep(order.status)} tone={timelineTone} />
+                        <OrderTimeline steps={resolvedSteps} current={currentStep(order.status)} tone={timelineTone} />
                     </Card>
 
                     <Card padding="lg" className={styles.cardStackTight}>
                         <div className={styles.cardHead}>
                             <Heading level={2} size="headline-3">
-                                Sản phẩm
+                                {t('Products')}
                             </Heading>
-                            <span className={styles.metaCode}>{order.items.length} món</span>
+                            <span className={styles.metaCode}>{t(':count products', { count: order.items.length })}</span>
                         </div>
 
                         <div>
@@ -225,13 +233,13 @@ export default function OrderShow({ order }: ShowProps) {
                             <div className={styles.cardHeadPlain}>
                                 <Star aria-hidden="true" className={styles.iconWarning} />
                                 <Heading level={2} size="headline-3">
-                                    Đánh giá đơn hàng
+                                    {t('Review your order')}
                                 </Heading>
                             </div>
 
                             <form onSubmit={handleReview} className={styles.reviewForm}>
                                 <fieldset className={styles.reviewFieldset}>
-                                    <legend className={styles.reviewLegend}>Chọn mức độ hài lòng</legend>
+                                    <legend className={styles.reviewLegend}>{t('How satisfied are you?')}</legend>
                                     <div className={styles.starRow}>
                                         {[1, 2, 3, 4, 5].map((value) => (
                                             <button
@@ -249,20 +257,20 @@ export default function OrderShow({ order }: ShowProps) {
                                     </div>
                                 </fieldset>
 
-                                <FormField label="Bình luận" hint="Chia sẻ trải nghiệm về sản phẩm và shop.">
+                                <FormField label={t('Comment')} hint={t('Share your experience with the product and the shop.')}>
                                     <Textarea
                                         value={comment}
                                         onChange={(event) => setComment(event.target.value)}
                                         rows={4}
                                         maxLength={1000}
                                         counter
-                                        placeholder="Hàng đóng gói cẩn thận, giao đúng hẹn..."
+                                        placeholder={t('Packaged carefully and delivered on time...')}
                                     />
                                 </FormField>
 
                                 <div className={styles.formActions}>
                                     <Button type="submit" loading={reviewProcessing}>
-                                        Gửi đánh giá
+                                        {t('Submit review')}
                                     </Button>
                                 </div>
                             </form>
@@ -274,7 +282,7 @@ export default function OrderShow({ order }: ShowProps) {
                             <div className={styles.cardHeadPlain}>
                                 <CheckCircle2 aria-hidden="true" className={styles.iconSuccess} />
                                 <Heading level={2} size="headline-3">
-                                    Đánh giá của bạn
+                                    {t('Your review')}
                                 </Heading>
                             </div>
 
@@ -294,35 +302,35 @@ export default function OrderShow({ order }: ShowProps) {
                 <aside className={styles.orderAside}>
                     <Card padding="lg" className={cx(styles.cardStackTight, styles.stickyAside)}>
                         <Heading level={2} size="headline-3">
-                            Tóm tắt thanh toán
+                            {t('Payment summary')}
                         </Heading>
 
                         <div className={styles.summaryRows}>
                             <div className={styles.summaryLine}>
-                                <span>Tạm tính</span>
-                                <span className={styles.summaryValue}>{formatVnd(order.subtotal)}</span>
+                                <span>{t('Subtotal')}</span>
+                                <span className={styles.summaryValue}>{money(order.subtotal)}</span>
                             </div>
                             <div className={styles.summaryLine}>
-                                <span>Phí vận chuyển</span>
-                                <span className={styles.summaryValue}>{order.shipping_fee > 0 ? formatVnd(order.shipping_fee) : 'Miễn phí'}</span>
+                                <span>{t('Shipping fee')}</span>
+                                <span className={styles.summaryValue}>{order.shipping_fee > 0 ? money(order.shipping_fee) : t('Free')}</span>
                             </div>
                             {order.discount_total > 0 ? (
                                 <div className={styles.summaryLine}>
-                                    <span>Giảm giá</span>
-                                    <span className={cx(styles.summaryValue, styles.summaryValueDiscount)}>-{formatVnd(order.discount_total)}</span>
+                                    <span>{t('Discount')}</span>
+                                    <span className={cx(styles.summaryValue, styles.summaryValueDiscount)}>-{money(order.discount_total)}</span>
                                 </div>
                             ) : null}
                         </div>
 
                         <div className={styles.summaryTotalRow}>
-                            <span className={styles.summaryTotalLabel}>Tổng cộng</span>
-                            <span className={styles.summaryTotalValue}>{formatVnd(order.total)}</span>
+                            <span className={styles.summaryTotalLabel}>{t('Total')}</span>
+                            <span className={styles.summaryTotalValue}>{money(order.total)}</span>
                         </div>
 
                         <div className={styles.summaryMeta}>
                             <span className={styles.summaryMetaRow}>
                                 <CreditCard aria-hidden="true" className={styles.iconFaint} />
-                                {paymentStatusLabel[order.payment_status] ?? order.payment_status}
+                                {t(paymentStatusKey[order.payment_status] ?? order.payment_status)}
                             </span>
                             {order.shipping_address ? (
                                 <span className={styles.summaryAddress}>
@@ -337,7 +345,7 @@ export default function OrderShow({ order }: ShowProps) {
                         </div>
 
                         <Button variant="secondary" size="sm" leftIcon={RefreshCw} onClick={handleReorder}>
-                            Mua lại đơn này
+                            {t('Reorder this order')}
                         </Button>
                     </Card>
 
@@ -345,8 +353,8 @@ export default function OrderShow({ order }: ShowProps) {
                         <Alert
                             tone="danger"
                             icon={AlertTriangle}
-                            title="Cần hỗ trợ?"
-                            description="Liên hệ shop trong mục chat để được kiểm tra hoàn tiền hoặc tạo đơn mới."
+                            title={t('Need help?')}
+                            description={t('Message the shop in chat to check the refund or place a new order.')}
                         />
                     ) : null}
                 </aside>
@@ -355,27 +363,27 @@ export default function OrderShow({ order }: ShowProps) {
             <Dialog
                 open={cancelOpen}
                 onOpenChange={setCancelOpen}
-                title="Huỷ đơn hàng?"
-                description="Đơn đã huỷ không thể khôi phục. Nếu đã thanh toán, khoản hoàn tiền sẽ được xử lý theo chính sách."
+                title={t('Cancel this order?')}
+                description={t('Cancelled orders cannot be restored. If you already paid, the refund follows policy.')}
                 size="md"
                 footer={
                     <div className={styles.dialogFooter}>
                         <Button variant="secondary" onClick={() => setCancelOpen(false)} disabled={cancelProcessing}>
-                            Giữ đơn
+                            {t('Keep order')}
                         </Button>
                         <Button variant="destructive" loading={cancelProcessing} onClick={handleCancel}>
-                            Huỷ đơn
+                            {t('Cancel order')}
                         </Button>
                     </div>
                 }
             >
-                <FormField label="Lý do (tuỳ chọn)" className={styles.dialogField}>
+                <FormField label={t('Reason (optional)')} className={styles.dialogField}>
                     <Textarea
                         value={cancelReason}
                         onChange={(event) => setCancelReason(event.target.value)}
                         rows={3}
                         maxLength={500}
-                        placeholder="Ví dụ: Muốn đổi địa chỉ giao hàng."
+                        placeholder={t('e.g. I want to change the shipping address.')}
                     />
                 </FormField>
             </Dialog>

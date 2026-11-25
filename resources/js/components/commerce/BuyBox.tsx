@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { CheckCircle2, ShoppingCart, Truck, Zap } from 'lucide-react';
 import * as React from 'react';
 
@@ -49,11 +50,13 @@ export function BuyBox({
     onBuyNow,
     adding = false,
     buying = false,
-    deliveryNote = 'Theo địa chỉ giao hàng.',
+    deliveryNote,
     trust = [],
     children,
     className,
 }: BuyBoxProps) {
+    const { t } = useTranslation();
+    const resolvedDeliveryNote = deliveryNote ?? t('By shipping address.');
     const inStock = (stock ?? maxQuantity) > 0;
 
     return (
@@ -64,7 +67,7 @@ export function BuyBox({
                 <h1 className={styles.buyBoxTitle}>{title}</h1>
                 <div className={styles.buyBoxRating}>
                     {typeof rating === 'number' && <Rating value={rating} count={reviewCount} compact />}
-                    {typeof soldCount === 'number' && <span>Đã bán {formatNumber(soldCount)}</span>}
+                    {typeof soldCount === 'number' && <span>{t('Sold :count', { count: formatNumber(soldCount) })}</span>}
                 </div>
             </div>
 
@@ -72,7 +75,7 @@ export function BuyBox({
                 <Price value={price} compareAt={compareAt} size="xl" />
                 {stock !== undefined && (
                     <Badge tone={inStock ? 'success' : 'danger'} dot size="sm">
-                        {inStock ? `Còn ${formatNumber(stock)} sản phẩm` : 'Tạm hết hàng'}
+                        {inStock ? t(':count items left', { count: formatNumber(stock) }) : t('Out of stock')}
                     </Badge>
                 )}
             </div>
@@ -81,12 +84,12 @@ export function BuyBox({
 
             <div className={styles.buyBoxQuantity}>
                 <QuantityStepper value={quantity} min={1} max={Math.max(1, maxQuantity)} onChange={onQuantityChange} disabled={!inStock} />
-                <span>Tối đa {Math.max(1, maxQuantity)} món</span>
+                <span>{t('Max :count items', { count: Math.max(1, maxQuantity) })}</span>
             </div>
 
             <div className={styles.buyBoxActions}>
                 <Button size="lg" leftIcon={ShoppingCart} loading={adding} disabled={!inStock} onClick={onAddToCart}>
-                    Thêm vào giỏ
+                    {t('Add to cart')}
                 </Button>
                 <Button size="lg" variant="secondary" leftIcon={Zap} loading={buying} disabled={!inStock} onClick={onBuyNow}>
                     Mua ngay
@@ -96,8 +99,8 @@ export function BuyBox({
             <div className={styles.buyBoxDelivery}>
                 <Truck aria-hidden="true" className={styles.buyBoxDeliveryIcon} />
                 <div className={styles.buyBoxDeliveryText}>
-                    <span className={styles.buyBoxDeliveryTitle}>Dự kiến nhận hàng</span>
-                    <span>{deliveryNote}</span>
+                    <span className={styles.buyBoxDeliveryTitle}>{t('Estimated delivery')}</span>
+                    <span>{resolvedDeliveryNote}</span>
                 </div>
             </div>
 

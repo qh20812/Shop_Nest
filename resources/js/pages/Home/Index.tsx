@@ -13,6 +13,7 @@ import { TrustStrip } from '@/components/storefront/TrustStrip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { usePageLoading } from '@/hooks/usePageLoading';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import styles from './Home.module.css';
@@ -73,67 +74,60 @@ interface PageProps extends Record<string, unknown> {
 const fallbackHeroImages = [
     {
         src: '/images/products/macbook-air-m3.jpg',
-        alt: 'Laptop trên bàn làm việc',
-        label: 'Điện tử',
+        altKey: 'Laptop on a desk',
+        labelKey: 'Electronics',
     },
     {
         src: '/images/products/noi-chien-khong-dau-philips-hd9200.jpg',
-        alt: 'Nồi chiên trong bếp',
-        label: 'Gia dụng',
+        altKey: 'Air fryer in the kitchen',
+        labelKey: 'Home appliances',
     },
     {
         src: '/images/products/vay-hoa-nhi-nu.jpg',
-        alt: 'Thời trang nữ',
-        label: 'Thời trang',
+        altKey: 'Women fashion',
+        labelKey: 'Fashion',
     },
 ];
 
-const anchorCategoryNames = [
-    'Điện tử & công nghệ',
-    'Gia dụng & nhà bếp',
-    'Nhà cửa & trang trí',
-    'Mẹ & bé',
-    'Thời trang & phụ kiện',
-    'Làm đẹp & chăm sóc',
-];
+const anchorCategoryKeys = ['Electronics & technology', 'Home & kitchen', 'Home & living', 'Mother & baby', 'Fashion & accessories', 'Beauty & care'];
 
 const trustItems = [
     {
         icon: ShieldCheck,
-        title: 'Shop đã kiểm duyệt',
-        description: 'Hồ sơ và nguồn gốc được kiểm tra trước khi mở bán.',
+        titleKey: 'Verified shops',
+        descriptionKey: 'Seller profiles and product origin are checked before opening.',
     },
     {
         icon: RotateCcw,
-        title: 'Đổi trả 7 ngày',
-        description: 'Đổi hoặc hoàn khi sản phẩm sai cam kết.',
+        titleKey: '7-day returns',
+        descriptionKey: 'Exchange or refund when the item is not as promised.',
     },
     {
         icon: Truck,
-        title: 'Giao toàn quốc',
-        description: 'Đóng gói chống sốc, có mã theo dõi đơn.',
+        titleKey: 'Nationwide delivery',
+        descriptionKey: 'Shockproof packaging with order tracking.',
     },
     {
         icon: Lock,
-        title: 'Thanh toán bảo mật',
-        description: 'Hỗ trợ Stripe và thanh toán khi nhận hàng.',
+        titleKey: 'Secure payment',
+        descriptionKey: 'Stripe and cash on delivery supported.',
     },
 ];
 
 const pillars = [
     {
-        title: 'Mỗi món đều có lý do',
-        description: 'Sáu nhóm ngành thiết yếu, chọn theo nhu cầu của tổ ấm Việt.',
+        titleKey: 'Every item has a reason',
+        descriptionKey: 'Six essential categories, chosen for Vietnamese homes.',
         image: '/images/shops/shopnest-official.jpg',
     },
     {
-        title: 'Thông tin rõ ràng',
-        description: 'Nguồn gốc, bảo hành và chính sách đổi trả hiển thị trước khi mua.',
+        titleKey: 'Clear information',
+        descriptionKey: 'Origin, warranty and return policy shown before you buy.',
         image: '/images/products/samsung-galaxy-s24-ultra.jpg',
     },
     {
-        title: 'Hỗ trợ đến khi nhận',
-        description: 'Từ lúc chọn món đến khi nhận hàng, đội hỗ trợ trả lời trong chat.',
+        titleKey: 'Support until delivery',
+        descriptionKey: 'From choosing to receiving, our support team answers in chat.',
         image: '/images/shops/techzone.jpg',
     },
 ];
@@ -169,9 +163,16 @@ function toProductCard(product: Product): ProductCardModel {
 }
 
 export default function Index() {
+    const { t } = useTranslation();
     const isLoading = usePageLoading({ delay: 300, minLoadingTime: 1500 });
     const { success, error: showError, info } = useToast();
     const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [], auth } = usePage<PageProps>().props;
+
+    const heroFallbacks = fallbackHeroImages.map((image) => ({
+        src: image.src,
+        alt: t(image.altKey),
+        label: t(image.labelKey),
+    }));
 
     const heroImages =
         banners.length > 0
@@ -181,9 +182,9 @@ export default function Index() {
                       alt: banner.alt ?? banner.title ?? 'ShopNest',
                       label: banner.subtitle ?? undefined,
                   })),
-                  ...fallbackHeroImages,
+                  ...heroFallbacks,
               ].slice(0, 3)
-            : fallbackHeroImages;
+            : heroFallbacks;
 
     const categoryItems: CategoryItem[] = categories.slice(0, 6).map((category) => ({
         id: category.id,
@@ -194,7 +195,10 @@ export default function Index() {
     const existingNames = new Set(categoryItems.map((category) => category.name.toLowerCase()));
     const filledCategories = [
         ...categoryItems,
-        ...anchorCategoryNames.filter((name) => !existingNames.has(name.toLowerCase())).map((name) => ({ name })),
+        ...anchorCategoryKeys
+            .map((key) => t(key))
+            .filter((name) => !existingNames.has(name.toLowerCase()))
+            .map((name) => ({ name })),
     ].slice(0, 6);
 
     const flashProducts = (flashSale?.products ?? []).map(toProductCard);
@@ -202,7 +206,7 @@ export default function Index() {
     const suggestedCards = suggestedProducts.map(toProductCard);
 
     const handleAddToCart = (product: ProductCardModel) => {
-        info('Chọn phân loại sản phẩm', product.name);
+        info(t('Choose a product variant'), product.name);
         router.visit(`/product/${product.id}`);
     };
 
@@ -218,8 +222,8 @@ export default function Index() {
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => success('Đã lưu sản phẩm', product.name),
-                onError: () => showError('Chưa thể lưu sản phẩm', 'Vui lòng đăng nhập để dùng danh sách yêu thích.'),
+                onSuccess: () => success(t('Saved to your wishlist'), product.name),
+                onError: () => showError(t('Could not save this item'), t('Sign in to use your wishlist.')),
             },
         );
     };
@@ -234,19 +238,19 @@ export default function Index() {
 
     return (
         <StorefrontLayout>
-            <Head title="ShopNest. Mọi thứ cho tổ ấm Việt" />
+            <Head title={t('ShopNest. Everything for Vietnamese homes')} />
 
             <HeroEditorial
-                eyebrow="Mọi thứ cho tổ ấm Việt"
+                eyebrow={t('Everything for Vietnamese homes')}
                 title={
                     <>
-                        Chọn đồ kỹ,
+                        {t('Choose carefully,')}
                         <br />
-                        sống êm.
+                        {t('live softly.')}
                     </>
                 }
-                subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
-                cta={{ label: 'Xem chợ', href: '/search' }}
+                subcopy={t('Electronics, home appliances, furniture, mother & baby, fashion and beauty from verified Vietnamese shops.')}
+                cta={{ label: t('Browse the market'), href: '/search' }}
                 images={heroImages}
             />
 
@@ -264,31 +268,43 @@ export default function Index() {
 
             <ProductShelf
                 id="ban-chay"
-                title="Sản phẩm bán chạy"
-                description="Xếp theo số lượng đã bán trên các đơn không huỷ."
+                title={t('Best sellers')}
+                description={t('Ranked by units sold on non-cancelled orders.')}
                 products={bestSellerCards}
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
-                emptyTitle="Chưa có sản phẩm bán chạy"
-                emptyDescription="Chưa có đơn nào để tính xếp hạng."
+                emptyTitle={t('No best sellers yet')}
+                emptyDescription={t('No orders yet to compute the ranking.')}
             />
 
             <ProductShelf
                 id="goi-y"
-                title="Gợi ý cho tổ ấm"
-                description="Chọn theo nhu cầu hôm nay: làm việc, nấu ăn, chăm bé hay chăm mình."
+                title={t('Suggestions for your home')}
+                description={t('Picked for today: work, cooking, childcare or self-care.')}
                 products={suggestedCards}
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
-                emptyTitle="Chưa có gợi ý"
-                emptyDescription="Thêm danh mục và thương hiệu bạn thích trong tài khoản để gợi ý sát hơn."
+                emptyTitle={t('No suggestions yet')}
+                emptyDescription={t('Add your favourite categories and brands in your account for better suggestions.')}
             />
 
             <BrandSpotlight />
 
-            <EditorialPillars pillars={pillars} />
+            <EditorialPillars
+                pillars={pillars.map((pillar) => ({
+                    title: t(pillar.titleKey),
+                    description: t(pillar.descriptionKey),
+                    image: pillar.image,
+                }))}
+            />
 
-            <TrustStrip items={trustItems} />
+            <TrustStrip
+                items={trustItems.map((item) => ({
+                    icon: item.icon,
+                    title: t(item.titleKey),
+                    description: t(item.descriptionKey),
+                }))}
+            />
         </StorefrontLayout>
     );
 }

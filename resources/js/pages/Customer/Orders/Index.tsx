@@ -6,6 +6,7 @@ import { OrderTable } from '@/components/commerce/OrderTable';
 import { AccountLayout } from '@/components/layout/AccountLayout';
 import { SearchInput } from '@/components/ui/search-input';
 import { Tabs } from '@/components/ui/tabs';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from '../customer.module.css';
 
@@ -27,16 +28,17 @@ interface PageProps extends Record<string, unknown> {
     };
 }
 
-const statusTabs = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'pending', label: 'Chờ xử lý' },
-    { value: 'processing', label: 'Đang xử lý' },
-    { value: 'shipped', label: 'Đang giao' },
-    { value: 'delivered', label: 'Đã giao' },
-    { value: 'canceled', label: 'Đã huỷ' },
+const statusTabKeys = [
+    { value: 'all', labelKey: 'All' },
+    { value: 'pending', labelKey: 'Pending' },
+    { value: 'processing', labelKey: 'Processing' },
+    { value: 'shipped', labelKey: 'Delivering' },
+    { value: 'delivered', labelKey: 'Delivered' },
+    { value: 'canceled', labelKey: 'Cancelled' },
 ];
 
 export default function OrdersIndex() {
+    const { t } = useTranslation();
     const { orders = [], filters = {} } = usePage<PageProps>().props;
     const [search, setSearch] = React.useState(filters.search ?? '');
     const activeStatus = filters.status ?? 'all';
@@ -80,11 +82,11 @@ export default function OrdersIndex() {
     return (
         <AccountLayout
             active="orders"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Đơn hàng' }]}
-            eyebrow="Tài khoản"
-            title="Đơn hàng của tôi"
-            description="Theo dõi trạng thái, thanh toán và tiến trình giao hàng của mọi đơn đã đặt."
-            count={`${orders.length} đơn`}
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Account') }, { label: t('Orders') }]}
+            eyebrow={t('Account')}
+            title={t('My orders')}
+            description={t('Track status, payment and delivery progress for every order you placed.')}
+            count={t(':count orders', { count: orders.length })}
             actions={
                 <div className={styles.searchWrap}>
                     <SearchInput
@@ -95,27 +97,31 @@ export default function OrdersIndex() {
                             setSearch('');
                             visit({ search: '' });
                         }}
-                        placeholder="Tìm theo mã đơn..."
+                        placeholder={t('Search by order code...')}
                         size="sm"
-                        aria-label="Tìm đơn hàng"
+                        aria-label={t('Search orders')}
                     />
                 </div>
             }
         >
-            <Head title="Đơn hàng của tôi" />
+            <Head title={t('My orders')} />
 
             <div className={styles.stack}>
                 <Tabs
-                    items={statusTabs.map((tab) => ({ value: tab.value, label: tab.label, icon: tab.value === 'all' ? ClipboardList : undefined }))}
+                    items={statusTabKeys.map((tab) => ({
+                        value: tab.value,
+                        label: t(tab.labelKey),
+                        icon: tab.value === 'all' ? ClipboardList : undefined,
+                    }))}
                     value={activeStatus}
                     onValueChange={handleStatus}
                     variant="filter"
-                    ariaLabel="Lọc đơn hàng theo trạng thái"
+                    ariaLabel={t('Filter orders by status')}
                 />
 
-                <OrderTable orders={tableRows} emptyDescription="Khi bạn đặt món đầu tiên, đơn hàng sẽ xuất hiện tại đây." />
+                <OrderTable orders={tableRows} emptyDescription={t('Your first order will appear here once you place it.')} />
 
-                <p className={styles.fineprint}>Danh sách hiển thị tối đa 50 đơn gần nhất. Dùng ô tìm kiếm để tra cứu mã đơn cũ hơn.</p>
+                <p className={styles.fineprint}>{t('The 50 newest purchases are shown. Use search for older codes.')}</p>
             </div>
         </AccountLayout>
     );

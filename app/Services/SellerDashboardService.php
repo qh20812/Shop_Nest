@@ -26,8 +26,6 @@ use Illuminate\Validation\ValidationException;
  * - Comprehensive error handling
  * - Configurable limits and thresholds
  * - Memory-efficient data processing
- *
- * @package App\Services
  */
 class SellerDashboardService
 {
@@ -38,9 +36,9 @@ class SellerDashboardService
      *
      * Ensures the seller ID is a positive integer to prevent invalid data access.
      *
-     * @param int $sellerId The seller ID to validate
-     * @return void
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     * @param  int  $sellerId  The seller ID to validate
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     private function validateSellerId(int $sellerId): void
     {
@@ -57,10 +55,11 @@ class SellerDashboardService
      * Ensures query limits are within safe bounds to prevent performance issues
      * and potential DoS attacks through excessive data retrieval.
      *
-     * @param int|null $limit The requested limit or null for default
-     * @param int $maxLimit Maximum allowed limit (default: 100)
+     * @param  int|null  $limit  The requested limit or null for default
+     * @param  int  $maxLimit  Maximum allowed limit (default: 100)
      * @return int Validated limit value
-     * @throws \Illuminate\Validation\ValidationException When limit is invalid
+     *
+     * @throws ValidationException When limit is invalid
      */
     private function validateLimit(?int $limit, int $maxLimit = 100): int
     {
@@ -90,9 +89,10 @@ class SellerDashboardService
      * - Number of unique customers
      * - Average order value (calculated from totals)
      *
-     * @param int $sellerId The seller's unique identifier
+     * @param  int  $sellerId  The seller's unique identifier
      * @return array Associative array with aggregated statistics
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getAggregatedSellerStats(int $sellerId): array
     {
@@ -131,9 +131,10 @@ class SellerDashboardService
      * including customer information and order items with product variants.
      * Uses optimized queries with eager loading to minimize database calls.
      *
-     * @param int $sellerId The seller's unique identifier
+     * @param  int  $sellerId  The seller's unique identifier
      * @return Collection Collection of Order models with relationships loaded
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getRecentShopOrders(int $sellerId): Collection
     {
@@ -174,12 +175,13 @@ class SellerDashboardService
      * Supports configurable limits and includes localization for product names.
      * Uses aggregation queries for optimal performance.
      *
-     * @param int $sellerId The seller's unique identifier
-     * @param int|null $limit Maximum number of products to return (null uses config default)
+     * @param  int  $sellerId  The seller's unique identifier
+     * @param  int|null  $limit  Maximum number of products to return (null uses config default)
      * @return Collection Collection of product data with sales metrics
-     * @throws \Illuminate\Validation\ValidationException When parameters are invalid
+     *
+     * @throws ValidationException When parameters are invalid
      */
-    public function getTopSellingProductsData(int $sellerId, int $limit = null): Collection
+    public function getTopSellingProductsData(int $sellerId, ?int $limit = null): Collection
     {
         $this->validateSellerId($sellerId);
         $limit = $this->validateLimit($limit);
@@ -206,10 +208,18 @@ class SellerDashboardService
             return collect();
         }
 
-        return $results->map(function ($row) use ($locale) {
+        // Load every product in one query instead of calling Product::find() per row.
+        $products = Product::query()
+            ->whereIn('product_id', $results->pluck('product_id'))
+            ->get()
+            ->keyBy('product_id');
+
+        return $results->map(function ($row) use ($locale, $products) {
             return [
                 'product_id' => $row->product_id,
-                'name' => $row->product_name ? (Product::find($row->product_id)?->getTranslation('name', $locale) ?? $row->product_name) : null,
+                'name' => $row->product_name
+                    ? ($products->get($row->product_id)?->getTranslation('name', $locale) ?? $row->product_name)
+                    : null,
                 'total_quantity' => (int) $row->total_quantity,
                 'total_revenue' => (float) $row->total_revenue,
             ];
@@ -222,13 +232,15 @@ class SellerDashboardService
      * Counts product variants that have stock levels below the configured
      * low stock threshold, helping sellers identify inventory needs.
      *
-     * @param int $sellerId The seller's unique identifier
+     * @param  int  $sellerId  The seller's unique identifier
      * @return int Number of products with low stock
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getStockAlertsCount(int $sellerId): int
     {
         $this->validateSellerId($sellerId);
+
         return ProductVariant::query()
             ->join('products', 'product_variants.product_id', '=', 'products.product_id')
             ->where('products.seller_id', $sellerId)
@@ -242,9 +254,10 @@ class SellerDashboardService
      * Returns detailed information about products that have fallen below
      * the low stock threshold to alert sellers about potential stock shortages.
      *
-     * @param int $sellerId The seller's unique identifier
-     * @return \Illuminate\Support\Collection Collection of products with low stock details
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     * @param  int  $sellerId  The seller's unique identifier
+     * @return Collection Collection of products with low stock details
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getStockAlertsData(int $sellerId): Collection
     {
@@ -260,7 +273,7 @@ class SellerDashboardService
                 'products.product_id',
                 'products.name',
                 'product_variants.variant_id',
-                'product_variants.stock_quantity'
+                'product_variants.stock_quantity',
             ])
             ->selectRaw('JSON_UNQUOTE(JSON_EXTRACT(products.name, "$.en")) as product_name_en')
             ->get()
@@ -280,9 +293,10 @@ class SellerDashboardService
      * Counts orders in various pending states that may need processing,
      * including orders pending confirmation, processing, assignment, and delivery.
      *
-     * @param int $sellerId The seller's unique identifier
+     * @param  int  $sellerId  The seller's unique identifier
      * @return int Number of pending orders
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getPendingOrdersCount(int $sellerId): int
     {
@@ -316,9 +330,10 @@ class SellerDashboardService
      * to calculate growth rate. Handles edge cases like zero previous revenue.
      * Uses Carbon for accurate month boundary calculations.
      *
-     * @param int $sellerId The seller's unique identifier
+     * @param  int  $sellerId  The seller's unique identifier
      * @return float Growth percentage (positive for growth, negative for decline)
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function calculateMonthlyRevenueGrowth(int $sellerId): float
     {
@@ -363,9 +378,10 @@ class SellerDashboardService
      * Identifies products that have fallen below the low stock threshold
      * to alert sellers about potential stock shortages.
      *
-     * @param int $sellerId The seller's unique identifier
-     * @return \Illuminate\Support\Collection Collection of products with low stock
-     * @throws \Illuminate\Validation\ValidationException When seller ID is invalid
+     * @param  int  $sellerId  The seller's unique identifier
+     * @return Collection Collection of products with low stock
+     *
+     * @throws ValidationException When seller ID is invalid
      */
     public function getStockAlerts(int $sellerId): Collection
     {
@@ -381,7 +397,7 @@ class SellerDashboardService
                 'products.name',
                 'product_variants.stock_quantity',
                 'product_variants.variant_id',
-                'products.product_id'
+                'products.product_id',
             ])
             ->with('product:product_id,name')
             ->get()

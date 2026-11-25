@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -27,7 +28,7 @@ type ChatbotPanelProps = {
     className?: string;
 };
 
-const defaultQuickReplies = ['Tra cứu đơn hàng', 'Chính sách đổi trả', 'Tư vấn sản phẩm'];
+const defaultQuickReplyKeys = ['Track my order', 'Return policy', 'Product advice'];
 
 export function ChatbotPanel({
     messages,
@@ -40,9 +41,11 @@ export function ChatbotPanel({
     onDismissError,
     onClearHistory,
     clearing = false,
-    quickReplies = defaultQuickReplies,
+    quickReplies,
     className,
 }: ChatbotPanelProps) {
+    const { t } = useTranslation();
+    const resolvedQuickReplies = quickReplies ?? defaultQuickReplyKeys.map((key) => t(key));
     const [draft, setDraft] = React.useState('');
     const [confirmingClear, setConfirmingClear] = React.useState(false);
 
@@ -71,16 +74,16 @@ export function ChatbotPanel({
         <div className={cx(styles.panel, className)}>
             <ChatHeader
                 variant="assistant"
-                title="Trợ lý ShopNest"
-                subtitle="Trực tuyến"
+                title={t('ShopNest assistant')}
+                subtitle={t('Online')}
                 online
                 onClose={onClose}
                 onMinimize={onMinimize}
                 actions={
                     onClearHistory ? (
                         <IconButton
-                            label="Xoá hội thoại"
-                            tooltip="Xoá hội thoại"
+                            label={t('Clear conversation')}
+                            tooltip={t('Clear conversation')}
                             variant="ghost"
                             size="sm"
                             disabled={clearing}
@@ -96,29 +99,29 @@ export function ChatbotPanel({
                 messages={messages}
                 loading={loading}
                 typing={typing}
-                typingLabel="Trợ lý đang soạn tin"
-                emptyTitle="Xin chào!"
-                emptyDescription="Hỏi mình về đơn hàng, đổi trả hoặc chọn sản phẩm phù hợp."
+                typingLabel={t('Assistant is typing')}
+                emptyTitle={t('Hi!')}
+                emptyDescription={t('Ask me about your order, returns or picking the right product.')}
             />
 
             <div className={styles.panelFooter}>
-                {error ? <Alert tone="danger" title="Trợ lý đang bận" description={error} onDismiss={onDismissError} /> : null}
+                {error ? <Alert tone="danger" title={t('The assistant is busy')} description={error} onDismiss={onDismissError} /> : null}
 
                 {confirmingClear ? (
                     <div className={styles.clearConfirm} role="alert">
-                        <span className={styles.clearConfirmText}>Xoá toàn bộ hội thoại? Thao tác này không thể hoàn tác.</span>
+                        <span className={styles.clearConfirmText}>{t('Clear the whole conversation? This cannot be undone.')}</span>
                         <div className={styles.clearConfirmActions}>
                             <Button type="button" size="sm" variant="destructive" loading={clearing} onClick={handleClear}>
-                                Xoá
+                                {t('Clear')}
                             </Button>
                             <Button type="button" size="sm" variant="ghost" disabled={clearing} onClick={() => setConfirmingClear(false)}>
-                                Huỷ
+                                {t('Cancel')}
                             </Button>
                         </div>
                     </div>
                 ) : null}
 
-                <QuickReplies items={quickReplies} onSelect={send} disabled={typing} />
+                <QuickReplies items={resolvedQuickReplies} onSelect={send} disabled={typing} />
 
                 <ChatComposer
                     value={draft}
@@ -126,12 +129,12 @@ export function ChatbotPanel({
                     onSend={() => send(draft)}
                     loading={typing}
                     disabled={typing}
-                    placeholder="Hỏi trợ lý ShopNest..."
+                    placeholder={t('Ask the ShopNest assistant...')}
                 />
 
                 <p className={styles.panelNote}>
                     <ShieldCheck aria-hidden="true" className={styles.panelNoteIcon} />
-                    Trợ lý có thể sai sót. Kiểm tra thông tin quan trọng trước khi đặt hàng.
+                    {t('The assistant can make mistakes. Verify important details before ordering.')}
                 </p>
             </div>
         </div>

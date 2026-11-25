@@ -9,8 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderItem extends Model
 {
     use HasFactory;
+
     public $timestamps = false;
+
     protected $primaryKey = 'order_item_id';
+
     protected $fillable = [
         'order_id',
         'variant_id',
@@ -19,10 +22,13 @@ class OrderItem extends Model
         'total_price',
         'original_currency',
         'original_unit_price',
-        'original_total_price'
+        'original_total_price',
     ];
-    public function variant(): BelongsTo{
-        return $this->belongsTo(ProductVariant::class,'variant_id');
+
+    public function variant(): BelongsTo
+    {
+        // Soft-deleted variants must remain readable from historical orders.
+        return $this->belongsTo(ProductVariant::class, 'variant_id')->withTrashed();
     }
 
     public function order(): BelongsTo

@@ -2,6 +2,7 @@ import { Pin } from 'lucide-react';
 
 import Avatar from '@/components/ui/avatar';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -28,6 +29,7 @@ export function ConversationRow({
     onClick,
     className,
 }: ConversationRowProps) {
+    const { t } = useTranslation();
     return (
         <button
             type="button"
@@ -39,7 +41,7 @@ export function ConversationRow({
         >
             <span className={styles.conversationAvatar}>
                 <Avatar name={name} size="md" />
-                {online ? <span aria-label="Đang trực tuyến" className={styles.conversationOnline} /> : null}
+                {online ? <span aria-label={t('Online')} className={styles.conversationOnline} /> : null}
             </span>
 
             <span className={styles.conversationBody}>
@@ -49,8 +51,8 @@ export function ConversationRow({
                 </span>
 
                 <span className={styles.conversationPreviewRow}>
-                    {pinned ? <Pin aria-label="Đã ghim" className={styles.conversationPin} /> : null}
-                    <span className={styles.conversationPreview}>{preview || 'Chưa có tin nhắn.'}</span>
+                    {pinned ? <Pin aria-label={t('Pinned')} className={styles.conversationPin} /> : null}
+                    <span className={styles.conversationPreview}>{preview || t('No messages yet.')}</span>
                     {unreadCount > 0 ? <span className={styles.conversationUnread}>{unreadCount > 9 ? '9+' : unreadCount}</span> : null}
                 </span>
             </span>

@@ -1,9 +1,10 @@
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import { Package, ReceiptText } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
 import { backendOrderStatusLabel } from '@/lib/status';
 
 import styles from './commerce.module.css';
@@ -24,6 +25,8 @@ type OrderAnnouncementCardProps = {
 };
 
 export function OrderAnnouncementCard({ order, className }: OrderAnnouncementCardProps) {
+    const { t } = useTranslation();
+    const { money } = useMoney();
     const href = order.url ?? `/user/orders/${order.id}`;
 
     return (
@@ -35,13 +38,13 @@ export function OrderAnnouncementCard({ order, className }: OrderAnnouncementCar
                 <div className={styles.announcementBody}>
                     <span className={styles.announcementCode}>{order.code}</span>
                     <span className={styles.announcementMeta}>
-                        {order.itemCount ? `${order.itemCount} sản phẩm` : 'Đơn hàng'}
+                        {order.itemCount ? t(':count items', { count: order.itemCount }) : t('Order')}
                         {order.createdAt ? ` · ${order.createdAt}` : ''}
                     </span>
                 </div>
                 {order.status ? (
                     <Badge tone="accent" size="sm" dot>
-                        {backendOrderStatusLabel(order.status)}
+                        {backendOrderStatusLabel(order.status, t)}
                     </Badge>
                 ) : null}
             </div>
@@ -49,9 +52,9 @@ export function OrderAnnouncementCard({ order, className }: OrderAnnouncementCar
             <div className={styles.announcementBottom}>
                 <span className={styles.announcementHint}>
                     <Package aria-hidden="true" />
-                    Xem chi tiết đơn
+                    {t('View order details')}
                 </span>
-                {typeof order.total === 'number' ? <span className={styles.announcementTotal}>{formatVnd(order.total)}</span> : null}
+                {typeof order.total === 'number' ? <span className={styles.announcementTotal}>{money(order.total)}</span> : null}
             </div>
         </Link>
     );

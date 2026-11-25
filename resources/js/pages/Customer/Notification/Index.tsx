@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from '../customer.module.css';
 
@@ -17,14 +18,15 @@ interface PageProps extends Record<string, unknown> {
     filters?: { tab?: string };
 }
 
-const tabs = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'unread', label: 'Chưa đọc' },
-    { value: 'promotion', label: 'Khuyến mãi' },
-    { value: 'order', label: 'Đơn hàng' },
+const tabKeys = [
+    { value: 'all', labelKey: 'All' },
+    { value: 'unread', labelKey: 'Unread' },
+    { value: 'promotion', labelKey: 'Promotions' },
+    { value: 'order', labelKey: 'Orders' },
 ];
 
 export default function NotificationIndex() {
+    const { t } = useTranslation();
     const { notifications = [], filters = {} } = usePage<PageProps>().props;
     const { success, error: showError } = useToast();
     const [items, setItems] = React.useState<NotificationModel[]>(notifications);
@@ -50,9 +52,9 @@ export default function NotificationIndex() {
                 preserveScroll: true,
                 onSuccess: () => {
                     setItems((current) => current.map((item) => ({ ...item, is_read: true })));
-                    success('Đã đánh dấu tất cả là đã đọc');
+                    success(t('All notifications marked as read'));
                 },
-                onError: () => showError('Không thể cập nhật thông báo'),
+                onError: () => showError(t('Could not update notifications')),
                 onFinish: () => setMarkingAll(false),
             },
         );
@@ -64,47 +66,45 @@ export default function NotificationIndex() {
             .then(() => {
                 setItems((current) => current.map((item) => (item.id === id ? { ...item, is_read: true } : item)));
             })
-            .catch(() => showError('Không thể đánh dấu thông báo'));
+            .catch(() => showError(t('Could not mark the notification')));
     };
 
     return (
         <AccountLayout
             active="notifications"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Thông báo' }]}
-            eyebrow="Tài khoản"
-            title="Thông báo"
-            description="Cập nhật đơn hàng, khuyến mãi và thông tin hệ thống gửi tới bạn."
-            count={unreadCount > 0 ? `${unreadCount} chưa đọc` : `${items.length} thông báo`}
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Account') }, { label: t('Notifications') }]}
+            eyebrow={t('Account')}
+            title={t('Notifications')}
+            description={t('Order updates, promotions and system notices sent to you.')}
+            count={unreadCount > 0 ? t(':count unread', { count: unreadCount }) : t(':count notifications', { count: items.length })}
             actions={
                 <Button variant="secondary" size="sm" leftIcon={CheckCheck} onClick={markAllRead} loading={markingAll} disabled={unreadCount === 0}>
-                    Đánh dấu tất cả đã đọc
+                    {t('Mark all as read')}
                 </Button>
             }
         >
-            <Head title="Thông báo" />
+            <Head title={t('Notifications')} />
 
             <div className={styles.stack}>
                 <Tabs
-                    items={tabs.map((tab) => ({ value: tab.value, label: tab.label }))}
+                    items={tabKeys.map((tab) => ({ value: tab.value, label: t(tab.labelKey) }))}
                     value={activeTab}
                     onValueChange={changeTab}
                     variant="filter"
-                    ariaLabel="Lọc thông báo"
+                    ariaLabel={t('Filter notifications')}
                 />
 
                 {items.length === 0 ? (
                     <EmptyState
                         icon={BellOff}
-                        title="Không có thông báo nào"
+                        title={t('No notifications')}
                         description={
-                            activeTab === 'all'
-                                ? 'Khi có cập nhật về đơn hàng hoặc khuyến mãi, thông báo sẽ xuất hiện tại đây.'
-                                : 'Không có thông báo phù hợp với bộ lọc này.'
+                            activeTab === 'all' ? t('Order updates and promotions will appear here.') : t('No notifications match this filter.')
                         }
                         actions={
                             activeTab === 'all' ? undefined : (
                                 <Button variant="secondary" size="sm" onClick={() => changeTab('all')}>
-                                    Xem tất cả
+                                    {t('View all')}
                                 </Button>
                             )
                         }
@@ -119,7 +119,7 @@ export default function NotificationIndex() {
 
                 <p className={styles.fineprint}>
                     <Bell aria-hidden="true" className={styles.fineprintIcon} />
-                    Thông báo được giữ tối đa 100 bản gần nhất.
+                    {t('Only the 100 most recent notifications are kept.')}
                 </p>
             </div>
         </AccountLayout>

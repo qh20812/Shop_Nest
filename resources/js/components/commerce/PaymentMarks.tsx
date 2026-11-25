@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Banknote } from 'lucide-react';
 
 import { cx } from '@/lib/cx';
@@ -24,14 +25,15 @@ const titles: Record<PaymentMethod, string> = {
     mastercard: 'Mastercard',
     jcb: 'JCB',
     stripe: 'Stripe',
-    cod: 'Thanh toán khi nhận hàng',
+    cod: 'Cash on delivery',
 };
 
 export function PaymentMarks({ methods = ['visa', 'mastercard', 'jcb', 'stripe'], className }: PaymentMarksProps) {
+    const { t } = useTranslation();
     return (
-        <span className={cx(styles.paymentMarks, className)} aria-label="Phương thức thanh toán">
+        <span className={cx(styles.paymentMarks, className)} aria-label={t('Payment method')}>
             {methods.map((method) => (
-                <span key={method} className={styles.paymentMark} title={titles[method]}>
+                <span key={method} className={styles.paymentMark} title={t(titles[method])}>
                     {method === 'cod' ? <Banknote aria-hidden="true" className={styles.paymentMarkIcon} /> : labels[method]}
                 </span>
             ))}

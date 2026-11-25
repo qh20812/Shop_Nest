@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { MessageCircle, Store } from 'lucide-react';
 
 import Avatar from '@/components/ui/avatar';
@@ -23,6 +24,7 @@ type ShopIdentityProps = {
 };
 
 export function ShopIdentity({ shop, onChat, onViewShop, className }: ShopIdentityProps) {
+    const { t } = useTranslation();
     return (
         <div className={className ? `${styles.shopIdentity} ${className}` : styles.shopIdentity}>
             <div className={styles.shopMain}>
@@ -31,8 +33,8 @@ export function ShopIdentity({ shop, onChat, onViewShop, className }: ShopIdenti
                     <span className={styles.shopName}>{shop.name}</span>
                     <div className={styles.shopMeta}>
                         {typeof shop.rating === 'number' && <Rating value={shop.rating} compact />}
-                        {typeof shop.totalProducts === 'number' && <span>{shop.totalProducts} sản phẩm</span>}
-                        {shop.lastActiveAt && <span>Hoạt động {shop.lastActiveAt}</span>}
+                        {typeof shop.totalProducts === 'number' && <span>{t(':count products', { count: shop.totalProducts })}</span>}
+                        {shop.lastActiveAt && <span>{t('Active :time', { time: shop.lastActiveAt })}</span>}
                     </div>
                 </div>
             </div>

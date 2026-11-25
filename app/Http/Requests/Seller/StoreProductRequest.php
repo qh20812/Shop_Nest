@@ -3,14 +3,18 @@
 namespace App\Http\Requests\Seller;
 
 use App\Enums\ProductStatus;
+use App\Support\ProductContentSanitizer;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\MessageBag;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
 {
@@ -44,32 +48,35 @@ class StoreProductRequest extends FormRequest
         $authStartTime = microtime(true);
 
         // Check rate limiting first to prevent spam
-        if (!$this->checkRateLimit()) {
+        if (! $this->checkRateLimit()) {
             // Log rate limit violation (already logged in checkRateLimit method)
             $this->logPerformanceMetrics('authorization', $authStartTime, 'rate_limited');
+
             return false;
         }
 
         // Basic authorization - user must be authenticated
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             Log::warning('Product creation authorization failed: User not authenticated', [
                 'ip' => $this->ip(),
                 'user_agent' => $this->userAgent(),
                 'request_data' => $this->all(),
             ]);
             $this->logPerformanceMetrics('authorization', $authStartTime, 'unauthenticated');
+
             return false;
         }
 
         // Additional authorization checks should be handled by middleware or policies
         $this->logPerformanceMetrics('authorization', $authStartTime, 'success');
+
         return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -92,9 +99,10 @@ class StoreProductRequest extends FormRequest
             'variants.*.option_values' => ['nullable', 'array'],
             'variants.*.option_values.*.name' => ['required_with:variants.*.option_values', 'string', 'max:100'],
             'variants.*.option_values.*.value' => ['required_with:variants.*.option_values', 'string', 'max:255'],
+            'variants.*.option_signature' => ['nullable', 'string', 'max:255'],
             'variants.*.is_primary' => ['sometimes', 'boolean'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg,gif', 'max:2048', 'dimensions:min_width=100,min_height=100'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:1024', 'dimensions:min_width=300,min_height=300'],
             'meta_title' => ['nullable', 'string', 'max:200'],
             'meta_slug' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:1000'],
@@ -157,9 +165,9 @@ class StoreProductRequest extends FormRequest
             'variants.*.is_primary.boolean' => 'The primary flag must be true or false.',
             'images.array' => 'Images must be an array.',
             'images.*.image' => 'Each file must be a valid image.',
-            'images.*.mimes' => 'Image must be a file of type: jpeg, png, jpg, gif.',
-            'images.*.max' => 'Image size must not exceed 2MB.',
-            'images.*.dimensions' => 'Image must be at least 100x100 pixels.',
+            'images.*.mimes' => 'Image must be a file of type: jpeg, png, jpg, webp.',
+            'images.*.max' => 'Image size must not exceed 1MB.',
+            'images.*.dimensions' => 'Image must be at least 300x300 pixels.',
             'meta_title.string' => 'Meta title must be a string.',
             'meta_title.max' => 'Meta title must not exceed 200 characters.',
             'meta_slug.string' => 'Meta slug must be a string.',
@@ -184,12 +192,17 @@ class StoreProductRequest extends FormRequest
             'name_en' => $this->name_en ? $this->sanitizeText($this->name_en) : null,
             'description' => $this->description ? $this->sanitizeText($this->description) : null,
             'description_en' => $this->description_en ? $this->sanitizeText($this->description_en) : null,
-            'status' => $this->normalizeStatus($this->status),
         ]);
+
+        if ($this->filled('status')) {
+            $this->merge([
+                'status' => $this->normalizeStatus($this->input('status')),
+            ]);
+        }
 
         $normalizedVariants = $this->normalizeVariants();
 
-        if (!empty($normalizedVariants)) {
+        if (! empty($normalizedVariants)) {
             $primaryVariant = $normalizedVariants[0];
 
             $this->merge([
@@ -225,7 +238,7 @@ class StoreProductRequest extends FormRequest
     {
         $variants = $this->input('variants');
 
-        if (!is_array($variants) || empty($variants)) {
+        if (! is_array($variants) || empty($variants)) {
             $variants = [[
                 'variant_name' => null,
                 'sku' => $this->input('sku'),
@@ -240,7 +253,7 @@ class StoreProductRequest extends FormRequest
         $primaryPresent = false;
 
         foreach ($variants as $index => $variant) {
-            if (!is_array($variant)) {
+            if (! is_array($variant)) {
                 continue;
             }
 
@@ -272,7 +285,7 @@ class StoreProductRequest extends FormRequest
             $optionValues = $this->normalizeOptionValues(Arr::get($variant, 'option_values', []));
             $signature = $this->buildOptionSignature($optionValues);
 
-            $isPrimary = $this->normalizeBoolean(Arr::get($variant, 'is_primary'), !$primaryPresent && $index === 0);
+            $isPrimary = $this->normalizeBoolean(Arr::get($variant, 'is_primary'), ! $primaryPresent && $index === 0);
             if ($isPrimary) {
                 $primaryPresent = true;
             }
@@ -282,13 +295,13 @@ class StoreProductRequest extends FormRequest
                 'sku' => $sku,
                 'price' => $price,
                 'stock_quantity' => $stock,
-                'option_values' => !empty($optionValues) ? $optionValues : null,
+                'option_values' => ! empty($optionValues) ? $optionValues : null,
                 'option_signature' => $signature,
                 'is_primary' => $isPrimary,
             ];
         }
 
-        if (!$primaryPresent && isset($normalized[0])) {
+        if (! $primaryPresent && isset($normalized[0])) {
             $normalized[0]['is_primary'] = true;
         }
 
@@ -298,12 +311,11 @@ class StoreProductRequest extends FormRequest
     /**
      * Normalize option values into a consistent array structure.
      *
-     * @param mixed $optionValues
      * @return array<int, array{name: string, value: string}>
      */
     protected function normalizeOptionValues(mixed $optionValues): array
     {
-        if (!is_array($optionValues) || empty($optionValues)) {
+        if (! is_array($optionValues) || empty($optionValues)) {
             return [];
         }
 
@@ -318,11 +330,11 @@ class StoreProductRequest extends FormRequest
                 $value = $option;
             }
 
-            if (!is_string($name) || $name === '') {
+            if (! is_string($name) || $name === '') {
                 continue;
             }
 
-            if (!is_string($value) && !is_numeric($value)) {
+            if (! is_string($value) && ! is_numeric($value)) {
                 continue;
             }
 
@@ -368,7 +380,7 @@ class StoreProductRequest extends FormRequest
             $name = Arr::get($option, 'name');
             $value = Arr::get($option, 'value');
 
-            if (!is_string($name) || !is_string($value)) {
+            if (! is_string($name) || ! is_string($value)) {
                 continue;
             }
 
@@ -379,7 +391,7 @@ class StoreProductRequest extends FormRequest
                 continue;
             }
 
-            $segments[] = $nameSegment . ':' . $valueSegment;
+            $segments[] = $nameSegment.':'.$valueSegment;
         }
 
         if (empty($segments)) {
@@ -426,8 +438,9 @@ class StoreProductRequest extends FormRequest
     {
         $variants = $this->input('variants');
 
-        if (!is_array($variants) || empty($variants)) {
+        if (! is_array($variants) || empty($variants)) {
             $validator->errors()->add('variants', 'At least one variant is required.');
+
             return;
         }
 
@@ -436,7 +449,7 @@ class StoreProductRequest extends FormRequest
         $skus = [];
 
         foreach ($variants as $index => $variant) {
-            if (!is_array($variant)) {
+            if (! is_array($variant)) {
                 continue;
             }
 
@@ -473,7 +486,7 @@ class StoreProductRequest extends FormRequest
     /**
      * Configure the validator instance.
      *
-     * @param \Illuminate\Validation\Validator $validator
+     * @param  Validator  $validator
      */
     public function withValidator($validator): void
     {
@@ -512,15 +525,13 @@ class StoreProductRequest extends FormRequest
 
     /**
      * Check rate limiting for product creation to prevent spam.
-     *
-     * @return bool
      */
     protected function checkRateLimit(): bool
     {
         $user = Auth::user();
 
         // If user is not authenticated, allow rate limiting by IP
-        $key = $user ? 'product_creation_user_' . $user->id : 'product_creation_ip_' . $this->ip();
+        $key = $user ? 'product_creation_user_'.$user->id : 'product_creation_ip_'.$this->ip();
 
         // Allow maximum 20 product creations per hour
         $maxAttempts = 20;
@@ -546,22 +557,10 @@ class StoreProductRequest extends FormRequest
 
     /**
      * Sanitize text input to prevent XSS attacks.
-     *
-     * @param string $text
-     * @return string
      */
     protected function sanitizeText(string $text): string
     {
-        // Trim whitespace first
-        $text = trim($text);
-
-        // Strip HTML tags to prevent XSS (keep basic formatting if needed)
-        $text = strip_tags($text, '<br><p><strong><em>'); // Allow basic formatting tags
-
-        // Additional security: remove potential script injection patterns
-        $text = $this->removeMaliciousPatterns($text);
-
-        return $text;
+        return ProductContentSanitizer::sanitize($text) ?? '';
     }
 
     /**
@@ -574,48 +573,33 @@ class StoreProductRequest extends FormRequest
         }
 
         if (is_numeric($status)) {
-            return ProductStatus::fromLegacyInt((int) $status)->value;
+            $legacy = (int) $status;
+
+            return in_array($legacy, [1, 2, 3, 4], true)
+                ? ProductStatus::fromLegacyInt($legacy)->value
+                : (string) $status;
         }
 
         if (is_string($status) && in_array($status, ProductStatus::values(), true)) {
             return $status;
         }
 
-        return ProductStatus::DRAFT->value;
+        return is_scalar($status) ? (string) $status : '';
     }
 
     /**
      * Remove potentially malicious patterns from text.
-     *
-     * @param string $text
-     * @return string
      */
     protected function removeMaliciousPatterns(string $text): string
     {
-        // Remove potential script tags (double protection)
-        $text = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i', '', $text);
-
-        // Remove javascript: protocols
-        $text = preg_replace('/javascript:/i', '', $text);
-
-        // Remove vbscript: protocols
-        $text = preg_replace('/vbscript:/i', '', $text);
-
-        // Remove data: URLs that might contain scripts
-        $text = preg_replace('/data:\s*text\/html/i', '', $text);
-
-        // Remove potential SQL injection patterns (basic protection)
-        $text = preg_replace('/(\b(union|select|insert|update|delete|drop|create|alter)\b)/i', '', $text);
-
-        return $text;
+        return ProductContentSanitizer::sanitize($text) ?? '';
     }
 
     /**
      * Validate additional security constraints.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @param mixed $user
-     * @return void
+     * @param  Validator  $validator
+     * @param  mixed  $user
      */
     protected function validateSecurityConstraints($validator, $user): void
     {
@@ -629,8 +613,7 @@ class StoreProductRequest extends FormRequest
     /**
      * Validate content for security threats.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
+     * @param  Validator  $validator
      */
     protected function validateContentSecurity($validator): void
     {
@@ -645,7 +628,7 @@ class StoreProductRequest extends FormRequest
             '/data:\s*text/i',
         ];
 
-    $fieldsToCheck = ['name', 'name_en', 'description', 'description_en'];
+        $fieldsToCheck = ['name', 'name_en', 'description', 'description_en'];
 
         foreach ($fieldsToCheck as $field) {
             $value = $this->input($field);
@@ -670,8 +653,7 @@ class StoreProductRequest extends FormRequest
     /**
      * Validate file upload security for images.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
+     * @param  Validator  $validator
      */
     protected function validateFileSecurity($validator): void
     {
@@ -688,7 +670,7 @@ class StoreProductRequest extends FormRequest
                         'jpg' => 'image/jpeg',
                         'jpeg' => 'image/jpeg',
                         'png' => 'image/png',
-                        'gif' => 'image/gif',
+                        'webp' => 'image/webp',
                     ];
 
                     if (isset($allowedMimeTypes[$extension]) && $mimeType !== $allowedMimeTypes[$extension]) {
@@ -718,9 +700,8 @@ class StoreProductRequest extends FormRequest
     /**
      * Validate request patterns for additional security.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @param mixed $user
-     * @return void
+     * @param  Validator  $validator
+     * @param  mixed  $user
      */
     protected function validateRequestPatterns($validator, $user): void
     {
@@ -735,7 +716,7 @@ class StoreProductRequest extends FormRequest
         }
 
         // Check for rapid successive requests (additional to rate limiting)
-        $cacheKey = 'product_request_pattern_' . ($user?->id ?: $this->ip());
+        $cacheKey = 'product_request_pattern_'.($user?->id ?: $this->ip());
         $recentRequests = Cache::get($cacheKey, []);
 
         // Keep only requests from last 10 seconds
@@ -760,12 +741,6 @@ class StoreProductRequest extends FormRequest
 
     /**
      * Log performance metrics for monitoring and optimization.
-     *
-     * @param string $operation
-     * @param float $startTime
-     * @param string $status
-     * @param array $additionalData
-     * @return void
      */
     protected function logPerformanceMetrics(string $operation, float $startTime, string $status, array $additionalData = []): void
     {
@@ -816,8 +791,6 @@ class StoreProductRequest extends FormRequest
 
     /**
      * Get cache hits count (simplified implementation).
-     *
-     * @return int
      */
     protected function getCacheHits(): int
     {
@@ -828,21 +801,19 @@ class StoreProductRequest extends FormRequest
 
     /**
      * Get database query count for this request.
-     *
-     * @return int
      */
     protected function getQueryCount(): int
     {
         // Get query count from Laravel's database connection
         $connection = app('db')->connection();
+
         return $connection->getQueryLog() ? count($connection->getQueryLog()) : 0;
     }
 
     /**
      * Check if validation errors contain security-related errors.
      *
-     * @param \Illuminate\Support\MessageBag $errors
-     * @return bool
+     * @param  MessageBag  $errors
      */
     protected function hasSecurityErrors($errors): bool
     {
@@ -858,4 +829,3 @@ class StoreProductRequest extends FormRequest
         return false;
     }
 }
-

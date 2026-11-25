@@ -1,6 +1,7 @@
 import { Progress } from '@/components/ui/progress';
 import { cx } from '@/lib/cx';
 import { formatDecimal, formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 
 import { Rating } from './Rating';
 import styles from './commerce.module.css';
@@ -21,12 +22,13 @@ type ReviewSummaryProps = {
 };
 
 export function ReviewSummary({ rating, count, breakdown, activeFilter, onFilter, className }: ReviewSummaryProps) {
+    const { t } = useTranslation();
     return (
         <div className={cx(styles.reviewSummary, className)}>
             <div className={styles.reviewSummaryLeft}>
                 <span className={styles.reviewScore}>{formatDecimal(rating)}</span>
                 <Rating value={rating} showValue={false} className={styles.reviewSummaryRating} />
-                <span className={styles.reviewSummaryCount}>{formatNumber(count)} đánh giá</span>
+                <span className={styles.reviewSummaryCount}>{t(':count reviews', { count: formatNumber(count) })}</span>
             </div>
 
             <div className={styles.reviewBreakdown}>

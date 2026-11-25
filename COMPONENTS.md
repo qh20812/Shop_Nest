@@ -84,6 +84,7 @@ Lý do: giữ API page ổn định sau Phase 11; codemod `AppLayout` đã xong 
 | `WorkspaceLayout` | Admin/Seller/Shipper | Sidebar 232px + topbar + main; <768 off-canvas + overlay; skip-link |
 | `PageContainer` | Page wrapper | container + gutter |
 | `PageHeader` | Page header | title/breadcrumbs/actions |
+| `BrandMark` | Logo trong header, footer, auth | Mark tô `--sn-color-accent` qua mask; wordmark ink 600, accent khi hover/focus; mark `aria-hidden` |
 
 `components/layout/WorkspaceLayout.tsx` là shell workspace duy nhất; `layouts/app/AppLayout.tsx` đã bị xoá.
 
@@ -92,6 +93,10 @@ Lý do: giữ API page ổn định sau Phase 11; codemod `AppLayout` đã xong 
 ### Storefront
 
 `HeroEditorial`, `CategoryShelf`, `ProductShelf`, `ProductCard`, `FlashSaleModule`, `BrandSpotlight`, `EditorialPillars`, `TrustStrip`, `NewsletterSignup`, `MobileNav`, `StorefrontHeader`, `StorefrontFooter`.
+
+`StorefrontHeader` là dock kính: `.sn-storefront__card` bo `--sn-radius-2xl`, nền `--sn-glass-tint` + `--sn-blur-glass`, hairline + `--sn-shadow-glass`. Nav link là capsule có `aria-current`, search là pill trắng nổi, icon action là bubble tròn, Sign In là pill accent duy nhất. Trigger locale/account có hover wash và `[data-state='open']` đổi nền + xoay chevron. Sticky offset toàn storefront dùng `--sn-header-stuck` (80px), không dùng `--sn-header`.
+
+`DropdownMenu` nhận `selected?: boolean` (render check trailing + `data-selected`) và `className="sn-dropdown--glass"` cho menu trong dock. Menu kính bo 16, item bo 10, hover dùng ink wash, selected dùng accent-wash + accent-text.
 
 ### Commerce
 

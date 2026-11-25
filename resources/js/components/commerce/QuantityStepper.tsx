@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Minus, Plus } from 'lucide-react';
 
 import { cx } from '@/lib/cx';
@@ -16,6 +17,7 @@ type QuantityStepperProps = {
 };
 
 export function QuantityStepper({ value, min = 1, max = 99, step = 1, onChange, size = 'md', disabled = false, className }: QuantityStepperProps) {
+    const { t } = useTranslation();
     const canDecrease = !disabled && value > min;
     const canIncrease = !disabled && value < max;
 
@@ -24,14 +26,14 @@ export function QuantityStepper({ value, min = 1, max = 99, step = 1, onChange, 
     return (
         <div
             role="group"
-            aria-label="Số lượng"
+            aria-label={t('Quantity')}
             className={cx(styles.quantityRoot, className)}
             data-size={size}
             data-disabled={disabled ? 'true' : undefined}
         >
             <button
                 type="button"
-                aria-label="Giảm số lượng"
+                aria-label={t('Decrease quantity')}
                 disabled={!canDecrease}
                 className={styles.quantityButton}
                 onClick={() => update(value - step)}
@@ -42,14 +44,14 @@ export function QuantityStepper({ value, min = 1, max = 99, step = 1, onChange, 
                 type="text"
                 readOnly
                 value={value}
-                aria-label="Số lượng hiện tại"
+                aria-label={t('Current quantity')}
                 inputMode="numeric"
                 autoComplete="off"
                 className={styles.quantityInput}
             />
             <button
                 type="button"
-                aria-label="Tăng số lượng"
+                aria-label={t('Increase quantity')}
                 disabled={!canIncrease}
                 className={styles.quantityButton}
                 onClick={() => update(value + step)}

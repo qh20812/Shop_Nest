@@ -6,6 +6,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { TextLink } from '@/components/ui/text-link';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './storefront.module.css';
 
@@ -23,13 +24,13 @@ type CategoryShelfProps = {
     className?: string;
 };
 
-const fallbackCategories: CategoryItem[] = [
-    { name: 'Điện tử & công nghệ' },
-    { name: 'Gia dụng & nhà bếp' },
-    { name: 'Nhà cửa & trang trí' },
-    { name: 'Mẹ & bé' },
-    { name: 'Thời trang & phụ kiện' },
-    { name: 'Làm đẹp & chăm sóc' },
+const fallbackCategoryKeys = [
+    'Electronics & technology',
+    'Home & kitchen',
+    'Home & living',
+    'Mother & baby',
+    'Fashion & accessories',
+    'Beauty & care',
 ];
 
 function getCategoryIcon(name: string): LucideIcon {
@@ -48,19 +49,21 @@ function getCategoryHref(category: CategoryItem): string {
     return category.id ? `/search?category_ids[]=${category.id}` : `/search?search=${encodeURIComponent(category.name)}`;
 }
 
-export function CategoryShelf({ categories = [], title = 'Danh mục chủ lực', action, className }: CategoryShelfProps) {
+export function CategoryShelf({ categories = [], title, action, className }: CategoryShelfProps) {
+    const { t } = useTranslation();
+    const fallbackCategories: CategoryItem[] = fallbackCategoryKeys.map((key) => ({ name: t(key) }));
     const items = (categories.length > 0 ? categories : fallbackCategories).slice(0, 6);
 
     return (
         <section id="danh-muc" className={cx(styles.categoryShelf, className)}>
             <PageContainer>
                 <SectionHeader
-                    eyebrow="Sáu nhóm ngành"
-                    title={title}
+                    eyebrow={t('Six core categories')}
+                    title={title ?? t('Featured categories')}
                     action={
                         action ?? (
                             <TextLink href="/search" tone="muted" underline={false}>
-                                Tất cả danh mục
+                                {t('All categories')}
                                 <ArrowRight aria-hidden="true" className={styles.inlineIcon} />
                             </TextLink>
                         )
@@ -80,7 +83,7 @@ export function CategoryShelf({ categories = [], title = 'Danh mục chủ lực
                                     )}
                                 </div>
                                 <h3 className={styles.categoryName}>{category.name}</h3>
-                                <span className={styles.categoryMeta}>Xem món</span>
+                                <span className={styles.categoryMeta}>{t('Browse products')}</span>
                             </Link>
                         );
                     })}

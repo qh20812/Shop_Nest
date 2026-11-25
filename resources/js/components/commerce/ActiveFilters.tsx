@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { X } from 'lucide-react';
 
 import { cx } from '@/lib/cx';
@@ -18,13 +19,14 @@ type ActiveFiltersProps = {
 };
 
 export function ActiveFilters({ filters, onRemove, onClear, className }: ActiveFiltersProps) {
+    const { t } = useTranslation();
     if (filters.length === 0) {
         return null;
     }
 
     return (
         <div className={cx(styles.activeFilters, className)}>
-            <span className={styles.activeLabel}>Đang lọc</span>
+            <span className={styles.activeLabel}>{t('Filtering')}</span>
             {filters.map((filter) => (
                 <span key={filter.key} className={styles.activeChip}>
                     <span>
@@ -33,7 +35,7 @@ export function ActiveFilters({ filters, onRemove, onClear, className }: ActiveF
                     </span>
                     <button
                         type="button"
-                        aria-label={`Bỏ lọc ${filter.label}`}
+                        aria-label={t('Remove filter :label', { label: filter.label })}
                         className={styles.activeChipButton}
                         onClick={() => onRemove(filter.key)}
                     >
@@ -42,7 +44,7 @@ export function ActiveFilters({ filters, onRemove, onClear, className }: ActiveF
                 </span>
             ))}
             <button type="button" className={styles.activeClear} onClick={onClear}>
-                Xoá tất cả
+                {t('Clear all')}
             </button>
         </div>
     );

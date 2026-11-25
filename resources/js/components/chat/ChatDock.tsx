@@ -9,6 +9,7 @@ import type { ChatbotHistoryTurn, ChatProduct } from '@/components/chat/types';
 import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import shellStyles from './chat-launcher.module.css';
 
@@ -159,6 +160,7 @@ function mapHistoryTurns(turns: unknown): StoredMessage[] {
 }
 
 export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 }: ChatDockProps) {
+    const { t } = useTranslation();
     const page = usePage<ChatDockPageProps>();
     const pathname = page.url.split('?')[0];
     const csrfToken = page.props.csrfToken;
@@ -254,7 +256,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             });
 
             if (!response.ok) {
-                throw new Error('Không xoá được lịch sử trò chuyện.');
+                throw new Error(t('Could not clear the conversation history.'));
             }
 
             historySynced.current = true;
@@ -268,7 +270,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                 // localStorage có thể bị chặn; server đã xoá là đủ.
             }
         } catch (clearError) {
-            setError(clearError instanceof Error ? clearError.message : 'Không xoá được lịch sử trò chuyện.');
+            setError(clearError instanceof Error ? clearError.message : t('Could not clear the conversation history.'));
         } finally {
             setClearing(false);
         }
@@ -317,14 +319,14 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             const payload = await response.json();
 
             if (!response.ok) {
-                throw new Error(payload?.message ?? 'Không thể kết nối trợ lý.');
+                throw new Error(payload?.message ?? t('Could not connect to the assistant.'));
             }
 
             const reply = payload?.data?.reply ?? payload?.reply;
             const products = sanitizeProducts(payload?.data?.products);
 
             if (typeof reply !== 'string' || reply.trim() === '') {
-                throw new Error('Trợ lý chưa có câu trả lời.');
+                throw new Error(t('The assistant did not reply.'));
             }
 
             setMessages((current) => [
@@ -338,7 +340,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                 },
             ]);
         } catch (requestError) {
-            const message = requestError instanceof Error ? requestError.message : 'Không thể kết nối trợ lý.';
+            const message = requestError instanceof Error ? requestError.message : t('Could not connect to the assistant.');
             setError(message);
             setMessages((current) => [
                 ...current,
@@ -371,9 +373,9 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
 
             <DialogPrimitive.Portal>
                 <DialogPrimitive.Content className={cx(shellStyles.dockContent)}>
-                    <DialogTitle className="sn-visually-hidden">Trợ lý ShopNest</DialogTitle>
+                    <DialogTitle className="sn-visually-hidden">{t('ShopNest assistant')}</DialogTitle>
                     <DialogDescription className="sn-visually-hidden">
-                        Cửa sổ trò chuyện với trợ lý ảo ShopNest. Nhấn Escape để đóng.
+                        {t('Chat window with the ShopNest assistant. Press Escape to close.')}
                     </DialogDescription>
 
                     <React.Suspense fallback={<div className={shellStyles.dockLoading} aria-busy="true" />}>

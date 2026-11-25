@@ -77,7 +77,7 @@
 
         .sn-account__nav {
             position: sticky;
-            top: calc(var(--sn-header) + var(--sn-space-4));
+            top: calc(var(--sn-header-stuck) + var(--sn-space-2));
             flex-direction: column;
             padding-bottom: 0;
             overflow: visible;

@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Textarea from '@/components/ui/textarea';
 import { formatChatTimestamp, formatConversationTimestamp, useChatConversations, type ChatUser } from '@/hooks/useChatConversations';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -29,6 +30,7 @@ type ChatWorkspaceProps = {
 };
 
 export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
+    const { t } = useTranslation();
     const {
         currentUserId,
         conversations,
@@ -176,7 +178,7 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
 
                 <section
                     className={cx(styles.workspaceThread, activeConversation ? undefined : styles.threadHidden)}
-                    aria-label="Nội dung cuộc trò chuyện"
+                    aria-label={t('Conversation content')}
                 >
                     {activeConversation ? (
                         <>
@@ -192,14 +194,14 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                 messages={messageItems}
                                 loading={loading}
                                 typing={sending}
-                                typingLabel="Đang gửi tin"
-                                emptyTitle="Bắt đầu trò chuyện"
-                                emptyDescription={`Gửi tin nhắn đầu tiên tới ${activeConversation.partnerName}.`}
+                                typingLabel={t('Sending message')}
+                                emptyTitle={t('Start a conversation')}
+                                emptyDescription={t('Send your first message to :name.', { name: activeConversation.partnerName })}
                             />
 
                             {sendError ? (
                                 <div className={styles.workspaceAlert}>
-                                    <Alert tone="danger" title="Không gửi được tin nhắn" description={sendError} onDismiss={clearSendError} />
+                                    <Alert tone="danger" title={t('Could not send the message')} description={sendError} onDismiss={clearSendError} />
                                 </div>
                             ) : null}
 
@@ -209,7 +211,7 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                 onSend={handleSend}
                                 loading={sending}
                                 disabled={sending}
-                                placeholder={`Nhập tin nhắn cho ${activeConversation.partnerName}...`}
+                                placeholder={t('Type a message to :name...', { name: activeConversation.partnerName })}
                             />
                         </>
                     ) : (
@@ -224,12 +226,12 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                     <span className={styles.workspaceEmptyIcon}>
                                         <Search aria-hidden="true" className={styles.headerIconSvg} />
                                     </span>
-                                    <span className={styles.workspaceEmptyTitle}>Chọn một cuộc trò chuyện</span>
+                                    <span className={styles.workspaceEmptyTitle}>{t('Choose a conversation')}</span>
                                     <span className={styles.workspaceEmptyText}>
-                                        Chọn shop hoặc người bán ở cột bên trái, hoặc bắt đầu cuộc trò chuyện mới để được tư vấn.
+                                        {t('Pick a shop or seller on the left, or start a new conversation for advice.')}
                                     </span>
                                     <Button variant="secondary" size="sm" onClick={() => setComposeOpen(true)}>
-                                        Bắt đầu trò chuyện
+                                        {t('Start a conversation')}
                                     </Button>
                                 </>
                             )}
@@ -251,23 +253,23 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                         setComposeOpen(true);
                     }
                 }}
-                title="Bắt đầu cuộc trò chuyện"
-                description="Tìm shop hoặc người bán bạn muốn liên hệ."
+                title={t('Start a conversation')}
+                description={t('Find the shop or seller you want to contact.')}
                 size="lg"
             >
                 <form onSubmit={handleCreateConversation} className={styles.composeForm}>
                     <SearchInput
                         value={composeQuery}
                         onChange={(event) => setComposeQuery(event.target.value)}
-                        placeholder="Tìm theo tên hoặc username..."
+                        placeholder={t('Search by name or username...')}
                         loading={composeSearching}
-                        aria-label="Tìm người để chat"
+                        aria-label={t('Search people to chat with')}
                     />
 
                     <div className={styles.composeResults}>
                         {composeResults.length === 0 ? (
                             <span className={styles.composeEmpty}>
-                                {composeQuery.trim() === '' ? 'Nhập tên shop hoặc username để tìm.' : 'Không tìm thấy người phù hợp.'}
+                                {composeQuery.trim() === '' ? t('Type a shop name or username to search.') : t('No matching people found.')}
                             </span>
                         ) : (
                             composeResults.map((user) => {
@@ -277,7 +279,7 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                                     ([user.first_name, user.last_name].filter(Boolean).join(' ') ||
                                         user.username ||
                                         user.email ||
-                                        `Người dùng #${user.id}`);
+                                        t('User #:id', { id: user.id }));
 
                                 return (
                                     <button
@@ -298,25 +300,25 @@ export function ChatWorkspace({ order, className }: ChatWorkspaceProps) {
                         )}
                     </div>
 
-                    <FormField label="Tin nhắn đầu tiên" required>
+                    <FormField label={t('First message')} required>
                         <Textarea
                             value={composeMessage}
                             onChange={(event) => setComposeMessage(event.target.value)}
                             rows={3}
                             maxLength={500}
                             counter
-                            placeholder="Xin chào, tôi muốn hỏi về sản phẩm..."
+                            placeholder={t('Hi, I would like to ask about a product...')}
                         />
                     </FormField>
 
-                    {sendError ? <Alert tone="danger" title="Không thể tạo cuộc trò chuyện" description={sendError} /> : null}
+                    {sendError ? <Alert tone="danger" title={t('Could not start the conversation')} description={sendError} /> : null}
 
                     <div className={styles.composeActions}>
                         <Button type="button" variant="secondary" onClick={resetCompose}>
-                            Huỷ
+                            {t('Cancel')}
                         </Button>
                         <Button type="submit" loading={sending} disabled={!composeSelected || composeMessage.trim() === ''}>
-                            Gửi tin nhắn
+                            {t('Send message')}
                         </Button>
                     </div>
                 </form>

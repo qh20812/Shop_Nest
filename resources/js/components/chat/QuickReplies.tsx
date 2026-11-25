@@ -1,4 +1,5 @@
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -16,12 +17,13 @@ type QuickRepliesProps = {
 };
 
 export function QuickReplies({ items, onSelect, disabled = false, className }: QuickRepliesProps) {
+    const { t } = useTranslation();
     if (items.length === 0) {
         return null;
     }
 
     return (
-        <div className={cx(styles.quickReplies, className)} aria-label="Gợi ý câu hỏi">
+        <div className={cx(styles.quickReplies, className)} aria-label={t('Suggested questions')}>
             {items.map((item) => {
                 const label = typeof item === 'string' ? item : item.label;
                 const value = typeof item === 'string' ? item : (item.value ?? item.label);

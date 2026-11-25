@@ -1,4 +1,5 @@
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './commerce.module.css';
 
@@ -17,8 +18,9 @@ type OrderTimelineProps = {
 };
 
 export function OrderTimeline({ steps, current, tone = 'default', className }: OrderTimelineProps) {
+    const { t } = useTranslation();
     return (
-        <ol className={cx(styles.timeline, className)} data-tone={tone} aria-label="Tiến trình đơn hàng">
+        <ol className={cx(styles.timeline, className)} data-tone={tone} aria-label={t('Order progress')}>
             {steps.map((step, index) => {
                 const state = index < current ? 'done' : index === current ? 'active' : 'pending';
                 const isLast = index === steps.length - 1;

@@ -6,6 +6,7 @@ import type { ChatProduct } from '@/components/chat/types';
 import { OrderAnnouncementCard, type OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
 import { ProductCard } from '@/components/commerce/ProductCard';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import styles from './chat.module.css';
@@ -41,11 +42,11 @@ function toProductCard(product: ChatProduct): ProductCardModel {
     };
 }
 
-const statusLabel: Record<NonNullable<ChatMessageProps['status']>, string> = {
-    sending: 'Đang gửi',
-    sent: 'Đã gửi',
-    delivered: 'Đã nhận',
-    failed: 'Gửi lỗi',
+const statusLabelKeys: Record<NonNullable<ChatMessageProps['status']>, string> = {
+    sending: 'Sending',
+    sent: 'Sent',
+    delivered: 'Delivered',
+    failed: 'Failed',
 };
 
 export function ChatMessage({
@@ -53,12 +54,13 @@ export function ChatMessage({
     content,
     timestamp,
     status,
-    assistantName = 'Trợ lý ShopNest',
+    assistantName,
     avatar,
     order,
     products,
     className,
 }: ChatMessageProps) {
+    const { t } = useTranslation();
     const isOutgoing = variant === 'outgoing';
     const isSystem = variant === 'system';
     const isError = variant === 'error';
@@ -104,7 +106,7 @@ export function ChatMessage({
 
                 <span className={styles.messageMeta}>
                     {timestamp ? <span>{timestamp}</span> : null}
-                    {status ? <span>· {statusLabel[status]}</span> : null}
+                    {status ? <span>· {t(statusLabelKeys[status])}</span> : null}
                 </span>
             </div>
         </div>

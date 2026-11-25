@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import { Bell, Megaphone, PackageCheck, ShieldAlert, Truck } from 'lucide-react';
 
@@ -64,6 +65,7 @@ function resolveCategory(notification: NotificationModel): keyof typeof category
 }
 
 export function NotificationRow({ notification, onRead, className }: NotificationRowProps) {
+    const { t } = useTranslation();
     const category = resolveCategory(notification);
     const Icon = categoryIcons[category];
     const unread = !notification.is_read;
@@ -77,7 +79,7 @@ export function NotificationRow({ notification, onRead, className }: Notificatio
             <div className={styles.notificationBody}>
                 <div className={styles.notificationHead}>
                     <span className={styles.notificationTitle}>{notification.title}</span>
-                    {unread ? <span aria-label="Chưa đọc" className={styles.notificationDot} /> : null}
+                    {unread ? <span aria-label={t('Unread')} className={styles.notificationDot} /> : null}
                     {notification.type_label ? <span className={styles.notificationType}>{notification.type_label}</span> : null}
                 </div>
                 <p className={styles.notificationText}>{notification.content}</p>
@@ -85,12 +87,12 @@ export function NotificationRow({ notification, onRead, className }: Notificatio
                     {notification.created_at ? <span className={styles.notificationTime}>{notification.created_at}</span> : null}
                     {notification.action_url ? (
                         <Button variant="tertiary" size="sm" asChild>
-                            <Link href={notification.action_url}>Xem chi tiết</Link>
+                            <Link href={notification.action_url}>{t('View details')}</Link>
                         </Button>
                     ) : null}
                     {unread && onRead ? (
                         <button type="button" className={styles.notificationReadButton} onClick={() => onRead(notification.id)}>
-                            Đánh dấu đã đọc
+                            {t('Mark as read')}
                         </button>
                     ) : null}
                 </div>

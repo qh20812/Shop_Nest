@@ -3,11 +3,15 @@
 namespace App\Http\Requests\Seller;
 
 use App\Enums\ProductStatus;
+use App\Models\ProductVariant;
+use App\Support\ProductContentSanitizer;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -32,19 +36,17 @@ class UpdateProductRequest extends FormRequest
      * bỏ qua ID sản phẩm hiện tại để cho phép cập nhật mà không vi phạm tính duy nhất giả.
      * Điều này rất quan trọng cho các thao tác cập nhật để ngăn xung đột đồng thời duy trì tính nhất quán dữ liệu.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         $product = $this->route('product');
-        $productId = $product?->getKey();
-        $primaryVariantId = $product?->variants()->orderBy('created_at')->value('variant_id');
 
         return [
             'name' => [
                 'nullable',
                 'string',
-                'max:255'
+                'max:255',
             ], // Removed unique rule as name is JSON multilingual
             'name_en' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -58,19 +60,28 @@ class UpdateProductRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:100',
-                Rule::unique('product_variants', 'sku')->ignore($primaryVariantId, 'variant_id')
             ],
             'variants' => ['nullable', 'array', 'min:1'],
+            'variants.*.variant_id' => [
+                'nullable',
+                'integer',
+                $product
+                    ? Rule::exists('product_variants', 'variant_id')->where(
+                        fn ($query) => $query->where('product_id', $product->product_id)
+                    )
+                    : Rule::exists('product_variants', 'variant_id'),
+            ],
             'variants.*.variant_name' => ['nullable', 'string', 'max:255'],
-            'variants.*.sku' => ['nullable', 'string', 'max:100', Rule::unique('product_variants', 'sku')->ignore($primaryVariantId, 'variant_id')],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock_quantity' => ['nullable', 'integer', 'min:0'],
             'variants.*.option_values' => ['nullable', 'array'],
             'variants.*.option_values.*.name' => ['required_with:variants.*.option_values', 'string', 'max:100'],
             'variants.*.option_values.*.value' => ['required_with:variants.*.option_values', 'string', 'max:255'],
+            'variants.*.option_signature' => ['nullable', 'string', 'max:255'],
             'variants.*.is_primary' => ['sometimes', 'boolean'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg,gif', 'max:2048', 'dimensions:min_width=100,min_height=100'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:1024', 'dimensions:min_width=300,min_height=300'],
             'meta_title' => ['nullable', 'string', 'max:200'],
             'meta_slug' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:1000'],
@@ -141,9 +152,9 @@ class UpdateProductRequest extends FormRequest
             'variants.*.is_primary.boolean' => 'The primary flag must be true or false.',
             'images.array' => 'Images must be an array.',
             'images.*.image' => 'Each file must be a valid image.',
-            'images.*.mimes' => 'Image must be a file of type: jpeg, png, jpg, gif.',
-            'images.*.max' => 'Image size must not exceed 2MB.',
-            'images.*.dimensions' => 'Image must be at least 100x100 pixels.',
+            'images.*.mimes' => 'Image must be a file of type: jpeg, png, jpg, webp.',
+            'images.*.max' => 'Image size must not exceed 1MB.',
+            'images.*.dimensions' => 'Image must be at least 300x300 pixels.',
             'meta_title.string' => 'Meta title must be a string.',
             'meta_title.max' => 'Meta title must not exceed 200 characters.',
             'meta_slug.string' => 'Meta slug must be a string.',
@@ -180,33 +191,45 @@ class UpdateProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Trim whitespace from text fields
+        // Trim and sanitise text fields the same way product creation does.
         $this->merge([
-            'name' => $this->name ? trim($this->name) : null,
-            'name_en' => $this->name_en ? trim($this->name_en) : null,
-            'description' => $this->description ? trim($this->description) : null,
-            'description_en' => $this->description_en ? trim($this->description_en) : null,
-            'status' => $this->normalizeStatus($this->status),
+            'name' => $this->name ? $this->sanitizeText($this->name) : null,
+            'name_en' => $this->name_en ? $this->sanitizeText($this->name_en) : null,
+            'description' => $this->description ? $this->sanitizeText($this->description) : null,
+            'description_en' => $this->description_en ? $this->sanitizeText($this->description_en) : null,
         ]);
 
-        $normalizedVariants = $this->normalizeVariants();
+        if ($this->filled('status')) {
+            $this->merge([
+                'status' => $this->normalizeStatus($this->input('status')),
+            ]);
+        }
 
-        if (!empty($normalizedVariants)) {
-            $primaryVariant = $normalizedVariants[0];
+        // Only touch variants when the payload actually contains them. A
+        // partial update must never replace the existing variant set.
+        if ($this->exists('variants')) {
+            $normalizedVariants = $this->normalizeVariants();
 
             $this->merge([
                 'variants' => $normalizedVariants,
-                'sku' => Arr::get($primaryVariant, 'sku'),
-                'price' => Arr::get($primaryVariant, 'price'),
-                'stock' => Arr::get($primaryVariant, 'stock_quantity'),
             ]);
+
+            if (! empty($normalizedVariants)) {
+                $primaryVariant = $normalizedVariants[0];
+
+                $this->merge([
+                    'sku' => Arr::get($primaryVariant, 'sku'),
+                    'price' => Arr::get($primaryVariant, 'price'),
+                    'stock' => Arr::get($primaryVariant, 'stock_quantity'),
+                ]);
+            }
         }
     }
 
     /**
      * Configure the validator instance.
      *
-     * @param \Illuminate\Validation\Validator $validator
+     * @param  Validator  $validator
      */
     public function withValidator($validator): void
     {
@@ -230,158 +253,239 @@ class UpdateProductRequest extends FormRequest
         });
     }
 
-        /**
-         * Normalize incoming status to enum-backed string before validation.
-         */
-        private function normalizeStatus(mixed $status): string
-        {
-            if ($status instanceof ProductStatus) {
-                return $status->value;
-            }
-
-            if (is_numeric($status)) {
-                return ProductStatus::fromLegacyInt((int) $status)->value;
-            }
-
-            if (is_string($status) && in_array($status, ProductStatus::values(), true)) {
-                return $status;
-            }
-
-            return ProductStatus::DRAFT->value;
+    /**
+     * Normalize incoming status to enum-backed string before validation.
+     */
+    private function normalizeStatus(mixed $status): string
+    {
+        if ($status instanceof ProductStatus) {
+            return $status->value;
         }
 
-        /**
-         * Normalize variants data for validation.
-         */
-        private function normalizeVariants(): array
-        {
-            $variants = $this->input('variants', []);
+        if (is_numeric($status)) {
+            $legacy = (int) $status;
 
-            if (empty($variants)) {
-                // Fallback to legacy single variant format
-                $variants = [[
-                    'sku' => $this->input('sku'),
-                    'price' => $this->input('price'),
-                    'stock_quantity' => $this->input('stock'),
-                    'is_primary' => true,
-                ]];
+            return in_array($legacy, [1, 2, 3, 4], true)
+                ? ProductStatus::fromLegacyInt($legacy)->value
+                : (string) $status;
+        }
+
+        if (is_string($status) && in_array($status, ProductStatus::values(), true)) {
+            return $status;
+        }
+
+        return is_scalar($status) ? (string) $status : '';
+    }
+
+    private function sanitizeText(string $text): string
+    {
+        return ProductContentSanitizer::sanitize($text) ?? '';
+    }
+
+    /**
+     * Normalize option values into a consistent array structure.
+     *
+     * @return array<int, array{name: string, value: string}>
+     */
+    private function normalizeOptionValues(mixed $optionValues): array
+    {
+        if (! is_array($optionValues) || empty($optionValues)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($optionValues as $key => $option) {
+            if (is_array($option)) {
+                $name = Arr::get($option, 'name', is_string($key) ? $key : null);
+                $value = Arr::get($option, 'value', Arr::get($option, 'label'));
+            } else {
+                $name = is_string($key) ? $key : null;
+                $value = $option;
             }
 
-            $normalized = [];
-            $hasPrimary = false;
+            if (! is_string($name) || $name === '') {
+                continue;
+            }
 
-            foreach ($variants as $index => $variant) {
-                $normalizedVariant = [
-                    'variant_name' => Arr::get($variant, 'variant_name'),
-                    'sku' => Arr::get($variant, 'sku') ? strtoupper(trim(Arr::get($variant, 'sku'))) : null,
-                    'price' => (float) Arr::get($variant, 'price', 0),
-                    'stock_quantity' => (int) Arr::get($variant, 'stock_quantity', 0),
-                    'option_values' => Arr::get($variant, 'option_values', []),
-                    'is_primary' => (bool) Arr::get($variant, 'is_primary', false),
-                ];
+            if (! is_string($value) && ! is_numeric($value)) {
+                continue;
+            }
 
-                // Generate option_signature if option_values exist
-                if (!empty($normalizedVariant['option_values'])) {
-                    $signatureParts = [];
-                    foreach ($normalizedVariant['option_values'] as $option) {
-                        $name = Str::slug(Arr::get($option, 'name', ''), '_');
-                        $value = Str::slug(Arr::get($option, 'value', ''), '_');
-                        $signatureParts[] = "{$name}:{$value}";
-                    }
-                    sort($signatureParts);
-                    $normalizedVariant['option_signature'] = implode('|', $signatureParts);
+            $normalizedName = ProductContentSanitizer::sanitize((string) $name);
+            $normalizedValue = ProductContentSanitizer::sanitize((string) $value);
+
+            if ($normalizedName === null || $normalizedName === '' || $normalizedValue === null || $normalizedValue === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $normalizedName,
+                'value' => $normalizedValue,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize variants data for validation.
+     */
+    private function normalizeVariants(): array
+    {
+        $variants = $this->input('variants');
+
+        if (! is_array($variants) || empty($variants)) {
+            return [];
+        }
+
+        $normalized = [];
+        $hasPrimary = false;
+
+        foreach ($variants as $variant) {
+            if (! is_array($variant)) {
+                continue;
+            }
+
+            $normalizedVariant = [
+                'variant_id' => Arr::get($variant, 'variant_id'),
+                'variant_name' => Arr::get($variant, 'variant_name'),
+                'sku' => ProductContentSanitizer::normalizeSku(Arr::get($variant, 'sku')),
+                'price' => (float) Arr::get($variant, 'price', 0),
+                'stock_quantity' => (int) Arr::get($variant, 'stock_quantity', 0),
+                'option_values' => $this->normalizeOptionValues(Arr::get($variant, 'option_values', [])),
+                'is_primary' => (bool) Arr::get($variant, 'is_primary', false),
+            ];
+
+            // Generate option_signature if option_values exist
+            if (! empty($normalizedVariant['option_values'])) {
+                $signatureParts = [];
+                foreach ($normalizedVariant['option_values'] as $option) {
+                    $name = Str::slug(Arr::get($option, 'name', ''), '_');
+                    $value = Str::slug(Arr::get($option, 'value', ''), '_');
+                    $signatureParts[] = "{$name}:{$value}";
+                }
+                sort($signatureParts);
+                $normalizedVariant['option_signature'] = implode('|', $signatureParts);
+            } else {
+                $normalizedVariant['option_signature'] = null;
+            }
+
+            // Ensure only one primary variant
+            if ($normalizedVariant['is_primary']) {
+                if ($hasPrimary) {
+                    $normalizedVariant['is_primary'] = false;
                 } else {
-                    $normalizedVariant['option_signature'] = null;
+                    $hasPrimary = true;
                 }
-
-                // Ensure only one primary variant
-                if ($normalizedVariant['is_primary']) {
-                    if ($hasPrimary) {
-                        $normalizedVariant['is_primary'] = false;
-                    } else {
-                        $hasPrimary = true;
-                    }
-                }
-
-                $normalized[] = $normalizedVariant;
             }
 
-            // If no primary set, make first one primary
-            if (!$hasPrimary && !empty($normalized)) {
-                $normalized[0]['is_primary'] = true;
-            }
-
-            return $normalized;
+            $normalized[] = $normalizedVariant;
         }
 
-        /**
-         * Validate variant structure and business rules.
-         */
-        private function validateVariantStructure($validator): void
-        {
-            $variants = $this->input('variants', []);
+        // If no primary set, make first one primary
+        if (! $hasPrimary && ! empty($normalized)) {
+            $normalized[0]['is_primary'] = true;
+        }
 
-            if (empty($variants)) {
-                return;
+        return $normalized;
+    }
+
+    /**
+     * Validate variant structure and business rules.
+     */
+    private function validateVariantStructure($validator): void
+    {
+        $variants = $this->input('variants', []);
+
+        if (empty($variants)) {
+            return;
+        }
+
+        $product = $this->route('product');
+        $existingSignatures = [];
+        $existingSkus = [];
+        $primaryCount = 0;
+
+        foreach ($variants as $index => $variant) {
+            $sku = Arr::get($variant, 'sku');
+            $signature = Arr::get($variant, 'option_signature');
+            $isPrimary = (bool) Arr::get($variant, 'is_primary', false);
+
+            // Check for duplicate SKUs within the request
+            if ($sku && in_array($sku, $existingSkus)) {
+                $validator->errors()->add("variants.{$index}.sku", 'Duplicate SKU within variants.');
+            } elseif ($sku) {
+                $existingSkus[] = $sku;
             }
 
-            $product = $this->route('product');
-            $existingSignatures = [];
-            $existingSkus = [];
-            $primaryCount = 0;
+            // Check for duplicate option signatures within the request
+            if ($signature && in_array($signature, $existingSignatures)) {
+                $validator->errors()->add("variants.{$index}.option_values", 'Duplicate option combination within variants.');
+            } elseif ($signature) {
+                $existingSignatures[] = $signature;
+            }
+
+            // Count primary variants
+            if ($isPrimary) {
+                $primaryCount++;
+            }
+        }
+
+        // Ensure exactly one primary variant
+        if ($primaryCount === 0) {
+            $validator->errors()->add('variants', 'At least one variant must be marked as primary.');
+        } elseif ($primaryCount > 1) {
+            $validator->errors()->add('variants', 'Only one variant can be marked as primary.');
+        }
+
+        // Check against variants that will survive this update. Variants
+        // omitted from the payload are removed, so their SKU/signature is
+        // allowed to be reused by the new payload.
+        if ($product) {
+            $incomingIds = collect($variants)
+                ->pluck('variant_id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
 
             foreach ($variants as $index => $variant) {
                 $sku = Arr::get($variant, 'sku');
                 $signature = Arr::get($variant, 'option_signature');
-                $isPrimary = (bool) Arr::get($variant, 'is_primary', false);
+                $currentId = Arr::get($variant, 'variant_id');
+                $currentId = $currentId !== null ? (int) $currentId : null;
+                $otherIncomingIds = array_values(array_filter(
+                    $incomingIds,
+                    fn (int $id) => $id !== $currentId
+                ));
 
-                // Check for duplicate SKUs within the request
-                if ($sku && in_array($sku, $existingSkus)) {
-                    $validator->errors()->add("variants.{$index}.sku", 'Duplicate SKU within variants.');
-                } elseif ($sku) {
-                    $existingSkus[] = $sku;
-                }
+                if ($sku) {
+                    $conflict = ProductVariant::query()
+                        ->where('sku', $sku)
+                        ->where(function ($query) use ($product, $otherIncomingIds) {
+                            $query->where('product_id', '!=', $product->product_id)
+                                ->orWhereIn('variant_id', $otherIncomingIds);
+                        })
+                        ->exists();
 
-                // Check for duplicate option signatures within the request
-                if ($signature && in_array($signature, $existingSignatures)) {
-                    $validator->errors()->add("variants.{$index}.option_values", 'Duplicate option combination within variants.');
-                } elseif ($signature) {
-                    $existingSignatures[] = $signature;
-                }
-
-                // Count primary variants
-                if ($isPrimary) {
-                    $primaryCount++;
-                }
-            }
-
-            // Ensure exactly one primary variant
-            if ($primaryCount === 0) {
-                $validator->errors()->add('variants', 'At least one variant must be marked as primary.');
-            } elseif ($primaryCount > 1) {
-                $validator->errors()->add('variants', 'Only one variant can be marked as primary.');
-            }
-
-            // Check against existing variants in database for updates
-            if ($product) {
-                foreach ($variants as $index => $variant) {
-                    $sku = Arr::get($variant, 'sku');
-                    $signature = Arr::get($variant, 'option_signature');
-
-                    if ($sku) {
-                        $existingVariant = $product->variants()->where('sku', $sku)->where('variant_id', '!=', Arr::get($variant, 'variant_id'))->exists();
-                        if ($existingVariant) {
-                            $validator->errors()->add("variants.{$index}.sku", 'This SKU is already in use by another variant.');
-                        }
+                    if ($conflict) {
+                        $validator->errors()->add("variants.{$index}.sku", 'This SKU is already in use by another variant.');
                     }
+                }
 
-                    if ($signature) {
-                        $existingVariant = $product->variants()->where('option_signature', $signature)->where('variant_id', '!=', Arr::get($variant, 'variant_id'))->exists();
-                        if ($existingVariant) {
-                            $validator->errors()->add("variants.{$index}.option_values", 'This option combination is already in use by another variant.');
-                        }
+                if ($signature) {
+                    $conflict = ProductVariant::query()
+                        ->where('product_id', $product->product_id)
+                        ->where('option_signature', $signature)
+                        ->whereIn('variant_id', $otherIncomingIds)
+                        ->exists();
+
+                    if ($conflict) {
+                        $validator->errors()->add("variants.{$index}.option_values", 'This option combination is already in use by another variant.');
                     }
                 }
             }
         }
+    }
 }

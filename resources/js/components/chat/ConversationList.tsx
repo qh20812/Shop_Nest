@@ -7,6 +7,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { SearchInput } from '@/components/ui/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -45,29 +46,30 @@ export function ConversationList({
     onCompose,
     className,
 }: ConversationListProps) {
+    const { t } = useTranslation();
     return (
-        <aside aria-label="Danh sách cuộc trò chuyện" className={cx(styles.conversationList, className)}>
+        <aside aria-label={t('Conversations')} className={cx(styles.conversationList, className)}>
             <div className={styles.conversationListHeader}>
                 {onQueryChange ? (
                     <SearchInput
                         value={query}
                         onChange={(event) => onQueryChange(event.target.value)}
                         onClear={() => onQueryChange('')}
-                        placeholder="Tìm cuộc trò chuyện..."
+                        placeholder={t('Search conversations...')}
                         size="sm"
-                        aria-label="Tìm cuộc trò chuyện"
+                        aria-label={t('Search conversations')}
                         className={styles.conversationSearch}
                     />
                 ) : (
                     <div className={styles.conversationSearch} />
                 )}
                 {onRefresh ? (
-                    <IconButton label="Tải lại cuộc trò chuyện" variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
+                    <IconButton label={t('Reload conversations')} variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
                         <RefreshCw aria-hidden="true" className={loading ? styles.spinning : undefined} />
                     </IconButton>
                 ) : null}
                 {onCompose ? (
-                    <IconButton label="Bắt đầu cuộc trò chuyện mới" variant="primary" size="sm" onClick={onCompose}>
+                    <IconButton label={t('Start a new conversation')} variant="primary" size="sm" onClick={onCompose}>
                         <MessageSquarePlus aria-hidden="true" />
                     </IconButton>
                 ) : null}
@@ -76,12 +78,12 @@ export function ConversationList({
             {error ? (
                 <Alert
                     tone="danger"
-                    title="Không tải được cuộc trò chuyện"
+                    title={t('Could not load conversations')}
                     description={error}
                     action={
                         onRefresh ? (
                             <Button variant="secondary" size="sm" onClick={onRefresh}>
-                                Thử lại
+                                {t('Try again')}
                             </Button>
                         ) : undefined
                     }
@@ -101,11 +103,11 @@ export function ConversationList({
                     ))
                 ) : conversations.length === 0 ? (
                     <div className={styles.conversationEmpty}>
-                        <span className={styles.conversationEmptyTitle}>Chưa có cuộc trò chuyện</span>
-                        <span className={styles.conversationEmptyText}>Bắt đầu chat với shop để được tư vấn.</span>
+                        <span className={styles.conversationEmptyTitle}>{t('No conversations yet')}</span>
+                        <span className={styles.conversationEmptyText}>{t('Start chatting with a shop for advice.')}</span>
                         {onCompose ? (
                             <Button variant="secondary" size="sm" onClick={onCompose}>
-                                Chat với shop
+                                {t('Chat with the shop')}
                             </Button>
                         ) : null}
                     </div>

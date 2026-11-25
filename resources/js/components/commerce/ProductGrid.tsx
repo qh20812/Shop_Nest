@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { PackageSearch } from 'lucide-react';
 
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,12 +24,15 @@ export function ProductGrid({
     products,
     columns = 3,
     loading = false,
-    emptyTitle = 'Không tìm thấy món phù hợp',
-    emptyDescription = 'Thử một từ khoá khác hoặc xoá bớt bộ lọc.',
+    emptyTitle,
+    emptyDescription,
     onAddToCart,
     onToggleWishlist,
     className,
 }: ProductGridProps) {
+    const { t } = useTranslation();
+    const resolvedEmptyTitle = emptyTitle ?? t('No matching products');
+    const resolvedEmptyDescription = emptyDescription ?? t('Try another keyword or remove some filters.');
     if (loading) {
         return (
             <div className={cx(styles.productGrid, className)} data-columns={columns}>
@@ -47,7 +51,7 @@ export function ProductGrid({
     }
 
     if (products.length === 0) {
-        return <EmptyState icon={PackageSearch} title={emptyTitle} description={emptyDescription} />;
+        return <EmptyState icon={PackageSearch} title={resolvedEmptyTitle} description={resolvedEmptyDescription} />;
     }
 
     return (

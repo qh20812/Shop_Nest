@@ -1084,7 +1084,7 @@
 
     .buyBox {
         position: sticky;
-        top: calc(var(--sn-header) + var(--sn-space-4));
+        top: calc(var(--sn-header-stuck) + var(--sn-space-2));
     }
 
     .buyBoxActions {
@@ -1115,7 +1115,7 @@
 
     .filterRail {
         position: sticky;
-        top: calc(var(--sn-header) + var(--sn-space-4));
+        top: calc(var(--sn-header-stuck) + var(--sn-space-2));
         width: var(--sn-filter-rail);
     }
 
@@ -1480,7 +1480,7 @@ a.cartLineTitle:hover {
 @media (min-width: 1024px) {
     .summaryAside {
         position: sticky;
-        top: calc(var(--sn-header) + var(--sn-space-4));
+        top: calc(var(--sn-header-stuck) + var(--sn-space-2));
     }
 
     .summaryToggle {

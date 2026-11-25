@@ -5,6 +5,7 @@ import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { IconButton } from '@/components/ui/icon-button';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './chat.module.css';
 
@@ -33,10 +34,11 @@ export function ChatHeader({
     actions,
     className,
 }: ChatHeaderProps) {
+    const { t } = useTranslation();
     return (
         <header className={cx(styles.header, className)}>
             {onBack ? (
-                <IconButton label="Quay lại danh sách" variant="ghost" size="sm" onClick={onBack} className={styles.headerBack}>
+                <IconButton label={t('Go back')} variant="ghost" size="sm" onClick={onBack} className={styles.headerBack}>
                     <ArrowLeft aria-hidden="true" />
                 </IconButton>
             ) : null}
@@ -64,19 +66,19 @@ export function ChatHeader({
                     ) : (
                         <Store aria-hidden="true" className={styles.headerStoreIcon} />
                     )}
-                    {subtitle ?? (variant === 'assistant' ? 'Trực tuyến' : online ? 'Đang trực tuyến' : 'Ngoại tuyến')}
+                    {subtitle ?? (variant === 'assistant' ? t('Online') : online ? t('Online now') : t('Offline'))}
                 </span>
             </div>
 
             <div className={styles.headerActions}>
                 {actions}
                 {onMinimize ? (
-                    <IconButton label="Thu nhỏ cửa sổ chat" variant="ghost" size="sm" onClick={onMinimize}>
+                    <IconButton label={t('Minimize chat')} variant="ghost" size="sm" onClick={onMinimize}>
                         <ChevronDown aria-hidden="true" />
                     </IconButton>
                 ) : null}
                 {onClose ? (
-                    <IconButton label="Đóng cửa sổ chat" variant="ghost" size="sm" onClick={onClose}>
+                    <IconButton label={t('Close chat')} variant="ghost" size="sm" onClick={onClose}>
                         <X aria-hidden="true" />
                     </IconButton>
                 ) : null}

@@ -6,6 +6,9 @@ import { NewsletterSignup } from '@/components/storefront/NewsletterSignup';
 import { useToast } from '@/components/ui/toast';
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import { BrandMark } from './BrandMark';
 
 type StorefrontFooterProps = {
     compact?: boolean;
@@ -14,28 +17,29 @@ type StorefrontFooterProps = {
 };
 
 const serviceLinks = [
-    { label: 'Về ShopNest', href: '/about' },
-    { label: 'Liên hệ', href: '/contact' },
-    { label: 'Điều khoản sử dụng', href: '/terms' },
-    { label: 'Chính sách bảo mật', href: '/privacy-policy' },
-    { label: 'Chính sách người bán', href: '/selling-policy' },
+    { labelKey: 'About ShopNest', href: '/about' },
+    { labelKey: 'Contact', href: '/contact' },
+    { labelKey: 'Terms of Service', href: '/terms' },
+    { labelKey: 'Privacy Policy', href: '/privacy-policy' },
+    { labelKey: 'Seller policy', href: '/selling-policy' },
 ];
 
 const partnerLinks = [
-    { label: 'Bán hàng cùng ShopNest', href: '/register/seller' },
-    { label: 'Giao vận cùng ShopNest', href: '/register/shipper' },
-    { label: 'Shop Việt', href: '/#shop-viet' },
+    { labelKey: 'Sell with ShopNest', href: '/register/seller' },
+    { labelKey: 'Deliver with ShopNest', href: '/register/shipper' },
+    { labelKey: 'Vietnamese shops', href: '/#shop-viet' },
 ];
 
 const supportLinks = [
-    { label: 'Tìm sản phẩm', href: '/search' },
-    { label: 'Giỏ hàng', href: '/cart' },
-    { label: 'Đơn hàng của tôi', href: '/user/orders' },
-    { label: 'Trung tâm hỗ trợ', href: '/contact' },
+    { labelKey: 'Search products', href: '/search' },
+    { labelKey: 'Cart', href: '/cart' },
+    { labelKey: 'My orders', href: '/user/orders' },
+    { labelKey: 'Help center', href: '/contact' },
 ];
 
 export function StorefrontFooter({ compact = false, onNewsletterSubmit, className }: StorefrontFooterProps) {
     const { success } = useToast();
+    const { t } = useTranslation();
 
     const handleNewsletter = (email: string) => {
         if (onNewsletterSubmit) {
@@ -43,7 +47,7 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
             return;
         }
 
-        success('Đã đăng ký bản tin', `Chúng tôi sẽ gửi chuyện chợ mỗi tuần đến ${email}.`);
+        success(t('Subscribed to the newsletter'), t('We will send weekly market stories to :email.', { email }));
     };
 
     return (
@@ -52,12 +56,13 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                 <div className="sn-footer__grid">
                     <div className="sn-footer__brand">
                         <Link href="/" className="sn-brand">
-                            <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
+                            <BrandMark />
                             <span className="sn-brand__name">ShopNest</span>
                         </Link>
                         <Text size="body-sm" tone="muted">
-                            Sàn thương mại điện tử tuyển chọn cho tổ ấm và đời sống người Việt: điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm
-                            đẹp.
+                            {t(
+                                'A curated marketplace for Vietnamese homes and everyday life: electronics, home appliances, furniture, mother & baby, fashion and beauty.',
+                            )}
                         </Text>
                         <div className="sn-footer__contact">
                             <span className="sn-footer__contact-line">
@@ -82,20 +87,23 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                         </div>
                     </div>
 
-                    <FooterColumn title="Dịch vụ & tiêu chuẩn" links={serviceLinks} />
-                    <FooterColumn title="Dành cho đối tác" links={partnerLinks} />
-                    <FooterColumn title="Hỗ trợ" links={supportLinks} />
+                    <FooterColumn
+                        title={t('Services & standards')}
+                        links={serviceLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))}
+                    />
+                    <FooterColumn title={t('For partners')} links={partnerLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))} />
+                    <FooterColumn title={t('Support')} links={supportLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))} />
                 </div>
 
                 {!compact && (
                     <div className="sn-footer__newsletter">
                         <div className="sn-footer__newsletter-copy">
-                            <Eyebrow tone="accent">Chuyện chợ mỗi tuần</Eyebrow>
+                            <Eyebrow tone="accent">{t('Weekly market stories')}</Eyebrow>
                             <Heading level={3} size="headline-3">
-                                Nhận chuyện chợ mỗi tuần
+                                {t('Get the weekly market letter')}
                             </Heading>
                             <Text size="body-sm" tone="muted">
-                                Tuyển chọn sản phẩm, câu chuyện nhà bán và ưu đãi dành cho tổ ấm Việt.
+                                {t('Handpicked products, seller stories and offers for Vietnamese homes.')}
                             </Text>
                         </div>
                         <div>
@@ -105,14 +113,16 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                 )}
 
                 <div className="sn-footer__bottom">
-                    <p className="sn-footer__copyright">© {new Date().getFullYear()} ShopNest. Tất cả quyền được bảo lưu.</p>
+                    <p className="sn-footer__copyright">
+                        © {new Date().getFullYear()} ShopNest. {t('All rights reserved.')}
+                    </p>
                     <div className="sn-footer__legal">
                         <PaymentMarks />
                         <Link href="/terms" className="sn-footer__link">
-                            Điều khoản
+                            {t('Terms')}
                         </Link>
                         <Link href="/privacy-policy" className="sn-footer__link">
-                            Bảo mật
+                            {t('Privacy')}
                         </Link>
                     </div>
                 </div>

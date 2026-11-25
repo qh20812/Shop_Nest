@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Heart } from 'lucide-react';
 import * as React from 'react';
 
@@ -23,6 +24,7 @@ type ProductGalleryProps = {
 };
 
 export function ProductGallery({ images, activeIndex, onChange, productName, wishlisted = false, onToggleWishlist, className }: ProductGalleryProps) {
+    const { t } = useTranslation();
     const [imageError, setImageError] = React.useState(false);
     const activeImage = images[activeIndex] ?? images[0];
     const imageUrl = imageError ? '/image/default-product.png' : activeImage?.url;
@@ -37,12 +39,12 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
                 {imageUrl ? (
                     <img src={imageUrl} alt={activeImage?.alt ?? productName} onError={() => setImageError(true)} className={styles.galleryImage} />
                 ) : (
-                    <div className={styles.galleryEmpty}>Chưa có ảnh sản phẩm</div>
+                    <div className={styles.galleryEmpty}>{t('No product images yet')}</div>
                 )}
 
                 {onToggleWishlist && (
                     <IconButton
-                        label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
+                        label={wishlisted ? t('Remove from wishlist') : t('Save to wishlist')}
                         variant="secondary"
                         size="md"
                         className={styles.galleryWishlist}
@@ -59,7 +61,7 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
                         <button
                             key={image.id ?? image.url}
                             type="button"
-                            aria-label={`Xem ảnh ${index + 1}`}
+                            aria-label={t('View image :index', { index: index + 1 })}
                             aria-pressed={index === activeIndex}
                             onClick={() => onChange(index)}
                             className={styles.galleryThumb}

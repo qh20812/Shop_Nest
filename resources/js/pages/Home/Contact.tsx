@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Clock, Mail, MapPin, Phone, Send } from 'lucide-react';
+import { Clock, Mail, MapPin, Phone, Send, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -12,20 +12,30 @@ import Input from '@/components/ui/input';
 import Textarea from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Heading, Text } from '@/components/ui/typography';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './Contact.module.css';
 
-const contactItems = [
-    { icon: MapPin, title: 'Địa chỉ', value: 'Tầng 5 Tòa nhà Emporium, 184 Lê Đại Hành, Phường 15, Quận 11, TP. Hồ Chí Minh' },
-    { icon: Phone, title: 'Điện thoại', value: '1900 6886', href: 'tel:19006886' },
-    { icon: Mail, title: 'Email', value: 'hotro@shopnest.vn', href: 'mailto:hotro@shopnest.vn' },
-    { icon: Clock, title: 'Giờ làm việc', value: 'Thứ 2 - Thứ 6: 8:00 - 18:00, Thứ 7 - CN: 9:00 - 17:00' },
+type ContactItemMeta = {
+    icon: LucideIcon;
+    titleKey: string;
+    value?: string;
+    valueKey?: string;
+    href?: string;
+};
+
+const contactItemsMeta: ContactItemMeta[] = [
+    { icon: MapPin, titleKey: 'Address', value: 'Tầng 5 Tòa nhà Emporium, 184 Lê Đại Hành, Phường 15, Quận 11, TP. Hồ Chí Minh' },
+    { icon: Phone, titleKey: 'Phone', value: '1900 6886', href: 'tel:19006886' },
+    { icon: Mail, titleKey: 'Email', value: 'hotro@shopnest.vn', href: 'mailto:hotro@shopnest.vn' },
+    { icon: Clock, titleKey: 'Opening hours', valueKey: 'Mon - Fri: 8:00 - 18:00, Sat - Sun: 9:00 - 17:00' },
 ];
 
 const insetCardVariant = 'inset' as const;
 
 export default function Contact() {
     const { success } = useToast();
+    const { t } = useTranslation();
     const [submitting, setSubmitting] = React.useState(false);
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -34,49 +44,55 @@ export default function Contact() {
         setSubmitting(true);
         window.setTimeout(() => {
             setSubmitting(false);
-            success('Đã gửi tin nhắn', 'ShopNest sẽ phản hồi trong giờ làm việc.');
+            success(t('Message sent'), t('ShopNest will reply during opening hours.'));
             form.reset();
         }, 500);
     };
 
+    const contactItems = contactItemsMeta.map((item) => ({
+        ...item,
+        title: t(item.titleKey),
+        displayValue: item.valueKey ? t(item.valueKey) : item.value,
+    }));
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Liên hệ ShopNest" />
+            <Head title={t('Contact ShopNest')} />
 
             <PageContainer className={styles.page}>
                 <PageHeader
-                    eyebrow="Liên hệ"
-                    title="Cần hỏi một điều rõ ràng?"
-                    description="Gửi tin nhắn hoặc gọi tổng đài. Chúng tôi trả lời trong giờ làm việc."
+                    eyebrow={t('Contact')}
+                    title={t('Need a clear answer?')}
+                    description={t('Send a message or call our hotline. We reply during opening hours.')}
                 />
 
                 <div className={styles.grid}>
                     <Card className={styles.formCard} padding="lg">
                         <Heading level={2} size="headline-2">
-                            Gửi tin nhắn
+                            {t('Send a message')}
                         </Heading>
                         <Text size="body-sm" tone="muted">
-                            Càng cụ thể càng dễ hỗ trợ.
+                            {t('The more specific, the easier it is to help.')}
                         </Text>
 
                         <form onSubmit={handleSubmit} className={styles.form}>
                             <div className={styles.formGrid}>
-                                <FormField label="Họ và tên" required>
-                                    <Input placeholder="Nguyễn Thu Hà" autoComplete="name" required />
+                                <FormField label={t('Full name')} required>
+                                    <Input placeholder={t('e.g. Nguyen Thu Ha')} autoComplete="name" required />
                                 </FormField>
-                                <FormField label="Email" required>
-                                    <Input type="email" placeholder="ban@example.com" autoComplete="email" required />
+                                <FormField label={t('Email')} required>
+                                    <Input type="email" placeholder="you@example.com" autoComplete="email" required />
                                 </FormField>
                             </div>
-                            <FormField label="Chủ đề" required>
-                                <Input placeholder="Ví dụ: Kiểm tra đơn hàng #SN-24817" required />
+                            <FormField label={t('Subject')} required>
+                                <Input placeholder={t('e.g. Check order #SN-24817')} required />
                             </FormField>
-                            <FormField label="Nội dung" required>
-                                <Textarea rows={5} placeholder="Bạn cần ShopNest hỗ trợ điều gì?" required />
+                            <FormField label={t('Message')} required>
+                                <Textarea rows={5} placeholder={t('What do you need help with?')} required />
                             </FormField>
                             <div className={styles.formActions}>
                                 <Button type="submit" loading={submitting} rightIcon={Send}>
-                                    Gửi tin nhắn
+                                    {t('Send message')}
                                 </Button>
                             </div>
                         </form>
@@ -96,10 +112,10 @@ export default function Contact() {
                                             <h3 className={styles.infoTitle}>{item.title}</h3>
                                             {item.href ? (
                                                 <a href={item.href} className={styles.infoValue}>
-                                                    {item.value}
+                                                    {item.displayValue}
                                                 </a>
                                             ) : (
-                                                <p className={styles.infoValue}>{item.value}</p>
+                                                <p className={styles.infoValue}>{item.displayValue}</p>
                                             )}
                                         </div>
                                     </div>

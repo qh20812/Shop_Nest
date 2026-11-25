@@ -1,8 +1,9 @@
 <?php
 
-
 namespace App\Http\Controllers\Seller;
 
+use App\Enums\ProductStatus;
+use App\Events\ProductUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Seller\StoreProductRequest;
 use App\Http\Requests\Seller\UpdateProductRequest;
@@ -11,37 +12,34 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\InventoryService;
+use App\Services\ProductDeletionService;
+use App\Services\Seller\GenerateSkuService;
+use App\Services\Seller\ProductViewService;
+use App\Services\Seller\StoreImagesService;
+use App\Services\Seller\VariantSkuService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Enums\ProductStatus;
-use App\Events\ProductUpdated;
-use App\Services\ImageValidationService;
-use App\Services\Seller\StoreImagesService;
-use App\Services\Seller\GenerateSkuService;
-use App\Services\Seller\ProductViewService;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    protected ImageValidationService $imageValidationService;
-    protected StoreImagesService $storeImagesService;
-    protected GenerateSkuService $generateSkuService;
-    protected ProductViewService $productViewService;
-
-    public function __construct(ImageValidationService $imageValidationService, StoreImagesService $storeImagesService, GenerateSkuService $generateSkuService, ProductViewService $productViewService)
-    {
+    public function __construct(
+        private StoreImagesService $storeImagesService,
+        private GenerateSkuService $generateSkuService,
+        private ProductViewService $productViewService,
+        private InventoryService $inventoryService,
+        private VariantSkuService $variantSkuService,
+        private ProductDeletionService $productDeletionService,
+    ) {
         $this->authorizeResource(Product::class, 'product');
-        $this->imageValidationService = $imageValidationService;
-        $this->storeImagesService = $storeImagesService;
-        $this->generateSkuService = $generateSkuService;
-        $this->productViewService = $productViewService;
     }
 
     public function index(): Response
@@ -56,9 +54,9 @@ class ProductController extends Controller
         $query = Product::with([
             'category',
             'brand',
-            'images' => fn($query) => $query->where('is_primary', true),
-            'variants' => fn($query) => $query->orderBy('created_at'),
-            'reviews' => fn($query) => $query->latest()->limit(
+            'images' => fn ($query) => $query->where('is_primary', true),
+            'variants' => fn ($query) => $query->orderBy('created_at'),
+            'reviews' => fn ($query) => $query->latest()->limit(
                 (int) config('app.reviews.limit', 5)
             ),
         ])
@@ -66,12 +64,13 @@ class ProductController extends Controller
             ->withSum('variants', 'stock_quantity')
             ->where('seller_id', Auth::id());
 
-        // Search and filters
         if ($search = Arr::get($filters, 'search')) {
-            $query->where(function ($query) use ($search) {
-                $like = "%{$search}%";
-                $query->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(name, "$.vi")) LIKE ?', [$like])
-                    ->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(name, "$.en")) LIKE ?', [$like]);
+            $like = "%{$search}%";
+
+            $query->where(function ($query) use ($like) {
+                $query->where('name->vi', 'like', $like)
+                    ->orWhere('name->en', 'like', $like)
+                    ->orWhereHas('variants', fn ($variants) => $variants->where('sku', 'like', $like));
             });
         }
 
@@ -136,13 +135,13 @@ class ProductController extends Controller
                 }
 
                 $nameTranslations = ['vi' => $validated['name']];
-                if (!empty($validated['name_en'])) {
+                if (! empty($validated['name_en'])) {
                     $nameTranslations['en'] = $validated['name_en'];
                 }
                 $productData['name'] = $nameTranslations;
 
                 $descriptionTranslations = ['vi' => $validated['description'] ?? ''];
-                if (!empty($validated['description_en'])) {
+                if (! empty($validated['description_en'])) {
                     $descriptionTranslations['en'] = $validated['description_en'];
                 }
                 $productData['description'] = $descriptionTranslations;
@@ -151,21 +150,23 @@ class ProductController extends Controller
 
                 $this->createVariants($product, $validated['variants']);
 
-                if (!empty($validated['images'])) {
+                if (! empty($validated['images'])) {
                     $this->storeImagesService->storeImages($product, $validated['images']);
                 }
             });
 
             return redirect()->route('seller.products.index')->with('success', 'Tạo sản phẩm thành công.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
             Log::error('Seller product creation failed', [
                 'seller_id' => $sellerId,
-                'errors' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'errors' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return back()->withErrors([
-                'error' => 'Có lỗi xảy ra khi tạo sản phẩm: ' . $e->getMessage(),
+                'error' => 'Có lỗi xảy ra khi tạo sản phẩm. Vui lòng thử lại.',
             ])->withInput();
         }
     }
@@ -196,31 +197,17 @@ class ProductController extends Controller
 
         try {
             DB::transaction(function () use ($product, $validated): void {
-                $productData = [
-                    'category_id' => $validated['category_id'],
-                    'brand_id' => $validated['brand_id'],
-                    'status' => ProductStatus::from($validated['status'])->value,
-                    'meta_title' => Arr::get($validated, 'meta_title') ?: null,
-                    'meta_slug' => Arr::get($validated, 'meta_slug') ?: null,
-                    'meta_description' => Arr::get($validated, 'meta_description') ?: null,
-                ];
+                $productData = $this->buildProductUpdatePayload($product, $validated);
 
-                $nameTranslations = ['vi' => $validated['name']];
-                if (!empty($validated['name_en'])) {
-                    $nameTranslations['en'] = $validated['name_en'];
+                if ($productData !== []) {
+                    $product->update($productData);
                 }
-                $productData['name'] = $nameTranslations;
 
-                $descriptionTranslations = ['vi' => $validated['description'] ?? ''];
-                if (!empty($validated['description_en'])) {
-                    $descriptionTranslations['en'] = $validated['description_en'];
+                if (array_key_exists('variants', $validated)) {
+                    $this->updateVariants($product, $validated['variants']);
                 }
-                $productData['description'] = $descriptionTranslations;
-                $product->update($productData);
 
-                $this->updateVariants($product, $validated['variants']);
-
-                if (isset($validated['images'])) {
+                if (! empty($validated['images'])) {
                     $this->storeImagesService->storeImages($product, $validated['images']);
                 }
             });
@@ -228,96 +215,211 @@ class ProductController extends Controller
             ProductUpdated::dispatch($product);
 
             return redirect()->route('seller.products.index')->with('success', 'Cập nhật sản phẩm thành công.');
-        } catch (\Exception $e) {
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
             Log::error('Seller product update failed', [
                 'seller_id' => $product->seller_id,
                 'product_id' => $product->product_id,
-                'errors' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'errors' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
 
             return back()->withErrors([
-                'error' => 'Có lỗi xảy ra khi cập nhật sản phẩm: ' . $e->getMessage(),
+                'error' => 'Có lỗi xảy ra khi cập nhật sản phẩm. Vui lòng thử lại.',
             ])->withInput();
         }
     }
 
     public function destroy(Product $product): RedirectResponse
     {
-        DB::transaction(function () use ($product): void {
-            $product->loadMissing('images');
-
-            $this->storeImagesService->deleteProductImages($product);
-
-            $product->delete();
-        });
+        $this->productDeletionService->delete($product);
 
         return redirect()->route('seller.products.index')->with('success', 'Xóa sản phẩm thành công.');
     }
 
     /**
+     * Build a partial update payload without overwriting fields that were not sent.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function buildProductUpdatePayload(Product $product, array $validated): array
+    {
+        $payload = [];
+
+        if (array_key_exists('category_id', $validated)) {
+            $payload['category_id'] = $validated['category_id'];
+        }
+
+        if (array_key_exists('brand_id', $validated)) {
+            $payload['brand_id'] = $validated['brand_id'];
+        }
+
+        if (array_key_exists('status', $validated)) {
+            $payload['status'] = ProductStatus::from($validated['status'])->value;
+        }
+
+        foreach (['meta_title', 'meta_slug', 'meta_description'] as $metaField) {
+            if (array_key_exists($metaField, $validated)) {
+                $payload[$metaField] = $validated[$metaField] ?: null;
+            }
+        }
+
+        if (array_key_exists('name', $validated) || array_key_exists('name_en', $validated)) {
+            $nameTranslations = $product->getTranslations('name');
+
+            if (array_key_exists('name', $validated) && $validated['name'] !== null) {
+                $nameTranslations['vi'] = $validated['name'];
+            }
+
+            if (array_key_exists('name_en', $validated)) {
+                if (! empty($validated['name_en'])) {
+                    $nameTranslations['en'] = $validated['name_en'];
+                } else {
+                    unset($nameTranslations['en']);
+                }
+            }
+
+            $payload['name'] = $nameTranslations;
+        }
+
+        if (array_key_exists('description', $validated) || array_key_exists('description_en', $validated)) {
+            $descriptionTranslations = $product->getTranslations('description');
+
+            if (array_key_exists('description', $validated) && $validated['description'] !== null) {
+                $descriptionTranslations['vi'] = $validated['description'];
+            }
+
+            if (array_key_exists('description_en', $validated)) {
+                if (! empty($validated['description_en'])) {
+                    $descriptionTranslations['en'] = $validated['description_en'];
+                } else {
+                    unset($descriptionTranslations['en']);
+                }
+            }
+
+            $payload['description'] = $descriptionTranslations;
+        }
+
+        return $payload;
+    }
+
+    /**
      * Create multiple variants for a product.
+     *
+     * @param  array<int, array<string, mixed>>  $variantsData
      */
     private function createVariants(Product $product, array $variantsData): void
     {
         foreach ($variantsData as $variantData) {
-            $product->variants()->create([
+            $stock = (int) Arr::get($variantData, 'stock_quantity', 0);
+
+            $variant = $product->variants()->create([
                 'variant_name' => Arr::get($variantData, 'variant_name'),
                 'sku' => Arr::get($variantData, 'sku') ?: $this->generateSkuService->generateSku(),
                 'price' => Arr::get($variantData, 'price', 0),
-                'stock_quantity' => Arr::get($variantData, 'stock_quantity', 0),
+                'stock_quantity' => 0,
                 'option_values' => Arr::get($variantData, 'option_values'),
                 'option_signature' => Arr::get($variantData, 'option_signature'),
                 'is_primary' => Arr::get($variantData, 'is_primary', false),
             ]);
+
+            if ($stock > 0) {
+                $this->inventoryService->setStock(
+                    $variant->variant_id,
+                    $stock,
+                    'Initial stock on product creation',
+                    Auth::id(),
+                );
+            }
         }
     }
 
     /**
      * Update variants for a product, handling additions, updates, and deletions.
+     *
+     * @param  array<int, array<string, mixed>>  $variantsData
      */
     private function updateVariants(Product $product, array $variantsData): void
     {
         $existingVariants = $product->variants()->get()->keyBy('variant_id');
+        $incomingVariantIds = collect($variantsData)
+            ->pluck('variant_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id);
+
+        // Release and remove variants first so their unique SKU / option
+        // signature can be reused by the variants created below.
+        $variantsToDelete = $existingVariants->reject(
+            fn (ProductVariant $variant) => $incomingVariantIds->contains($variant->variant_id)
+        );
+
+        foreach ($variantsToDelete as $variant) {
+            $this->variantSkuService->releaseUniqueValues($variant);
+            $variant->delete();
+        }
+
         $updatedVariantIds = [];
 
         foreach ($variantsData as $variantData) {
             $variantId = Arr::get($variantData, 'variant_id');
+            $stock = Arr::get($variantData, 'stock_quantity');
 
-            if ($variantId && isset($existingVariants[$variantId])) {
-                // Update existing variant
-                $existingVariants[$variantId]->update([
-                    'variant_name' => Arr::get($variantData, 'variant_name'),
-                    'sku' => Arr::get($variantData, 'sku'),
-                    'price' => Arr::get($variantData, 'price', 0),
-                    'stock_quantity' => Arr::get($variantData, 'stock_quantity', 0),
+            if ($variantId && $existingVariants->has($variantId) && ! $variantsToDelete->has($variantId)) {
+                /** @var ProductVariant $variant */
+                $variant = $existingVariants->get($variantId);
+                $payload = [
+                    'sku' => Arr::get($variantData, 'sku') ?: $variant->sku,
                     'option_values' => Arr::get($variantData, 'option_values'),
                     'option_signature' => Arr::get($variantData, 'option_signature'),
                     'is_primary' => Arr::get($variantData, 'is_primary', false),
-                ]);
-                $updatedVariantIds[] = $variantId;
-            } else {
-                // Create new variant
-                $newVariant = $product->variants()->create([
-                    'variant_name' => Arr::get($variantData, 'variant_name'),
-                    'sku' => Arr::get($variantData, 'sku') ?: $this->generateSkuService->generateSku(),
-                    'price' => Arr::get($variantData, 'price', 0),
-                    'stock_quantity' => Arr::get($variantData, 'stock_quantity', 0),
-                    'option_values' => Arr::get($variantData, 'option_values'),
-                    'option_signature' => Arr::get($variantData, 'option_signature'),
-                    'is_primary' => Arr::get($variantData, 'is_primary', false),
-                ]);
-                $updatedVariantIds[] = $newVariant->variant_id;
+                ];
+
+                if (array_key_exists('variant_name', $variantData)) {
+                    $payload['variant_name'] = Arr::get($variantData, 'variant_name');
+                }
+
+                if (Arr::get($variantData, 'price') !== null) {
+                    $payload['price'] = Arr::get($variantData, 'price');
+                }
+
+                $variant->update($payload);
+
+                if ($stock !== null && (int) $stock !== (int) $variant->stock_quantity) {
+                    $this->inventoryService->setStock(
+                        $variant->variant_id,
+                        (int) $stock,
+                        'Seller product update',
+                        Auth::id(),
+                    );
+                }
+
+                $updatedVariantIds[] = $variant->variant_id;
+
+                continue;
             }
-        }
 
-        // Delete variants that are no longer present
-        $variantsToDelete = $existingVariants->filter(function ($variant) use ($updatedVariantIds) {
-            return !in_array($variant->variant_id, $updatedVariantIds);
-        });
+            $variant = $product->variants()->create([
+                'variant_name' => Arr::get($variantData, 'variant_name'),
+                'sku' => Arr::get($variantData, 'sku') ?: $this->generateSkuService->generateSku(),
+                'price' => Arr::get($variantData, 'price', 0),
+                'stock_quantity' => 0,
+                'option_values' => Arr::get($variantData, 'option_values'),
+                'option_signature' => Arr::get($variantData, 'option_signature'),
+                'is_primary' => Arr::get($variantData, 'is_primary', false),
+            ]);
 
-        foreach ($variantsToDelete as $variant) {
-            $variant->delete();
+            if ($stock !== null && (int) $stock > 0) {
+                $this->inventoryService->setStock(
+                    $variant->variant_id,
+                    (int) $stock,
+                    'Initial stock on product update',
+                    Auth::id(),
+                );
+            }
+
+            $updatedVariantIds[] = $variant->variant_id;
         }
     }
 

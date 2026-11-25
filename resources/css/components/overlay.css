@@ -1,3 +1,4 @@
+/* Hallmark · component: dropdown · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
 /*
  * Bảng Hiệu — overlays: dialog, sheet, dropdown menu, tooltip.
  * Radix sets `data-state`; side and size are expressed with data attributes.
@@ -190,6 +191,63 @@
         background: var(--sn-color-surface);
         color: var(--sn-color-text);
         box-shadow: var(--sn-shadow-popover);
+        transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+    }
+
+    .sn-dropdown[data-state='open'] {
+        animation: sn-dropdown-in var(--sn-dur-fast) var(--sn-ease-out);
+    }
+
+    .sn-dropdown[data-state='closed'] {
+        animation: sn-dropdown-out var(--sn-dur-instant) var(--sn-ease-standard);
+    }
+
+    /* Glass variant for floating chrome. A menu stays more opaque than the bar it drops from. */
+    .sn-dropdown--glass {
+        border-color: var(--sn-glass-hairline);
+        border-radius: var(--sn-radius-menu);
+        background: var(--sn-glass-menu);
+        box-shadow:
+            inset 0 1px 0 var(--sn-glass-highlight),
+            var(--sn-shadow-overlay);
+        backdrop-filter: var(--sn-blur-glass);
+        -webkit-backdrop-filter: var(--sn-blur-glass);
+    }
+
+    .sn-dropdown--glass .sn-dropdown__item {
+        border-radius: var(--sn-radius-item);
+    }
+
+    .sn-dropdown--glass .sn-dropdown__item:hover,
+    .sn-dropdown--glass .sn-dropdown__item[data-highlighted] {
+        background: var(--sn-glass-hover);
+    }
+
+    .sn-dropdown--glass .sn-dropdown__separator {
+        background: var(--sn-glass-hairline);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .sn-dropdown--glass {
+            background: var(--sn-color-surface);
+        }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+        .sn-dropdown--glass {
+            background: var(--sn-color-surface);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+    }
+
+    @media (forced-colors: active) {
+        .sn-dropdown--glass {
+            border-color: CanvasText;
+            background: Canvas;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
     }
 
     .sn-dropdown__item {
@@ -210,9 +268,25 @@
         transition: background-color var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
-    .sn-dropdown__item:focus-visible,
-    .sn-dropdown__item:hover {
+    .sn-dropdown__item:hover,
+    .sn-dropdown__item[data-highlighted] {
         background: var(--sn-color-accent-wash);
+    }
+
+    .sn-dropdown__item:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: -2px;
+    }
+
+    .sn-dropdown__item[data-selected='true'] {
+        background: var(--sn-color-accent-wash);
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-dropdown__item[data-selected='true']:hover,
+    .sn-dropdown__item[data-selected='true'][data-highlighted] {
+        background: var(--sn-color-accent-wash);
+        color: var(--sn-color-accent-text);
     }
 
     .sn-dropdown__item[data-inset='true'] {
@@ -223,8 +297,8 @@
         color: var(--sn-color-danger-text);
     }
 
-    .sn-dropdown__item[data-destructive='true']:focus-visible,
-    .sn-dropdown__item[data-destructive='true']:hover {
+    .sn-dropdown__item[data-destructive='true']:hover,
+    .sn-dropdown__item[data-destructive='true'][data-highlighted] {
         background: var(--sn-color-danger-wash);
     }
 
@@ -239,14 +313,19 @@
         flex-shrink: 0;
     }
 
+    .sn-dropdown__check {
+        display: inline-flex;
+        align-items: center;
+        margin-inline-start: auto;
+        color: var(--sn-color-accent-text);
+    }
+
     .sn-dropdown__label {
         padding: var(--sn-space-2) var(--sn-space-3);
         font-family: var(--sn-font-sans);
-        font-size: var(--sn-text-2xs);
-        font-weight: var(--sn-weight-semibold);
-        letter-spacing: var(--sn-tracking-wider);
-        text-transform: uppercase;
-        color: var(--sn-color-text-faint);
+        font-size: var(--sn-text-xs);
+        font-weight: var(--sn-weight-medium);
+        color: var(--sn-color-text-muted);
     }
 
     .sn-dropdown__separator {
@@ -293,6 +372,31 @@
         }
     }
 
+    /* Scale, not transform: Radix positions the content with a transform. */
+    @keyframes sn-dropdown-in {
+        from {
+            opacity: 0;
+            scale: 0.96;
+        }
+
+        to {
+            opacity: 1;
+            scale: 1;
+        }
+    }
+
+    @keyframes sn-dropdown-out {
+        from {
+            opacity: 1;
+            scale: 1;
+        }
+
+        to {
+            opacity: 0;
+            scale: 0.98;
+        }
+    }
+
     @keyframes sn-slide-in-right {
         from {
             transform: translateX(100%);
@@ -327,6 +431,7 @@
         .sn-scrim[data-state='open'],
         .sn-dialog[data-state='open'],
         .sn-sheet[data-side],
+        .sn-dropdown[data-state],
         .sn-tooltip[data-state] {
             animation: none;
         }

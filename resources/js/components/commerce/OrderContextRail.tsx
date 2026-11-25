@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { MessageCircleQuestion } from 'lucide-react';
 
 import { OrderAnnouncementCard, type OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
@@ -13,22 +14,24 @@ type OrderContextRailProps = {
     className?: string;
 };
 
-const defaultHints = ['Đơn của tôi đang ở đâu?', 'Tôi muốn đổi địa chỉ giao hàng', 'Khi nào đơn được hoàn tiền?'];
+const defaultHintKeys = ['Where is my order?', 'I want to change the shipping address', 'When will my refund arrive?'];
 
-export function OrderContextRail({ order, hints = defaultHints, onAsk, className }: OrderContextRailProps) {
+export function OrderContextRail({ order, hints, onAsk, className }: OrderContextRailProps) {
+    const { t } = useTranslation();
+    const resolvedHints = hints ?? defaultHintKeys.map((key) => t(key));
     return (
-        <aside aria-label="Ngữ cảnh đơn hàng" className={cx(styles.contextRail, className)}>
+        <aside aria-label={t('Order context')} className={cx(styles.contextRail, className)}>
             <div className={styles.contextRailHead}>
                 <MessageCircleQuestion aria-hidden="true" className={styles.contextRailIcon} />
-                <h3 className={styles.contextRailTitle}>Đơn hàng đang trao đổi</h3>
+                <h3 className={styles.contextRailTitle}>{t('Order in this conversation')}</h3>
             </div>
 
             <OrderAnnouncementCard order={order} />
 
-            {hints.length > 0 ? (
+            {resolvedHints.length > 0 ? (
                 <div className={styles.contextHints}>
-                    <span className={styles.contextHintsLabel}>Câu hỏi nhanh</span>
-                    {hints.map((hint) => (
+                    <span className={styles.contextHintsLabel}>{t('Quick questions')}</span>
+                    {resolvedHints.map((hint) => (
                         <Button key={hint} variant="secondary" size="sm" className={styles.contextHintButton} onClick={() => onAsk?.(hint)}>
                             {hint}
                         </Button>
@@ -36,7 +39,7 @@ export function OrderContextRail({ order, hints = defaultHints, onAsk, className
                 </div>
             ) : null}
 
-            <p className={styles.contextRailNote}>Ngữ cảnh đơn hàng giúp shop trả lời nhanh hơn. Không chia sẻ thông tin thanh toán trong chat.</p>
+            <p className={styles.contextRailNote}>{t('Order context helps the shop reply faster. Never share payment details in chat.')}</p>
         </aside>
     );
 }

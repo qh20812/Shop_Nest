@@ -6,6 +6,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './storefront.module.css';
 
@@ -25,6 +26,7 @@ type HeroEditorialProps = {
 };
 
 export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className }: HeroEditorialProps) {
+    const { t } = useTranslation();
     const [lead, ...rest] = images;
 
     return (
@@ -32,7 +34,7 @@ export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className 
             <PageContainer>
                 <div className={styles.heroGrid}>
                     <div className={styles.heroCopy}>
-                        <Eyebrow tone="accent">{eyebrow ?? 'Mọi thứ cho tổ ấm Việt'}</Eyebrow>
+                        <Eyebrow tone="accent">{eyebrow ?? t('Everything for Vietnamese homes')}</Eyebrow>
                         <Heading level={1} size="display-lg" className={styles.heroTitle}>
                             {title}
                         </Heading>

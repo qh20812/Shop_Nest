@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\StoreProductRequest;
-use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ProductDeletionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-
 
 class ProductController extends Controller
 {
+    public function __construct(private ProductDeletionService $productDeletionService) {}
+
     /**
      * Display a listing of products for admin moderation
      */
@@ -24,9 +24,15 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'brand', 'seller', 'images']);
 
-        // Filter by search (product name)
-        if ($request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        // Filter by search (product name or variant SKU)
+        if ($search = trim((string) $request->input('search'))) {
+            $like = "%{$search}%";
+
+            $query->where(function ($query) use ($like) {
+                $query->where('name->vi', 'like', $like)
+                    ->orWhere('name->en', 'like', $like)
+                    ->orWhereHas('variants', fn ($variants) => $variants->where('sku', 'like', $like));
+            });
         }
 
         // Filter by category
@@ -39,17 +45,24 @@ class ProductController extends Controller
             $query->where('brand_id', $request->brand_id);
         }
 
-        // Filter by status
-        if ($request->status) {
-            $query->where('status', $request->status);
+        // Filter by status (accepts enum strings and legacy integers)
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            $normalizedStatus = is_numeric($status)
+                ? ProductStatus::fromLegacyInt((int) $status)->value
+                : $status;
+
+            $query->where('status', $normalizedStatus);
         }
+
+        $totalProducts = (clone $query)->count();
 
         // Get products with variant count, total stock, and price range
         $products = $query->withCount('variants')
             ->withSum('variants', 'stock_quantity')
-            ->with(['variants' => function($query) {
+            ->with(['variants' => function ($query) {
                 $query->select('product_id', 'price')
-                      ->orderBy('price');
+                    ->orderBy('price');
             }])
             ->latest()
             ->paginate(10)
@@ -61,33 +74,34 @@ class ProductController extends Controller
                 'product_id' => $product->product_id,
                 'name' => $product->getTranslation('name', app()->getLocale()),
                 'category' => $product->category ? [
-                    'name' => $product->category->getTranslation('name', app()->getLocale())
+                    'name' => $product->category->getTranslation('name', app()->getLocale()),
                 ] : null,
                 'brand' => $product->brand ? [
-                    'name' => $product->brand->getTranslation('name', app()->getLocale())
+                    'name' => $product->brand->getTranslation('name', app()->getLocale()),
                 ] : null,
                 'seller' => $product->seller ? [
                     'username' => $product->seller->username,
                     'first_name' => $product->seller->first_name,
-                    'last_name' => $product->seller->last_name
+                    'last_name' => $product->seller->last_name,
                 ] : null,
                 'status' => $product->status,
-                'images' => $product->images ? $product->images->map(function($image) {
+                'images' => $product->images ? $product->images->map(function ($image) {
                     // Normalize image URL: if it's already an absolute URL (http/https), keep it,
                     // otherwise convert it using Storage::url (public disk)
                     $rawUrl = $image->image_url;
                     $imageUrl = $rawUrl;
-                    if (!preg_match('/^https?:\/\//i', (string)$rawUrl) && !str_starts_with((string)$rawUrl, '/')) {
+                    if (! preg_match('/^https?:\/\//i', (string) $rawUrl) && ! str_starts_with((string) $rawUrl, '/')) {
                         $imageUrl = Storage::url($rawUrl);
                     }
+
                     return [
                         'image_url' => $imageUrl,
-                        'is_primary' => $image->is_primary
+                        'is_primary' => $image->is_primary,
                     ];
                 }) : null,
-                'variants' => $product->variants ? $product->variants->map(function($variant) {
+                'variants' => $product->variants ? $product->variants->map(function ($variant) {
                     return [
-                        'price' => $variant->price
+                        'price' => $variant->price,
                     ];
                 }) : null,
                 'variants_count' => $product->variants_count,
@@ -101,19 +115,17 @@ class ProductController extends Controller
             ->map(function ($category) {
                 return [
                     'category_id' => $category->category_id,
-                    'name' => $category->getTranslation('name', app()->getLocale())
+                    'name' => $category->getTranslation('name', app()->getLocale()),
                 ];
             });
-        
+
         $brands = Brand::select('brand_id', 'name')->get()
             ->map(function ($brand) {
                 return [
                     'brand_id' => $brand->brand_id,
-                    'name' => $brand->getTranslation('name', app()->getLocale())
+                    'name' => $brand->getTranslation('name', app()->getLocale()),
                 ];
             });
-
-        $totalProducts = Product::count();
 
         return Inertia::render('Admin/Products/Index', [
             'products' => $products,
@@ -129,22 +141,27 @@ class ProductController extends Controller
      */
     public function updateStatus(Request $request, Product $product)
     {
-        $request->validate([
-            'status' => 'required|integer|in:1,2,3', // 1=pending, 2=active, 3=inactive
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(array_merge(ProductStatus::values(), ['1', '2', '3', '4', 1, 2, 3, 4]))],
         ]);
 
+        $status = is_numeric($validated['status'])
+            ? ProductStatus::fromLegacyInt((int) $validated['status'])
+            : ProductStatus::from($validated['status']);
+
         $product->update([
-            'status' => $request->status
+            'status' => $status->value,
         ]);
 
         $statusMessages = [
-            1 => 'Product status changed to pending.',
-            2 => 'Product approved and activated successfully.',
-            3 => 'Product deactivated successfully.',
+            ProductStatus::PUBLISHED->value => 'Product approved and activated successfully.',
+            ProductStatus::HIDDEN->value => 'Product deactivated successfully.',
+            ProductStatus::PENDING_APPROVAL->value => 'Product status changed to pending approval.',
+            ProductStatus::DRAFT->value => 'Product status changed to draft.',
         ];
 
         return redirect()->route('admin.products.index')
-            ->with('success', $statusMessages[$request->status]);
+            ->with('success', $statusMessages[$status->value]);
     }
 
     /**
@@ -155,23 +172,24 @@ class ProductController extends Controller
         // Eager-load all necessary relationships with proper nesting
         $product->load([
             'category',
-            'brand', 
+            'brand',
             'images',
-            'variants' => function($query) {
-                $query->with(['attributeValues' => function($subQuery) {
+            'variants' => function ($query) {
+                $query->with(['attributeValues' => function ($subQuery) {
                     $subQuery->with('attribute');
                 }]);
             },
-            'reviews.user'
+            'reviews.user',
         ]);
 
         // Normalize image urls for client (convert storage paths to public URLs)
         if ($product->images) {
             $product->images = $product->images->map(function ($image) {
                 $rawUrl = $image->image_url;
-                if (!preg_match('/^https?:\/\//i', (string)$rawUrl) && !str_starts_with((string)$rawUrl, '/')) {
+                if (! preg_match('/^https?:\/\//i', (string) $rawUrl) && ! str_starts_with((string) $rawUrl, '/')) {
                     $image->image_url = Storage::url($rawUrl);
                 }
+
                 return $image;
             });
         }
@@ -186,7 +204,7 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        $product->delete();
+        $this->productDeletionService->delete($product);
 
         return redirect()->route('admin.products.index')->with('success', 'Product removed successfully.');
     }

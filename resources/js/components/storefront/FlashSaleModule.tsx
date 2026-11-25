@@ -2,6 +2,7 @@ import { ProductCard } from '@/components/commerce/ProductCard';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import { Countdown } from '@/components/commerce/Countdown';
@@ -17,6 +18,8 @@ type FlashSaleModuleProps = {
 };
 
 export function FlashSaleModule({ endsAt, name, products, onAddToCart, onToggleWishlist, className }: FlashSaleModuleProps) {
+    const { t } = useTranslation();
+
     if (products.length === 0) {
         return null;
     }
@@ -27,16 +30,16 @@ export function FlashSaleModule({ endsAt, name, products, onAddToCart, onToggleW
                 <div className={styles.flashPanel}>
                     <div className={styles.flashHead}>
                         <div className={styles.flashCopy}>
-                            <span className="sn-label">Giờ vàng</span>
+                            <span className="sn-label">{t('Golden hour')}</span>
                             <Heading level={2} size="headline-2" className={styles.flashTitle}>
-                                {name ?? 'Flash sale hôm nay'}
+                                {name ?? t("Today's flash sale")}
                             </Heading>
                             <Text size="body-sm" tone="muted" className={styles.flashText}>
-                                Số lượng giới hạn trong ngày.
+                                {t('Limited quantities for today only.')}
                             </Text>
                         </div>
                         <div className={styles.flashTime}>
-                            <span className={styles.flashTimeLabel}>Kết thúc sau</span>
+                            <span className={styles.flashTimeLabel}>{t('Ends in')}</span>
                             <Countdown endsAt={endsAt} />
                         </div>
                     </div>

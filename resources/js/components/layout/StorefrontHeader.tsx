@@ -26,7 +26,9 @@ import { DropdownMenu, type DropdownMenuItemConfig } from '@/components/ui/dropd
 import { SearchInput } from '@/components/ui/search-input';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
+import { BrandMark } from './BrandMark';
 import { MobileNav, type MobileNavItem } from './MobileNav';
 
 type StorefrontUser = {
@@ -56,46 +58,46 @@ type StorefrontHeaderProps = {
     className?: string;
 };
 
-const navLinks = [
-    { label: 'Danh mục', href: '/#danh-muc', icon: Store },
-    { label: 'Khuyến mãi', href: '/#flash-sale', icon: Tag },
-    { label: 'Shop Việt', href: '/#shop-viet', icon: Truck },
-    { label: 'Đơn hàng', href: '/user/orders', icon: Package },
+const navItems = [
+    { labelKey: 'Categories', href: '/#danh-muc', icon: Store },
+    { labelKey: 'Deals', href: '/#flash-sale', icon: Tag },
+    { labelKey: 'Vietnamese shops', href: '/#shop-viet', icon: Truck },
+    { labelKey: 'Orders', href: '/user/orders', icon: Package },
 ];
 
-const accountItems = (unreadCount: number): DropdownMenuItemConfig[] => [
+const accountItems = (t: (key: string) => string, unreadCount: number): DropdownMenuItemConfig[] => [
     {
-        label: 'Hồ sơ cá nhân',
+        label: t('My profile'),
         href: '/user/profile',
         icon: User,
     },
     {
-        label: 'Đơn hàng của tôi',
+        label: t('My orders'),
         href: '/user/orders',
         icon: Package,
     },
     {
-        label: 'Địa chỉ giao hàng',
+        label: t('Shipping addresses'),
         href: '/user/addresses',
         icon: MapPin,
     },
     {
-        label: unreadCount > 0 ? `Thông báo (${unreadCount})` : 'Thông báo',
+        label: unreadCount > 0 ? `${t('Notifications')} (${unreadCount})` : t('Notifications'),
         href: '/user/notifications',
         icon: Bell,
     },
     {
-        label: 'Tin nhắn',
+        label: t('Messages'),
         href: '/customer/chat',
         icon: MessageCircle,
     },
     {
-        label: 'Cài đặt',
+        label: t('Settings'),
         href: '/settings/profile',
         icon: Settings,
     },
     {
-        label: 'Đăng xuất',
+        label: t('Sign out'),
         icon: LogOut,
         destructive: true,
         separatorBefore: true,
@@ -103,26 +105,29 @@ const accountItems = (unreadCount: number): DropdownMenuItemConfig[] => [
     },
 ];
 
-function getDisplayName(user: StorefrontUser | null): string {
+function getDisplayName(user: StorefrontUser | null, fallback: string): string {
     if (!user) {
         return '';
     }
 
     const fullName = [user.last_name, user.first_name].filter(Boolean).join(' ');
 
-    return fullName || user.username || user.email || 'Người dùng';
+    return fullName || user.username || user.email || fallback;
 }
 
 export function StorefrontHeader({ cartCount, unreadCount, className }: StorefrontHeaderProps) {
     const page = usePage<PageProps>();
+    const { t } = useTranslation();
     const user = page.props.auth?.user ?? null;
-    const locale = page.props.locale === 'en' ? 'EN' : 'VI';
+    const localeCode = page.props.locale === 'en' ? 'en' : 'vi';
+    const localeLabel = localeCode === 'en' ? 'EN' : 'VI';
     const currency = page.props.currency?.code ?? 'VND';
     const resolvedCartCount = cartCount ?? page.props.cartCount ?? page.props.cart_items_count ?? 0;
     const resolvedUnreadCount = unreadCount ?? page.props.unreadCount ?? page.props.unread_count ?? 0;
     const mobileNav = useDisclosure();
     const [query, setQuery] = React.useState('');
-    const displayName = getDisplayName(user);
+    const displayName = getDisplayName(user, t('User'));
+    const currentUrl = page.url.split('?')[0];
 
     const submitSearch = (value: string) => {
         const search = value.trim();
@@ -130,137 +135,162 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
     };
 
     const mobileItems: MobileNavItem[] = [
-        { label: 'Trang chủ', href: '/', icon: Home },
-        ...navLinks.map((item) => ({ label: item.label, href: item.href, icon: item.icon })),
+        { label: t('Home'), href: '/', icon: Home },
+        ...navItems.map((item) => ({ label: t(item.labelKey), href: item.href, icon: item.icon })),
         ...(user
             ? [
-                  { label: 'Hồ sơ cá nhân', href: '/user/profile', icon: User },
-                  { label: 'Địa chỉ giao hàng', href: '/user/addresses', icon: MapPin },
+                  { label: t('My profile'), href: '/user/profile', icon: User },
+                  { label: t('Shipping addresses'), href: '/user/addresses', icon: MapPin },
                   {
-                      label: 'Thông báo',
+                      label: t('Notifications'),
                       href: '/user/notifications',
                       icon: Bell,
                       badge: resolvedUnreadCount > 0 ? resolvedUnreadCount : undefined,
                   },
-                  { label: 'Tin nhắn', href: '/customer/chat', icon: MessageCircle },
+                  { label: t('Messages'), href: '/customer/chat', icon: MessageCircle },
               ]
             : [
-                  { label: 'Đăng nhập', href: '/login', icon: User },
-                  { label: 'Đăng ký', href: '/register', icon: Heart },
+                  { label: t('Sign In'), href: '/login', icon: User },
+                  { label: t('Register'), href: '/register', icon: Heart },
               ]),
     ];
 
     return (
         <header className={cx('sn-storefront__header', className)}>
             <div className="sn-storefront__header-inner">
-                <div className="sn-storefront__bar">
-                    <Link href="/" className="sn-brand">
-                        <img src="/image/ShopnestLogo.png" alt="ShopNest" className="sn-brand__logo" />
-                        <span className="sn-brand__name">ShopNest</span>
-                    </Link>
+                <div className="sn-storefront__card">
+                    <div className="sn-storefront__bar">
+                        <Link href="/" className="sn-brand">
+                            <BrandMark />
+                            <span className="sn-brand__name">ShopNest</span>
+                        </Link>
 
-                    <nav className="sn-storefront__nav" aria-label="Điều hướng chính">
-                        {navLinks.map((item) => (
-                            <Link key={item.href} href={item.href} className="sn-storefront__nav-link">
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                        <nav className="sn-storefront__nav" aria-label={t('Main navigation')}>
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    aria-current={item.href === currentUrl ? 'page' : undefined}
+                                    className="sn-storefront__nav-link"
+                                >
+                                    {t(item.labelKey)}
+                                </Link>
+                            ))}
+                        </nav>
 
-                    <div className="sn-storefront__search">
+                        <div className="sn-storefront__search">
+                            <SearchInput
+                                value={query}
+                                onChange={(event) => setQuery(event.target.value)}
+                                onSubmit={submitSearch}
+                                placeholder={t('Search for laptops, air fryers, strollers...')}
+                                className="sn-storefront__search-inner"
+                            />
+                        </div>
+
+                        <div className="sn-storefront__actions">
+                            <div className="sn-storefront__locale">
+                                <DropdownMenu
+                                    align="end"
+                                    className="sn-dropdown--glass"
+                                    trigger={
+                                        <Button variant="ghost" size="sm" className="sn-storefront__trigger">
+                                            <Globe2 aria-hidden="true" />
+                                            <span>{localeLabel}</span>
+                                            <span aria-hidden="true" className="sn-storefront__locale-divider" />
+                                            <span>{currency}</span>
+                                            <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
+                                        </Button>
+                                    }
+                                    items={[
+                                        {
+                                            label: 'Tiếng Việt',
+                                            selected: localeCode === 'vi',
+                                            onSelect: () => router.post('/language', { locale: 'vi' }, { preserveScroll: true }),
+                                        },
+                                        {
+                                            label: 'English',
+                                            selected: localeCode === 'en',
+                                            onSelect: () => router.post('/language', { locale: 'en' }, { preserveScroll: true }),
+                                        },
+                                        {
+                                            label: t('VND - Vietnamese dong'),
+                                            separatorBefore: true,
+                                            selected: currency === 'VND',
+                                            onSelect: () => router.post('/currency', { currency: 'VND' }, { preserveScroll: true }),
+                                        },
+                                        {
+                                            label: 'USD - US Dollar',
+                                            selected: currency === 'USD',
+                                            onSelect: () => router.post('/currency', { currency: 'USD' }, { preserveScroll: true }),
+                                        },
+                                    ]}
+                                />
+                            </div>
+
+                            <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label={t('Notifications')}>
+                                <Link href="/user/notifications">
+                                    <Bell aria-hidden="true" />
+                                    {resolvedUnreadCount > 0 && (
+                                        <span className="sn-storefront__badge">{resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}</span>
+                                    )}
+                                </Link>
+                            </Button>
+
+                            <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label={t('Cart')}>
+                                <Link href="/cart">
+                                    <ShoppingBag aria-hidden="true" />
+                                    {resolvedCartCount > 0 && (
+                                        <span className="sn-storefront__badge">{resolvedCartCount > 9 ? '9+' : resolvedCartCount}</span>
+                                    )}
+                                </Link>
+                            </Button>
+
+                            {user ? (
+                                <div className="sn-storefront__account">
+                                    <DropdownMenu
+                                        align="end"
+                                        className="sn-dropdown--glass"
+                                        trigger={
+                                            <Button variant="ghost" size="sm" className="sn-storefront__trigger">
+                                                <Avatar user={user} size="sm" />
+                                                <span className="sn-storefront__account-name">{displayName}</span>
+                                                <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
+                                            </Button>
+                                        }
+                                        items={accountItems(t, resolvedUnreadCount)}
+                                    />
+                                </div>
+                            ) : (
+                                <Button asChild size="sm" className="sn-storefront__login">
+                                    <Link href="/login">
+                                        <User aria-hidden="true" />
+                                        {t('Sign In')}
+                                    </Link>
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="sn-storefront__menu-toggle"
+                                aria-label={t('Open menu')}
+                                onClick={mobileNav.open}
+                            >
+                                <Menu aria-hidden="true" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="sn-storefront__search sn-storefront__search--mobile">
                         <SearchInput
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             onSubmit={submitSearch}
-                            placeholder="Tìm laptop, nồi chiên, xe đẩy..."
+                            placeholder={t('Find something for your home...')}
                             className="sn-storefront__search-inner"
                         />
                     </div>
-
-                    <div className="sn-storefront__actions">
-                        <div className="sn-storefront__locale">
-                            <DropdownMenu
-                                align="end"
-                                trigger={
-                                    <Button variant="ghost" size="sm">
-                                        <Globe2 aria-hidden="true" />
-                                        <span>
-                                            {locale} · {currency}
-                                        </span>
-                                        <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
-                                    </Button>
-                                }
-                                items={[
-                                    { label: 'Tiếng Việt', onSelect: () => router.post('/language', { locale: 'vi' }, { preserveScroll: true }) },
-                                    { label: 'English', onSelect: () => router.post('/language', { locale: 'en' }, { preserveScroll: true }) },
-                                    {
-                                        label: 'VND - Việt Nam đồng',
-                                        separatorBefore: true,
-                                        onSelect: () => router.post('/currency', { currency: 'VND' }, { preserveScroll: true }),
-                                    },
-                                    {
-                                        label: 'USD - US Dollar',
-                                        onSelect: () => router.post('/currency', { currency: 'USD' }, { preserveScroll: true }),
-                                    },
-                                ]}
-                            />
-                        </div>
-
-                        <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label="Thông báo">
-                            <Link href="/user/notifications">
-                                <Bell aria-hidden="true" />
-                                {resolvedUnreadCount > 0 && (
-                                    <span className="sn-storefront__badge">{resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}</span>
-                                )}
-                            </Link>
-                        </Button>
-
-                        <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label="Giỏ hàng">
-                            <Link href="/cart">
-                                <ShoppingBag aria-hidden="true" />
-                                {resolvedCartCount > 0 && (
-                                    <span className="sn-storefront__badge">{resolvedCartCount > 9 ? '9+' : resolvedCartCount}</span>
-                                )}
-                            </Link>
-                        </Button>
-
-                        {user ? (
-                            <div className="sn-storefront__account">
-                                <DropdownMenu
-                                    align="end"
-                                    trigger={
-                                        <Button variant="ghost" size="sm">
-                                            <Avatar user={user} size="sm" />
-                                            <span className="sn-storefront__account-name">{displayName}</span>
-                                            <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
-                                        </Button>
-                                    }
-                                    items={accountItems(resolvedUnreadCount)}
-                                />
-                            </div>
-                        ) : (
-                            <Button asChild variant="secondary" size="sm" className="sn-storefront__login">
-                                <Link href="/login">
-                                    <User aria-hidden="true" />
-                                    Đăng nhập
-                                </Link>
-                            </Button>
-                        )}
-
-                        <Button variant="ghost" size="icon" className="sn-storefront__menu-toggle" aria-label="Mở menu" onClick={mobileNav.open}>
-                            <Menu aria-hidden="true" />
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="sn-storefront__search sn-storefront__search--mobile">
-                    <SearchInput
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        onSubmit={submitSearch}
-                        placeholder="Tìm món đồ cho tổ ấm..."
-                        className="sn-storefront__search-inner"
-                    />
                 </div>
             </div>
 
@@ -273,12 +303,12 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                         <Button asChild variant="secondary" size="sm">
                             <Link href="/search" onClick={mobileNav.close}>
                                 <Search aria-hidden="true" />
-                                Tìm kiếm sản phẩm
+                                {t('Search products')}
                             </Link>
                         </Button>
                         {user && (
                             <Button variant="ghost" size="sm" leftIcon={LogOut} onClick={() => router.post('/logout')}>
-                                Đăng xuất
+                                {t('Sign out')}
                             </Button>
                         )}
                     </div>

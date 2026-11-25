@@ -2,15 +2,18 @@ import { Head } from '@inertiajs/react';
 
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { LegalDocument } from '@/components/storefront/LegalDocument';
+import { useTranslation } from '@/lib/i18n';
 
 export default function PrivacyPolicy() {
+    const { t } = useTranslation();
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Chính sách bảo mật" />
+            <Head title={t('Privacy Policy')} />
 
             <LegalDocument
-                title="Chính sách bảo mật"
-                description="Cách ShopNest thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn."
+                title={t('Privacy Policy')}
+                description={t('How ShopNest collects, uses and protects your personal data.')}
                 sections={[
                     {
                         heading: '1. Thông tin chúng tôi thu thập',

@@ -11,6 +11,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from '../customer.module.css';
 
@@ -55,6 +56,7 @@ function toFormState(user: UserProfile): FormState {
 }
 
 export default function ProfileIndex() {
+    const { t } = useTranslation();
     const { user, errors = {} } = usePage<PageProps>().props;
     const { success, error: showError } = useToast();
 
@@ -132,9 +134,9 @@ export default function ProfileIndex() {
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
-                success('Đã lưu thông tin cá nhân');
+                success(t('Profile saved'));
             },
-            onError: () => showError('Vui lòng kiểm tra lại thông tin'),
+            onError: () => showError(t('Please double-check your details')),
             onFinish: () => setProcessing(false),
         });
     };
@@ -148,28 +150,28 @@ export default function ProfileIndex() {
     return (
         <AccountLayout
             active="profile"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Hồ sơ' }]}
-            eyebrow="Tài khoản"
-            title="Thông tin cá nhân"
-            description="Cập nhật hồ sơ để shop và bưu tá liên hệ đúng người, đúng địa chỉ."
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Account') }, { label: t('Profile') }]}
+            eyebrow={t('Account')}
+            title={t('Personal information')}
+            description={t('Keep your profile up to date so shops and couriers can reach you.')}
             actions={
                 <Button variant="secondary" size="sm" leftIcon={Lock} asChild>
-                    <Link href="/user/change-password">Đổi mật khẩu</Link>
+                    <Link href="/user/change-password">{t('Change password')}</Link>
                 </Button>
             }
         >
-            <Head title="Thông tin cá nhân" />
+            <Head title={t('Personal information')} />
 
             <form onSubmit={handleSubmit} className={styles.profileGrid}>
                 <Card padding="lg" className={styles.avatarCard}>
                     <Avatar src={avatarPreview ?? user.avatar_url} name={`${form.last_name} ${form.first_name}`.trim() || user.username} size={112} />
                     <input ref={fileInputRef} type="file" accept="image/*" className={styles.hiddenInput} onChange={handleAvatarChange} />
-                    <IconButton label="Chọn ảnh đại diện" variant="secondary" size="md" onClick={() => fileInputRef.current?.click()}>
+                    <IconButton label={t('Choose profile photo')} variant="secondary" size="md" onClick={() => fileInputRef.current?.click()}>
                         <Camera aria-hidden="true" />
                     </IconButton>
                     <div className={styles.avatarMeta}>
-                        <span className={styles.avatarTitle}>Ảnh đại diện</span>
-                        <span className={styles.avatarHint}>JPG, PNG hoặc GIF. Tối đa 2MB.</span>
+                        <span className={styles.avatarTitle}>{t('Profile photo')}</span>
+                        <span className={styles.avatarHint}>{t('JPG, PNG or GIF. Maximum 2MB.')}</span>
                     </div>
                     {errors.avatar ? (
                         <span role="alert" className={styles.avatarError}>
@@ -184,11 +186,11 @@ export default function ProfileIndex() {
                 <Card padding="lg" className={styles.profileCard}>
                     <div className={styles.cardHead}>
                         <UserRound aria-hidden="true" className={styles.iconAccent} />
-                        <h2 className={styles.cardTitle}>Hồ sơ của bạn</h2>
+                        <h2 className={styles.cardTitle}>{t('Your profile')}</h2>
                     </div>
 
                     <div className={styles.formGrid}>
-                        <FormField label="Họ" error={errors.last_name}>
+                        <FormField label={t('Last name')} error={errors.last_name}>
                             <Input
                                 value={form.last_name}
                                 onChange={updateField('last_name')}
@@ -197,7 +199,7 @@ export default function ProfileIndex() {
                             />
                         </FormField>
 
-                        <FormField label="Tên" error={errors.first_name}>
+                        <FormField label={t('Name')} error={errors.first_name}>
                             <Input
                                 value={form.first_name}
                                 onChange={updateField('first_name')}
@@ -217,7 +219,7 @@ export default function ProfileIndex() {
                             />
                         </FormField>
 
-                        <FormField label="Số điện thoại" error={errors.phone_number} hint="Dùng để bưu tá liên hệ khi giao hàng.">
+                        <FormField label={t('Phone number')} error={errors.phone_number} hint={t('Used by the courier to contact you on delivery.')}>
                             <Input
                                 type="tel"
                                 value={form.phone_number}
@@ -228,21 +230,21 @@ export default function ProfileIndex() {
                             />
                         </FormField>
 
-                        <FormField label="Giới tính" error={errors.gender}>
+                        <FormField label={t('Gender')} error={errors.gender}>
                             <Select
                                 value={form.gender}
                                 onChange={updateField('gender')}
-                                placeholder="Chọn giới tính"
+                                placeholder={t('Select gender')}
                                 options={[
-                                    { value: 'male', label: 'Nam' },
-                                    { value: 'female', label: 'Nữ' },
-                                    { value: 'other', label: 'Khác' },
+                                    { value: 'male', label: t('Male') },
+                                    { value: 'female', label: t('Female') },
+                                    { value: 'other', label: t('Other') },
                                 ]}
                                 invalid={Boolean(errors.gender)}
                             />
                         </FormField>
 
-                        <FormField label="Ngày sinh" error={errors.date_of_birth} hint="Bạn cần đủ 18 tuổi để đặt hàng.">
+                        <FormField label={t('Date of birth')} error={errors.date_of_birth} hint={t('You must be 18 or older to place orders.')}>
                             <Input
                                 type="date"
                                 value={form.date_of_birth}
@@ -255,10 +257,10 @@ export default function ProfileIndex() {
 
                     <div className={styles.formFooter}>
                         <Button type="button" variant="secondary" onClick={handleReset} disabled={!isDirty || processing}>
-                            Hoàn tác
+                            {t('Undo')}
                         </Button>
                         <Button type="submit" leftIcon={Save} loading={processing} disabled={!isDirty}>
-                            Lưu thay đổi
+                            {t('Save changes')}
                         </Button>
                     </div>
                 </Card>

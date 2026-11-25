@@ -8,6 +8,7 @@ import { AccountLayout } from '@/components/layout/AccountLayout';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from '../customer.module.css';
 
@@ -27,6 +28,7 @@ interface PageProps extends Record<string, unknown> {
 }
 
 export default function AddressIndex() {
+    const { t } = useTranslation();
     const { addresses = [] } = usePage<PageProps>().props;
     const { success, error: showError } = useToast();
     const [pendingDelete, setPendingDelete] = React.useState<AddressModel | null>(null);
@@ -40,8 +42,8 @@ export default function AddressIndex() {
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => success('Đã đặt làm địa chỉ mặc định'),
-                onError: () => showError('Không thể đặt địa chỉ mặc định'),
+                onSuccess: () => success(t('Default address updated')),
+                onError: () => showError(t('Could not set the default address')),
                 onFinish: () => setBusyId(null),
             },
         );
@@ -56,10 +58,10 @@ export default function AddressIndex() {
         router.delete(`/user/addresses/${pendingDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-                success('Đã xoá địa chỉ');
+                success(t('Address deleted'));
                 setPendingDelete(null);
             },
-            onError: () => showError('Không thể xoá địa chỉ'),
+            onError: () => showError(t('Could not delete the address')),
             onFinish: () => setDeleting(false),
         });
     };
@@ -67,27 +69,27 @@ export default function AddressIndex() {
     return (
         <AccountLayout
             active="addresses"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Địa chỉ' }]}
-            eyebrow="Tài khoản"
-            title="Địa chỉ giao hàng"
-            description="Quản lý địa chỉ nhận hàng và chọn địa chỉ mặc định cho lần thanh toán tiếp theo."
-            count={`${addresses.length} địa chỉ`}
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Account') }, { label: t('Addresses') }]}
+            eyebrow={t('Account')}
+            title={t('Shipping addresses')}
+            description={t('Manage delivery addresses and choose a default for your next checkout.')}
+            count={t(':count addresses', { count: addresses.length })}
             actions={
                 <Button leftIcon={Plus} asChild>
-                    <Link href="/user/addresses/create">Thêm địa chỉ</Link>
+                    <Link href="/user/addresses/create">{t('Add address')}</Link>
                 </Button>
             }
         >
-            <Head title="Địa chỉ giao hàng" />
+            <Head title={t('Shipping addresses')} />
 
             {addresses.length === 0 ? (
                 <EmptyState
                     icon={MapPin}
-                    title="Chưa có địa chỉ nào"
-                    description="Thêm địa chỉ đầu tiên để đặt hàng nhanh hơn ở lần mua tiếp theo."
+                    title={t('No addresses yet')}
+                    description={t('Add your first address to check out faster next time.')}
                     actions={
                         <Button leftIcon={Plus} asChild>
-                            <Link href="/user/addresses/create">Thêm địa chỉ</Link>
+                            <Link href="/user/addresses/create">{t('Add address')}</Link>
                         </Button>
                     }
                 />
@@ -113,13 +115,18 @@ export default function AddressIndex() {
                         setPendingDelete(null);
                     }
                 }}
-                title="Xoá địa chỉ này?"
+                title={t('Delete this address?')}
                 description={
                     pendingDelete
-                        ? `${pendingDelete.name}, ${pendingDelete.address}, ${pendingDelete.ward}, ${pendingDelete.province}. Địa chỉ đã xoá không thể khôi phục.`
+                        ? t(':name, :address, :ward, :province. Deleted addresses cannot be restored.', {
+                              name: pendingDelete.name,
+                              address: pendingDelete.address,
+                              ward: pendingDelete.ward,
+                              province: pendingDelete.province,
+                          })
                         : ''
                 }
-                confirmLabel="Xoá địa chỉ"
+                confirmLabel={t('Delete address')}
                 loading={deleting}
                 onConfirm={handleDelete}
             />

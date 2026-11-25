@@ -516,7 +516,7 @@
 
     .stickyAside {
         position: sticky;
-        top: calc(var(--sn-header) + var(--sn-space-4));
+        top: calc(var(--sn-header-stuck) + var(--sn-space-2));
     }
 }
 

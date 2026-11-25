@@ -1,9 +1,10 @@
+import { useTranslation } from '@/lib/i18n';
 import { ChevronDown, Lock } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
 
 import styles from './commerce.module.css';
 
@@ -46,7 +47,7 @@ export function OrderSummary({
     total,
     promotion,
     onCheckout,
-    ctaLabel = 'Thanh toán',
+    ctaLabel,
     loading = false,
     disabled = false,
     showItems = true,
@@ -55,6 +56,9 @@ export function OrderSummary({
     className,
     children,
 }: OrderSummaryProps) {
+    const { t } = useTranslation();
+    const resolvedCtaLabel = ctaLabel ?? t('Checkout');
+    const { money } = useMoney();
     const [expanded, setExpanded] = React.useState(false);
     const [isDesktop, setIsDesktop] = React.useState(false);
 
@@ -73,7 +77,7 @@ export function OrderSummary({
     }, []);
 
     return (
-        <aside aria-label="Tóm tắt đơn hàng" className={cx(styles.summaryAside, className)}>
+        <aside aria-label={t('Order summary')} className={cx(styles.summaryAside, className)}>
             <details
                 className={styles.summary}
                 open={isDesktop || expanded}
@@ -84,15 +88,15 @@ export function OrderSummary({
                 }}
             >
                 <summary className={styles.summaryToggle}>
-                    <span className={styles.summaryToggleLabel}>Tóm tắt đơn hàng</span>
+                    <span className={styles.summaryToggleLabel}>{t('Order summary')}</span>
                     <span className={styles.summaryToggleMeta}>
-                        <span className={styles.summaryToggleValue}>{formatVnd(total)}</span>
+                        <span className={styles.summaryToggleValue}>{money(total)}</span>
                         <ChevronDown aria-hidden="true" className={styles.summaryChevron} />
                     </span>
                 </summary>
 
                 <div className={styles.summaryBody}>
-                    <h2 className={styles.summaryTitle}>Tóm tắt đơn hàng</h2>
+                    <h2 className={styles.summaryTitle}>{t('Order summary')}</h2>
 
                     {showItems && items.length > 0 && (
                         <ul className={styles.summaryItems}>
@@ -105,7 +109,7 @@ export function OrderSummary({
                                     </div>
                                     <div className={styles.summaryItemAmount}>
                                         <span className={styles.summaryItemQty}>×{item.quantity}</span>
-                                        <span className={styles.summaryItemPrice}>{formatVnd(item.price * item.quantity)}</span>
+                                        <span className={styles.summaryItemPrice}>{money(item.price * item.quantity)}</span>
                                     </div>
                                 </li>
                             ))}
@@ -116,31 +120,31 @@ export function OrderSummary({
 
                     <div className={styles.summaryLines}>
                         <div className={styles.summaryRow}>
-                            <span>Tạm tính</span>
-                            <span className={styles.summaryRowValue}>{formatVnd(subtotal)}</span>
+                            <span>{t('Subtotal')}</span>
+                            <span className={styles.summaryRowValue}>{money(subtotal)}</span>
                         </div>
                         {discount > 0 && (
                             <div className={styles.summaryRow}>
-                                <span>Giảm giá</span>
-                                <span className={cx(styles.summaryRowValue, styles.summaryRowValueDiscount)}>-{formatVnd(discount)}</span>
+                                <span>{t('Discount')}</span>
+                                <span className={cx(styles.summaryRowValue, styles.summaryRowValueDiscount)}>-{money(discount)}</span>
                             </div>
                         )}
                         <div className={styles.summaryRow}>
-                            <span>Phí vận chuyển</span>
-                            <span className={styles.summaryRowValue}>{shippingLabel ?? formatVnd(shipping)}</span>
+                            <span>{t('Shipping fee')}</span>
+                            <span className={styles.summaryRowValue}>{shippingLabel ?? money(shipping)}</span>
                         </div>
                     </div>
 
                     <div className={styles.summaryTotal}>
-                        <span className={styles.summaryTotalLabel}>Tổng cộng</span>
-                        <span className={styles.summaryTotalValue}>{formatVnd(total)}</span>
+                        <span className={styles.summaryTotalLabel}>{t('Total')}</span>
+                        <span className={styles.summaryTotalValue}>{money(total)}</span>
                     </div>
 
                     {children}
 
                     {onCheckout && (
                         <Button className={styles.summaryCta} size="lg" loading={loading} disabled={disabled} onClick={onCheckout}>
-                            {ctaLabel}
+                            {resolvedCtaLabel}
                         </Button>
                     )}
 

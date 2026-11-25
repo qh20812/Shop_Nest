@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { router } from '@inertiajs/react';
 import * as React from 'react';
 
@@ -8,10 +9,9 @@ interface CheckoutExitConfirmationProps {
     message?: string;
 }
 
-export default function CheckoutExitConfirmation({
-    hasUnsavedChanges,
-    message = 'Bạn có chắc muốn rời khỏi trang thanh toán? Các thay đổi chưa được lưu có thể bị mất.',
-}: CheckoutExitConfirmationProps) {
+export default function CheckoutExitConfirmation({ hasUnsavedChanges, message }: CheckoutExitConfirmationProps) {
+    const { t } = useTranslation();
+    const resolvedMessage = message ?? t('Are you sure you want to leave checkout? Unsaved changes may be lost.');
     const [showModal, setShowModal] = React.useState(false);
     const pendingNavigation = React.useRef<(() => void) | null>(null);
 
@@ -19,8 +19,8 @@ export default function CheckoutExitConfirmation({
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (hasUnsavedChanges) {
                 event.preventDefault();
-                event.returnValue = message;
-                return message;
+                event.returnValue = resolvedMessage;
+                return resolvedMessage;
             }
         };
 
@@ -43,7 +43,7 @@ export default function CheckoutExitConfirmation({
             window.removeEventListener('beforeunload', handleBeforeUnload);
             document.removeEventListener('inertia:before', handleInertiaNavigate);
         };
-    }, [hasUnsavedChanges, message, showModal]);
+    }, [hasUnsavedChanges, resolvedMessage, showModal]);
 
     const stay = () => {
         setShowModal(false);
@@ -62,10 +62,10 @@ export default function CheckoutExitConfirmation({
             onOpenChange={(open) => {
                 if (!open) stay();
             }}
-            title="Xác nhận rời khỏi trang"
-            description={message}
-            confirmLabel="Rời khỏi"
-            cancelLabel="Ở lại"
+            title={t('Leave checkout?')}
+            description={resolvedMessage}
+            confirmLabel={t('Leave')}
+            cancelLabel={t('Stay')}
             tone="warning"
             onConfirm={leave}
         />

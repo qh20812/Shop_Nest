@@ -7,6 +7,7 @@ import { SectionHeader } from '@/components/layout/SectionHeader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TextLink } from '@/components/ui/text-link';
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import styles from './storefront.module.css';
@@ -33,16 +34,17 @@ export function ProductShelf({
     products,
     action,
     variant = 'grid',
-    emptyTitle = 'Chưa có sản phẩm',
-    emptyDescription = 'Các món được tuyển chọn sẽ xuất hiện ở đây.',
+    emptyTitle,
+    emptyDescription,
     onAddToCart,
     onToggleWishlist,
     className,
     id,
 }: ProductShelfProps) {
+    const { t } = useTranslation();
     const fallbackAction = (
         <TextLink href="/search" tone="muted" underline={false}>
-            Xem tất cả
+            {t('View all')}
             <ArrowRight aria-hidden="true" className={styles.inlineIcon} />
         </TextLink>
     );
@@ -52,7 +54,11 @@ export function ProductShelf({
             <PageContainer>
                 <SectionHeader eyebrow={eyebrow} title={title} description={description} action={action ?? fallbackAction} />
                 {products.length === 0 ? (
-                    <EmptyState icon={Package} title={emptyTitle} description={emptyDescription} />
+                    <EmptyState
+                        icon={Package}
+                        title={emptyTitle ?? t('No products yet')}
+                        description={emptyDescription ?? t('Handpicked items will appear here.')}
+                    />
                 ) : variant === 'rail' ? (
                     <div className={styles.shelfRail}>
                         {products.map((product, index) => (

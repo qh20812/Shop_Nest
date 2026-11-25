@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/components/ui/toast';
-import { formatVnd } from '@/lib/format';
+import { useMoney } from '@/hooks/useMoney';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './customer.module.css';
 
@@ -72,6 +73,8 @@ function normalizeImage(src?: string | null): string {
 
 export default function Cart() {
     const { cartItems, totals, promotion } = usePage<PageProps>().props;
+    const { money } = useMoney();
+    const { t } = useTranslation();
     const { success, error: showError } = useToast();
     const [selectedItems, setSelectedItems] = React.useState<number[]>(cartItems.map((item) => item.cart_item_id));
     const [quantities, setQuantities] = React.useState<Record<number, number>>(
@@ -114,10 +117,10 @@ export default function Cart() {
             await Promise.all(
                 Object.entries(quantities).map(([itemId, quantity]) => axios.post(`/cart/update/${itemId}`, { quantity: Number(quantity) })),
             );
-            success('Đã cập nhật giỏ hàng');
+            success(t('Cart updated'));
             router.reload();
         } catch {
-            showError('Không thể cập nhật giỏ hàng', 'Thử lại sau ít phút.');
+            showError(t('Could not update cart'), t('Please try again in a moment.'));
         } finally {
             setUpdating(false);
         }
@@ -131,10 +134,10 @@ export default function Cart() {
         try {
             await Promise.all(pendingDelete.map((itemId) => axios.post(`/cart/remove/${itemId}`)));
             setPendingDelete(null);
-            success('Đã xoá sản phẩm khỏi giỏ');
+            success(t('Item removed from cart'));
             router.reload();
         } catch {
-            showError('Không thể xoá sản phẩm', 'Thử lại sau ít phút.');
+            showError(t('Could not remove item'), t('Please try again in a moment.'));
         } finally {
             setDeleting(false);
         }
@@ -149,18 +152,18 @@ export default function Cart() {
         try {
             const response = await axios.post('/cart/apply-promotion', { code: couponCode.trim() });
             if (response.data?.success === false) {
-                setPromoError(response.data?.message || 'Mã khuyến mãi không hợp lệ.');
+                setPromoError(response.data?.message || t('Invalid promotion code.'));
                 return;
             }
 
-            success('Đã áp dụng mã khuyến mãi');
+            success(t('Promotion applied'));
             setCouponCode('');
             router.reload();
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                setPromoError(error.response?.data?.message || 'Mã khuyến mãi không hợp lệ.');
+                setPromoError(error.response?.data?.message || t('Invalid promotion code.'));
             } else {
-                setPromoError('Không thể áp dụng mã khuyến mãi.');
+                setPromoError(t('Could not apply promotion code.'));
             }
         } finally {
             setApplyingPromo(false);
@@ -170,25 +173,25 @@ export default function Cart() {
     const handleRemovePromo = async () => {
         try {
             await axios.post('/cart/remove-promotion');
-            success('Đã bỏ mã khuyến mãi');
+            success(t('Promotion removed'));
             router.reload();
         } catch {
-            showError('Không thể bỏ mã khuyến mãi');
+            showError(t('Could not remove promotion code'));
         }
     };
 
     if (cartItems.length === 0) {
         return (
             <StorefrontLayout compactFooter>
-                <Head title="Giỏ hàng" />
+                <Head title={t('Cart')} />
                 <PageContainer className={styles.pageTight}>
                     <EmptyState
                         icon={ShoppingBag}
-                        title="Giỏ đang trống"
-                        description="Chọn một món cho tổ ấm nhé."
+                        title={t('Your cart is empty')}
+                        description={t('Pick something for your home.')}
                         actions={
                             <Button asChild leftIcon={ArrowLeft}>
-                                <Link href="/">Xem chợ hôm nay</Link>
+                                <Link href="/">{t("Browse today's market")}</Link>
                             </Button>
                         }
                     />
@@ -199,7 +202,7 @@ export default function Cart() {
 
     const summaryItems = cartItems.map((item) => ({
         id: item.cart_item_id,
-        name: item.variant.product?.name ?? 'Sản phẩm',
+        name: item.variant.product?.name ?? t('Product'),
         image: normalizeImage(item.variant.product?.images?.[0]?.image_url),
         variant: item.variant.sku,
         quantity: quantities[item.cart_item_id] ?? item.quantity,
@@ -208,28 +211,28 @@ export default function Cart() {
 
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Giỏ hàng" />
+            <Head title={t('Cart')} />
 
             <PageContainer className={styles.page}>
                 <PageHeader
-                    breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Giỏ hàng' }]}
-                    eyebrow="Đơn hàng của bạn"
-                    title="Giỏ hàng"
-                    count={`${cartItems.length} món`}
+                    breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Cart') }]}
+                    eyebrow={t('Your order')}
+                    title={t('Cart')}
+                    count={t(':count products', { count: cartItems.length })}
                     actions={
                         <Button variant="ghost" size="sm" leftIcon={ArrowLeft} asChild>
-                            <Link href="/">Tiếp tục mua sắm</Link>
+                            <Link href="/">{t('Continue shopping')}</Link>
                         </Button>
                     }
                 />
 
                 <div className={styles.cartGrid}>
-                    <section className={styles.cartMain} aria-label="Danh sách món hàng">
+                    <section className={styles.cartMain} aria-label={t('Products in cart')}>
                         <div className={styles.cartToolbar}>
                             <Checkbox
                                 checked={isAllSelected}
                                 onCheckedChange={(checked) => handleSelectAll(checked === true)}
-                                label={`Chọn tất cả (${cartItems.length} sản phẩm)`}
+                                label={t('Select all (:count items)', { count: cartItems.length })}
                             />
                             <Button
                                 variant="ghost"
@@ -238,7 +241,7 @@ export default function Cart() {
                                 disabled={selectedItems.length === 0}
                                 onClick={() => setPendingDelete(selectedItems)}
                             >
-                                Xoá món đã chọn
+                                {t('Remove selected items')}
                             </Button>
                         </div>
 
@@ -272,10 +275,10 @@ export default function Cart() {
 
                         <div className={styles.cartActions}>
                             <Button variant="secondary" leftIcon={ArrowLeft} asChild>
-                                <Link href="/">Tiếp tục mua sắm</Link>
+                                <Link href="/">{t('Continue shopping')}</Link>
                             </Button>
                             <Button variant="outline" leftIcon={RefreshCw} loading={updating} onClick={handleUpdateCart}>
-                                Cập nhật giỏ hàng
+                                {t('Update cart')}
                             </Button>
                         </div>
                     </section>
@@ -286,7 +289,7 @@ export default function Cart() {
                             subtotal={totals.subtotal}
                             discount={totals.discount}
                             shipping={totals.shipping}
-                            shippingLabel={totals.shipping > 0 ? undefined : 'Tính ở bước sau'}
+                            shippingLabel={totals.shipping > 0 ? undefined : t('Calculated at next step')}
                             total={totals.total}
                             promotion={
                                 <PromoField
@@ -295,15 +298,15 @@ export default function Cart() {
                                     onApply={handleApplyPromo}
                                     onRemove={handleRemovePromo}
                                     appliedCode={promotion?.code}
-                                    appliedLabel={promotion ? `- Giảm ${formatVnd(totals.discount)}` : undefined}
+                                    appliedLabel={promotion ? `- ${t('Discount')} ${money(totals.discount)}` : undefined}
                                     error={promoError}
                                     loading={applyingPromo}
                                 />
                             }
-                            ctaLabel="Thanh toán"
+                            ctaLabel={t('Checkout')}
                             onCheckout={() => router.visit('/checkout')}
                             disabled={cartItems.length === 0}
-                            trust={['Thanh toán bảo mật', 'Đổi trả theo chính sách']}
+                            trust={[t('Secure payment'), t('Returns per policy')]}
                         />
                     </div>
                 </div>
@@ -314,9 +317,9 @@ export default function Cart() {
                 onOpenChange={(open) => {
                     if (!open) setPendingDelete(null);
                 }}
-                title="Xác nhận bỏ sản phẩm?"
-                description={`${pendingDelete?.length ?? 0} món sẽ được gỡ khỏi giỏ hàng. Bạn vẫn có thể thêm lại sau.`}
-                confirmLabel="Đồng ý xoá"
+                title={t('Remove this item?')}
+                description={t(':count items will be removed from your cart. You can add them again later.', { count: pendingDelete?.length ?? 0 })}
+                confirmLabel={t('Remove')}
                 loading={deleting}
                 onConfirm={handleDelete}
             />

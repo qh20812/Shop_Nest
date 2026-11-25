@@ -19,7 +19,9 @@ import Select from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/toast';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { formatNumber, formatVnd } from '@/lib/format';
+import { useMoney } from '@/hooks/useMoney';
+import { formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import styles from './Search.module.css';
@@ -113,6 +115,8 @@ function toCard(product: ProductCardData): ProductCardModel {
 
 export default function SearchPage() {
     const { query, products, filters, activeFilters, auth } = usePage<SearchPageProps>().props;
+    const { money } = useMoney();
+    const { t } = useTranslation();
     const { success, error: showError } = useToast();
     const mobileFilters = useDisclosure();
     const [searchValue, setSearchValue] = React.useState(query ?? '');
@@ -142,24 +146,24 @@ export default function SearchPage() {
     const activeFilterItems: ActiveFilter[] = [];
     selectedCategoryIds.forEach((id) => {
         const category = filters.categories.find((item) => item.id === id);
-        if (category) activeFilterItems.push({ key: `category-${id}`, label: 'Danh mục', value: category.name });
+        if (category) activeFilterItems.push({ key: `category-${id}`, label: t('Categories'), value: category.name });
     });
     selectedBrandIds.forEach((id) => {
         const brand = filters.brands.find((item) => item.id === id);
-        if (brand) activeFilterItems.push({ key: `brand-${id}`, label: 'Thương hiệu', value: brand.name });
+        if (brand) activeFilterItems.push({ key: `brand-${id}`, label: t('Brand'), value: brand.name });
     });
     if (activeFilters.price_min || activeFilters.price_max) {
         activeFilterItems.push({
             key: 'price',
-            label: 'Giá',
-            value: `${activeFilters.price_min ? formatVnd(activeFilters.price_min) : '0 ₫'} - ${activeFilters.price_max ? formatVnd(activeFilters.price_max) : 'Không giới hạn'}`,
+            label: t('Price'),
+            value: `${activeFilters.price_min ? money(activeFilters.price_min) : money(0)} - ${activeFilters.price_max ? money(activeFilters.price_max) : t('No limit')}`,
         });
     }
     if (activeFilters.rating_min) {
-        activeFilterItems.push({ key: 'rating', label: 'Đánh giá', value: `${activeFilters.rating_min} sao trở lên` });
+        activeFilterItems.push({ key: 'rating', label: t('Rating'), value: `${activeFilters.rating_min} ${t('stars and up')}` });
     }
     selectedStates.forEach((state) => {
-        activeFilterItems.push({ key: `state-${state}`, label: 'Tình trạng', value: state === 'new' ? 'Mới' : 'Giảm giá' });
+        activeFilterItems.push({ key: `state-${state}`, label: t('Condition'), value: state === 'new' ? t('New') : t('On sale') });
     });
 
     const removeFilter = (key: string) => {
@@ -213,7 +217,7 @@ export default function SearchPage() {
     const filterContent = (
         <>
             {filters.categories.length > 0 && (
-                <FilterGroup title="Danh mục" count={selectedCategoryIds.length}>
+                <FilterGroup title={t('Categories')} count={selectedCategoryIds.length}>
                     <div className={styles.filterList}>
                         {filters.categories.map((category) => (
                             <Checkbox
@@ -228,7 +232,7 @@ export default function SearchPage() {
             )}
 
             {filters.brands.length > 0 && (
-                <FilterGroup title="Thương hiệu" count={selectedBrandIds.length}>
+                <FilterGroup title={t('Brand')} count={selectedBrandIds.length}>
                     <div className={styles.filterList}>
                         {filters.brands.map((brand) => (
                             <Checkbox
@@ -242,26 +246,26 @@ export default function SearchPage() {
                 </FilterGroup>
             )}
 
-            <FilterGroup title="Khoảng giá">
+            <FilterGroup title={t('Price range')}>
                 <div className={styles.priceRow}>
-                    <InputPrice value={priceMin} onChange={setPriceMin} placeholder="Từ" />
+                    <InputPrice value={priceMin} onChange={setPriceMin} placeholder={t('From')} />
                     <span className={styles.priceSeparator}>-</span>
-                    <InputPrice value={priceMax} onChange={setPriceMax} placeholder="Đến" />
+                    <InputPrice value={priceMax} onChange={setPriceMax} placeholder={t('To')} />
                 </div>
                 <Button type="button" variant="secondary" size="sm" onClick={applyPrice}>
-                    Áp dụng giá
+                    {t('Apply price')}
                 </Button>
             </FilterGroup>
 
             {filters.ratingOptions.length > 0 && (
-                <FilterGroup title="Đánh giá">
+                <FilterGroup title={t('Rating')}>
                     <div className={styles.filterList}>
                         {filters.ratingOptions.map((rating) => (
                             <Checkbox
                                 key={rating}
                                 checked={activeFilters.rating_min === rating}
                                 onCheckedChange={(checked) => updateFilters({ rating_min: checked === true ? rating : null })}
-                                label={`${rating} sao trở lên`}
+                                label={`${rating} ${t('stars and up')}`}
                             />
                         ))}
                     </div>
@@ -269,14 +273,14 @@ export default function SearchPage() {
             )}
 
             {filters.states.length > 0 && (
-                <FilterGroup title="Tình trạng">
+                <FilterGroup title={t('Condition')}>
                     <div className={styles.filterList}>
                         {filters.states.map((state) => (
                             <Checkbox
                                 key={state}
                                 checked={selectedStates.includes(state)}
                                 onCheckedChange={(checked) => toggleState(state, checked === true)}
-                                label={state === 'new' ? 'Mới' : state === 'sale' ? 'Đang giảm giá' : state}
+                                label={state === 'new' ? t('New') : state === 'sale' ? t('On sale') : state}
                             />
                         ))}
                     </div>
@@ -287,21 +291,21 @@ export default function SearchPage() {
 
     return (
         <StorefrontLayout compactFooter>
-            <Head title={query ? `Tìm kiếm: ${query}` : 'Tìm sản phẩm'} />
+            <Head title={query ? t('Search: :query', { query }) : t('Search products')} />
 
             <PageContainer className={styles.page}>
                 <PageHeader
-                    breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tìm kiếm' }]}
-                    eyebrow={query ? 'Kết quả tìm kiếm' : 'Toàn bộ sản phẩm'}
-                    title={query ? `Kết quả cho “${query}”` : 'Tìm món đồ cho tổ ấm'}
-                    description={`Tìm thấy ${formatNumber(products.total)} món phù hợp.`}
+                    breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Search') }]}
+                    eyebrow={query ? t('Search results') : t('All products')}
+                    title={query ? t('Results for “:query”', { query }) : t('Find something for your home')}
+                    description={t(':count items found.', { count: formatNumber(products.total) })}
                     actions={
                         <div className={styles.headerActions}>
                             <SearchInput
                                 value={searchValue}
                                 onChange={(event) => setSearchValue(event.target.value)}
                                 onSubmit={(value) => updateFilters({ search: value })}
-                                placeholder="Tìm laptop, nồi chiên, xe đẩy..."
+                                placeholder={t('Search for laptops, air fryers, strollers...')}
                                 className={styles.searchField}
                             />
                             <Select
@@ -309,7 +313,7 @@ export default function SearchPage() {
                                 onChange={(event) => updateFilters({ sort: event.target.value })}
                                 options={filters.sortOptions}
                                 className={styles.sortField}
-                                aria-label="Sắp xếp sản phẩm"
+                                aria-label={t('Sort products')}
                             />
                         </div>
                     }
@@ -318,7 +322,7 @@ export default function SearchPage() {
                 <div className={styles.toolbar}>
                     <CategoryPills
                         items={[
-                            { value: '', label: 'Tất cả' },
+                            { value: '', label: t('All') },
                             ...filters.categories.map((category) => ({ value: category.id, label: category.name })),
                         ]}
                         value={selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : ''}
@@ -334,12 +338,12 @@ export default function SearchPage() {
                         </FilterRail>
                     </div>
 
-                    <section className={styles.results} aria-label="Kết quả tìm kiếm">
+                    <section className={styles.results} aria-label={t('Search results')}>
                         <div className={styles.mobileBar}>
                             <Button variant="secondary" size="sm" leftIcon={SlidersHorizontal} onClick={mobileFilters.open}>
-                                Bộ lọc
+                                {t('Filters')}
                             </Button>
-                            <span className={styles.mobileCount}>{formatNumber(products.total)} món</span>
+                            <span className={styles.mobileCount}>{t(':count results', { count: formatNumber(products.total) })}</span>
                         </div>
 
                         <ProductGrid
@@ -358,8 +362,8 @@ export default function SearchPage() {
                                     {},
                                     {
                                         preserveScroll: true,
-                                        onSuccess: () => success('Đã lưu sản phẩm', product.name),
-                                        onError: () => showError('Chưa thể lưu sản phẩm', 'Vui lòng đăng nhập để dùng danh sách yêu thích.'),
+                                        onSuccess: () => success(t('Saved to your wishlist'), product.name),
+                                        onError: () => showError(t('Could not save this item'), t('Sign in to use your wishlist.')),
                                     },
                                 );
                             }}
@@ -377,12 +381,12 @@ export default function SearchPage() {
                 </div>
             </PageContainer>
 
-            <Sheet open={mobileFilters.isOpen} onOpenChange={mobileFilters.setOpen} side="bottom" title="Bộ lọc sản phẩm">
+            <Sheet open={mobileFilters.isOpen} onOpenChange={mobileFilters.setOpen} side="bottom" title={t('Product filters')}>
                 <div className={styles.sheetContent}>
                     <FilterRail variant="sheet" onClear={clearAll} activeCount={activeFilterItems.length}>
                         {filterContent}
                     </FilterRail>
-                    <Button onClick={mobileFilters.close}>Xem {formatNumber(products.total)} kết quả</Button>
+                    <Button onClick={mobileFilters.close}>{t('View :count results', { count: formatNumber(products.total) })}</Button>
                 </div>
             </Sheet>
         </StorefrontLayout>

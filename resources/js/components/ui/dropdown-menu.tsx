@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import type { LucideIcon } from 'lucide-react';
+import { Check, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { cx } from '@/lib/cx';
@@ -32,12 +32,14 @@ const DropdownMenuItem = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
         inset?: boolean;
         destructive?: boolean;
+        selected?: boolean;
     }
->(({ className, inset, destructive, ...props }, ref) => (
+>(({ className, inset, destructive, selected, ...props }, ref) => (
     <DropdownMenuPrimitive.Item
         ref={ref}
         data-inset={inset ? 'true' : undefined}
         data-destructive={destructive ? 'true' : undefined}
+        data-selected={selected ? 'true' : undefined}
         className={cx('sn-dropdown__item', className)}
         {...props}
     />
@@ -66,6 +68,7 @@ type DropdownMenuItemConfig = {
     href?: string;
     destructive?: boolean;
     disabled?: boolean;
+    selected?: boolean;
     separatorBefore?: boolean;
 };
 
@@ -88,6 +91,11 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                         <>
                             {Icon && <Icon aria-hidden="true" />}
                             <span>{item.label}</span>
+                            {item.selected && (
+                                <span className="sn-dropdown__check">
+                                    <Check aria-hidden="true" />
+                                </span>
+                            )}
                         </>
                     );
 
@@ -95,7 +103,12 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                         <React.Fragment key={`${String(item.label)}-${index}`}>
                             {item.separatorBefore && <DropdownMenuSeparator />}
                             {item.href ? (
-                                <DropdownMenuItem asChild destructive={item.destructive} disabled={item.disabled}>
+                                <DropdownMenuItem
+                                    asChild
+                                    destructive={item.destructive}
+                                    disabled={item.disabled}
+                                    selected={item.selected}
+                                >
                                     {isExternal(item.href) ? (
                                         <a href={item.href} target="_blank" rel="noreferrer noopener">
                                             {content}
@@ -105,7 +118,12 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                                     )}
                                 </DropdownMenuItem>
                             ) : (
-                                <DropdownMenuItem destructive={item.destructive} disabled={item.disabled} onSelect={item.onSelect}>
+                                <DropdownMenuItem
+                                    destructive={item.destructive}
+                                    disabled={item.disabled}
+                                    selected={item.selected}
+                                    onSelect={item.onSelect}
+                                >
                                     {content}
                                 </DropdownMenuItem>
                             )}

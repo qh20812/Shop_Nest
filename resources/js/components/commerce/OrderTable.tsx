@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import { Link } from '@inertiajs/react';
 import { ChevronRight, PackageSearch } from 'lucide-react';
 
@@ -6,9 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMoney } from '@/hooks/useMoney';
 import { cx } from '@/lib/cx';
-import { formatVnd } from '@/lib/format';
-import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusLabel, paymentStatusTone } from '@/lib/status';
+import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusKey, paymentStatusTone } from '@/lib/status';
 
 import styles from './commerce.module.css';
 
@@ -30,13 +31,12 @@ type OrderTableProps = {
     className?: string;
 };
 
-export function OrderTable({
-    orders,
-    loading = false,
-    emptyTitle = 'Chưa có đơn hàng nào',
-    emptyDescription = 'Đơn hàng bạn đặt sẽ xuất hiện tại đây để theo dõi.',
-    className,
-}: OrderTableProps) {
+export function OrderTable({ orders, loading = false, emptyTitle, emptyDescription, className }: OrderTableProps) {
+    const { t } = useTranslation();
+    const resolvedEmptyTitle = emptyTitle ?? t('No orders yet');
+    const resolvedEmptyDescription = emptyDescription ?? t('Your orders will appear here for tracking.');
+    const { money } = useMoney();
+
     if (loading) {
         return (
             <div className={cx(styles.orderCards, className)}>
@@ -52,7 +52,7 @@ export function OrderTable({
     }
 
     if (orders.length === 0) {
-        return <EmptyState icon={PackageSearch} title={emptyTitle} description={emptyDescription} />;
+        return <EmptyState icon={PackageSearch} title={resolvedEmptyTitle} description={resolvedEmptyDescription} />;
     }
 
     return (
@@ -62,7 +62,7 @@ export function OrderTable({
                     <table className={styles.orderTable}>
                         <thead className={styles.orderTableHead}>
                             <tr>
-                                {['Mã đơn', 'Ngày tạo', 'Trạng thái', 'Thanh toán', 'Tổng tiền', ''].map((header, index) => (
+                                {[t('Order code'), t('Created at'), t('Status'), t('Payment'), t('Total'), ''].map((header, index) => (
                                     <th key={header || index} scope="col">
                                         {header}
                                     </th>
@@ -86,16 +86,16 @@ export function OrderTable({
                                         <td className={styles.orderTableCell}>
                                             <OrderStatusBadge
                                                 status={normalizeOrderStatus(order.status)}
-                                                label={backendOrderStatusLabel(order.status)}
+                                                label={backendOrderStatusLabel(order.status, t)}
                                             />
                                         </td>
                                         <td className={styles.orderTableCell}>
                                             <Badge tone={paymentStatusTone[paymentStatus] ?? 'neutral'} dot>
-                                                {paymentStatusLabel[paymentStatus] ?? paymentStatus}
+                                                {t(paymentStatusKey[paymentStatus] ?? paymentStatus)}
                                             </Badge>
                                         </td>
                                         <td className={styles.orderTableCell}>
-                                            <span className={styles.orderTableAmount}>{formatVnd(order.total)}</span>
+                                            <span className={styles.orderTableAmount}>{money(order.total)}</span>
                                         </td>
                                         <td className={cx(styles.orderTableCell, styles.orderTableAction)}>
                                             <Button variant="ghost" size="sm" asChild rightIcon={ChevronRight}>
@@ -122,13 +122,13 @@ export function OrderTable({
                                         <span className={styles.orderCardCode}>{order.code}</span>
                                         <span className={styles.orderCardDate}>{order.createdAt ?? '-'}</span>
                                     </div>
-                                    <OrderStatusBadge status={normalizeOrderStatus(order.status)} label={backendOrderStatusLabel(order.status)} />
+                                    <OrderStatusBadge status={normalizeOrderStatus(order.status)} label={backendOrderStatusLabel(order.status, t)} />
                                 </div>
                                 <div className={styles.orderCardBottom}>
                                     <Badge tone={paymentStatusTone[paymentStatus] ?? 'neutral'} dot>
-                                        {paymentStatusLabel[paymentStatus] ?? paymentStatus}
+                                        {t(paymentStatusKey[paymentStatus] ?? paymentStatus)}
                                     </Badge>
-                                    <span className={styles.orderCardAmount}>{formatVnd(order.total)}</span>
+                                    <span className={styles.orderCardAmount}>{money(order.total)}</span>
                                 </div>
                             </Link>
                         </li>

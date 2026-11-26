@@ -28,7 +28,7 @@ class CustomerSegmentationService
                 ]);
 
                 // If customers are provided, add them to the segment
-                if (!empty($data['customer_ids'])) {
+                if (! empty($data['customer_ids'])) {
                     $this->addCustomersToSegment($segment, $data['customer_ids']);
                 }
 
@@ -74,6 +74,7 @@ class CustomerSegmentationService
     {
         try {
             $segment->delete();
+
             return true;
         } catch (Exception $exception) {
             Log::error('Failed to delete customer segment', ['exception' => $exception]);
@@ -141,7 +142,7 @@ class CustomerSegmentationService
     public function evaluateCustomerForSegment(User $customer, CustomerSegment $segment): bool
     {
         // Cache evaluation results for performance
-        $cacheKey = "segment:{$segment->segment_id}:customer:{$customer->id}:rules:" . md5(serialize($segment->rules));
+        $cacheKey = "segment:{$segment->segment_id}:customer:{$customer->id}:rules:".md5(serialize($segment->rules));
 
         return Cache::remember($cacheKey, 3600, function () use ($customer, $segment) {
             return $this->evaluateRules($customer, $segment->rules);
@@ -159,7 +160,7 @@ class CustomerSegmentationService
 
         // Evaluate each rule
         foreach ($rules as $rule) {
-            if (!$this->evaluateRule($customer, $rule)) {
+            if (! $this->evaluateRule($customer, $rule)) {
                 return false;
             }
         }
@@ -173,8 +174,9 @@ class CustomerSegmentationService
     private function evaluateRule(User $customer, array $rule): bool
     {
         // Validate rule structure
-        if (!isset($rule['field']) || !isset($rule['operator']) || !isset($rule['value'])) {
+        if (! isset($rule['field']) || ! isset($rule['operator']) || ! isset($rule['value'])) {
             Log::warning('Invalid rule structure', ['rule' => $rule]);
+
             return false;
         }
 
@@ -187,11 +189,12 @@ class CustomerSegmentationService
             'equals', 'not_equals', 'greater_than', 'less_than',
             'greater_than_or_equal', 'less_than_or_equal',
             'contains', 'not_contains', 'starts_with', 'ends_with',
-            'in', 'not_in'
+            'in', 'not_in',
         ];
 
-        if (!in_array($operator, $validOperators)) {
+        if (! in_array($operator, $validOperators)) {
             Log::warning('Invalid operator in rule', ['operator' => $operator]);
+
             return false;
         }
 
@@ -217,7 +220,7 @@ class CustomerSegmentationService
                        str_contains(strtolower($customerValue), strtolower($value));
             case 'not_contains':
                 return is_string($customerValue) && is_string($value) &&
-                       !str_contains(strtolower($customerValue), strtolower($value));
+                       ! str_contains(strtolower($customerValue), strtolower($value));
             case 'starts_with':
                 return is_string($customerValue) && is_string($value) &&
                        str_starts_with(strtolower($customerValue), strtolower($value));
@@ -227,7 +230,7 @@ class CustomerSegmentationService
             case 'in':
                 return in_array($customerValue, (array) $value);
             case 'not_in':
-                return !in_array($customerValue, (array) $value);
+                return ! in_array($customerValue, (array) $value);
             default:
                 return false;
         }
@@ -245,6 +248,7 @@ class CustomerSegmentationService
                 return $customer->orders()->sum('total_amount');
             case 'average_order_value':
                 $orderCount = $customer->orders()->count();
+
                 return $orderCount > 0 ? $customer->orders()->sum('total_amount') / $orderCount : 0;
             case 'last_order_date':
                 return $customer->orders()->latest('created_at')->first()?->created_at?->timestamp ?? 0;
@@ -254,6 +258,7 @@ class CustomerSegmentationService
                 return now()->diffInDays($customer->created_at);
             case 'days_since_last_order':
                 $lastOrder = $customer->orders()->latest('created_at')->first();
+
                 return $lastOrder ? now()->diffInDays($lastOrder->created_at) : 999;
             default:
                 return $customer->{$field} ?? null;
@@ -285,7 +290,7 @@ class CustomerSegmentationService
         } catch (Exception $exception) {
             Log::error('Failed to refresh segment customers', [
                 'segment_id' => $segment->segment_id,
-                'exception' => $exception
+                'exception' => $exception,
             ]);
             throw $exception;
         }
@@ -336,8 +341,8 @@ class CustomerSegmentationService
     {
         $query->whereHas('orders', function ($orderQuery) use ($operator, $value) {
             $orderQuery->selectRaw('COUNT(*) as order_count')
-                      ->havingRaw("COUNT(*) {$this->mapOperatorToSql($operator)} ?", [$value])
-                      ->groupBy('customer_id');
+                ->havingRaw("COUNT(*) {$this->mapOperatorToSql($operator)} ?", [$value])
+                ->groupBy('customer_id');
         });
     }
 
@@ -348,8 +353,8 @@ class CustomerSegmentationService
     {
         $query->whereHas('orders', function ($orderQuery) use ($operator, $value) {
             $orderQuery->selectRaw('SUM(total_amount) as total_spent')
-                      ->havingRaw("SUM(total_amount) {$this->mapOperatorToSql($operator)} ?", [$value])
-                      ->groupBy('customer_id');
+                ->havingRaw("SUM(total_amount) {$this->mapOperatorToSql($operator)} ?", [$value])
+                ->groupBy('customer_id');
         });
     }
 
@@ -360,8 +365,8 @@ class CustomerSegmentationService
     {
         $query->whereHas('orders', function ($orderQuery) use ($operator, $value) {
             $orderQuery->selectRaw('AVG(total_amount) as avg_order_value')
-                      ->havingRaw("AVG(total_amount) {$this->mapOperatorToSql($operator)} ?", [$value])
-                      ->groupBy('customer_id');
+                ->havingRaw("AVG(total_amount) {$this->mapOperatorToSql($operator)} ?", [$value])
+                ->groupBy('customer_id');
         });
     }
 
@@ -372,8 +377,8 @@ class CustomerSegmentationService
     {
         $query->whereHas('orders', function ($orderQuery) use ($operator, $value) {
             $orderQuery->selectRaw('MAX(created_at) as last_order_date')
-                      ->havingRaw("MAX(created_at) {$this->mapOperatorToSql($operator)} ?", [$value])
-                      ->groupBy('customer_id');
+                ->havingRaw("MAX(created_at) {$this->mapOperatorToSql($operator)} ?", [$value])
+                ->groupBy('customer_id');
         });
     }
 
@@ -403,8 +408,8 @@ class CustomerSegmentationService
 
         $query->whereHas('orders', function ($orderQuery) use ($operator, $cutoffDate) {
             $orderQuery->selectRaw('MAX(created_at) as last_order_date')
-                      ->havingRaw("MAX(created_at) {$this->mapOperatorToSql($operator)} ?", [$cutoffDate])
-                      ->groupBy('customer_id');
+                ->havingRaw("MAX(created_at) {$this->mapOperatorToSql($operator)} ?", [$cutoffDate])
+                ->groupBy('customer_id');
         });
     }
 
@@ -459,7 +464,7 @@ class CustomerSegmentationService
     /**
      * Get customers eligible for a segment based on rules
      */
-    public function getEligibleCustomers(CustomerSegment $segment, int $limit = null): Collection
+    public function getEligibleCustomers(CustomerSegment $segment, ?int $limit = null): Collection
     {
         if (empty($segment->rules)) {
             return collect();

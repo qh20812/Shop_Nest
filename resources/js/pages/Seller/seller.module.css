@@ -334,6 +334,15 @@
     background: var(--sn-color-surface);
 }
 
+.metricCardFrosted {
+    border-color: var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
+}
+
 .metricIcon {
     display: flex;
     width: 2.25rem;

@@ -92,12 +92,13 @@ export default function Dashboard() {
 
             <Insights items={summaryItems} columns={3} />
 
-            <div className={styles.actions}>
+            <div className={`${styles.filterBar} sn-glass-surface`}>
                 <div className={styles.filterField}>
                     <span className={styles.filterLabel}>{t('Trend range')}</span>
                     <Select
                         value={String(months)}
                         aria-label={t('Trend range')}
+                        surface="glass"
                         onChange={(event) => router.get('/admin/shops/dashboard', { months: event.target.value }, { preserveState: true })}
                     >
                         <option value="3">{t('Last 3 months')}</option>
@@ -107,7 +108,14 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <AnalyticsChart type="line" data={chartData} title={t('Revenue Trend')} description={t('Global shop revenue by month')} />
+            <AnalyticsChart
+                type="line"
+                data={chartData}
+                title={t('Revenue Trend')}
+                description={t('Global shop revenue by month')}
+                valueFormatter={formatVnd}
+                valueLabel={t('Revenue')}
+            />
 
             <DataTable
                 columns={columns}

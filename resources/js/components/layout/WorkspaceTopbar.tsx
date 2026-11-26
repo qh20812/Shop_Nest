@@ -115,66 +115,90 @@ export function WorkspaceTopbar({ onToggleSidebar }: WorkspaceTopbarProps) {
     ];
 
     return (
-        <header className="sn-workspace__topbar">
-            <div className="sn-workspace__topbar-left">
-                <Button variant="ghost" size="icon" className="sn-workspace__toggle" aria-label="Mở menu" onClick={onToggleSidebar}>
-                    <Menu aria-hidden="true" />
-                </Button>
+        <div className="sn-workspace__topbar">
+            <header className="sn-workspace__topbar-card sn-glass-surface">
+                <div className="sn-workspace__topbar-bar">
+                    <div className="sn-workspace__topbar-left">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            shape="pill"
+                            surface="glass"
+                            className="sn-workspace__toggle"
+                            aria-label="Mở menu"
+                            onClick={onToggleSidebar}
+                        >
+                            <Menu aria-hidden="true" />
+                        </Button>
 
-                <form className="sn-workspace__search" onSubmit={submitSearch} role="search">
-                    <Input
-                        type="search"
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder={t('Search...')}
-                        aria-label={t('Search...')}
-                        leadingIcon={Search}
-                        className="sn-workspace__search-input"
-                    />
-                </form>
-            </div>
+                        <form className="sn-workspace__search" onSubmit={submitSearch} role="search">
+                            <Input
+                                type="search"
+                                value={query}
+                                onChange={(event) => setQuery(event.target.value)}
+                                placeholder={t('Search...')}
+                                aria-label={t('Search...')}
+                                leadingIcon={Search}
+                                surface="glass"
+                                shape="pill"
+                                className="sn-workspace__search-input"
+                            />
+                        </form>
+                    </div>
 
-            <div className="sn-workspace__topbar-right">
-                <Button asChild variant="ghost" size="icon" className="sn-workspace__notif" aria-label={t('Notifications')}>
-                    <Link href={route('notifications.index')}>
-                        <Bell aria-hidden="true" />
-                        {unreadCount > 0 && <span className="sn-workspace__notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
-                    </Link>
-                </Button>
+                    <div className="sn-workspace__topbar-right">
+                        <Button
+                            asChild
+                            variant="ghost"
+                            size="icon"
+                            shape="pill"
+                            surface="glass"
+                            className="sn-workspace__notif"
+                            aria-label={t('Notifications')}
+                        >
+                            <Link href={route('notifications.index')}>
+                                <Bell aria-hidden="true" />
+                                {unreadCount > 0 && <span className="sn-workspace__notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+                            </Link>
+                        </Button>
 
-                <LanguageSwitcher />
+                        <LanguageSwitcher surface="glass" />
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={resolvedTheme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-                    onClick={() => changeTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                >
-                    {resolvedTheme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-                </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            shape="pill"
+                            surface="glass"
+                            aria-label={resolvedTheme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+                            onClick={() => changeTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                        >
+                            {resolvedTheme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                        </Button>
 
-                {user ? (
-                    <DropdownMenu
-                        align="end"
-                        trigger={
-                            <Button variant="ghost" size="sm" className="sn-workspace__user">
-                                <Avatar user={user} size="sm" />
-                                <span className="sn-workspace__user-text">
-                                    <span className="sn-workspace__user-name">{getDisplayName(user)}</span>
-                                    <span className="sn-workspace__user-role">{getRoleLabel(user)}</span>
-                                </span>
-                                <ChevronDown aria-hidden="true" className="sn-workspace__chevron" />
+                        {user ? (
+                            <DropdownMenu
+                                align="end"
+                                trigger={
+                                    <Button variant="ghost" size="sm" shape="pill" surface="glass" className="sn-workspace__user">
+                                        <Avatar user={user} size="sm" />
+                                        <span className="sn-workspace__user-text">
+                                            <span className="sn-workspace__user-name">{getDisplayName(user)}</span>
+                                            <span className="sn-workspace__user-role">{getRoleLabel(user)}</span>
+                                        </span>
+                                        <ChevronDown aria-hidden="true" className="sn-workspace__chevron" />
+                                    </Button>
+                                }
+                                items={accountItems}
+                            />
+                        ) : (
+                            <Button asChild variant="secondary" size="sm" shape="pill" surface="glass">
+                                <Link href="/login">Đăng nhập</Link>
                             </Button>
-                        }
-                        items={accountItems}
-                    />
-                ) : (
-                    <Button asChild variant="secondary" size="sm">
-                        <Link href="/login">Đăng nhập</Link>
-                    </Button>
-                )}
-            </div>
-        </header>
+                        )}
+                    </div>
+                </div>
+            </header>
+        </div>
     );
 }
 

@@ -184,6 +184,8 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                 onChange={(event) => setQuery(event.target.value)}
                                 onSubmit={submitSearch}
                                 placeholder={t('Search for laptops, air fryers, strollers...')}
+                                surface="glass"
+                                shape="pill"
                                 className="sn-storefront__search-inner"
                             />
                         </div>
@@ -194,7 +196,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                     align="end"
                                     className="sn-dropdown--glass"
                                     trigger={
-                                        <Button variant="ghost" size="sm" className="sn-storefront__trigger">
+                                        <Button variant="ghost" size="sm" surface="glass" shape="pill" className="sn-storefront__trigger">
                                             <Globe2 aria-hidden="true" />
                                             <span>{localeLabel}</span>
                                             <span aria-hidden="true" className="sn-storefront__locale-divider" />
@@ -228,7 +230,14 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                 />
                             </div>
 
-                            <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label={t('Notifications')}>
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                surface="glass"
+                                className="sn-storefront__icon"
+                                aria-label={t('Notifications')}
+                            >
                                 <Link href="/user/notifications">
                                     <Bell aria-hidden="true" />
                                     {resolvedUnreadCount > 0 && (
@@ -237,7 +246,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                 </Link>
                             </Button>
 
-                            <Button asChild variant="ghost" size="icon" className="sn-storefront__icon" aria-label={t('Cart')}>
+                            <Button asChild variant="ghost" size="icon" surface="glass" className="sn-storefront__icon" aria-label={t('Cart')}>
                                 <Link href="/cart">
                                     <ShoppingBag aria-hidden="true" />
                                     {resolvedCartCount > 0 && (
@@ -252,7 +261,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                         align="end"
                                         className="sn-dropdown--glass"
                                         trigger={
-                                            <Button variant="ghost" size="sm" className="sn-storefront__trigger">
+                                            <Button variant="ghost" size="sm" surface="glass" shape="pill" className="sn-storefront__trigger">
                                                 <Avatar user={user} size="sm" />
                                                 <span className="sn-storefront__account-name">{displayName}</span>
                                                 <ChevronDown aria-hidden="true" className="sn-storefront__chevron" />
@@ -262,7 +271,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                                     />
                                 </div>
                             ) : (
-                                <Button asChild size="sm" className="sn-storefront__login">
+                                <Button asChild size="sm" shape="pill" className="sn-storefront__login">
                                     <Link href="/login">
                                         <User aria-hidden="true" />
                                         {t('Sign In')}
@@ -273,6 +282,7 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                surface="glass"
                                 className="sn-storefront__menu-toggle"
                                 aria-label={t('Open menu')}
                                 onClick={mobileNav.open}
@@ -288,6 +298,8 @@ export function StorefrontHeader({ cartCount, unreadCount, className }: Storefro
                             onChange={(event) => setQuery(event.target.value)}
                             onSubmit={submitSearch}
                             placeholder={t('Find something for your home...')}
+                            surface="glass"
+                            shape="pill"
                             className="sn-storefront__search-inner"
                         />
                     </div>

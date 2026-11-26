@@ -2,15 +2,18 @@ import * as React from 'react';
 
 import { cx } from '@/lib/cx';
 
+type TextareaSurface = 'content' | 'glass';
+
 type TextareaProps = React.ComponentProps<'textarea'> & {
     invalid?: boolean;
+    surface?: TextareaSurface;
     autoGrow?: boolean;
     maxRows?: number;
     counter?: boolean;
 };
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-    ({ className, invalid, autoGrow = false, maxRows = 6, counter = false, maxLength, value, onChange, ...props }, ref) => {
+    ({ className, invalid, surface = 'content', autoGrow = false, maxRows = 6, counter = false, maxLength, value, onChange, ...props }, ref) => {
         const innerRef = React.useRef<HTMLTextAreaElement | null>(null);
         const currentLength = typeof value === 'string' ? value.length : 0;
 
@@ -36,6 +39,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                 <textarea
                     ref={innerRef}
                     data-slot="textarea"
+                    data-surface={surface}
                     maxLength={maxLength}
                     value={value}
                     onChange={(event) => {
@@ -59,5 +63,5 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = 'Textarea';
 
 export { Textarea };
-export type { TextareaProps };
+export type { TextareaProps, TextareaSurface };
 export default Textarea;

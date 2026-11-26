@@ -1,4 +1,6 @@
-/* Chat domain module — Phase 6. Tokens only. */
+/* Hallmark · component: chat glass · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · chat reads as glass chrome around a solid reading surface; only the dock slab blurs. */
+/* Chat domain module - Phase 6. Tokens only. */
 
 /* Panel */
 .panel {
@@ -7,7 +9,7 @@
     min-height: 0;
     flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
-    background: var(--sn-color-surface);
+    background: transparent;
 }
 
 .panelFooter {
@@ -15,15 +17,15 @@
     flex-direction: column;
     gap: var(--sn-space-3);
     padding: var(--sn-space-3);
-    border-top: 1px solid var(--sn-color-border);
+    border-top: 1px solid var(--sn-glass-hairline);
 }
 
 .panelNote {
     display: flex;
     align-items: flex-start;
     gap: var(--sn-space-1);
-    color: var(--sn-color-text-faint);
-    font-size: var(--sn-text-2xs);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
 }
 
 .panelNoteIcon {
@@ -41,7 +43,7 @@
     gap: var(--sn-space-2);
     padding: var(--sn-space-2) var(--sn-space-3);
     border: 1px solid var(--sn-color-danger);
-    border-radius: var(--sn-radius-md);
+    border-radius: var(--sn-radius-lg);
     background: var(--sn-color-danger-wash);
     color: var(--sn-color-danger-text);
 }
@@ -352,8 +354,8 @@
     align-items: center;
     gap: var(--sn-space-3);
     padding: var(--sn-space-3) var(--sn-space-4);
-    border-bottom: 1px solid var(--sn-color-border);
-    background: var(--sn-color-surface);
+    border-bottom: 1px solid var(--sn-glass-hairline);
+    background: transparent;
 }
 
 .headerIcon {
@@ -363,8 +365,10 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    border: 1px solid var(--sn-glass-hairline);
     border-radius: var(--sn-radius-pill);
-    background: var(--sn-color-accent-wash);
+    background: var(--sn-glass-field);
+    box-shadow: inset 0 1px 0 var(--sn-glass-highlight);
     color: var(--sn-color-accent-text);
 }
 
@@ -444,6 +448,14 @@
     gap: var(--sn-space-1);
 }
 
+.headerActions button:hover {
+    background: var(--sn-glass-hover);
+}
+
+.headerActions button:active {
+    background: var(--sn-glass-press);
+}
+
 @media (min-width: 1024px) {
     .headerBack {
         display: none;
@@ -456,8 +468,7 @@
     align-items: flex-end;
     gap: var(--sn-space-2);
     padding: var(--sn-space-3);
-    border-top: 1px solid var(--sn-color-border);
-    background: var(--sn-color-surface);
+    background: transparent;
 }
 
 .composerField {
@@ -469,6 +480,10 @@
     min-height: var(--sn-control-md);
     resize: none;
     padding-block: 0.625rem;
+    border-radius: var(--sn-radius-pill);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-float);
     font-size: var(--sn-text-sm);
 }
 
@@ -476,6 +491,22 @@
 .messageList {
     flex: 1;
     overflow-y: auto;
+    background: var(--sn-color-surface);
+    scrollbar-color: var(--sn-color-border) transparent;
+    scrollbar-width: thin;
+}
+
+.messageList::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+.messageList::-webkit-scrollbar-thumb {
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-color-border);
+}
+
+.messageList::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .messageListSkeleton {
@@ -530,8 +561,10 @@
     height: 3rem;
     align-items: center;
     justify-content: center;
+    border: 1px solid var(--sn-glass-hairline);
     border-radius: var(--sn-radius-pill);
-    background: var(--sn-color-accent-wash);
+    background: var(--sn-glass-field);
+    box-shadow: inset 0 1px 0 var(--sn-glass-highlight);
     color: var(--sn-color-accent-text);
 }
 
@@ -600,7 +633,7 @@
 
 .messageBubble {
     padding: var(--sn-space-3) var(--sn-space-4);
-    border-radius: var(--sn-radius-lg);
+    border-radius: var(--sn-radius-xl);
     font-size: var(--sn-text-sm);
     line-height: var(--sn-leading-relaxed);
     overflow-wrap: break-word;
@@ -625,16 +658,23 @@
 }
 
 .messageProducts {
-    display: flex;
+    display: grid;
     width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
     gap: var(--sn-space-2);
-    overflow-x: auto;
-    padding-bottom: var(--sn-space-1);
+    overflow: visible;
+    padding: var(--sn-space-1) var(--sn-space-1) var(--sn-space-2);
 }
 
 .messageProductCard {
-    width: 9rem;
-    flex-shrink: 0;
+    width: 100%;
+}
+
+/* Tin nhắn có kèm card sản phẩm dùng hết chiều rộng để grid không bị bó hẹp. */
+.messageBody[data-has-products='true'] {
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .messageMeta {
@@ -676,7 +716,7 @@
     gap: var(--sn-space-1);
     padding: var(--sn-space-2) var(--sn-space-3);
     border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
+    border-radius: var(--sn-radius-xl);
     background: var(--sn-color-surface-sunken);
 }
 
@@ -728,20 +768,26 @@
     min-height: var(--sn-control-sm);
     align-items: center;
     padding: var(--sn-space-1) 0.875rem;
-    border: 1px solid var(--sn-color-border);
+    border: 1px solid var(--sn-glass-hairline);
     border-radius: var(--sn-radius-pill);
-    background: var(--sn-color-surface);
+    background: var(--sn-glass-control);
     color: var(--sn-color-text);
     font-size: var(--sn-text-sm);
     cursor: pointer;
     transition:
+        background-color var(--sn-dur-fast) var(--sn-ease-standard),
         border-color var(--sn-dur-fast) var(--sn-ease-standard),
         color var(--sn-dur-fast) var(--sn-ease-standard);
 }
 
 .quickReply:hover {
     border-color: var(--sn-color-accent);
+    background: var(--sn-glass-control-hover);
     color: var(--sn-color-accent-text);
+}
+
+.quickReply:active {
+    background: var(--sn-glass-press);
 }
 
 .quickReply:disabled {

@@ -13,3 +13,9 @@ Schedule::command('reservations:cleanup --force')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Xoá lịch sử chatbot quá thời hạn lưu trữ (mặc định 90 ngày).
+Schedule::command('chatbot:prune')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground();

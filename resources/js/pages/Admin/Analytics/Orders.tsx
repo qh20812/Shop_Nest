@@ -14,7 +14,7 @@ import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 import analyticsStyles from '@/components/admin/analytics/analytics.module.css';
@@ -93,7 +93,8 @@ interface OrdersPageProps extends Record<string, unknown> {
     filters?: Record<string, unknown>;
     statusOptions?: Record<string, string>;
     locale?: string;
-    currency?: string;
+    currency?: string | { code?: string };
+    currencyCode?: string;
 }
 
 type OrderFilterState = AnalyticsFilterState & {
@@ -144,7 +145,7 @@ const Orders: React.FC = () => {
     const analytics = useMemo<OrderAnalyticsPayload>(() => props.orders ?? {}, [props.orders]);
     const initialFilters = props.filters ?? {};
     const locale = typeof props.locale === 'string' ? props.locale : 'vi';
-    const currency = resolveCurrencyCode(props.currency);
+    const currency = resolveCurrencyCode(props.currencyCode ?? props.currency);
     const { t } = useTranslation();
 
     const [filters, setFilters] = useState<OrderFilterState>(() => ({
@@ -175,15 +176,7 @@ const Orders: React.FC = () => {
     const disputeRate = analytics.disputeRate ?? 0;
     const averageOrderValue = analytics.averageOrderValue ?? 0;
 
-    const currencyFormatter = useMemo(
-        () =>
-            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
-                style: 'currency',
-                currency,
-                maximumFractionDigits: 0,
-            }),
-        [currency, locale],
-    );
+    const money = useMemo(() => (value: number) => formatMoney(value, currency, locale), [currency, locale]);
     const dateFormatter = useMemo(
         () =>
             new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
@@ -282,7 +275,7 @@ const Orders: React.FC = () => {
                 label: t('Total'),
                 sortable: false,
                 align: 'right',
-                render: (value) => currencyFormatter.format(Number(value ?? 0)),
+                render: (value) => money(Number(value ?? 0)),
             },
             {
                 key: 'paymentMethod',
@@ -291,7 +284,7 @@ const Orders: React.FC = () => {
                 render: (value) => (value ? t(String(value)) : t('Unknown')),
             },
         ],
-        [currencyFormatter, dateFormatter, t],
+        [dateFormatter, money, t],
     );
 
     const statusOptions = useMemo(() => Object.entries(props.statusOptions ?? {}), [props.statusOptions]);
@@ -339,65 +332,61 @@ const Orders: React.FC = () => {
                     </p>
                 </section>
 
-                <section className={styles.section}>
-                    <AnalyticsFilters
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        title={t('Filter Order Data')}
-                        description={t('Choose a date range or narrow by seller, category, or specific customers.')}
-                        onReset={handleResetFilters}
-                    >
-                        {statusOptions.length > 0 ? (
-                            <div className={analyticsStyles.filtersCustomGroup}>
-                                <span className={analyticsStyles.filtersLabel}>{t('Order Status')}</span>
-                                <div className={analyticsStyles.checkboxGrid}>
-                                    {statusOptions.map(([value, label]) => {
-                                        const checked = selectedStatuses.includes(value);
+                <AnalyticsFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    title={t('Filter Order Data')}
+                    description={t('Choose a date range or narrow by seller, category, or specific customers.')}
+                    onReset={handleResetFilters}
+                >
+                    {statusOptions.length > 0 ? (
+                        <div className={analyticsStyles.filtersCustomGroup}>
+                            <span className={analyticsStyles.filtersLabel}>{t('Order Status')}</span>
+                            <div className={analyticsStyles.checkboxGrid}>
+                                {statusOptions.map(([value, label]) => {
+                                    const checked = selectedStatuses.includes(value);
 
-                                        return (
-                                            <label key={value} className={analyticsStyles.checkbox}>
-                                                <input type="checkbox" checked={checked} onChange={() => handleStatusToggle(value)} />
-                                                <span>{t(label)}</span>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
+                                    return (
+                                        <label key={value} className={analyticsStyles.checkbox}>
+                                            <input type="checkbox" checked={checked} onChange={() => handleStatusToggle(value)} />
+                                            <span>{t(label)}</span>
+                                        </label>
+                                    );
+                                })}
                             </div>
-                        ) : null}
-
-                        <div className={styles.filterActions}>
-                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
-                                <Filter aria-hidden="true" />
-                                {t('Apply Filters')}
-                            </Button>
                         </div>
-                    </AnalyticsFilters>
-                </section>
+                    ) : null}
 
-                <section className={styles.section}>
-                    <ul className={styles.kpiList}>
-                        <AnalyticsCard
-                            title={t('Total Orders')}
-                            value={formatNumber(totalOrders)}
-                            tooltip={t('Orders counted within the selected filters and statuses.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Average Order Value')}
-                            value={currencyFormatter.format(averageOrderValue)}
-                            tooltip={t('Mean revenue per order during the selected period.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Fulfillment Rate')}
-                            value={`${(fulfillmentRate ?? 0).toFixed(1)}%`}
-                            tooltip={`${t('Ratio of successful checkouts converting into completed orders.')} ${t('Average fulfillment time')}: ${avgFulfillmentHours.toFixed(1)}h`}
-                        />
-                        <AnalyticsCard
-                            title={t('Dispute Rate')}
-                            value={`${(disputeRate ?? 0).toFixed(2)}%`}
-                            tooltip={t('Percentage of orders that resulted in disputes for the chosen timeframe.')}
-                        />
-                    </ul>
-                </section>
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                            <Filter aria-hidden="true" />
+                            {t('Apply Filters')}
+                        </Button>
+                    </div>
+                </AnalyticsFilters>
+
+                <ul className={styles.kpiList}>
+                    <AnalyticsCard
+                        title={t('Total Orders')}
+                        value={formatNumber(totalOrders)}
+                        tooltip={t('Orders counted within the selected filters and statuses.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Average Order Value')}
+                        value={money(averageOrderValue)}
+                        tooltip={t('Mean revenue per order during the selected period.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Fulfillment Rate')}
+                        value={`${(fulfillmentRate ?? 0).toFixed(1)}%`}
+                        tooltip={`${t('Ratio of successful checkouts converting into completed orders.')} ${t('Average fulfillment time')}: ${avgFulfillmentHours.toFixed(1)}h`}
+                    />
+                    <AnalyticsCard
+                        title={t('Dispute Rate')}
+                        value={`${(disputeRate ?? 0).toFixed(2)}%`}
+                        tooltip={t('Percentage of orders that resulted in disputes for the chosen timeframe.')}
+                    />
+                </ul>
 
                 <section className={styles.chartGrid}>
                     <AnalyticsChart
@@ -405,12 +394,14 @@ const Orders: React.FC = () => {
                         data={statusChartData}
                         title={t('Status Distribution')}
                         description={t('Visual breakdown of orders across fulfillment statuses.')}
+                        valueLabel={t('Orders')}
                     />
                     <AnalyticsChart
                         type="line"
                         data={conversionSeries}
                         title={t('Order Funnel Volume')}
                         description={t('Volume flowing through each stage of the conversion funnel.')}
+                        valueLabel={t('Orders')}
                     />
                 </section>
 

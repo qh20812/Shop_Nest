@@ -6,27 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePromotionRequest;
 use App\Http\Requests\Admin\UpdatePromotionRequest;
 use App\Models\Promotion;
-use App\Services\PromotionService;
-use App\Services\PromotionConflictResolver;
-use App\Services\PromotionAnalyticsService;
-use App\Services\PromotionTemplateService;
 use App\Services\PromotionBulkImportService;
-use App\Services\PromotionBulkService;
+use App\Services\PromotionConflictResolver;
+use App\Services\PromotionRuleService;
+use App\Services\PromotionService;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\PromotionRuleService;
 
 class PromotionController extends Controller
 {
@@ -42,9 +34,6 @@ class PromotionController extends Controller
     public function __construct(
         private PromotionService $promotionService,
         private PromotionConflictResolver $conflictResolver,
-        private PromotionAnalyticsService $analyticsService,
-        private PromotionTemplateService $templateService,
-        private PromotionBulkService $bulkService,
         private PromotionRuleService $ruleService,
         private PromotionBulkImportService $bulkImportService
     ) {}
@@ -54,8 +43,6 @@ class PromotionController extends Controller
      */
     public function index(Request $request): Response
     {
-        $this->applyAutomaticStatusUpdates();
-
         $filters = [
             'search' => $request->string('search')->toString(),
             'status' => $request->string('status')->toString(),
@@ -84,28 +71,7 @@ class PromotionController extends Controller
                 $builder->where('type', $this->promotionService->mapTypeForQuery($type));
             })
             ->when($filters['status'], function ($builder, $status) {
-                $now = now();
-
-                switch ($status) {
-                    case 'draft':
-                        $builder->where('start_date', '>', $now);
-                        break;
-                    case 'active':
-                        $builder
-                            ->where('start_date', '<=', $now)
-                            ->where('end_date', '>=', $now)
-                            ->where('is_active', true);
-                        break;
-                    case 'paused':
-                        $builder
-                            ->where('start_date', '<=', $now)
-                            ->where('end_date', '>=', $now)
-                            ->where('is_active', false);
-                        break;
-                    case 'expired':
-                        $builder->where('end_date', '<', $now);
-                        break;
-                }
+                $builder->ofStatus($status);
             })
             ->orderByDesc('created_at');
 
@@ -151,7 +117,7 @@ class PromotionController extends Controller
         $payload = $request->validated();
 
         try {
-            if (!empty($payload['selection_rules'] ?? [])) {
+            if (! empty($payload['selection_rules'] ?? [])) {
                 $promotion = $this->promotionService->createWithRules($payload);
             } else {
                 unset($payload['selection_rules']);
@@ -234,7 +200,7 @@ class PromotionController extends Controller
         $payload = $request->validated();
 
         try {
-            if (array_key_exists('selection_rules', $payload) && !empty($payload['selection_rules'])) {
+            if (array_key_exists('selection_rules', $payload) && ! empty($payload['selection_rules'])) {
                 $promotion = $this->promotionService->updateWithRules($promotion, $payload);
             } else {
                 $promotion = $this->promotionService->update(
@@ -282,172 +248,6 @@ class PromotionController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to delete promotion. Please try again.');
         }
-    }
-
-    private function applyAutomaticStatusUpdates(?Promotion $promotion = null, bool $requestedActive = true): void
-    {
-        Promotion::where('end_date', '<', now())->update(['is_active' => false]);
-        Promotion::where('start_date', '>', now())->update(['is_active' => false]);
-    }
-
-    // ===== PHASE 3: CONFLICT RESOLUTION & TARGETING BASICS =====
-
-    // ===== PHASE 2: USAGE TRACKING & ANALYTICS =====
-
-    /**
-     * Get detailed usage statistics for a promotion
-     */
-    public function getUsageStats(Promotion $promotion): array
-    {
-        return $this->analyticsService->getUsageStats($promotion);
-    }
-
-    /**
-     * Calculate revenue impact of a promotion
-     */
-    public function getRevenueImpact(Promotion $promotion): array
-    {
-        return $this->analyticsService->getRevenueImpact($promotion);
-    }
-
-    /**
-     * Get performance metrics for a promotion
-     */
-    public function getPerformanceMetrics(Promotion $promotion): array
-    {
-        return $this->analyticsService->getPerformanceMetrics($promotion);
-    }
-
-    // ===== PHASE 2: BULK OPERATIONS =====
-
-    /**
-     * Bulk activate multiple promotions
-     */
-    public function bulkActivate(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $request->validate([
-            'promotion_ids' => 'required|array|min:1',
-            'promotion_ids.*' => 'exists:promotions,promotion_id',
-        ]);
-
-        $result = $this->bulkService->bulkActivate($request->promotion_ids);
-
-        return response()->json($result);
-    }
-
-    /**
-     * Bulk deactivate multiple promotions
-     */
-    public function bulkDeactivate(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $request->validate([
-            'promotion_ids' => 'required|array|min:1',
-            'promotion_ids.*' => 'exists:promotions,promotion_id',
-        ]);
-
-        $result = $this->bulkService->bulkDeactivate($request->promotion_ids);
-
-        return response()->json($result);
-    }
-
-    /**
-     * Bulk delete multiple promotions
-     */
-    public function bulkDelete(Request $request): \Illuminate\Http\JsonResponse
-    {
-        $request->validate([
-            'promotion_ids' => 'required|array|min:1',
-            'promotion_ids.*' => 'exists:promotions,promotion_id',
-            'confirm' => 'required|boolean|accepted',
-        ]);
-
-        $result = $this->bulkService->bulkDelete($request->promotion_ids);
-
-        return response()->json($result);
-    }
-
-    /**
-     * Bulk duplicate promotions
-     */
-    public function bulkDuplicate(Request $request, Promotion $promotion): \Illuminate\Http\JsonResponse
-    {
-        $request->validate([
-            'count' => 'required|integer|min:1|max:50',
-            'name_prefix' => 'nullable|string|max:100',
-        ]);
-
-        $result = $this->bulkService->bulkDuplicate(
-            $promotion,
-            $request->count,
-            $request->name_prefix ?? 'Copy of '
-        );
-
-        return response()->json($result);
-    }
-
-    // ===== PHASE 2: PROMOTION TEMPLATES =====
-
-    /**
-     * Get available promotion templates
-     */
-    public function getTemplates(): \Illuminate\Http\JsonResponse
-    {
-        $templates = $this->templateService->getTemplates();
-
-        return response()->json([
-            'templates' => $templates,
-        ]);
-    }
-
-    /**
-     * Create promotion from template
-     */
-    public function createFromTemplate(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'template_id' => 'required|string',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'starts_at' => 'required|date|after_or_equal:today',
-            'expires_at' => 'required|date|after:starts_at',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,product_id',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,category_id',
-        ]);
-
-        try {
-            $promotion = $this->templateService->createFromTemplate($request->all());
-
-            return redirect()->route('admin.promotions.edit', $promotion)
-                ->with('success', 'Promotion created from template successfully. Please review and activate when ready.');
-        } catch (Exception $exception) {
-            Log::error('Failed to create promotion from template', ['exception' => $exception]);
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Failed to create promotion from template. Please try again.');
-        }
-    }
-
-    /**
-     * Save current promotion as template
-     */
-    public function saveAsTemplate(Request $request, Promotion $promotion): \Illuminate\Http\JsonResponse
-    {
-        $request->validate([
-            'template_name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'is_public' => 'boolean',
-        ]);
-
-        $template = $this->templateService->saveAsTemplate($promotion, $request->all());
-
-        return response()->json([
-            'success' => true,
-            'template' => $template,
-            'message' => 'Promotion saved as template successfully.',
-        ]);
     }
 
     /**
@@ -556,7 +356,7 @@ class PromotionController extends Controller
         ]);
 
         try {
-            /** @var \Illuminate\Http\UploadedFile $file */
+            /** @var UploadedFile $file */
             $file = $validated['file'];
             $import = $this->bulkImportService->queueImport($promotion, $file);
 
@@ -588,7 +388,7 @@ class PromotionController extends Controller
     {
         $status = $this->bulkImportService->getImportStatus($trackingToken);
 
-        if (!$status) {
+        if (! $status) {
             return response()->json([
                 'success' => false,
                 'message' => 'Import not found.',

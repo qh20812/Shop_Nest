@@ -158,9 +158,12 @@
     align-items: center;
     gap: var(--sn-space-3);
     padding: var(--sn-space-4);
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
-    background: var(--sn-color-surface);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
 }
 
 .metricIcon {
@@ -171,7 +174,7 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--sn-radius-md);
-    background: var(--sn-color-surface-sunken);
+    background: var(--sn-glass-field);
     color: var(--sn-color-text-muted);
 }
 
@@ -503,7 +506,27 @@ a.tag:hover {
     flex-direction: column;
     gap: var(--sn-space-3);
     padding-top: var(--sn-space-3);
-    border-top: 1px solid var(--sn-color-border);
+    border-top: 1px solid var(--sn-glass-hairline);
+}
+
+/* Filter chrome sits inside a glass slab; these classes carry layout only. */
+.filterSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+}
+
+.filterSection .sectionHead {
+    border-bottom-color: var(--sn-glass-hairline);
+}
+
+.filterBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--sn-space-3);
+    padding: var(--sn-space-3) var(--sn-space-4);
 }
 
 .multiSelect {
@@ -512,7 +535,7 @@ a.tag:hover {
     min-height: 9rem;
     padding: var(--sn-space-2);
     border: 1px solid var(--sn-color-border-strong);
-    border-radius: var(--sn-radius-md);
+    border-radius: var(--sn-radius-control);
     background: var(--sn-color-surface);
     color: var(--sn-color-text);
     font: inherit;
@@ -525,7 +548,7 @@ a.tag:hover {
     min-height: 7rem;
     padding: var(--sn-space-2) var(--sn-space-3);
     border: 1px solid var(--sn-color-border-strong);
-    border-radius: var(--sn-radius-md);
+    border-radius: var(--sn-radius-control);
     background: var(--sn-color-surface);
     color: var(--sn-color-text);
     font: inherit;

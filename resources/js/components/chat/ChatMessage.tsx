@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { AlertTriangle, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Sparkles } from 'lucide-react';
 import * as React from 'react';
 
 import type { ChatProduct } from '@/components/chat/types';
@@ -81,7 +81,7 @@ export function ChatMessage({
                 </span>
             ) : null}
 
-            <div className={styles.messageBody}>
+            <div className={styles.messageBody} data-has-products={products && products.length > 0 ? 'true' : undefined}>
                 {!isOutgoing ? <span className={styles.messageAuthor}>{assistantName}</span> : null}
 
                 <div className={styles.messageBubble} data-variant={isError ? 'error' : isOutgoing ? 'outgoing' : 'incoming'}>
@@ -97,6 +97,8 @@ export function ChatMessage({
                                 <ProductCard
                                     product={toProductCard(product)}
                                     variant="compact"
+                                    actionLabel={t('View Product')}
+                                    actionIcon={ArrowUpRight}
                                     onAddToCart={() => router.visit(product.url ?? `/product/${product.id}`)}
                                 />
                             </div>

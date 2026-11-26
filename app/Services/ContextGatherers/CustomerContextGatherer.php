@@ -38,6 +38,10 @@ class CustomerContextGatherer implements ContextGathererInterface
 
         $recommendations = Product::query()
             ->with(['category', 'brand'])
+            ->where('is_active', true)
+            ->where('status', 'published')
+            ->whereHas('shop', fn ($query) => $query->where('status', 'active'))
+            ->whereHas('variants', fn ($query) => $query->where('available_quantity', '>', 0))
             ->when($favoriteCategoryIds, function ($query, $categoryIds) {
                 $query->whereIn('category_id', $categoryIds);
             })

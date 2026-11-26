@@ -158,7 +158,7 @@ export default function Index() {
             {stats && Object.keys(stats).length > 0 && (
                 <div className={styles.actions}>
                     {Object.entries(stats).map(([key, value]) => (
-                        <div key={key} className={styles.metricCard}>
+                        <div key={key} className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
                             <div className={styles.metricBody}>
                                 <span className={styles.metricLabel}>{key}</span>
                                 <span className={styles.metricValue}>{value}</span>

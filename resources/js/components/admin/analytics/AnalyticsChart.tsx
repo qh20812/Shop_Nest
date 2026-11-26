@@ -21,6 +21,7 @@ import {
     YAxis,
 } from 'recharts';
 
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from './analytics.module.css';
@@ -45,6 +46,8 @@ export interface AnalyticsChartProps {
     loading?: boolean;
     legend?: boolean;
     tooltipFormatter?: (value: number, name: string, entry: AnalyticsChartPoint) => React.ReactNode;
+    valueFormatter?: (value: number) => string;
+    valueLabel?: string;
     className?: string;
 }
 
@@ -86,6 +89,8 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     loading = false,
     legend = false,
     tooltipFormatter,
+    valueFormatter,
+    valueLabel,
     className = '',
 }) => {
     const { t } = useTranslation();
@@ -93,12 +98,33 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     const palette = useMemo(() => (colors.length ? colors : defaultColors), [colors]);
     const hasData = Array.isArray(data) && data.length > 0;
 
+    const renderTooltipValue = (
+        value: number | string | readonly (string | number)[] | undefined,
+        name: string | number | undefined,
+        entry: { payload?: AnalyticsChartPoint } | undefined,
+    ): [React.ReactNode, string] => {
+        const numericValue = Number(value);
+        const point = entry?.payload;
+        const seriesName = name == null ? '' : String(name);
+
+        if (tooltipFormatter) {
+            return [tooltipFormatter(numericValue, seriesName, point as AnalyticsChartPoint), valueLabel ?? seriesName];
+        }
+
+        const formattedValue = valueFormatter && Number.isFinite(numericValue) ? valueFormatter(numericValue) : formatNumber(numericValue);
+
+        // Pie/funnel slices are named by their category, which reads better than the chart title.
+        const fallbackLabel = type === 'pie' || type === 'funnel' ? seriesName || title : title;
+
+        return [formattedValue, valueLabel ?? fallbackLabel];
+    };
+
     const tooltipContent = (
         <Tooltip
-            formatter={(value, name, entry) =>
-                tooltipFormatter ? tooltipFormatter(Number(value), String(name), entry.payload as AnalyticsChartPoint) : value
-            }
+            formatter={(value, name, entry) => renderTooltipValue(value, name, entry)}
             contentStyle={tooltipStyle}
+            labelStyle={{ color: 'var(--sn-color-text-muted)' }}
+            itemStyle={{ color: 'var(--sn-color-text)' }}
         />
     );
 

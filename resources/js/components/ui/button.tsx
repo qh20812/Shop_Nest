@@ -6,6 +6,8 @@ import { cx } from '@/lib/cx';
 
 type ButtonVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'tertiary' | 'destructive' | 'link';
 type ButtonSize = 'default' | 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
+type ButtonSurface = 'content' | 'glass' | 'overlay';
+type ButtonShape = 'default' | 'pill';
 
 type ButtonVariantProps = { variant?: ButtonVariant; size?: ButtonSize };
 
@@ -18,6 +20,8 @@ const buttonVariants: (props?: ButtonVariantProps) => string = () => 'sn-btn';
 type ButtonProps = React.ComponentProps<'button'> & {
     variant?: ButtonVariant;
     size?: ButtonSize;
+    surface?: ButtonSurface;
+    shape?: ButtonShape;
     asChild?: boolean;
     loading?: boolean;
     leftIcon?: LucideIcon;
@@ -30,6 +34,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             className,
             variant = 'default',
             size = 'default',
+            surface = 'content',
+            shape = 'default',
             asChild = false,
             loading = false,
             leftIcon: LeftIcon,
@@ -57,6 +63,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 data-slot="button"
                 data-variant={variant}
                 data-size={size}
+                data-surface={surface}
+                data-shape={shape}
                 aria-busy={loading || undefined}
                 disabled={disabled || loading}
                 className={cx('sn-btn', className)}
@@ -71,4 +79,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-export type { ButtonProps, ButtonSize, ButtonVariant };
+export type { ButtonProps, ButtonSize, ButtonSurface, ButtonShape, ButtonVariant };

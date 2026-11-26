@@ -1,3 +1,4 @@
+/* Hallmark · component: workspace shell · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
 /*
  * Bảng Hiệu — workspace shell for seller, admin and shipper.
  *
@@ -8,7 +9,25 @@
 
 @layer sn-layouts {
     .sn-workspace {
-        background: var(--sn-color-canvas);
+        position: relative;
+        isolation: isolate;
+        background: var(--sn-color-canvas-deep);
+    }
+
+    /* Ambient wash: gives the glass chrome something to blur, like the storefront dock over imagery */
+    .sn-workspace::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: var(--sn-workspace-wash);
+        pointer-events: none;
+    }
+
+    @media (forced-colors: active) {
+        .sn-workspace::before {
+            display: none;
+        }
     }
 
     .sn-workspace__content {
@@ -17,30 +36,41 @@
 
     .sn-workspace__main {
         width: 100%;
-        min-height: calc(100dvh - var(--sn-header));
-        padding: 2.25rem var(--sn-space-6);
+        min-height: calc(100dvh - var(--sn-header) - var(--sn-shell-inset) * 2);
+        padding: var(--sn-space-4) var(--sn-space-4) var(--sn-space-6);
     }
 
-    /* Sidebar */
+    /* Sidebar: floating glass slab, inset from every viewport edge */
     .sn-workspace__sidebar {
         position: fixed;
-        inset-block: 0;
-        inset-inline-start: 0;
+        inset-block: var(--sn-shell-inset);
+        inset-inline-start: var(--sn-shell-inset);
         z-index: calc(var(--sn-z-overlay) + 1);
-        display: flex;
         width: var(--sn-sidebar);
-        flex-direction: column;
-        gap: var(--sn-space-1);
-        padding: var(--sn-space-4) var(--sn-space-3);
-        border-right: 1px solid var(--sn-color-border);
-        background: var(--sn-color-surface);
-        overflow-y: auto;
-        transform: translateX(-100%);
+        transform: translateX(calc(-100% - var(--sn-shell-inset) - var(--sn-shell-gap) - var(--sn-space-8)));
         transition: transform var(--sn-dur-base) var(--sn-ease-standard);
     }
 
     .sn-workspace__sidebar[data-open='true'] {
         transform: translateX(0);
+    }
+
+    .sn-workspace__sidebar-card {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        gap: var(--sn-space-1);
+        padding: var(--sn-space-3);
+        overflow: hidden;
+    }
+
+    .sn-workspace__sidebar-card > nav {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .sn-workspace__brand {
@@ -49,7 +79,7 @@
         gap: 0.625rem;
         margin-bottom: var(--sn-space-2);
         padding: var(--sn-space-1) var(--sn-space-2) var(--sn-space-3);
-        border-bottom: 1px solid var(--sn-color-border);
+        border-bottom: 1px solid var(--sn-glass-hairline);
         color: var(--sn-color-text);
         text-decoration: none;
     }
@@ -58,20 +88,11 @@
         color: var(--sn-color-text);
     }
 
-    .sn-workspace__brand-logo {
-        width: 2rem;
-        height: 2rem;
-        object-fit: contain;
-        flex-shrink: 0;
-    }
-
-    .sn-workspace__brand-name {
-        display: block;
-        font-size: var(--sn-text-lg);
-        font-weight: var(--sn-weight-bold);
-        letter-spacing: var(--sn-tracking-snug);
-        line-height: var(--sn-leading-tight);
-        color: var(--sn-color-text);
+    .sn-workspace__brand-text {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 0.125rem;
     }
 
     .sn-workspace__brand-role {
@@ -95,24 +116,39 @@
 
     .sn-workspace__nav-link {
         display: flex;
+        min-height: 2.5rem;
         align-items: center;
         gap: var(--sn-space-3);
-        padding: 0.625rem var(--sn-space-3);
-        border-left: 2px solid transparent;
-        border-radius: var(--sn-radius-md);
+        padding: 0.5rem var(--sn-space-3);
+        border-radius: var(--sn-radius-item);
         font-size: var(--sn-text-sm);
         font-weight: var(--sn-weight-medium);
         color: var(--sn-color-text-muted);
         text-decoration: none;
+        transition:
+            background-color var(--sn-dur-fast) var(--sn-ease-standard),
+            color var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
     .sn-workspace__nav-link:hover {
-        background: var(--sn-color-surface-sunken);
+        background: var(--sn-glass-hover);
         color: var(--sn-color-text);
     }
 
+    .sn-workspace__nav-link:active {
+        background: var(--sn-glass-press);
+    }
+
+    .sn-workspace__nav-link:focus-visible {
+        outline-offset: -2px;
+    }
+
     .sn-workspace__nav-link[data-active='true'] {
-        border-left-color: var(--sn-color-accent);
+        background: var(--sn-color-accent-wash);
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-workspace__nav-link[data-active='true']:hover {
         background: var(--sn-color-accent-wash);
         color: var(--sn-color-accent-text);
     }
@@ -140,18 +176,35 @@
         cursor: pointer;
     }
 
-    /* Topbar */
+    /* Topbar: sticky wrapper + glass card + bar, mirroring the storefront dock */
     .sn-workspace__topbar {
         position: sticky;
         top: 0;
         z-index: var(--sn-z-header);
+        padding: var(--sn-shell-inset) var(--sn-shell-inset) 0;
+    }
+
+    /* Covers the 12px strip above the sticky card so scrolling content never leaks through */
+    .sn-workspace__topbar::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto;
+        height: var(--sn-shell-inset);
+        background: var(--sn-workspace-wash), var(--sn-color-canvas-deep);
+        background-attachment: fixed;
+        pointer-events: none;
+    }
+
+    .sn-workspace__topbar-card {
+        position: relative;
+    }
+
+    .sn-workspace__topbar-bar {
         display: flex;
         align-items: center;
         gap: var(--sn-space-3);
         height: var(--sn-header);
-        padding-inline: var(--sn-space-4);
-        border-bottom: 1px solid var(--sn-color-border);
-        background: var(--sn-color-surface);
+        padding-inline: var(--sn-space-2) var(--sn-space-3);
     }
 
     .sn-workspace__topbar-left {
@@ -200,6 +253,7 @@
         border-radius: var(--sn-radius-pill);
         background: var(--sn-color-danger);
         color: var(--sn-color-on-danger);
+        box-shadow: 0 0 0 2px var(--sn-glass-ring);
         font-size: var(--sn-text-2xs);
         font-weight: var(--sn-weight-semibold);
         line-height: 1;
@@ -248,9 +302,6 @@
         gap: var(--sn-space-3);
         align-items: center;
         padding: var(--sn-space-4);
-        border: 1px solid var(--sn-color-border);
-        border-radius: var(--sn-radius-lg);
-        background: var(--sn-color-surface);
     }
 
     .sn-filter-panel__search {
@@ -270,7 +321,11 @@
 
     @media (min-width: 768px) {
         .sn-workspace__content {
-            margin-inline-start: var(--sn-sidebar);
+            margin-inline-start: calc(var(--sn-sidebar) + var(--sn-shell-inset));
+        }
+
+        .sn-workspace__main {
+            padding: var(--sn-space-5) var(--sn-space-6) var(--sn-space-6);
         }
 
         .sn-workspace__sidebar {
@@ -299,6 +354,12 @@
     @media (min-width: 1280px) {
         .sn-workspace__user-text {
             display: block;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sn-workspace__sidebar {
+            transition: none;
         }
     }
 }

@@ -21,14 +21,14 @@ class PromotionConflictResolver
      */
     public function handlePromotionConflicts(?Promotion $promotion): void
     {
-        if (!$promotion) {
+        if (! $promotion) {
             return;
         }
 
         $promotion->loadMissing('products:product_id', 'categories:category_id');
 
         $windowEnd = Carbon::parse($promotion->end_date);
-        if (!$promotion->is_active && $windowEnd->isPast()) {
+        if (! $promotion->is_active && $windowEnd->isPast()) {
             return;
         }
 
@@ -70,14 +70,14 @@ class PromotionConflictResolver
         $items = [];
 
         foreach ($candidates as $candidate) {
-            if (!$this->timeRangesOverlap($promotion, $candidate)) {
+            if (! $this->timeRangesOverlap($promotion, $candidate)) {
                 continue;
             }
 
             $candidateTargets = $this->getTargetsForPromotion($candidate);
             $targetOverlap = $this->targetsOverlap($promotionTargets, $candidateTargets);
 
-            if (!$targetOverlap['overlap']) {
+            if (! $targetOverlap['overlap']) {
                 continue;
             }
 
@@ -119,7 +119,7 @@ class PromotionConflictResolver
             $stackableAllowed = $conflict['stackable_allowed'];
             $priorityDelta = $conflict['priority_delta'];
 
-            if (!$stackableAllowed) {
+            if (! $stackableAllowed) {
                 if ($priorityDelta >= 0) {
                     $suggestions[] = sprintf(
                         'Pause promotion #%d "%s" while #%d "%s" is active to avoid non-stackable overlap on %s.',
@@ -186,11 +186,7 @@ class PromotionConflictResolver
      */
     public function validateStackableRules(Collection $promotions): bool
     {
-        $nonStackableCount = $promotions->filter(function (Promotion $promotion) {
-            return !$promotion->stackable;
-        })->count();
-
-        return $nonStackableCount <= 1;
+        return $promotions->every(fn (Promotion $promotion) => (bool) $promotion->stackable);
     }
 
     /**
@@ -217,7 +213,7 @@ class PromotionConflictResolver
         $categoryOverlap = array_values(array_intersect($primaryTargets['categories'], $otherTargets['categories']));
 
         $globalOverlap = $primaryTargets['global'] || $otherTargets['global'];
-        $hasOverlap = $globalOverlap || !empty($productOverlap) || !empty($categoryOverlap);
+        $hasOverlap = $globalOverlap || ! empty($productOverlap) || ! empty($categoryOverlap);
 
         return [
             'overlap' => $hasOverlap,
@@ -281,18 +277,18 @@ class PromotionConflictResolver
      */
     private function describeOverlap(array $targets): string
     {
-        if (!empty($targets['global'])) {
+        if (! empty($targets['global'])) {
             return 'the entire catalog';
         }
 
-        if (!empty($targets['products'])) {
+        if (! empty($targets['products'])) {
             $sample = array_slice($targets['products'], 0, 5);
             $label = implode(', ', $sample);
 
             return count($targets['products']) > 5 ? "products {$label}, ..." : "products {$label}";
         }
 
-        if (!empty($targets['categories'])) {
+        if (! empty($targets['categories'])) {
             $sample = array_slice($targets['categories'], 0, 5);
             $label = implode(', ', $sample);
 

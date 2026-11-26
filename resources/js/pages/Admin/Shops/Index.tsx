@@ -10,8 +10,10 @@ import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
 import { Dialog } from '@/components/ui/dialog';
 import FilterPanel from '@/components/ui/filter-panel';
+import { Input } from '@/components/ui/input';
 import Insights from '@/components/ui/insights';
 import Pagination from '@/components/ui/pagination';
+import { Textarea } from '@/components/ui/textarea';
 import { formatDate, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
@@ -446,7 +448,7 @@ export default function Index() {
                     <label className={styles.filterLabel} htmlFor="shop-reason">
                         {t('Reason')}
                     </label>
-                    <textarea
+                    <Textarea
                         id="shop-reason"
                         className={styles.textArea}
                         value={reason}
@@ -460,12 +462,11 @@ export default function Index() {
                         <label className={styles.filterLabel} htmlFor="shop-duration">
                             {t('Suspension days (1-365)')}
                         </label>
-                        <input
+                        <Input
                             id="shop-duration"
                             type="number"
                             min="1"
                             max="365"
-                            className="sn-input"
                             value={duration}
                             onChange={(event) => setDuration(event.target.value)}
                         />

@@ -6,9 +6,7 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 
 class ProductCacheService
 {
-    public function __construct(private CacheRepository $cache)
-    {
-    }
+    public function __construct(private CacheRepository $cache) {}
 
     public function forgetProductDetailCaches(int $productId): void
     {

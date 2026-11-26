@@ -223,7 +223,7 @@ class TransactionalMailTest extends TestCase
             'order_number' => 'SN-123456',
             'total_amount' => 1250000,
             'currency' => 'VND',
-            'payment_method' => 'cod',
+            'payment_method' => 1,
             'payment_status' => PaymentStatus::UNPAID,
             'status' => OrderStatus::DELIVERED,
         ]);

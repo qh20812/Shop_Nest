@@ -7,6 +7,7 @@
 
     {{-- Resolve the theme before paint; no legacy `.dark` mirror after Phase 11. --}}
     <script>
+        document.documentElement.setAttribute('data-js', 'true');
         (function () {
             try {
                 var saved = localStorage.getItem('theme') || 'system';

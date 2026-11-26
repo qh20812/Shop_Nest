@@ -11,7 +11,7 @@ import StatusBadge from '@/components/ui/status-badge';
 import { formatDate, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Gift, Pause, Play, PlayCircle, Plus, Target, Trash2, Wallet } from 'lucide-react';
+import { Eye, Gift, Pause, Pencil, Play, PlayCircle, Plus, Target, Trash2, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import styles from '../seller.module.css';
@@ -26,6 +26,7 @@ interface Promotion {
     promotion_id: number;
     name: string;
     type: string;
+    status?: string;
     value: number;
     start_date: string;
     end_date: string;
@@ -238,29 +239,30 @@ export default function Index() {
 
     const determineStatus = useCallback(
         (promotion: Promotion) => {
+            const apiStatus = promotion.status;
             const now = new Date();
             const startDate = promotion.start_date ? new Date(promotion.start_date) : null;
             const endDate = promotion.end_date ? new Date(promotion.end_date) : null;
 
-            if (!promotion.is_active) {
+            if (apiStatus === 'paused') {
                 return {
-                    badge: 'Paused',
+                    badge: 'paused',
                     label: t('Paused'),
                     helper: endDate ? joinLabelWithDate('Paused until', promotion.end_date) : t('Promotion is paused'),
                 };
             }
 
-            if (endDate && endDate < now) {
+            if (apiStatus === 'expired' || (endDate && endDate < now)) {
                 return {
-                    badge: 'Expired',
+                    badge: 'expired',
                     label: t('Expired'),
                     helper: joinLabelWithDate('Ended on', promotion.end_date),
                 };
             }
 
-            if (startDate && startDate > now) {
+            if (apiStatus === 'draft' || apiStatus === 'upcoming' || (startDate && startDate > now)) {
                 return {
-                    badge: 'Upcoming',
+                    badge: 'upcoming',
                     label: t('Upcoming'),
                     helper: joinLabelWithDate('Starts on', promotion.start_date),
                 };
@@ -367,6 +369,23 @@ export default function Index() {
             const statusSnapshot = determineStatus(promotion);
             const actions: ActionConfig[] = [];
 
+            actions.push(
+                {
+                    type: 'link',
+                    href: `/seller/promotions/${promotion.promotion_id}`,
+                    variant: 'primary',
+                    icon: Eye,
+                    label: t('View'),
+                },
+                {
+                    type: 'link',
+                    href: `/seller/promotions/${promotion.promotion_id}/edit`,
+                    variant: 'primary',
+                    icon: Pencil,
+                    label: t('Edit'),
+                },
+            );
+
             if (statusSnapshot.badge === 'active') {
                 actions.push({
                     type: 'button',
@@ -375,7 +394,7 @@ export default function Index() {
                     icon: Pause,
                     label: t('Pause'),
                 });
-            } else if (statusSnapshot.badge === 'Paused' || statusSnapshot.badge === 'Expired') {
+            } else if (statusSnapshot.badge === 'paused') {
                 actions.push({
                     type: 'button',
                     onClick: () => openConfirmModal(promotion, 'resume'),
@@ -443,7 +462,7 @@ export default function Index() {
 
                     return (
                         <div className={styles.statusCell}>
-                            <StatusBadge status={statusSnapshot.badge.toLowerCase()} />
+                            <StatusBadge status={statusSnapshot.badge} />
                             <span className={styles.statusHelper}>{statusSnapshot.helper}</span>
                         </div>
                     );

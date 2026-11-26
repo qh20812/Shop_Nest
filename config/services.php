@@ -60,7 +60,7 @@ return [
         'base_url' => env('GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
         'default_model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
         'timeout' => (int) env('GROQ_TIMEOUT', 20),
-        'verify_ssl' => env('GROQ_VERIFY_SSL', false),
+        'verify_ssl' => filter_var(env('GROQ_VERIFY_SSL', true), FILTER_VALIDATE_BOOL),
     ],
 
     'openai' => [
@@ -68,11 +68,16 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
         'default_model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
         'timeout' => (int) env('OPENAI_TIMEOUT', 20),
-        'verify_ssl' => env('OPENAI_VERIFY_SSL', false),
+        'verify_ssl' => filter_var(env('OPENAI_VERIFY_SSL', true), FILTER_VALIDATE_BOOL),
     ],
 
     'chatbot' => [
         'fallback_enabled' => filter_var(env('CHATBOT_FALLBACK_ENABLED', true), FILTER_VALIDATE_BOOL),
+        // Tổng thời gian tối đa cho toàn bộ chuỗi provider (giây), tránh cộng dồn
+        // timeout của từng provider làm request vượt giới hạn PHP/nginx.
+        'total_timeout' => (int) env('CHATBOT_TOTAL_TIMEOUT', 25),
+        // Số ngày giữ lịch sử chatbot trước khi job dọn dẹp xoá.
+        'retention_days' => (int) env('CHATBOT_RETENTION_DAYS', 90),
     ],
 
 ];

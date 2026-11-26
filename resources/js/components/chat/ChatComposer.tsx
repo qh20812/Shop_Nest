@@ -73,6 +73,7 @@ export function ChatComposer({
                     maxLength={maxLength}
                     autoGrow
                     maxRows={4}
+                    surface="glass"
                     disabled={disabled}
                     className={styles.composerInput}
                     aria-label={t('Message content')}

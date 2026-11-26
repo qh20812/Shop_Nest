@@ -5,6 +5,8 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -56,7 +58,10 @@ class DuplicateAccountTest extends TestCase
         $response->assertRedirect(route('verification.notice'));
 
         $this->assertDatabaseHas('users', ['email' => 'new.user@example.com']);
-        $this->assertDatabaseMissing('users', ['email' => 'New.User@Example.COM']);
+        $this->assertFalse(
+            User::where('email', 'New.User@Example.COM')->get()
+                ->contains(fn (User $user) => $user->email === 'New.User@Example.COM')
+        );
     }
 
     public function test_register_rejects_duplicate_phone_after_normalization(): void
@@ -76,7 +81,7 @@ class DuplicateAccountTest extends TestCase
             'email' => 'only.google@example.com',
             'provider' => 'google',
             'provider_id' => 'google-2',
-            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(40)),
+            'password' => Hash::make(Str::random(40)),
         ]);
 
         $response = $this->post(route('login'), [

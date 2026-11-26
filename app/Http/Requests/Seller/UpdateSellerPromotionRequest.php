@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Seller;
 
 use App\Services\SellerPromotionService;
-use App\Services\SellerWalletService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -39,7 +39,13 @@ class UpdateSellerPromotionRequest extends FormRequest
             $sellerId = $this->user()?->id;
             $promotion = $this->route('promotion');
 
-            if (!$sellerId || !$promotion) {
+            if (! $sellerId || ! $promotion) {
+                return;
+            }
+
+            if ((int) $promotion->seller_id !== (int) $sellerId) {
+                // Let the controller policy return 403 instead of leaking
+                // ownership validation errors for another seller's promotion.
                 return;
             }
 
@@ -53,7 +59,7 @@ class UpdateSellerPromotionRequest extends FormRequest
             if ($this->filled('product_ids')) {
                 $promotionService = app(SellerPromotionService::class);
                 $productIds = $this->input('product_ids', []);
-                if (!$promotionService->validateSellerOwnership($productIds, $sellerId)) {
+                if (! $promotionService->validateSellerOwnership($productIds, $sellerId)) {
                     $validator->errors()->add('product_ids', 'You can only assign products you own.');
                 }
             }
@@ -62,6 +68,7 @@ class UpdateSellerPromotionRequest extends FormRequest
                 $newBudget = (float) $this->input('allocated_budget', 0);
                 if ($newBudget < (float) ($promotion->spent_budget ?? 0)) {
                     $validator->errors()->add('allocated_budget', 'Allocated budget cannot be less than the amount already spent.');
+
                     return;
                 }
 
@@ -69,15 +76,16 @@ class UpdateSellerPromotionRequest extends FormRequest
                 $difference = $newBudget - $currentAllocated;
 
                 if ($difference > 0) {
-                    $walletService = app(SellerWalletService::class);
-                    $wallet = $walletService->getWallet($sellerId);
+                    $walletService = app(WalletService::class);
+                    $wallet = $walletService->findForUser($sellerId);
 
-                    if ($wallet->status !== 'active') {
+                    if (! $wallet || ! $wallet->isActive()) {
                         $validator->errors()->add('allocated_budget', 'Your wallet is not active.');
+
                         return;
                     }
 
-                    if ($wallet->balance < $difference) {
+                    if ((float) $wallet->balance < $difference) {
                         $validator->errors()->add('allocated_budget', 'Insufficient wallet balance for the requested increase.');
                     }
                 }

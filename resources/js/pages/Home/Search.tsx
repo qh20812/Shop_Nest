@@ -117,7 +117,7 @@ export default function SearchPage() {
     const { query, products, filters, activeFilters, auth } = usePage<SearchPageProps>().props;
     const { money } = useMoney();
     const { t } = useTranslation();
-    const { success, error: showError } = useToast();
+    const { success, error: showError, info } = useToast();
     const mobileFilters = useDisclosure();
     const [searchValue, setSearchValue] = React.useState(query ?? '');
     const [priceMin, setPriceMin] = React.useState(activeFilters.price_min ? String(activeFilters.price_min) : '');
@@ -349,7 +349,10 @@ export default function SearchPage() {
                         <ProductGrid
                             products={productCards}
                             columns={3}
-                            onAddToCart={(product) => router.visit(`/product/${product.id}`)}
+                            onAddToCart={(product) => {
+                                info(t('Choose a product variant'), product.name);
+                                router.visit(`/product/${product.id}`);
+                            }}
                             onToggleWishlist={(product) => {
                                 if (!auth?.user) {
                                     router.visit('/login');

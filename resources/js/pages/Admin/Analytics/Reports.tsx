@@ -225,7 +225,7 @@ const Reports: React.FC = () => {
                 </section>
 
                 <div className={styles.gridTwo}>
-                    <section className={styles.section}>
+                    <section className={`${styles.filterSection} sn-glass-surface`}>
                         <div className={styles.sectionHead}>
                             <h2 className={styles.sectionTitle}>
                                 <FileText aria-hidden="true" className={styles.sectionIcon} />
@@ -236,6 +236,7 @@ const Reports: React.FC = () => {
                         <AnalyticsFilters
                             filters={panelFilters}
                             onFilterChange={handleFilterChange}
+                            surface="content"
                             title={t('Configure Report Criteria')}
                             description={t('Select the report type, timeframe, and any additional filters to shape the output.')}
                             onReset={handleReset}
@@ -246,6 +247,7 @@ const Reports: React.FC = () => {
                                     <Select
                                         value={String(filters.type ?? 'revenue')}
                                         aria-label={t('Report Type')}
+                                        surface="glass"
                                         onChange={(event) =>
                                             setFilters((previous) => ({
                                                 ...previous,
@@ -266,6 +268,7 @@ const Reports: React.FC = () => {
                                     <Select
                                         value={exportFormat}
                                         aria-label={t('Export Format')}
+                                        surface="glass"
                                         onChange={(event) => setExportFormat(event.target.value)}
                                     >
                                         <option value="">{t('Select format')}</option>
@@ -292,6 +295,7 @@ const Reports: React.FC = () => {
                                     }}
                                     disabled={!exportFormat}
                                     variant="secondary"
+                                    surface="glass"
                                 />
                             </div>
                         </AnalyticsFilters>

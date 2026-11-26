@@ -14,7 +14,7 @@ import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 
@@ -90,7 +90,8 @@ interface UsersPageProps extends Record<string, unknown> {
     filters?: Record<string, unknown>;
     availableRanges?: string[];
     locale?: string;
-    currency?: string;
+    currency?: string | { code?: string };
+    currencyCode?: string;
 }
 
 type UserFilterState = AnalyticsFilterState & {
@@ -140,7 +141,7 @@ const Users: React.FC = () => {
     const analytics = useMemo<UsersAnalyticsPayload>(() => props.users ?? {}, [props.users]);
     const initialFilters = props.filters ?? {};
     const locale = typeof props.locale === 'string' ? props.locale : 'vi';
-    const currency = resolveCurrencyCode(props.currency);
+    const currency = resolveCurrencyCode(props.currencyCode ?? props.currency);
     const { t } = useTranslation();
 
     const [filters, setFilters] = useState<UserFilterState>(() => ({
@@ -155,15 +156,7 @@ const Users: React.FC = () => {
     const retention = useMemo<UserRetentionMetrics>(() => analytics.retention ?? {}, [analytics]);
     const activeUsers = useMemo<UserActiveMetrics>(() => analytics.activeUsers ?? {}, [analytics]);
 
-    const currencyFormatter = useMemo(
-        () =>
-            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
-                style: 'currency',
-                currency,
-                maximumFractionDigits: 0,
-            }),
-        [currency, locale],
-    );
+    const money = useMemo(() => (value: number) => formatMoney(value, currency, locale), [currency, locale]);
     const dateFormatter = useMemo(
         () =>
             new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
@@ -275,7 +268,7 @@ const Users: React.FC = () => {
                 label: t('Total Spent'),
                 sortable: false,
                 align: 'right',
-                render: (value) => currencyFormatter.format(Number(value ?? 0)),
+                render: (value) => money(Number(value ?? 0)),
             },
             {
                 key: 'lastActivity',
@@ -297,7 +290,7 @@ const Users: React.FC = () => {
                 render: (value) => (value ? <StatusBadge status={String(value)} type="general" /> : t('Unknown')),
             },
         ],
-        [currencyFormatter, dateFormatter, t],
+        [dateFormatter, money, t],
     );
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
@@ -332,49 +325,45 @@ const Users: React.FC = () => {
                     </p>
                 </section>
 
-                <section className={styles.section}>
-                    <AnalyticsFilters
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        title={t('Filter User Data')}
-                        description={t('Adjust timeframe or narrow down segments to analyze specific user cohorts.')}
-                        onReset={handleResetFilters}
-                    >
-                        <div className={styles.filterActions}>
-                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
-                                <Filter aria-hidden="true" />
-                                {t('Apply Filters')}
-                            </Button>
-                        </div>
-                    </AnalyticsFilters>
-                </section>
+                <AnalyticsFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    title={t('Filter User Data')}
+                    description={t('Adjust timeframe or narrow down segments to analyze specific user cohorts.')}
+                    onReset={handleResetFilters}
+                >
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                            <Filter aria-hidden="true" />
+                            {t('Apply Filters')}
+                        </Button>
+                    </div>
+                </AnalyticsFilters>
 
-                <section className={styles.section}>
-                    <ul className={styles.kpiList}>
-                        <AnalyticsCard
-                            title={t('Total Users')}
-                            value={formatNumber(totalUsers)}
-                            tooltip={t('Number of registered users across the platform.')}
-                        />
-                        <AnalyticsCard
-                            title={t('New Users (Current Period)')}
-                            value={formatNumber(latestNewUsers)}
-                            tooltip={t('Users acquired within the selected reporting range.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Active Users (7d)')}
-                            value={formatNumber(activeLast7d)}
-                            tooltip={t('Unique users active over the past 7 days.')}
-                        />
-                        <AnalyticsCard
-                            title={t('30-Day Retention')}
-                            value={`${retention30.toFixed(1)}%`}
-                            change={retentionChange}
-                            changeLabel={t('vs 90-day retention')}
-                            tooltip={t('Percentage of users returning within 30 days compared to the 90-day baseline.')}
-                        />
-                    </ul>
-                </section>
+                <ul className={styles.kpiList}>
+                    <AnalyticsCard
+                        title={t('Total Users')}
+                        value={formatNumber(totalUsers)}
+                        tooltip={t('Number of registered users across the platform.')}
+                    />
+                    <AnalyticsCard
+                        title={t('New Users (Current Period)')}
+                        value={formatNumber(latestNewUsers)}
+                        tooltip={t('Users acquired within the selected reporting range.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Active Users (7d)')}
+                        value={formatNumber(activeLast7d)}
+                        tooltip={t('Unique users active over the past 7 days.')}
+                    />
+                    <AnalyticsCard
+                        title={t('30-Day Retention')}
+                        value={`${retention30.toFixed(1)}%`}
+                        change={retentionChange}
+                        changeLabel={t('vs 90-day retention')}
+                        tooltip={t('Percentage of users returning within 30 days compared to the 90-day baseline.')}
+                    />
+                </ul>
 
                 <section className={styles.chartGrid}>
                     <AnalyticsChart
@@ -382,6 +371,7 @@ const Users: React.FC = () => {
                         data={growthSeries}
                         title={t('User Growth Trend')}
                         description={t('New users acquired over the selected time range.')}
+                        valueLabel={t('New Users')}
                     />
                     <AnalyticsChart
                         type="pie"
@@ -397,6 +387,7 @@ const Users: React.FC = () => {
                     data={activeUsersSeries}
                     title={t('Active User Engagement')}
                     description={t('Comparison of users active within recent engagement windows.')}
+                    valueLabel={t('Users')}
                 />
 
                 <AnalyticsTable

@@ -265,7 +265,7 @@ export default function Index() {
             />
 
             <div className={styles.metricGrid}>
-                <div className={styles.metricCard}>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
                     <span className={styles.metricIcon}>
                         <TrendingUp aria-hidden="true" />
                     </span>
@@ -275,7 +275,7 @@ export default function Index() {
                     </div>
                 </div>
 
-                <div className={styles.metricCard}>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
                     <span className={styles.metricIcon}>
                         <Receipt aria-hidden="true" />
                     </span>
@@ -285,7 +285,7 @@ export default function Index() {
                     </div>
                 </div>
 
-                <div className={styles.metricCard}>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
                     <span className={styles.metricIcon}>
                         <Package aria-hidden="true" />
                     </span>
@@ -295,7 +295,7 @@ export default function Index() {
                     </div>
                 </div>
 
-                <div className={styles.metricCard}>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
                     <span className={styles.metricIcon}>
                         <AlertTriangle aria-hidden="true" />
                     </span>

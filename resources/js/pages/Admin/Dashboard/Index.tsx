@@ -11,7 +11,7 @@ import Insights from '@/components/ui/insights';
 import StatusBadge from '@/components/ui/status-badge';
 import { formatDate } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { formatCurrency, resolveCurrencyCode } from '@/lib/utils';
+import { formatCurrency, formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 
@@ -98,6 +98,8 @@ export default function Index() {
 
     const currencyCode = props.currencyCode ?? props.meta?.currencyCode ?? resolveCurrencyCode(props.currency);
 
+    const money = useMemo(() => (value: number) => formatMoney(value, currencyCode, locale), [currencyCode, locale]);
+
     const breadcrumbs = [
         { label: t('Dashboard'), href: '/admin/dashboard' },
         { label: t('Overview'), href: '#', active: true },
@@ -132,12 +134,7 @@ export default function Index() {
                 abbreviate: true,
             }),
             label: t('Total Revenue'),
-            tooltip: formatCurrency(stats.total_revenue, {
-                from: currencyCode,
-                to: currencyCode,
-                rates: {},
-                locale,
-            }),
+            tooltip: money(stats.total_revenue),
         },
     ];
 
@@ -218,8 +215,21 @@ export default function Index() {
             <Insights items={insightsData} />
 
             <section className={styles.chartGrid} aria-label={t('Overview charts')}>
-                <AnalyticsChart type="line" data={revenueChartData} title={t('Revenue Trend')} description={t('Last 7 days')} />
-                <AnalyticsChart type="bar" data={userGrowthChartData} title={t('User Growth')} description={t('Last 4 weeks')} />
+                <AnalyticsChart
+                    type="line"
+                    data={revenueChartData}
+                    title={t('Revenue Trend')}
+                    description={t('Last 7 days')}
+                    valueFormatter={money}
+                    valueLabel={t('Revenue')}
+                />
+                <AnalyticsChart
+                    type="bar"
+                    data={userGrowthChartData}
+                    title={t('User Growth')}
+                    description={t('Last 4 weeks')}
+                    valueLabel={t('Users')}
+                />
             </section>
 
             <DataTable

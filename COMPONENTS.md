@@ -23,17 +23,16 @@ Quy tắc:
 
 | File | Thành phần | Ghi chú |
 |---|---|---|
-| `button.tsx` | `Button` | `variant`: default/primary/secondary/outline/ghost/tertiary/destructive/link; `size`: default/sm/md/lg/icon/icon-sm/icon-lg; `leftIcon`/`rightIcon`, `loading` |
-| `icon-button.tsx` | `IconButton` | Icon-only; bắt buộc `aria-label` |
-| `input.tsx` | `Input` | `size`, `invalid`, icon slot |
-| `textarea.tsx` | `Textarea` | resize dọc, error qua `FormField` |
-| `select.tsx` | `Select` | `options`, `size`, `invalid` |
+| `button.tsx` | `Button` | `variant`: default/primary/secondary/outline/ghost/tertiary/destructive/link; `size`: default/sm/md/lg/icon/icon-sm/icon-lg; `surface`: content/glass/overlay; `shape`: default/pill; `leftIcon`/`rightIcon`, `loading` |
+| `icon-button.tsx` | `IconButton` | Icon-only; `surface`: content/glass/overlay; bắt buộc `aria-label` |
+| `input.tsx` | `Input` | `size`, `surface`, `shape`, `invalid`, icon slot |
+| `textarea.tsx` | `Textarea` | resize dọc, `surface`; error qua `FormField` |
+| `select.tsx` | `Select` | `options`, `size`, `surface`, `shape`, `invalid` |
 | `checkbox.tsx` | `Checkbox` | label + description |
 | `radio-card.tsx` | `RadioCard` | chọn một trong danh sách card |
 | `switch.tsx` | `Switch` | bật/tắt; hiện chỉ dùng qua `commerce/PreferenceRow` |
 | `form-field.tsx` | `FormField` | label trên, helper/error dưới, `required` |
-| `input-error.tsx` | `InputError` | lỗi field đơn lẻ |
-| `search-input.tsx` | `SearchInput` | icon search, clear, submit |
+| `search-input.tsx` | `SearchInput` | icon search, clear, submit; `surface`, `shape` |
 | `password-strength.tsx` | `PasswordStrength` | meter + nhãn |
 | `file-dropzone.tsx` | `FileDropzone` | kéo thả, preview, validate |
 | `rich-text-editor.tsx` | `RichTextEditor` | TinyMCE, skin mặc định |
@@ -44,7 +43,7 @@ Quy tắc:
 | `table.tsx` | `Table` | `columns`, `density`, `stickyHeader`, `loading`, `empty`, `rowKey` |
 | `data-table.tsx` | `DataTable` | wrapper `Table` + header + empty; `columns/data/headerTitle/headerIcon/emptyMessage` |
 | `pagination.tsx` | `Pagination` | `<div role="navigation">`, không dùng `<nav>` |
-| `tabs.tsx` | `Tabs` | `variant`: underline/pill/filter; `ariaLabel`; `items[]` |
+| `tabs.tsx` | `Tabs` | `variant`: underline/pill/filter; `surface`: content/glass; `ariaLabel`; `items[]` |
 | `breadcrumbs.tsx` | `Breadcrumbs` | `items`, `as="nav"` |
 | `dropdown-menu.tsx` | `DropdownMenu` | Radix; item config |
 | `dialog.tsx` | Dialog | Radix root/trigger/content/title/description |
@@ -63,8 +62,8 @@ Quy tắc:
 | `filter-panel.tsx` | `FilterPanel` | filter bar/grid, collapsible |
 | `action-buttons.tsx` | `ActionButtons` | nhóm action inline |
 | `action-dropdown.tsx` | `ActionDropdown` | menu action |
-| `primary-input.tsx` | `PrimaryInput` | wrapper tương thích |
-| `language-switcher.tsx` | `LanguageSwitcher` | POST `/language` |
+| `primary-input.tsx` | `PrimaryInput` | deprecated; wrapper `FormField` + `Input`/`Select` |
+| `language-switcher.tsx` | `LanguageSwitcher` | `surface`: content/glass; POST `/language` |
 
 ## 3. Composition wrapper giữ nguyên
 
@@ -81,12 +80,14 @@ Lý do: giữ API page ổn định sau Phase 11; codemod `AppLayout` đã xong 
 | `StorefrontLayout` | Home, Search, ProductDetail (auth), Legal, About/Contact | Header + main + footer; mount `ChatDock` một lần; skip-link |
 | `AccountLayout` | Customer/Settings | wraps `StorefrontLayout` + rail `active`; không mount chat lần hai |
 | `AuthLayout` | Login/Register/Forgot/Reset/Verify/Seller/Shipper register | `variant="split"\|"centered"`, `width="default"\|"wide"`; skip-link |
-| `WorkspaceLayout` | Admin/Seller/Shipper | Sidebar 232px + topbar + main; <768 off-canvas + overlay; skip-link |
+| `WorkspaceLayout` | Admin/Seller/Shipper | Sidebar 232px + topbar là hai slab kính nổi (inset 12px, radius 20, nền `--sn-color-canvas-deep`) + main; <768 off-canvas + overlay; skip-link |
 | `PageContainer` | Page wrapper | container + gutter |
 | `PageHeader` | Page header | title/breadcrumbs/actions |
-| `BrandMark` | Logo trong header, footer, auth | Mark tô `--sn-color-accent` qua mask; wordmark ink 600, accent khi hover/focus; mark `aria-hidden` |
+| `BrandMark` | Logo trong header, footer, auth, workspace sidebar | Mark tô `--sn-color-accent` qua mask; wordmark ink 600, accent khi hover/focus; mark `aria-hidden` |
 
 `components/layout/WorkspaceLayout.tsx` là shell workspace duy nhất; `layouts/app/AppLayout.tsx` đã bị xoá.
+
+Workspace chrome dùng `.sn-glass-surface` từ `components/glass.css`: topbar là wrapper sticky trong suốt + dải che 12px + card kính + bar 56px (đúng anatomy dock storefront); sidebar là outer fixed + card kính cuộn bên trong. Hai slab inset `--sn-shell-inset` 12px, cách nhau `--sn-shell-gap` 12px; nền trang có `.sn-workspace::before` fixed dùng `--sn-workspace-wash` để blur có material phía sau. Brand dùng `BrandMark` + `.sn-brand__name` accent như navbar, role label muted bên dưới. Nav link bo `--sn-radius-item`, hover/press glass wash, active accent-wash, focus-visible offset -2. Language switcher và search trong topbar dùng `surface="glass"`; dưới 768px switcher thu còn cờ.
 
 ## 5. Domain components
 
@@ -102,11 +103,15 @@ Lý do: giữ API page ổn định sau Phase 11; codemod `AppLayout` đã xong 
 
 `Price`, `Rating`, `ReviewCard`, `ReviewSummary`, `QuantityStepper`, `VariantSelector`, `ProductGallery`, `ProductGrid`, `BuyBox`, `SpecTable`, `OrderTable`, `OrderSummary`, `OrderItemRow`, `OrderTimeline`, `OrderAnnouncementCard`, `PaymentOption`, `PaymentMarks`, `CheckoutStepper`, `CheckoutAddressForm`, `AddressCard`, `CartLine`, `PromoField`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills`, `Countdown`, `NotificationRow`, `ShopIdentity`.
 
+`ProductCard` là frosted media card: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; ảnh 1:1 inset 8px bo `--sn-radius-media` 10. Sale pill trên ảnh, wishlist và quick-action pill dùng `surface="overlay"`. Quick pill label "Choose options", hiện khi hover/focus, luôn hiện dưới 768px hoặc thiết bị không hover. `actionLabel`/`actionIcon` cho phép override nhãn và icon hành động (mặc định "Choose options" + `ShoppingCart`).
+
 `PaymentMarks` dùng `payment-marks.module.css` riêng để footer không kéo toàn bộ commerce CSS.
 
 ### Admin / Analytics
 
 `AnalyticsCard`, `AnalyticsChart` (recharts + token), `AnalyticsTable`, `AnalyticsFilters`, `QuickFilter`, `ExportButton`, `ShipperInfoCard`.
+
+`AnalyticsCard` và `Insights` dùng frosted stat card (glass-control + hairline + inset highlight + `--sn-shadow-card`, radius 16, không blur). Metric card của Seller thêm `metricCardFrosted` khi đứng trực tiếp trên canvas; bên trong `Card` nội dung thì giữ nền đặc để không lồng card. `AnalyticsFilters` mặc định là glass slab (`surface="glass"`, blur) và đặt thẳng trên nền `canvas-deep`; khi nằm trong panel kính khác thì truyền `surface="content"`. `FilterPanel` dùng `.sn-glass-surface` cho grid; control bên trong dùng `surface="glass"`. Chart card và data table giữ bề mặt đặc.
 
 Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; không gradient.
 
@@ -125,6 +130,10 @@ Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; kh�
 ```tsx
 <Button variant="primary" size="md" leftIcon={Plus} loading={saving} onClick={save}>
     {t('Save')}
+</Button>
+
+<Button variant="ghost" size="icon" surface="glass" aria-label={t('Cart')}>
+    <ShoppingBag />
 </Button>
 ```
 
@@ -157,7 +166,7 @@ Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; kh�
 ### Feedback
 
 - Thành công ngắn: `toast({ tone: 'success', message })`.
-- Lỗi form: `InputError`/`Alert tone="danger"`.
+- Lỗi form: `FormField error` hoặc `Alert tone="danger"`.
 - Kết quả thanh toán: `ResultState` (success/pending/failure/cod).
 - Loading: `Skeleton`/`SkeletonText`; bảng dùng `loading`.
 
@@ -184,6 +193,8 @@ Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; kh�
 | `action-button`, `action-buttons` | `Button`/`IconButton` + `ActionButtons` |
 | `action-dropdown` | `ActionDropdown`/`DropdownMenu` |
 | `primary-input` | `PrimaryInput` → `Input`/`FormField` |
+
+`surface="glass"` dùng cho control nằm trong chrome (dock, sheet, floating bar). `surface="overlay"` dùng cho control nằm trên ảnh/media (wishlist, quick action) với `--sn-glass-menu`. Control không bao giờ có `backdrop-filter`; kính của control là alpha + hairline + shadow, blur chỉ nằm trên slab.
 | `data-table` | `DataTable` (wrap `Table`) |
 | `confirmation-modal` | `ConfirmationModal` (wrap `ConfirmDialog`) |
 | `status-badge` | `StatusBadge` (wrap `Badge` tone) |

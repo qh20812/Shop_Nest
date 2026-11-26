@@ -8,8 +8,11 @@ use App\Models\AdministrativeDivision;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Promotion;
+use App\Models\PromotionCode;
 use App\Models\User;
+use App\Services\CartService;
 use App\Services\PaymentService;
+use App\Services\PromotionUsageService;
 use App\Support\Localization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +26,11 @@ use InvalidArgumentException;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        private CartService $cartService,
+        private PromotionUsageService $promotionUsageService,
+    ) {}
+
     /**
      * Display the checkout page.
      */
@@ -35,7 +43,9 @@ class CheckoutController extends Controller
 
         $locale = app()->getLocale();
 
-        $promotion = session('applied_promotion', null);
+        $appliedPromotion = $this->cartService->getActivePromotionDetails($user);
+        $promotion = $appliedPromotion['promotion'];
+        $promotionCode = $appliedPromotion['code'];
         $addressPayload = $this->buildAddressPayload($user);
 
         $cartItems = CartItem::with(['variant.product.images'])
@@ -50,7 +60,7 @@ class CheckoutController extends Controller
                 'discount' => 0,
                 'total' => 0,
                 'addresses' => $addressPayload,
-                'promotion' => $promotion,
+                'promotion' => null,
                 'paymentMethods' => PaymentService::list(),
                 'availablePromotions' => [],
                 'ineligiblePromotions' => [],
@@ -71,7 +81,7 @@ class CheckoutController extends Controller
                 'discount' => 0,
                 'total' => 0,
                 'addresses' => $addressPayload,
-                'promotion' => $promotion,
+                'promotion' => null,
                 'paymentMethods' => PaymentService::list(),
                 'availablePromotions' => [],
                 'ineligiblePromotions' => [],
@@ -86,7 +96,7 @@ class CheckoutController extends Controller
         });
 
         $shipping = $this->calculateShippingFee($subtotal);
-        $discount = $this->calculatePromotionDiscount($promotion, $subtotal);
+        $discount = $this->calculatePromotionDiscount($promotion, $subtotal, $shipping);
         $total = max(0, $subtotal + $shipping - $discount);
 
         $formattedCartItems = $cartItems->map(function (CartItem $item) use ($locale) {
@@ -137,7 +147,7 @@ class CheckoutController extends Controller
             'discount' => round($discount, 2),
             'total' => round($total, 2),
             'addresses' => $addressPayload,
-            'promotion' => $promotion,
+            'promotion' => $this->buildPromotionPayload($promotion, $promotionCode, $discount),
             'availablePromotions' => $promotionsData->available_promotions ?? [],
             'ineligiblePromotions' => $promotionsData->ineligible_promotions ?? [],
             'paymentMethods' => PaymentService::list(),
@@ -195,7 +205,9 @@ class CheckoutController extends Controller
             ], 400);
         }
 
-        $promotion = session('applied_promotion', null);
+        $appliedPromotion = $this->cartService->getActivePromotionDetails($user);
+        $promotion = $appliedPromotion['promotion'];
+        $promotionCode = $appliedPromotion['code'];
 
         $subtotal = $cartItems->sum(function (CartItem $item) use ($locale) {
             $variant = $item->variant;
@@ -205,7 +217,7 @@ class CheckoutController extends Controller
         });
 
         $shippingFee = $this->calculateShippingFee($subtotal);
-        $discountAmount = $this->calculatePromotionDiscount($promotion, $subtotal);
+        $discountAmount = $this->calculatePromotionDiscount($promotion, $subtotal, $shippingFee);
         $totalAmount = max(0, $subtotal + $shippingFee - $discountAmount);
 
         DB::beginTransaction();
@@ -245,16 +257,14 @@ class CheckoutController extends Controller
             }
 
             if ($promotion) {
-                $promotionData = is_array($promotion) ? $promotion : (array) $promotion;
-                $promotionId = $promotionData['promotion_id'] ?? $promotionData['id'] ?? null;
+                $order->promotions()->syncWithoutDetaching([
+                    $promotion->promotion_id => [
+                        'promotion_code_id' => $promotionCode?->promotion_code_id,
+                        'discount_applied' => $discountAmount,
+                    ],
+                ]);
 
-                if ($promotionId) {
-                    $order->promotions()->syncWithoutDetaching([
-                        $promotionId => [
-                            'discount_applied' => $discountAmount,
-                        ],
-                    ]);
-                }
+                $this->promotionUsageService->recordForOrder($order);
             }
 
             CartItem::where('user_id', $user->id)->delete();
@@ -274,6 +284,7 @@ class CheckoutController extends Controller
             ], 500);
         }
 
+        $this->cartService->removePromotion($user);
         session()->forget('applied_promotion');
 
         try {
@@ -364,29 +375,47 @@ class CheckoutController extends Controller
             ->all();
     }
 
-    private function calculatePromotionDiscount($promotion, float $subtotal): float
+    private function calculatePromotionDiscount(?Promotion $promotion, float $subtotal, float $shippingFee = 0.0): float
     {
         if (! $promotion || $subtotal <= 0) {
             return 0.0;
         }
 
-        $data = is_array($promotion) ? $promotion : (array) $promotion;
+        $type = (int) $promotion->type;
+        $value = (float) $promotion->value;
 
-        $type = $data['type'] ?? 'percentage';
-        $rawValue = (float) ($data['discount'] ?? $data['value'] ?? 0);
-        $discount = 0.0;
+        $discount = match ($type) {
+            1 => $subtotal * ($value / 100),
+            2 => $value,
+            3 => $shippingFee,
+            default => 0.0,
+        };
 
-        if ($type === 'fixed') {
-            $discount = $rawValue;
-        } else {
-            $discount = $subtotal * ($rawValue / 100);
+        if ($promotion->max_discount_amount !== null) {
+            $discount = min($discount, (float) $promotion->max_discount_amount);
         }
 
-        if (isset($data['max_discount_amount'])) {
-            $discount = min($discount, (float) $data['max_discount_amount']);
+        return max(0.0, min($discount, $subtotal + $shippingFee));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function buildPromotionPayload(?Promotion $promotion, ?PromotionCode $promotionCode, float $discount): ?array
+    {
+        if (! $promotion) {
+            return null;
         }
 
-        return max(0.0, min($discount, $subtotal));
+        return [
+            'promotion_id' => $promotion->promotion_id,
+            'name' => $promotion->name,
+            'code' => $promotionCode?->code ?? '',
+            'discount' => round($discount, 2),
+            'type' => $promotion->type,
+            'value' => $promotion->value,
+            'max_discount_amount' => $promotion->max_discount_amount,
+        ];
     }
 
     /**

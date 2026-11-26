@@ -1,4 +1,6 @@
-/* Chat launcher and dock shell — loaded with the storefront layout. Tokens only. */
+/* Hallmark · component: chat glass · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · one slab blur for the dock chrome; the launcher keeps the accent signal with a glass rim. */
+/* Chat launcher and dock shell - loaded with the storefront layout. Tokens only. */
 
 .launcher {
     position: fixed;
@@ -10,11 +12,13 @@
     height: var(--sn-chat-launcher);
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--sn-color-accent-hover);
+    border: 1px solid var(--sn-glass-hairline);
     border-radius: var(--sn-radius-pill);
     background: var(--sn-color-accent);
     color: var(--sn-color-on-accent);
-    box-shadow: var(--sn-shadow-popover);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-accent);
     transition:
         background-color var(--sn-dur-fast) var(--sn-ease-standard),
         transform var(--sn-dur-instant) var(--sn-ease-standard);
@@ -22,6 +26,7 @@
 
 .launcher:hover {
     background: var(--sn-color-accent-hover);
+    transform: translateY(-1px);
 }
 
 .launcher:active {
@@ -51,6 +56,7 @@
     border: 1px solid var(--sn-color-border);
     border-radius: var(--sn-radius-pill);
     background: var(--sn-color-surface);
+    box-shadow: 0 0 0 2px var(--sn-glass-ring);
     color: var(--sn-color-accent-text);
     font-family: var(--sn-font-numeric);
     font-size: var(--sn-text-2xs);
@@ -64,7 +70,7 @@
     }
 }
 
-/* Dock panel shell. The panel body is lazy-loaded. */
+/* Dock panel shell. Glass recipe comes from .sn-glass-surface in components/glass.css. */
 .dockContent {
     position: fixed;
     inset-inline: 0;
@@ -74,10 +80,14 @@
     max-width: none;
     height: var(--sn-chat-sheet-height);
     overflow: hidden;
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-xl) var(--sn-radius-xl) 0 0;
-    background: var(--sn-color-surface);
-    box-shadow: var(--sn-shadow-overlay);
+    border-radius: var(--sn-radius-3xl) var(--sn-radius-3xl) 0 0;
+}
+
+/* Mobile: phóng to = toàn màn hình. */
+.dockContent[data-expanded='true'] {
+    inset: 0;
+    height: 100dvh;
+    border-radius: 0;
 }
 
 .dockContent:focus {
@@ -87,9 +97,18 @@
 @media (min-width: 768px) {
     .dockContent {
         inset: auto var(--sn-space-6) var(--sn-space-6) auto;
-        width: var(--sn-chat-panel);
-        height: var(--sn-chat-panel-height);
-        border-radius: var(--sn-radius-lg);
+        width: var(--sn-chat-dock-width);
+        height: var(--sn-chat-dock-height);
+        border-radius: var(--sn-radius-2xl);
+    }
+
+    .dockContent[data-expanded='true'] {
+        inset: var(--sn-space-4);
+        width: auto;
+        height: auto;
+        max-width: 64rem;
+        margin-inline: auto;
+        border-radius: var(--sn-radius-2xl);
     }
 }
 

@@ -16,11 +16,12 @@ type TabsProps = {
     value: string;
     onValueChange: (value: string) => void;
     variant?: 'underline' | 'pill' | 'filter';
+    surface?: 'content' | 'glass';
     className?: string;
     ariaLabel?: string;
 };
 
-export function Tabs({ items, value, onValueChange, variant = 'underline', className, ariaLabel }: TabsProps) {
+export function Tabs({ items, value, onValueChange, variant = 'underline', surface = 'content', className, ariaLabel }: TabsProps) {
     const tabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
 
     const focusTab = (index: number) => {
@@ -65,7 +66,7 @@ export function Tabs({ items, value, onValueChange, variant = 'underline', class
     };
 
     return (
-        <div role="tablist" aria-label={ariaLabel} data-variant={variant} className={cx('sn-tabs', className)}>
+        <div role="tablist" aria-label={ariaLabel} data-variant={variant} data-surface={surface} className={cx('sn-tabs', className)}>
             {items.map((item, index) => {
                 const active = item.value === value;
                 const Icon = item.icon;

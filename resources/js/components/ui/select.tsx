@@ -10,22 +10,28 @@ type SelectOption = {
 };
 
 type SelectSize = 'sm' | 'md' | 'lg';
+type SelectSurface = 'content' | 'glass';
+type SelectShape = 'default' | 'pill';
 
 type SelectProps = Omit<React.ComponentProps<'select'>, 'size'> & {
     size?: SelectSize;
+    surface?: SelectSurface;
+    shape?: SelectShape;
     invalid?: boolean;
     options?: SelectOption[];
     placeholder?: string;
 };
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-    ({ className, size = 'md', invalid, options, placeholder, children, ...props }, ref) => {
+    ({ className, size = 'md', surface = 'content', shape = 'default', invalid, options, placeholder, children, ...props }, ref) => {
         return (
             <span className="sn-select-wrap">
                 <select
                     ref={ref}
                     data-slot="select"
                     data-size={size}
+                    data-surface={surface}
+                    data-shape={shape}
                     aria-invalid={invalid || props['aria-invalid']}
                     className={cx('sn-select', className)}
                     {...props}
@@ -51,5 +57,5 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 Select.displayName = 'Select';
 
 export { Select };
-export type { SelectOption, SelectProps, SelectSize };
+export type { SelectOption, SelectProps, SelectShape, SelectSize, SelectSurface };
 export default Select;

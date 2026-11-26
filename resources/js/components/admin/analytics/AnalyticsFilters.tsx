@@ -6,6 +6,7 @@ import FormField from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Tabs } from '@/components/ui/tabs';
+import { cx } from '@/lib/cx';
 import { useTranslation } from '@/lib/i18n';
 
 import styles from './analytics.module.css';
@@ -24,6 +25,7 @@ export interface AnalyticsFiltersProps {
     isCollapsible?: boolean;
     defaultCollapsed?: boolean;
     onReset?: () => void;
+    surface?: 'glass' | 'content';
     children?: React.ReactNode;
 }
 
@@ -42,6 +44,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     isCollapsible = true,
     defaultCollapsed = false,
     onReset,
+    surface = 'glass',
     children,
 }) => {
     const { t } = useTranslation();
@@ -85,6 +88,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                         name={key}
                         value={String(value ?? '')}
                         onChange={(event) => handleUpdate(key, event.target.value)}
+                        surface="glass"
                     >
                         <option value="">{t('All')}</option>
                         {options.map((option) => (
@@ -106,6 +110,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                         name={key}
                         value={String(value ?? '')}
                         onChange={(event) => handleUpdate(key, event.target.value)}
+                        surface="glass"
                     />
                 </FormField>
             );
@@ -120,6 +125,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                         name={key}
                         value={value}
                         onChange={(event) => handleUpdate(key, event.target.value === '' ? '' : Number(event.target.value))}
+                        surface="glass"
                     />
                 </FormField>
             );
@@ -133,13 +139,14 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                     name={key}
                     value={String(value ?? '')}
                     onChange={(event) => handleUpdate(key, event.target.value)}
+                    surface="glass"
                 />
             </FormField>
         );
     };
 
     return (
-        <section className={styles.filters}>
+        <section className={cx(styles.filters, surface === 'glass' && 'sn-glass-surface')} data-surface={surface}>
             <div className={styles.filtersHead}>
                 <div className={styles.filtersTitles}>
                     <h3 className={styles.filtersTitle}>{title ? t(title) : t('Filters')}</h3>
@@ -150,6 +157,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                     {quickRanges && quickRanges.length > 0 ? (
                         <Tabs
                             variant="filter"
+                            surface="glass"
                             items={quickRanges.map((range) => ({ value: range.value, label: t(range.label) }))}
                             value={periodValue}
                             onValueChange={(value) => handleUpdate('period', value)}
@@ -157,7 +165,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                         />
                     ) : null}
 
-                    <Button type="button" variant="ghost" size="sm" onClick={resetHandler}>
+                    <Button type="button" variant="ghost" size="sm" surface="glass" onClick={resetHandler}>
                         <RotateCcw aria-hidden="true" />
                         {t('Reset')}
                     </Button>
@@ -167,6 +175,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
                             type="button"
                             variant="ghost"
                             size="sm"
+                            surface="glass"
                             onClick={() => setCollapsed((prev) => !prev)}
                             aria-expanded={!collapsed}
                             aria-label={collapsed ? t('Show filters') : t('Hide filters')}

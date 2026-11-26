@@ -56,28 +56,11 @@ class HybridChatbotService
     ];
 
     private const ROLE_SYSTEM_PROMPTS = [
-        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng.Trả lời đúng theo bối cảnh chẳng hạn như người dùng chào thì phải chào lại bằng ngữ điệu thân thiện lịch sự.Tuy nhiên không phải câu hỏi nào cũng trả lời, chẳng hạn như người dùng hỏi 1 câu hỏi không liên quan đến hệ thống e-commerce như "Hôm nay thời tiết như thế nào?" thì hãy trả lời "Xin lỗi, tôi chỉ có thể hỗ trợ các câu hỏi liên quan đến nền tảng thương mại điện tử Shop Nest.". Trình bày bằng tiếng Việt, có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
-        'seller' => 'Bạn là trợ lý kinh doanh cho nhà bán tại Shop Nest. Hãy đưa ra gợi ý bán hàng, tối ưu tồn kho và chiến lược khuyến mãi dựa trên dữ liệu được cung cấp. Phản hồi bằng tiếng Việt thân thiện.',
-        'shipper' => 'Bạn là điều phối viên giao vận tại Shop Nest. Hãy giúp shipper nắm trạng thái đơn hàng, ưu tiên tuyến giao hàng và lưu ý dịch vụ khách hàng. Trình bày bằng tiếng Việt ngắn gọn, rõ ràng.',
-        'customer' => 'Bạn là hướng dẫn viên mua sắm cho khách hàng tại Shop Nest. Hãy đưa ra tư vấn cá nhân hóa, gợi ý sản phẩm phù hợp và giải thích quy trình rõ ràng bằng tiếng Việt thân thiện.',
-        'default' => 'Bạn là trợ lý hỗ trợ tại Shop Nest. Hãy cung cấp thông tin chính xác, súc tích bằng tiếng Việt.',
-    ];
-
-    private const ROLE_MODEL_OVERRIDES = [
-        'openai' => [
-            'admin' => 'gpt-4o-mini',
-            'seller' => 'gpt-4o-mini',
-            'shipper' => 'gpt-4o-mini',
-            'customer' => 'gpt-4o-mini',
-            'default' => 'gpt-4o-mini',
-        ],
-        'groq' => [
-            'admin' => 'qwen/qwen3.8-27b',
-            'seller' => 'qwen/qwen3.8-27b',
-            'shipper' => 'qwen/qwen3.8-27b',
-            'customer' => 'qwen/qwen3.8-27b',
-            'default' => 'qwen/qwen3.8-27b',
-        ],
+        'admin' => 'Bạn là cố vấn vận hành cho nền tảng thương mại điện tử Shop Nest. Hãy phân tích dữ liệu, ưu tiên insight có thể hành động được, đề xuất bước tiếp theo rõ ràng.Trả lời đúng theo bối cảnh chẳng hạn như người dùng chào thì phải chào lại bằng ngữ điệu thân thiện lịch sự.Tuy nhiên không phải câu hỏi nào cũng trả lời, chẳng hạn như người dùng hỏi 1 câu hỏi không liên quan đến hệ thống e-commerce như "Hôm nay thời tiết như thế nào?" thì hãy trả lời "Xin lỗi, tôi chỉ có thể hỗ trợ các câu hỏi liên quan đến nền tảng thương mại điện tử Shop Nest.". Trả lời bằng ngôn ngữ của người dùng (mặc định tiếng Việt), có thể bổ sung thuật ngữ tiếng Anh nếu cần.',
+        'seller' => 'Bạn là trợ lý kinh doanh cho nhà bán tại Shop Nest. Hãy đưa ra gợi ý bán hàng, tối ưu tồn kho và chiến lược khuyến mãi dựa trên dữ liệu được cung cấp. Trả lời bằng ngôn ngữ của người dùng (mặc định tiếng Việt), thân thiện.',
+        'shipper' => 'Bạn là điều phối viên giao vận tại Shop Nest. Hãy giúp shipper nắm trạng thái đơn hàng, ưu tiên tuyến giao hàng và lưu ý dịch vụ khách hàng. Trả lời bằng ngôn ngữ của người dùng (mặc định tiếng Việt), ngắn gọn, rõ ràng.',
+        'customer' => 'Bạn là hướng dẫn viên mua sắm cho khách hàng tại Shop Nest. Hãy đưa ra tư vấn cá nhân hóa, gợi ý sản phẩm phù hợp và giải thích quy trình rõ ràng, thân thiện bằng ngôn ngữ của người dùng (mặc định tiếng Việt).',
+        'default' => 'Bạn là trợ lý hỗ trợ tại Shop Nest. Hãy cung cấp thông tin chính xác, súc tích bằng ngôn ngữ của người dùng (mặc định tiếng Việt).',
     ];
 
     public function sendMessage(User $user, string $rawMessage): array
@@ -114,7 +97,14 @@ class HybridChatbotService
         RateLimiter::hit('chatbot:'.$user->getKey(), 60); // 10 per minute
 
         $context = $this->fetchContextData($user, $role);
-        $products = $role === 'customer'
+
+        $followUpProductIds = $this->followUpProductIds($user, $role, $message);
+
+        if ($followUpProductIds !== []) {
+            $context['follow_up_product_ids'] = $followUpProductIds;
+        }
+
+        $products = $this->canReceiveProductCards($user)
             ? $this->productRecommender->recommend($user, $message, $context)
             : [];
 
@@ -215,11 +205,106 @@ class HybridChatbotService
     {
         $cacheKey = sprintf('chatbot:context:%s:%d', $role, $user->getKey());
 
-        return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($user, $role) {
-            $gatherer = $this->contextGatherers[$role] ?? $this->contextGatherers['default'];
+        try {
+            return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($user, $role) {
+                $gatherer = $this->contextGatherers[$role] ?? $this->contextGatherers['default'];
 
-            return $gatherer->gather($user);
-        });
+                return $gatherer->gather($user);
+            });
+        } catch (Throwable $exception) {
+            // Context chỉ là dữ liệu phụ; lỗi truy vấn không được làm hỏng cả câu trả lời.
+            Log::warning('Chatbot context gathering failed', [
+                'role' => $role,
+                'user_id' => $user->getKey(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    private function canReceiveProductCards(User $user): bool
+    {
+        $user->loadMissing('roles');
+
+        return $user->roles->contains(
+            fn ($role) => $role->getTranslation('name', 'en') === 'Customer'
+        );
+    }
+
+    /**
+     * Xác định các sản phẩm được nhắc tới ở câu hỏi tiếp nối dựa trên thẻ sản phẩm
+     * của lượt trả lời gần nhất.
+     *
+     * @return array<int, int>
+     */
+    private function followUpProductIds(User $user, string $role, string $message): array
+    {
+        $reference = $this->followUpReference($message);
+
+        if ($reference === null) {
+            return [];
+        }
+
+        $roomId = $this->findRoomId($user, $role);
+
+        if ($roomId === null) {
+            return [];
+        }
+
+        $lastWithProducts = ChatMessage::query()
+            ->where('chat_room_id', $roomId)
+            ->whereNotNull('assistant_content')
+            ->orderByDesc('chat_message_id')
+            ->limit(10)
+            ->get(['chat_message_id', 'assistant_metadata'])
+            ->first(fn (ChatMessage $chatMessage) => ! empty($chatMessage->assistant_metadata['products'] ?? []));
+
+        $products = collect($lastWithProducts?->assistant_metadata['products'] ?? [])
+            ->map(fn ($product) => (int) ($product['id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($products->isEmpty()) {
+            return [];
+        }
+
+        if ($reference === 'all') {
+            return $products->take(3)->all();
+        }
+
+        if ($reference === 'last') {
+            return [(int) $products->last()];
+        }
+
+        return $products->has($reference - 1) ? [(int) $products[$reference - 1]] : [];
+    }
+
+    /**
+     * @return int|string|null Số thứ tự (1-based), 'all', 'last' hoặc null nếu không phải follow-up.
+     */
+    private function followUpReference(string $message): int|string|null
+    {
+        $normalized = mb_strtolower($message);
+
+        if (preg_match('/(?:cái|mẫu|sản phẩm|chiếc|món|đôi)\s+(?:thứ|số)\s*(\d+)/u', $normalized, $matches)) {
+            return max(1, (int) $matches[1]);
+        }
+
+        if (preg_match('/(?:đầu tiên|thứ nhất)/u', $normalized)) {
+            return 1;
+        }
+
+        if (preg_match('/cuối cùng/u', $normalized)) {
+            return 'last';
+        }
+
+        if (preg_match('/(?:cái đó|mẫu đó|sản phẩm đó|chiếc đó|món đó|cái này|mẫu này|sản phẩm này|chiếc này|món này)/u', $normalized)) {
+            return 'all';
+        }
+
+        return null;
     }
 
     /**
@@ -306,13 +391,22 @@ TEXT;
     {
         $providers = self::ROLE_PROVIDER_PRIORITY[$role] ?? self::ROLE_PROVIDER_PRIORITY['default'];
         $failures = [];
+        $deadline = microtime(true) + max(1, (int) Config::get('services.chatbot.total_timeout', 25));
 
         foreach ($providers as $provider) {
+            $remaining = (int) floor($deadline - microtime(true));
+
+            if ($remaining < 1) {
+                $failures[$provider] = 'Bỏ qua do hết thời gian chờ.';
+
+                continue;
+            }
+
             try {
                 $model = $this->resolveModel($provider, $role);
-                $timeout = Config::get("services.{$provider}.timeout", 20);
+                $timeout = min((int) Config::get("services.{$provider}.timeout", 20), $remaining);
 
-                return $this->callProvider($provider, $messages, $model, $timeout);
+                return $this->callProvider($provider, $messages, $model, max(1, $timeout));
             } catch (Throwable $exception) {
                 $failures[$provider] = $exception->getMessage();
                 Log::warning('Chatbot provider failed', [
@@ -338,12 +432,13 @@ TEXT;
 
     private function resolveModel(string $provider, string $role): string
     {
-        $override = self::ROLE_MODEL_OVERRIDES[$provider][$role] ?? null;
-        if ($override) {
-            return $override;
+        $roleModel = Config::get("services.{$provider}.role_models.{$role}");
+
+        if (is_string($roleModel) && $roleModel !== '') {
+            return $roleModel;
         }
 
-        return Config::get("services.{$provider}.default_model", '');
+        return (string) Config::get("services.{$provider}.default_model", '');
     }
 
     private function callProvider(string $provider, array $messages, string $model, int $timeout): array
@@ -367,6 +462,7 @@ TEXT;
         $startedAt = microtime(true);
 
         $response = Http::timeout($timeout)
+            ->connectTimeout(min(5, max(1, $timeout)))
             ->withOptions(['verify' => $verifySsl])
             ->withHeaders([
                 'Accept' => 'application/json',
@@ -405,7 +501,6 @@ TEXT;
             'content' => $content,
             'usage' => [
                 'fallback' => true,
-                'failures' => $failures,
             ],
             'latency_ms' => 0,
             'raw' => [
@@ -538,8 +633,20 @@ TEXT;
 
     private function ensureRoomId(User $user, string $role): int
     {
+        $cacheKey = sprintf('chatbot:room:%d:%s', $user->getKey(), $role);
+        $cachedId = Cache::get($cacheKey);
+
+        if ($cachedId !== null) {
+            if (ChatRoom::query()->whereKey($cachedId)->exists()) {
+                return (int) $cachedId;
+            }
+
+            // Room bị xoá (vd dọn dữ liệu) nhưng cache vẫn còn: xoá cache để tạo lại.
+            Cache::forget($cacheKey);
+        }
+
         return (int) Cache::remember(
-            sprintf('chatbot:room:%d:%s', $user->getKey(), $role),
+            $cacheKey,
             now()->addDay(),
             function () use ($user, $role): int {
                 $room = ChatRoom::firstOrCreate(
@@ -547,7 +654,7 @@ TEXT;
                         'room_name' => $this->roomName($user, $role),
                     ],
                     [
-                        'type' => 3,
+                        'type' => 3, // 3 = chatbot room (1 user-user, 2 user-seller)
                         'is_active' => true,
                     ]
                 );

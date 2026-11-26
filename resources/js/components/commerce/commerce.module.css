@@ -1,3 +1,5 @@
+/* Hallmark · component: commerce · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · product card actions are Button and IconButton primitives, whose active and disabled states live in button.css · the disabled state belongs to the glass button component, not the card */
 /* Commerce domain module — Phase 4. Tokens only. */
 
 /* Price */
@@ -106,29 +108,136 @@
     display: flex;
     width: 100%;
     flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
-    background: var(--sn-color-surface);
-    transition: border-color var(--sn-dur-fast) var(--sn-ease-standard);
+    padding: var(--sn-space-2);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
+    transition:
+        border-color var(--sn-dur-fast) var(--sn-ease-standard),
+        box-shadow var(--sn-dur-fast) var(--sn-ease-standard),
+        transform var(--sn-dur-fast) var(--sn-ease-out);
+}
+
+.productCard:hover,
+.productCard:focus-within {
+    border-color: var(--sn-color-border-strong);
+    box-shadow: var(--sn-shadow-glass);
 }
 
 .productCard:hover {
-    border-color: var(--sn-color-border-strong);
+    transform: translateY(-3px);
 }
 
 .productMedia {
-    display: block;
-    aspect-ratio: 4 / 5;
+    position: relative;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
-    border-radius: var(--sn-radius-xs);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-media);
     background: var(--sn-color-surface-sunken);
+}
+
+.productImageLink {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .productImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform var(--sn-dur-slow) var(--sn-ease-out);
+}
+
+.productCard:hover .productImage {
+    transform: scale(1.04);
+}
+
+.productMedia[data-out='true'] .productImage {
+    opacity: 0.5;
+}
+
+.productSale {
+    position: absolute;
+    top: var(--sn-space-2);
+    left: var(--sn-space-2);
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem var(--sn-space-2);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-glass-menu);
+    box-shadow: var(--sn-shadow-float);
+    color: var(--sn-color-accent-text);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-snug);
+    font-variant-numeric: tabular-nums;
+}
+
+.productWishlist {
+    position: absolute;
+    top: var(--sn-space-2);
+    right: var(--sn-space-2);
+    z-index: 3;
+}
+
+.productQuick {
+    position: absolute;
+    right: var(--sn-space-2);
+    bottom: var(--sn-space-2);
+    left: var(--sn-space-2);
+    z-index: 4;
+    transition:
+        opacity var(--sn-dur-fast) var(--sn-ease-standard),
+        transform var(--sn-dur-fast) var(--sn-ease-out),
+        background-color var(--sn-dur-fast) var(--sn-ease-standard),
+        border-color var(--sn-dur-fast) var(--sn-ease-standard),
+        color var(--sn-dur-fast) var(--sn-ease-standard),
+        box-shadow var(--sn-dur-fast) var(--sn-ease-standard);
+}
+
+:global([data-js]) .productQuick {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--sn-space-2));
+}
+
+:global([data-js]) .productCard:hover .productQuick,
+:global([data-js]) .productCard:focus-within .productQuick {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (max-width: 767px), (hover: none) {
+    :global([data-js]) .productQuick {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+    }
+}
+
+.productOutOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 5;
+    transform: translate(-50%, -50%);
+    padding: var(--sn-space-1) var(--sn-space-3);
+    border-radius: var(--sn-radius-pill);
+    background: var(--sn-color-surface);
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-semibold);
+    white-space: nowrap;
+    box-shadow: var(--sn-shadow-float);
 }
 
 .productBody {
@@ -136,7 +245,14 @@
     flex: 1 1 auto;
     flex-direction: column;
     gap: var(--sn-space-2);
-    padding: var(--sn-space-3);
+    padding: var(--sn-space-2) 0 var(--sn-space-1);
+}
+
+.productShopRow {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--sn-space-1);
 }
 
 .productShop {
@@ -147,11 +263,23 @@
     white-space: nowrap;
 }
 
+.productShopCheck {
+    width: var(--sn-icon-xs);
+    height: var(--sn-icon-xs);
+    flex: none;
+    color: var(--sn-color-accent-text);
+}
+
+.productTitleLink {
+    color: inherit;
+    text-decoration: none;
+}
+
 .productTitle {
     display: -webkit-box;
     overflow: hidden;
     color: var(--sn-color-text);
-    font-size: var(--sn-text-sm);
+    font-size: var(--sn-text-base);
     font-weight: var(--sn-weight-semibold);
     line-height: var(--sn-leading-snug);
     -webkit-box-orient: vertical;
@@ -164,22 +292,49 @@
     text-underline-offset: 3px;
 }
 
+.productTagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sn-space-1);
+}
+
+.productTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.0625rem var(--sn-space-2);
+    border-radius: var(--sn-radius-pill);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-medium);
+    line-height: var(--sn-leading-snug);
+    white-space: nowrap;
+}
+
+.productTagNew {
+    background: var(--sn-color-neutral-wash);
+    color: var(--sn-color-neutral-text);
+}
+
+.productTagFast {
+    background: var(--sn-color-success-wash);
+    color: var(--sn-color-success-text);
+}
+
+.productTagOfficial {
+    background: var(--sn-color-accent-wash);
+    color: var(--sn-color-accent-text);
+}
+
+.productTagLow {
+    background: var(--sn-color-warning-wash);
+    color: var(--sn-color-warning-text);
+}
+
 .productMeta {
     overflow: hidden;
     color: var(--sn-color-text-faint);
     font-size: var(--sn-text-xs);
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.productBadgeList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sn-space-2);
-    color: var(--sn-color-text-muted);
-    font-size: var(--sn-text-2xs);
-    letter-spacing: var(--sn-tracking-wide);
-    text-transform: uppercase;
 }
 
 .icon {
@@ -196,14 +351,14 @@
     overflow: hidden;
     padding: var(--sn-space-3);
     border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
+    border-radius: var(--sn-radius-card);
     background: var(--sn-color-surface);
 }
 
 .skeletonImage {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
     height: auto;
-    border-radius: var(--sn-radius-xs);
+    border-radius: var(--sn-radius-media);
 }
 
 .skeletonBody {
@@ -238,45 +393,38 @@
     gap: var(--sn-space-2);
     margin-top: auto;
     padding-top: var(--sn-space-2);
-    border-top: 1px solid var(--sn-color-border);
-}
-
-.productActions {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sn-space-1);
-}
-
-.productOut {
-    color: var(--sn-color-danger-text);
-    font-size: var(--sn-text-xs);
 }
 
 .productAdd {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sn-space-1);
-    padding: 0.375rem var(--sn-space-3);
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-md);
-    background: transparent;
-    color: var(--sn-color-text);
-    font-size: var(--sn-text-sm);
-    font-weight: var(--sn-weight-medium);
+    flex: none;
 }
 
-.productAdd:hover {
-    background: var(--sn-color-surface-sunken);
+@media (prefers-reduced-transparency: reduce) {
+    .productCard {
+        background: var(--sn-color-surface);
+    }
 }
 
-.productAdd:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+@media (forced-colors: active) {
+    .productCard {
+        border-color: CanvasText;
+        background: Canvas;
+        box-shadow: none;
+    }
 }
 
-.productAddIcon {
-    width: var(--sn-icon-sm);
-    height: var(--sn-icon-sm);
+@media (prefers-reduced-motion: reduce) {
+    .productCard:hover {
+        transform: none;
+    }
+
+    .productCard:hover .productImage {
+        transform: none;
+    }
+
+    .productQuick {
+        transition: none;
+    }
 }
 
 /* Product grid */
@@ -849,10 +997,8 @@
 
 .activeLabel {
     color: var(--sn-color-text-faint);
-    font-size: var(--sn-text-2xs);
-    font-weight: var(--sn-weight-semibold);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-medium);
 }
 
 .activeChip {
@@ -1044,6 +1190,7 @@
     font-size: var(--sn-text-sm);
     font-weight: var(--sn-weight-semibold);
     line-height: var(--sn-leading-snug);
+    text-wrap: balance;
 }
 
 .filterHeadIcon {
@@ -1602,10 +1749,8 @@ a.orderItemTitle:hover {
 .orderTableHead th {
     padding: var(--sn-space-3) var(--sn-space-4);
     color: var(--sn-color-text-muted);
-    font-size: var(--sn-text-2xs);
+    font-size: var(--sn-text-xs);
     font-weight: var(--sn-weight-medium);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
 }
 
 .orderTableRow {
@@ -1953,10 +2098,8 @@ a.orderItemTitle:hover {
 
 .promoLabel {
     color: var(--sn-color-text-muted);
-    font-size: var(--sn-text-2xs);
-    font-weight: var(--sn-weight-semibold);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-medium);
 }
 
 .promoApplied {
@@ -2348,10 +2491,8 @@ a.orderItemTitle:hover {
 
 .contextHintsLabel {
     color: var(--sn-color-text-faint);
-    font-size: var(--sn-text-2xs);
-    font-weight: var(--sn-weight-semibold);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-medium);
 }
 
 .contextHintButton {

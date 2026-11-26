@@ -5,9 +5,12 @@
     flex-direction: column;
     gap: var(--sn-space-1);
     padding: var(--sn-space-4) var(--sn-space-5);
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
-    background: var(--sn-color-surface);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
 }
 
 .cardTitle {
@@ -115,6 +118,10 @@
     gap: var(--sn-space-4);
 }
 
+.filters[data-surface='glass'] {
+    padding: var(--sn-space-5);
+}
+
 .filtersHead {
     display: flex;
     flex-wrap: wrap;
@@ -122,7 +129,7 @@
     justify-content: space-between;
     gap: var(--sn-space-3);
     padding-bottom: var(--sn-space-3);
-    border-bottom: 1px solid var(--sn-color-border);
+    border-bottom: 1px solid var(--sn-glass-hairline);
 }
 
 .filtersTitles {

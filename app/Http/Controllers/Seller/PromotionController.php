@@ -9,28 +9,37 @@ use App\Models\Product;
 use App\Models\Promotion;
 use App\Services\SellerPromotionService;
 use App\Services\SellerWalletService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
+use Throwable;
 
 class PromotionController extends Controller
 {
     public function __construct(
         private SellerPromotionService $promotionService,
         private SellerWalletService $walletService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
         $sellerId = Auth::id();
-        $filters = $request->only(['status', 'type', 'per_page']);
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(['active', 'paused', 'upcoming', 'draft', 'expired'])],
+            'type' => ['nullable', Rule::in(['percentage', 'fixed_amount', 'free_shipping', 'buy_x_get_y'])],
+            'date_range' => ['nullable', Rule::in(['last_7_days', 'last_30_days', 'last_90_days'])],
+            'budget_range' => ['nullable', Rule::in(['0-1000000', '1000000-5000000', '5000000+'])],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
 
-        $promotions = $this->promotionService->getSellerPromotions($sellerId, $filters);
+        $promotions = $this->promotionService->getSellerPromotions((int) $sellerId, $filters);
         $transformed = $promotions->through(function (Promotion $promotion) {
             return [
                 'promotion_id' => $promotion->promotion_id,
@@ -40,6 +49,7 @@ class PromotionController extends Controller
                 'start_date' => $promotion->start_date,
                 'end_date' => $promotion->end_date,
                 'is_active' => $promotion->is_active,
+                'status' => $this->promotionService->resolveStatus($promotion),
                 'allocated_budget' => $promotion->allocated_budget,
                 'spent_budget' => $promotion->spent_budget,
                 'roi_percentage' => $promotion->roi_percentage,
@@ -90,8 +100,15 @@ class PromotionController extends Controller
             return redirect()
                 ->route('seller.promotions.show', $promotion)
                 ->with('success', 'Promotion created successfully.');
-        } catch (Exception $exception) {
-            return back()->withErrors(['error' => $exception->getMessage()]);
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['error' => $exception->getMessage()])->withInput();
+        } catch (Throwable $exception) {
+            Log::error('Seller promotion creation failed', [
+                'seller_id' => Auth::id(),
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors(['error' => 'Unable to create promotion. Please try again.'])->withInput();
         }
     }
 
@@ -104,6 +121,7 @@ class PromotionController extends Controller
         return Inertia::render('Seller/Promotions/Show', [
             'promotion' => $promotion->load(['products', 'orders']),
             'roi' => $roi,
+            'status' => $this->promotionService->resolveStatus($promotion),
         ]);
     }
 
@@ -122,6 +140,7 @@ class PromotionController extends Controller
             'promotion' => $promotion->load('products'),
             'products' => $products,
             'wallet' => $this->walletService->getWallet($sellerId),
+            'status' => $this->promotionService->resolveStatus($promotion),
         ]);
     }
 
@@ -139,8 +158,16 @@ class PromotionController extends Controller
             return redirect()
                 ->route('seller.promotions.show', $updated)
                 ->with('success', 'Promotion updated successfully.');
-        } catch (Exception $exception) {
-            return back()->withErrors(['error' => $exception->getMessage()]);
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors(['error' => $exception->getMessage()])->withInput();
+        } catch (Throwable $exception) {
+            Log::error('Seller promotion update failed', [
+                'seller_id' => Auth::id(),
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors(['error' => 'Unable to update promotion. Please try again.'])->withInput();
         }
     }
 
@@ -154,8 +181,16 @@ class PromotionController extends Controller
             return redirect()
                 ->route('seller.promotions.index')
                 ->with('success', 'Promotion deleted successfully.');
-        } catch (Exception $exception) {
+        } catch (InvalidArgumentException $exception) {
             return back()->withErrors(['error' => $exception->getMessage()]);
+        } catch (Throwable $exception) {
+            Log::error('Seller promotion deletion failed', [
+                'seller_id' => Auth::id(),
+                'promotion_id' => $promotion->promotion_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors(['error' => 'Unable to delete promotion. Please try again.']);
         }
     }
 
@@ -163,7 +198,11 @@ class PromotionController extends Controller
     {
         $this->authorize('update', $promotion);
 
-        $updated = $this->promotionService->pausePromotion($promotion, Auth::id());
+        try {
+            $updated = $this->promotionService->pausePromotion($promotion, (int) Auth::id());
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
 
         return response()->json([
             'message' => 'Promotion paused successfully.',
@@ -175,7 +214,11 @@ class PromotionController extends Controller
     {
         $this->authorize('update', $promotion);
 
-        $updated = $this->promotionService->resumePromotion($promotion, Auth::id());
+        try {
+            $updated = $this->promotionService->resumePromotion($promotion, (int) Auth::id());
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
 
         return response()->json([
             'message' => 'Promotion resumed successfully.',

@@ -12,10 +12,27 @@ type SearchInputProps = Omit<React.ComponentProps<'input'>, 'size' | 'onSubmit'>
     loading?: boolean;
     clearable?: boolean;
     size?: 'sm' | 'md' | 'lg';
+    surface?: 'content' | 'glass';
+    shape?: 'default' | 'pill';
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-    ({ className, value, onSubmit, onClear, loading = false, clearable = true, size = 'md', onChange, ...props }, ref) => {
+    (
+        {
+            className,
+            value,
+            onSubmit,
+            onClear,
+            loading = false,
+            clearable = true,
+            size = 'md',
+            surface = 'content',
+            shape = 'default',
+            onChange,
+            ...props
+        },
+        ref,
+    ) => {
         const hasValue = typeof value === 'string' && value.length > 0;
 
         return (
@@ -30,6 +47,8 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                 <Input
                     ref={ref}
                     size={size}
+                    surface={surface}
+                    shape={shape}
                     type="search"
                     value={value}
                     onChange={onChange}

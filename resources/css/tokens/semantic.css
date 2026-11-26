@@ -69,6 +69,8 @@
     /* Glass dock */
     --sn-color-canvas-deep: var(--sn-neutral-150);
     --sn-glass-tint: rgb(255 255 255 / 0.78);
+    --sn-glass-control: rgb(255 255 255 / 0.62);
+    --sn-glass-control-hover: rgb(255 255 255 / 0.9);
     --sn-glass-field: var(--sn-color-surface);
     --sn-glass-menu: rgb(255 255 255 / 0.92);
     --sn-glass-hover: rgb(21 22 15 / 0.06);
@@ -77,8 +79,16 @@
     --sn-glass-highlight: rgb(255 255 255 / 0.9);
     --sn-glass-ring: rgb(255 255 255 / 0.92);
     --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 44px -26px rgb(21 22 15 / 0.4), 0 4px 10px -6px rgb(21 22 15 / 0.14);
+    --sn-shadow-card: 0 1px 2px rgb(21 22 15 / 0.04), 0 14px 30px -24px rgb(21 22 15 / 0.3);
     --sn-shadow-float: 0 1px 2px rgb(21 22 15 / 0.06), 0 6px 16px -10px rgb(21 22 15 / 0.3);
     --sn-shadow-accent: 0 10px 20px -12px rgb(194 65 12 / 0.55);
+
+    /* Workspace ambient wash — material layer behind floating chrome */
+    --sn-workspace-wash-warm: rgb(194 65 12 / 0.07);
+    --sn-workspace-wash-cool: rgb(21 22 15 / 0.035);
+    --sn-workspace-wash:
+        radial-gradient(58rem 42rem at 6% -4%, var(--sn-workspace-wash-warm), transparent 62%),
+        radial-gradient(46rem 34rem at 98% 2%, var(--sn-workspace-wash-cool), transparent 58%);
 }
 
 [data-theme='dark'] {
@@ -143,6 +153,8 @@
     /* Glass dock */
     --sn-color-canvas-deep: var(--sn-graphite-950);
     --sn-glass-tint: rgb(28 32 26 / 0.62);
+    --sn-glass-control: rgb(255 255 255 / 0.06);
+    --sn-glass-control-hover: rgb(255 255 255 / 0.1);
     --sn-glass-field: rgb(255 255 255 / 0.07);
     --sn-glass-menu: rgb(28 32 26 / 0.88);
     --sn-glass-hover: rgb(255 255 255 / 0.07);
@@ -151,8 +163,12 @@
     --sn-glass-highlight: rgb(255 255 255 / 0.08);
     --sn-glass-ring: rgb(28 32 26 / 0.95);
     --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+    --sn-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 36px -26px rgb(0 0 0 / 0.7);
     --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
     --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
+
+    --sn-workspace-wash-warm: rgb(255 138 91 / 0.06);
+    --sn-workspace-wash-cool: rgb(255 255 255 / 0.03);
 }
 
 /* Fallback khi chưa có JS: theo hệ điều hành */
@@ -199,6 +215,8 @@
         --sn-color-scrim: rgb(0 0 0 / 0.32);
         --sn-color-canvas-deep: var(--sn-graphite-950);
         --sn-glass-tint: rgb(28 32 26 / 0.62);
+        --sn-glass-control: rgb(255 255 255 / 0.06);
+        --sn-glass-control-hover: rgb(255 255 255 / 0.1);
         --sn-glass-field: rgb(255 255 255 / 0.07);
         --sn-glass-menu: rgb(28 32 26 / 0.88);
         --sn-glass-hover: rgb(255 255 255 / 0.07);
@@ -207,7 +225,11 @@
         --sn-glass-highlight: rgb(255 255 255 / 0.08);
         --sn-glass-ring: rgb(28 32 26 / 0.95);
         --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+        --sn-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 36px -26px rgb(0 0 0 / 0.7);
         --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
         --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
+
+        --sn-workspace-wash-warm: rgb(255 138 91 / 0.06);
+        --sn-workspace-wash-cool: rgb(255 255 255 / 0.03);
     }
 }

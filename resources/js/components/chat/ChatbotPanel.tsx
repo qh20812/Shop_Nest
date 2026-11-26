@@ -1,4 +1,4 @@
-import { ShieldCheck, Trash2 } from 'lucide-react';
+import { Maximize2, Minimize2, ShieldCheck, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import { ChatComposer } from '@/components/chat/ChatComposer';
@@ -24,6 +24,8 @@ type ChatbotPanelProps = {
     onDismissError?: () => void;
     onClearHistory?: () => void;
     clearing?: boolean;
+    expanded?: boolean;
+    onToggleExpanded?: () => void;
     quickReplies?: Array<string | { id?: string; label: string; value?: string }>;
     className?: string;
 };
@@ -41,6 +43,8 @@ export function ChatbotPanel({
     onDismissError,
     onClearHistory,
     clearing = false,
+    expanded = false,
+    onToggleExpanded,
     quickReplies,
     className,
 }: ChatbotPanelProps) {
@@ -80,17 +84,32 @@ export function ChatbotPanel({
                 onClose={onClose}
                 onMinimize={onMinimize}
                 actions={
-                    onClearHistory ? (
-                        <IconButton
-                            label={t('Clear conversation')}
-                            tooltip={t('Clear conversation')}
-                            variant="ghost"
-                            size="sm"
-                            disabled={clearing}
-                            onClick={() => setConfirmingClear((current) => !current)}
-                        >
-                            <Trash2 aria-hidden="true" />
-                        </IconButton>
+                    onToggleExpanded || onClearHistory ? (
+                        <>
+                            {onToggleExpanded ? (
+                                <IconButton
+                                    label={t(expanded ? 'Collapse chat' : 'Expand chat')}
+                                    tooltip={t(expanded ? 'Collapse chat' : 'Expand chat')}
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onToggleExpanded}
+                                >
+                                    {expanded ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+                                </IconButton>
+                            ) : null}
+                            {onClearHistory ? (
+                                <IconButton
+                                    label={t('Clear conversation')}
+                                    tooltip={t('Clear conversation')}
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={clearing}
+                                    onClick={() => setConfirmingClear((current) => !current)}
+                                >
+                                    <Trash2 aria-hidden="true" />
+                                </IconButton>
+                            ) : null}
+                        </>
                     ) : null
                 }
             />

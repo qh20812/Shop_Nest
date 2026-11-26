@@ -33,7 +33,6 @@ Route::prefix('seller')->name('seller.')->middleware(['auth', 'isSeller'])->grou
     Route::get('wallet/transactions', [WalletController::class, 'transactions'])->name('wallet.transactions');
     Route::post('wallet/top-up', [WalletController::class, 'topUp'])->name('wallet.top-up');
     Route::get('wallet/top-up/{transaction}/status', [WalletController::class, 'topUpStatus'])->name('wallet.top-up.status');
-    Route::post('wallet/transfer', [WalletController::class, 'transfer'])->name('wallet.transfer');
 
     // Shop profile
     Route::get('/shop', [ShopController::class, 'edit'])->name('shop.edit');

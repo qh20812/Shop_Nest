@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Promotion;
+use App\Models\WalletTransaction;
+use App\Traits\AuditLoggable;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -12,6 +14,8 @@ use InvalidArgumentException;
 
 class SellerPromotionService
 {
+    use AuditLoggable;
+
     private const TYPE_MAP = [
         'percentage' => 1,
         'fixed_amount' => 2,
@@ -19,9 +23,7 @@ class SellerPromotionService
         'buy_x_get_y' => 4,
     ];
 
-    public function __construct(private SellerWalletService $walletService)
-    {
-    }
+    public function __construct(private WalletService $walletService) {}
 
     public function createPromotion(array $data, int $sellerId): Promotion
     {
@@ -44,25 +46,28 @@ class SellerPromotionService
                 'seller_id' => $sellerId,
                 'budget_source' => 'seller_wallet',
                 'allocated_budget' => $data['allocated_budget'] ?? 0,
-                'spent_budget' => $data['spent_budget'] ?? 0,
+                'spent_budget' => 0,
             ]);
 
-            if (!empty($productIds)) {
+            if (! empty($productIds)) {
                 $promotion->products()->sync($productIds);
             }
 
             $budget = (float) $promotion->allocated_budget;
             if ($budget > 0) {
-                $wallet = $this->walletService->getWallet($sellerId);
-                $this->walletService->deductFromWallet(
+                $wallet = $this->walletService->forUser($sellerId);
+                $this->walletService->debit(
                     $wallet->wallet_id,
                     $budget,
+                    WalletTransaction::TYPE_PROMOTION_BUDGET,
                     sprintf('Budget allocated to promotion %s', $promotion->name),
                     'promotion',
                     $promotion->promotion_id,
-                    false
+                    false,
                 );
             }
+
+            $this->logAudit('created', $promotion, [], $promotion->toArray());
 
             return $promotion->fresh(['products']);
         });
@@ -72,65 +77,81 @@ class SellerPromotionService
     {
         $this->assertPromotionBelongsToSeller($promotion, $sellerId);
 
-        return DB::transaction(function () use ($promotion, $data, $sellerId) {
+        $oldValues = $promotion->toArray();
+
+        return DB::transaction(function () use ($promotion, $data, $sellerId, $oldValues) {
             $productIds = $data['product_ids'] ?? [];
-            if (!empty($productIds)) {
+            if (! empty($productIds)) {
                 $this->assertSellerOwnsProducts($productIds, $sellerId);
             }
 
-            $newBudget = $data['allocated_budget'] ?? null;
-            if ($newBudget !== null) {
-                if ((float) ($promotion->spent_budget ?? 0) > (float) $newBudget) {
+            if (array_key_exists('allocated_budget', $data) && $data['allocated_budget'] !== null) {
+                $newBudget = (float) $data['allocated_budget'];
+
+                if ((float) ($promotion->spent_budget ?? 0) > $newBudget) {
                     throw new InvalidArgumentException('Allocated budget cannot be less than the amount already spent.');
                 }
 
-                $currentBudget = (float) ($promotion->allocated_budget ?? 0);
-                $difference = (float) $newBudget - $currentBudget;
+                $difference = $newBudget - (float) ($promotion->allocated_budget ?? 0);
 
                 if ($difference > 0) {
-                    $wallet = $this->walletService->getWallet($sellerId);
-                    $this->walletService->deductFromWallet(
+                    $wallet = $this->walletService->forUser($sellerId);
+                    $this->walletService->debit(
                         $wallet->wallet_id,
                         $difference,
+                        WalletTransaction::TYPE_PROMOTION_BUDGET,
                         sprintf('Budget increase for promotion %s', $promotion->name),
-                        'promotion_adjustment',
+                        'promotion',
                         $promotion->promotion_id,
-                        false
+                        false,
                     );
                 } elseif ($difference < 0) {
-                    $wallet = $this->walletService->getWallet($sellerId);
-                    $this->walletService->creditWallet(
+                    $wallet = $this->walletService->forUser($sellerId);
+                    $this->walletService->credit(
                         $wallet->wallet_id,
                         abs($difference),
+                        WalletTransaction::TYPE_PROMOTION_REFUND,
                         sprintf('Budget release from promotion %s', $promotion->name),
-                        'promotion_adjustment',
+                        'promotion',
                         $promotion->promotion_id,
-                        false
+                        false,
+                        false,
+                        true,
                     );
                 }
 
                 $promotion->allocated_budget = $newBudget;
             }
 
-            $promotion->update([
+            $payload = [
                 'name' => $data['name'] ?? $promotion->name,
-                'description' => $data['description'] ?? $promotion->description,
                 'type' => isset($data['type'])
                     ? $this->mapTypeForStorage($data['type'])
                     : $promotion->type,
                 'value' => $data['value'] ?? $promotion->value,
-                'min_order_amount' => $data['min_order_amount'] ?? $promotion->min_order_amount,
-                'max_discount_amount' => $data['max_discount_amount'] ?? $promotion->max_discount_amount,
                 'start_date' => $data['start_date'] ?? $promotion->start_date,
                 'end_date' => $data['end_date'] ?? $promotion->end_date,
-                'usage_limit' => $data['usage_limit'] ?? $promotion->usage_limit,
-                'is_active' => array_key_exists('is_active', $data) ? (bool) $data['is_active'] : $promotion->is_active,
                 'allocated_budget' => $promotion->allocated_budget,
-            ]);
+            ];
 
-            if (!empty($productIds)) {
+            foreach (['description', 'min_order_amount', 'max_discount_amount', 'usage_limit'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $payload[$field] = $data[$field];
+                }
+            }
+
+            if (array_key_exists('is_active', $data)) {
+                $payload['is_active'] = (bool) $data['is_active'];
+            }
+
+            $promotion->update($payload);
+
+            if (array_key_exists('product_ids', $data)) {
                 $promotion->products()->sync($productIds);
             }
+
+            $promotion->refresh();
+            $this->logAudit('updated', $promotion, $oldValues, $promotion->toArray());
 
             return $promotion->fresh(['products']);
         });
@@ -144,18 +165,24 @@ class SellerPromotionService
             $remainingBudget = max(0, (float) ($promotion->allocated_budget ?? 0) - (float) ($promotion->spent_budget ?? 0));
 
             if ($remainingBudget > 0) {
-                $wallet = $this->walletService->getWallet($sellerId);
-                $this->walletService->creditWallet(
+                $wallet = $this->walletService->forUser($sellerId);
+                $this->walletService->credit(
                     $wallet->wallet_id,
                     $remainingBudget,
+                    WalletTransaction::TYPE_PROMOTION_REFUND,
                     sprintf('Budget refund from promotion %s', $promotion->name),
-                    'promotion_refund',
+                    'promotion',
                     $promotion->promotion_id,
-                    false
+                    false,
+                    false,
+                    true,
                 );
             }
 
             $promotion->products()->detach();
+            $promotion->categories()->detach();
+
+            $this->logAudit('deleted', $promotion, $promotion->toArray(), []);
 
             return (bool) $promotion->delete();
         });
@@ -166,6 +193,7 @@ class SellerPromotionService
         $this->assertPromotionBelongsToSeller($promotion, $sellerId);
 
         $promotion->update(['is_active' => false]);
+        $this->logAudit('deactivated', $promotion, ['is_active' => true], ['is_active' => false]);
 
         return $promotion->refresh();
     }
@@ -179,6 +207,7 @@ class SellerPromotionService
         }
 
         $promotion->update(['is_active' => true]);
+        $this->logAudit('activated', $promotion, ['is_active' => false], ['is_active' => true]);
 
         return $promotion->refresh();
     }
@@ -189,35 +218,66 @@ class SellerPromotionService
             ->where('seller_id', $sellerId)
             ->orderByDesc('promotion_id');
 
-        if (!empty($filters['status'])) {
-            $status = $filters['status'];
-            $query->where(function ($builder) use ($status) {
-                $now = Carbon::now();
-
-                if ($status === 'active') {
-                    $builder->where('is_active', true)
-                        ->where('start_date', '<=', $now)
-                        ->where('end_date', '>=', $now);
-                } elseif ($status === 'paused') {
-                    $builder->where('is_active', false)
-                        ->where('end_date', '>=', $now);
-                } elseif ($status === 'upcoming') {
-                    $builder->where('start_date', '>', $now);
-                } elseif ($status === 'expired') {
-                    $builder->where('end_date', '<', $now);
-                }
-            });
+        if (! empty($filters['search'])) {
+            $query->where('name', 'like', '%'.$filters['search'].'%');
         }
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['status'])) {
+            $query->ofStatus((string) $filters['status']);
+        }
+
+        if (! empty($filters['type'])) {
             $query->where('type', $this->mapTypeForStorage($filters['type']));
+        }
+
+        if (! empty($filters['date_range'])) {
+            $days = match ($filters['date_range']) {
+                'last_7_days' => 7,
+                'last_30_days' => 30,
+                'last_90_days' => 90,
+                default => null,
+            };
+
+            if ($days !== null) {
+                $query->where('created_at', '>=', Carbon::now()->subDays($days));
+            }
+        }
+
+        if (! empty($filters['budget_range'])) {
+            [$min, $max] = $this->parseBudgetRange((string) $filters['budget_range']);
+
+            if ($min !== null) {
+                $query->where('allocated_budget', '>=', $min);
+            }
+
+            if ($max !== null) {
+                $query->where('allocated_budget', '<=', $max);
+            }
         }
 
         $query->with(['products']);
 
-        $perPage = (int) ($filters['per_page'] ?? 10);
+        $perPage = max(1, min(50, (int) ($filters['per_page'] ?? 10)));
 
         return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * @return array{0: float|null, 1: float|null}
+     */
+    private function parseBudgetRange(string $range): array
+    {
+        if (str_ends_with($range, '+')) {
+            return [(float) str_replace('+', '', $range), null];
+        }
+
+        if (str_contains($range, '-')) {
+            [$min, $max] = explode('-', $range, 2);
+
+            return [(float) $min, (float) $max];
+        }
+
+        return [null, null];
     }
 
     public function validateSellerOwnership(array $productIds, int $sellerId): bool
@@ -250,15 +310,28 @@ class SellerPromotionService
         return $rounded;
     }
 
-    public function validateSellerOwnershipForPromotion(Promotion $promotion, int $sellerId): bool
+    public function resolveStatus(Promotion $promotion): string
     {
-        return (int) $promotion->seller_id === $sellerId;
+        $now = Carbon::now();
+        $start = Carbon::parse($promotion->start_date);
+        $end = Carbon::parse($promotion->end_date);
+
+        if ($end->lt($now)) {
+            return 'expired';
+        }
+
+        if ($start->gt($now)) {
+            return 'draft';
+        }
+
+        return $promotion->is_active ? 'active' : 'paused';
     }
 
     public function mapTypeForResponse(int|string|null $type): string
     {
         if (is_numeric($type)) {
             $map = array_flip(self::TYPE_MAP);
+
             return $map[(int) $type] ?? 'percentage';
         }
 
@@ -269,7 +342,7 @@ class SellerPromotionService
     {
         $type = strtolower($type);
 
-        if (!array_key_exists($type, self::TYPE_MAP)) {
+        if (! array_key_exists($type, self::TYPE_MAP)) {
             throw new InvalidArgumentException('Unsupported promotion type.');
         }
 
@@ -278,7 +351,7 @@ class SellerPromotionService
 
     private function assertSellerOwnsProducts(array $productIds, int $sellerId): void
     {
-        if (!$this->validateSellerOwnership($productIds, $sellerId)) {
+        if (! $this->validateSellerOwnership($productIds, $sellerId)) {
             throw new InvalidArgumentException('You can only manage promotions for your own products.');
         }
     }

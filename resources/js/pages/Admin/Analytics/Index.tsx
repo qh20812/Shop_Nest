@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/ui/header';
 import { formatDecimal, formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 
@@ -52,6 +52,7 @@ interface AnalyticsPageProps extends Record<string, unknown> {
         generatedAt?: string;
     };
     currency?: string | { code?: string };
+    currencyCode?: string;
     locale?: string;
 }
 
@@ -78,18 +79,10 @@ const Index: React.FC = () => {
     const { props } = usePage<AnalyticsPageProps>();
     const { stats, revenueChart, userGrowthChart, recentActivities = [], meta } = props;
     const locale = props.locale ?? 'vi';
-    const resolvedCurrency = resolveCurrencyCode(props.currency);
+    const currencyCode = resolveCurrencyCode(props.currencyCode ?? props.currency);
     const { t } = useTranslation();
 
-    const currencyFormatter = useMemo(
-        () =>
-            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
-                style: 'currency',
-                currency: resolvedCurrency,
-                maximumFractionDigits: 0,
-            }),
-        [locale, resolvedCurrency],
-    );
+    const money = useMemo(() => (value: number) => formatMoney(value, currencyCode, locale), [currencyCode, locale]);
 
     const lastGeneratedAt = useMemo(() => {
         if (!meta?.generatedAt) {
@@ -187,7 +180,7 @@ const Index: React.FC = () => {
             <AnalyticsCard
                 key="total-revenue"
                 title={t('Total Revenue')}
-                value={currencyFormatter.format(stats.totalRevenue)}
+                value={money(stats.totalRevenue)}
                 tooltip={t('Total revenue generated in the selected period')}
             />,
             <AnalyticsCard
@@ -211,7 +204,7 @@ const Index: React.FC = () => {
                 tooltip={t('Completion rate of successful orders in the period')}
             />,
         ];
-    }, [currencyFormatter, stats, t]);
+    }, [money, stats, t]);
 
     const quickActions = [
         { href: '/admin/analytics/revenue', icon: DollarSign, label: t('View Revenue Analytics') },
@@ -266,9 +259,7 @@ const Index: React.FC = () => {
                     </div>
                 </section>
 
-                <section className={styles.section}>
-                    <ul className={styles.kpiList}>{kpiCards}</ul>
-                </section>
+                <ul className={styles.kpiList}>{kpiCards}</ul>
 
                 <section className={styles.chartGrid}>
                     <AnalyticsChart
@@ -276,12 +267,15 @@ const Index: React.FC = () => {
                         data={revenueChart}
                         title={t('Revenue Trend')}
                         description={t('Daily revenue within the selected range')}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
                     />
                     <AnalyticsChart
                         type="bar"
                         data={userGrowthChart}
                         title={t('User Growth Trend')}
                         description={t('New users acquired over time')}
+                        valueLabel={t('New Users')}
                     />
                 </section>
 

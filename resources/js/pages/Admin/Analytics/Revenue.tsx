@@ -12,8 +12,9 @@ import ExportButton from '@/components/admin/analytics/ExportButton';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
-import { formatNumber, formatVnd } from '@/lib/format';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 
@@ -45,6 +46,8 @@ interface RevenuePageProps extends Record<string, unknown> {
     filters: Record<string, unknown>;
     availablePeriods: string[];
     locale?: string;
+    currency?: string | { code?: string };
+    currencyCode?: string;
 }
 
 type TopProductRow = RevenueTopProduct & {
@@ -72,10 +75,13 @@ function normalizeFilterValue(value: unknown, fallback: AnalyticsFilterValue = '
 
 const Revenue: React.FC = () => {
     const { props } = usePage<RevenuePageProps>();
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const revenue = props.revenue ?? { timeSeries: [], byCategory: [], bySeller: [], topProducts: [] };
     const initialFilters = props.filters ?? {};
     const pageDescription = t('Analyze revenue trends, track top-performing segments, and export financial insights.');
+    const currencyCode = resolveCurrencyCode(props.currencyCode ?? props.currency);
+
+    const money = useMemo(() => (value: number) => formatMoney(value, currencyCode, locale), [currencyCode, locale]);
 
     const [filters, setFilters] = useState<AnalyticsFilterState>(() => ({
         period: normalizeFilterValue(initialFilters.period, '30days'),
@@ -139,7 +145,7 @@ const Revenue: React.FC = () => {
                 label: t('Revenue'),
                 sortable: false,
                 align: 'right',
-                render: (_, row) => formatVnd(Number(row.revenue ?? 0)),
+                render: (_, row) => money(Number(row.revenue ?? 0)),
             },
             {
                 key: 'share',
@@ -149,7 +155,7 @@ const Revenue: React.FC = () => {
                 render: (value) => `${(Number(value ?? 0) * 100).toFixed(1)}%`,
             },
         ],
-        [t],
+        [money, t],
     );
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
@@ -225,46 +231,42 @@ const Revenue: React.FC = () => {
                     <p className={styles.muted}>{pageDescription}</p>
                 </section>
 
-                <section className={styles.section}>
-                    <AnalyticsFilters
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        availableOptions={{}}
-                        title={t('Filter Revenue Data')}
-                        description={t('Adjust the period or apply advanced filters to refine the revenue analytics view.')}
-                        quickRanges={quickRanges}
-                        onReset={handleResetFilters}
-                    >
-                        <div className={styles.filterActions}>
-                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
-                                <Filter aria-hidden="true" />
-                                {t('Apply Filters')}
-                            </Button>
-                        </div>
-                    </AnalyticsFilters>
-                </section>
+                <AnalyticsFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    availableOptions={{}}
+                    title={t('Filter Revenue Data')}
+                    description={t('Adjust the period or apply advanced filters to refine the revenue analytics view.')}
+                    quickRanges={quickRanges}
+                    onReset={handleResetFilters}
+                >
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                            <Filter aria-hidden="true" />
+                            {t('Apply Filters')}
+                        </Button>
+                    </div>
+                </AnalyticsFilters>
 
-                <section className={styles.section}>
-                    <ul className={styles.kpiList}>
-                        <AnalyticsCard
-                            title={t('Total Revenue')}
-                            value={formatVnd(totalRevenue)}
-                            tooltip={t('Aggregate revenue within the selected filter range.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Revenue Growth')}
-                            value={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`}
-                            change={growthRate}
-                            changeLabel={t('vs previous data point')}
-                            tooltip={t('Change compared to the previous data point in the series.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Average Order Value')}
-                            value={formatVnd(averageOrderValue)}
-                            tooltip={t('Approximate average revenue per order based on available data.')}
-                        />
-                    </ul>
-                </section>
+                <ul className={styles.kpiList}>
+                    <AnalyticsCard
+                        title={t('Total Revenue')}
+                        value={money(totalRevenue)}
+                        tooltip={t('Aggregate revenue within the selected filter range.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Revenue Growth')}
+                        value={`${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%`}
+                        change={growthRate}
+                        changeLabel={t('vs previous data point')}
+                        tooltip={t('Change compared to the previous data point in the series.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Average Order Value')}
+                        value={money(averageOrderValue)}
+                        tooltip={t('Approximate average revenue per order based on available data.')}
+                    />
+                </ul>
 
                 <section className={styles.chartGrid}>
                     <AnalyticsChart
@@ -272,12 +274,15 @@ const Revenue: React.FC = () => {
                         data={revenue.timeSeries ?? []}
                         title={t('Revenue Over Time')}
                         description={t('Track revenue fluctuations throughout the selected period.')}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
                     />
                     <AnalyticsChart
                         type="pie"
                         data={revenue.byCategory ?? []}
                         title={t('Revenue by Category')}
                         description={t('Compare revenue contribution across product categories.')}
+                        valueFormatter={money}
                         legend
                     />
                 </section>
@@ -288,12 +293,16 @@ const Revenue: React.FC = () => {
                         data={revenue.bySeller ?? []}
                         title={t('Top Sellers by Revenue')}
                         description={t('Identify sellers driving the highest revenue.')}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
                     />
                     <AnalyticsChart
                         type="bar"
                         data={revenue.topProducts.slice(0, 10).map((product) => ({ label: product.label, value: product.revenue }))}
                         title={t('Top Products Revenue')}
                         description={t('Revenue distribution of leading products.')}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
                     />
                 </section>
 

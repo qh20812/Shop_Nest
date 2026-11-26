@@ -1,8 +1,9 @@
 # ShopNest — Design System: Bảng Hiệu
 
 > Hướng thiết kế: **Bảng Hiệu** — signage / industrial catalog Việt Nam.
+> Phiên bản: **Bảng Hiệu 2.0**, bổ sung lớp chrome kính (glass) sau pass navbar.
 > Nền tảng: CSS thuần, token `--sn-*`, CSS Modules, React 19 + Inertia 3.
-> Nguồn chuẩn kỹ thuật: `resources/css/`, `resources/js/components/ui/`, `REFACTOR_PLAN.md`.
+> Nguồn chuẩn kỹ thuật: `resources/css/`, `resources/js/components/ui/`, `COMPONENTS.md`, `AGENTS.md`.
 > QA gần nhất: `docs/ui/PHASE-12-QA.md`.
 
 ## 1. Định vị
@@ -12,7 +13,7 @@ Bảng Hiệu lấy cảm hứng từ biển hiệu cửa hàng, catalogue in v�
 Ba nguyên tắc:
 
 1. **Tín hiệu, không trang trí.** Accent chỉ dùng cho hành động chính, trạng thái đang chọn và liên kết quan trọng.
-2. **Cấu trúc bằng đường kẻ, khoảng trắng và một lớp kính.** Glass chỉ dành cho chrome nổi (navbar, dock, sheet, popover) qua token `--sn-glass-*`; không gradient trang trí, không glow, không icon tile pastel, không card lồng card.
+2. **Cấu trúc bằng đường kẻ, khoảng trắng và một lớp kính.** Glass là vật liệu của chrome nổi (dock, menu, sheet, panel), không phải hiệu ứng cho card nội dung; mỗi vùng chỉ một lớp blur và mọi bề mặt kính phải có fallback đặc.
 3. **Dữ liệu thật.** Không bịa số liệu, badge, tab, cột hay filter. Thiếu dữ liệu thì bỏ UI, không tạo placeholder giả.
 
 ## 2. Typography
@@ -48,7 +49,7 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 | Danger | `--sn-color-danger`, `--sn-color-danger-text`, `--sn-color-danger-wash`, `--sn-color-on-danger` |
 | Neutral badge | `--sn-color-neutral`, `--sn-color-neutral-text`, `--sn-color-neutral-wash` |
 | Utility | `--sn-color-overlay`, `--sn-color-selection`, `--sn-color-scrim` |
-| Glass chrome | `--sn-color-canvas-deep`, `--sn-glass-tint`, `--sn-glass-field`, `--sn-glass-menu`, `--sn-glass-hover`, `--sn-glass-press`, `--sn-glass-hairline`, `--sn-glass-highlight`, `--sn-glass-ring`, `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` |
+| Glass chrome | `--sn-color-canvas-deep`, `--sn-glass-tint`, `--sn-glass-control`, `--sn-glass-control-hover`, `--sn-glass-field`, `--sn-glass-menu`, `--sn-glass-hover`, `--sn-glass-press`, `--sn-glass-hairline`, `--sn-glass-highlight`, `--sn-glass-ring`, `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` |
 
 ### 3.3 Light / dark
 
@@ -69,49 +70,203 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 ### 3.5 Brand lockup
 
 - Mark dùng `BrandMark` (`components/layout/BrandMark.tsx`): PNG `ShopnestLogo.png` làm alpha mask, tô `--sn-color-accent`, nên mark tự sáng đúng ở dark mode.
-- Wordmark `.sn-brand__name`: ink, weight 600, tracking snug. Không tô accent ở trạng thái nghỉ, để accent vẫn là tín hiệu hành động.
-- Hover/focus của link brand mới chuyển wordmark sang `--sn-color-accent-text`.
+- Wordmark `.sn-brand__name`: `--sn-color-accent`, weight 600, tracking snug. Mark và wordmark dùng cùng một màu brand.
+- Wordmark là brand, không phải control: accent ở đây là brand color, không phá quy tắc accent dành cho hành động.
+- Hover/focus của link brand chuyển wordmark sang `--sn-color-accent-hover`.
 - Mark là decorative (`aria-hidden`); accessible name lấy từ wordmark, không lặp `alt`.
+- Workspace sidebar dùng lại đúng lockup của navbar: `BrandMark` + `.sn-brand__name` accent, weight 600; role label nằm dưới wordmark với màu muted. Không dùng `<img>` logo gốc hay wordmark đen riêng.
 
 ## 4. Space & layout
 
 - Cơ số 4px: `--sn-space-1..32`.
 - Container: `--sn-container` 90rem, narrow 65rem, form 26.25rem / wide 37.5rem.
 - Section rhythm: `--sn-section` clamp(40–72px), tight clamp(24–40px).
-- Shell: header 56px (workspace), topbar 56px, sidebar 232px, account rail 220px, filter rail 264px.
+- Shell: header 56px (workspace), topbar 56px, sidebar 232px, account rail 220px, filter rail 264px. Workspace chrome inset 12px (`--sn-shell-inset`) và cách nhau 12px (`--sn-shell-gap`).
 - Storefront dock: slab kính 60px + inset 10px, tổng `--sn-header-stuck` 80px. Mọi sticky offset trong storefront dùng `calc(var(--sn-header-stuck) + var(--sn-space-2))`, không dùng `--sn-header`.
+- Glass: ranh giới sử dụng, token, tầng và lộ trình rollout ở mục 6.
 - Breakpoint dùng trong CSS: 640 / 768 / 1024 / 1280. QA chạy 375/390/480/768/1024/1280/1440.
-- Workspace: `.sn-workspace__content` offset sidebar; `.sn-workspace__main` padding 36/24; <768 sidebar off-canvas + overlay + toggle.
+- Workspace: sidebar và topbar là hai slab kính nổi, inset 12px, bo `--sn-radius-2xl`, nền trang `--sn-color-canvas-deep`; `.sn-workspace__content` offset `calc(var(--sn-sidebar) + var(--sn-shell-inset))`; `.sn-workspace__main` padding 20/24; <768 sidebar off-canvas + overlay + toggle.
 - Storefront: header + `main` + footer; ChatDock mount một lần trong `StorefrontLayout`.
 - Account: `StorefrontLayout` + rail; không mount chat lần hai.
 - Auth: split/centered, brand panel riêng.
 
 ## 5. Shape & elevation
 
-- Radius: none 0 · xs 2px · sm 4px · md 6px · lg 8px · xl 12px · 2xl 20px · 3xl 28px · pill.
-- Card nội dung dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Chỉ chrome nổi được dùng `2xl` 20px (slab kính) và `3xl` 28px (sheet).
-- Quy tắc shape của hệ glass: **slab 20px, menu 16px, control pill, media 12px**. Không trộn radius khác trong cùng một cụm.
+- Radius: none 0 · xs 2px · sm 4px · md 6px · lg 8px · xl 12px · 2xl 20px · 3xl 28px · pill. Control thêm `--sn-radius-control` 12; media card thêm `--sn-radius-card` 16 và `--sn-radius-media` 10; overlay thêm `--sn-radius-menu` 16 (panel) và `--sn-radius-item` 10 (item).
+- Card nội dung dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Media card dùng `--sn-radius-card` 16, ảnh bên trong `--sn-radius-media` 10. Chỉ chrome nổi được dùng `2xl` 20px (slab kính) và `3xl` 28px (sheet).
+- Quy tắc shape của hệ glass: **slab 20px, menu 16px, media card 16px (ảnh 10px), stat card frosted 16px, control 12px trên nội dung và pill trên chrome, media 12px**. Không trộn radius khác trong cùng một cụm.
 - Menu dùng `--sn-radius-menu` 16 cho panel và `--sn-radius-item` 10 cho từng item. Menu kính chỉ dành cho chrome nổi (`sn-dropdown--glass`), menu trong workspace giữ nền đặc.
 - Shadow chỉ cho lớp nổi: `--sn-shadow-popover`, `--sn-shadow-overlay` (popover/overlay), `--sn-shadow-glass` (dock kính), `--sn-shadow-float` (control nổi trong kính), `--sn-shadow-accent` (CTA accent). Không shadow cho card tĩnh.
-- Glass: một lớp `backdrop-filter: var(--sn-blur-glass)` trên đúng phần tử slab, không blur cho control con; luôn có hairline + inset highlight + fallback đặc (`@supports`, `prefers-reduced-transparency`, `forced-colors`).
+- Bề mặt kính: đúng một lớp blur trên slab, không blur control con; chi tiết vật liệu, fallback và tầng ở mục 6.
 - Border 1px `--sn-color-border`; border mạnh cho hover/selected.
 
-## 6. Motion
+## 6. Glass system
+
+Glass là vật liệu của **lớp chrome nổi**, không phải hiệu ứng trang trí cho nội dung. Mục tiêu: dock, menu, sheet và panel đọc như cùng một vật liệu; card, bảng và form vẫn đặc để đọc lâu.
+
+### 6.1 Ranh giới dùng
+
+| Dùng glass | Giữ bề mặt đặc |
+|---|---|
+| Storefront dock, sticky toolbar | Table, data grid, form, multi-step dialog |
+| Dropdown/context menu ngắn | Page section, hero band, footer band |
+| Sheet mobile, chat panel, command palette | Field, input, select, textarea |
+| Floating filter bar, floating action, toast | Content card không phải media |
+| Workspace sidebar, topbar, filter bar | Chart card, data table, form dài |
+
+**Frosted media card**: product card và category card dùng `--sn-glass-control` + `--sn-glass-hairline` + inset highlight + `--sn-shadow-card`, **không blur**. Control nằm trên ảnh (wishlist, quick action) dùng `surface="overlay"` với `--sn-glass-menu` để giữ tương phản trên mọi ảnh.
+
+**Frosted stat card**: Insights, AnalyticsCard và metric card của workspace dùng cùng recipe frosted (glass-control, hairline, inset highlight, `--sn-shadow-card`, radius 16), **không blur**; chỉ filter bar và shell mới dùng slab blur.
+
+Ba luật cứng:
+
+- Một vùng chỉ một lớp blur. Control nằm trong slab dùng `--sn-glass-field` (alpha, không blur).
+- Không lồng slab trong slab. Tối đa ba tầng: `canvas-deep → glass slab → field`.
+- Bề mặt chứa form dài hoặc nội dung cuộn dài dùng `--sn-color-surface`, không dùng glass.
+
+### 6.2 Token
+
+| Token | Vai trò | Light / dark |
+|---|---|---|
+| `--sn-color-canvas-deep` | Nền trang storefront và workspace, lùi một bậc để slab nổi | neutral-150 / graphite-950 |
+| `--sn-glass-tint` | Nền slab chrome | trắng 0.78 / graphite 0.62 |
+| `--sn-glass-control` | Nền button content (secondary/outline) | trắng 0.62 / trắng 0.06 |
+| `--sn-glass-control-hover` | Hover của button content | trắng 0.9 / trắng 0.1 |
+| `--sn-glass-field` | Nền control nằm trong slab | surface / trắng 0.07 |
+| `--sn-glass-menu` | Nền menu, đục hơn slab | trắng 0.92 / graphite 0.88 |
+| `--sn-glass-hover` / `--sn-glass-press` | Wash hover/press trên slab | ink 0.06 / 0.10 · trắng 0.07 / 0.11 |
+| `--sn-glass-hairline` | Viền 1px | ink 0.10 / trắng 0.12 |
+| `--sn-glass-highlight` | Inset highlight cạnh trên | trắng 0.90 / trắng 0.08 |
+| `--sn-glass-ring` | Ring quanh badge/avatar nổi trên slab | trắng 0.92 / graphite 0.95 |
+| `--sn-blur-glass` | Blur và saturate của slab (`scale.css`) | blur(22px) saturate(170%) |
+| `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` | Shadow slab, control nổi, CTA accent (`semantic.css`) | theo theme |
+| `--sn-shadow-card` | Shadow rest của media card (`semantic.css`) | rất mềm, nhuộm nền |
+| `--sn-workspace-wash-warm` / `--sn-workspace-wash-cool` | Quầng material phía sau chrome workspace (`semantic.css`) | accent 0.07 + ink 0.035 / accent 0.06 + trắng 0.03 |
+| `--sn-workspace-wash` | Tổ hợp hai radial-gradient của workspace | dùng `background` trên pseudo fixed |
+
+Dark: kính phải sáng hơn canvas, không bao giờ tối hơn. Light: kính trắng trên giấy lạnh, không dùng trắng 100%.
+
+**Workspace ambient wash**: chrome workspace không có ảnh cuộn phía sau như storefront dock, nên `.sn-workspace::before` giữ một lớp `position: fixed`, `z-index: -1`, nền `--sn-workspace-wash`, `pointer-events: none`. Đây là lớp material duy nhất cho glass workspace: alpha thấp, không blur filter, không animate, tắt trong `forced-colors`. Không dùng lớp này cho nội dung, card hay storefront.
+
+### 6.3 Recipe
+
+Recipe chuẩn của slab nằm ở `components/glass.css` dưới class `.sn-glass-surface` (workspace sidebar/topbar, filter bar). Menu kính vẫn giữ recipe cục bộ `.sn-dropdown--glass`; dock vẫn dùng `.sn-storefront__card` cho tới Phase 9.
+
+```css
+.sn-glass-surface {
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-2xl);
+    background: var(--sn-glass-tint);
+    box-shadow: var(--sn-shadow-glass);
+    backdrop-filter: var(--sn-blur-glass);
+    -webkit-backdrop-filter: var(--sn-blur-glass);
+}
+
+.sn-glass-surface--menu {
+    border-radius: var(--sn-radius-menu);
+    background: var(--sn-glass-menu);
+    box-shadow: inset 0 1px 0 var(--sn-glass-highlight), var(--sn-shadow-overlay);
+}
+```
+
+Mọi bề mặt kính phải kèm ba fallback, tất cả đặt nền đặc và tắt blur:
+
+```css
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sn-glass-surface { background: var(--sn-color-surface); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sn-glass-surface {
+        background: var(--sn-color-surface);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .sn-glass-surface {
+        border-color: CanvasText;
+        background: Canvas;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+```
+
+### 6.4 Tầng và tương phản
+
+- `canvas-deep → slab → field` là tối đa; không thêm tầng kính thứ tư.
+- Nav, label và menu item trên slab dùng `--sn-color-text`; không dùng `text-faint` cho nội dung cần đọc.
+- Khi slab nằm trên ảnh tối, tăng tint lên 0.86 hoặc dùng `--sn-glass-menu` để giữ AA.
+- Accent trên kính chỉ cho CTA, selected và focus ring.
+
+### 6.5 Trạng thái
+
+- Hover: `--sn-glass-hover`, không đổi blur hay shadow lớn.
+- Press: `--sn-glass-press` + `scale(.96)` hoặc dịch 1px.
+- Open/selected: `--sn-glass-press` + hairline, hoặc accent-wash + accent-text.
+- Focus: ring 2px `--sn-color-focus` offset 2; item trong menu dùng inset -2.
+- Chỉ animate màu, opacity, transform; không animate `backdrop-filter`.
+
+### 6.6 Hiệu năng và fallback
+
+- Một `backdrop-filter` cho mỗi vùng; không đặt trên container cuộn dài.
+- Không `will-change` cho slab; không filter trên control con.
+- Luôn có fallback đặc; máy yếu thì giữ tint và bỏ blur, không hy sinh tương phản.
+- Kiểm tra 375px và một máy Android tầm trung trước khi nhân rộng.
+
+### 6.7 Rollout
+
+| Phase | Phạm vi | Trạng thái |
+|---|---|---|
+| 1 | Storefront dock, BrandMark, dropdown locale/account | Xong |
+| 2 | Button, input, field toàn cục | Xong |
+| 3 | Product card: frosted media card + quick-action pill | Xong |
+| 4 | Category card, Price/Rating chip | Tiếp theo |
+| 5 | Sheet, dialog, tooltip, filter rail | |
+| 6 | Chat dock, panel, composer | Xong |
+| 7 | Footer, newsletter, legal | |
+| 8 | Workspace sidebar, topbar, ambient wash, filter bar, stat card frosted | Xong |
+| 9 | Data table, QA sweep toàn UI | Tiếp theo |
+
+- Phase 2 đã hấp thụ override navbar (search pill, icon bubble, login pill) vào `button.css` và `field.css`; layout chỉ còn kích thước và trạng thái mở menu.
+- Phase 6: chat dùng một slab kính cho dock (header/footer chrome), message list giữ nền đặc để đọc; composer và quick reply là field alpha, không blur.
+- Layout chỉ được override kích thước, vị trí và radius cục bộ; không override tint, blur hay hairline của primitive.
+
+Checklist cho mỗi component:
+
+1. Phân loại chrome nổi hay nội dung.
+2. Chọn radius theo mục 5.
+3. Chỉ dùng token `--sn-glass-*`; không thêm alpha mới.
+4. Đủ state: default, hover, focus-visible, active, disabled, loading, error, success (nếu có).
+5. Đủ ba fallback.
+6. Ảnh 375/768/1440, light/dark, zoom 200%, reduced motion.
+7. Cập nhật bảng Rollout.
+
+Definition of done cho toàn UI:
+
+- Mọi chrome nổi dùng đúng năm dấu hiệu: tint, blur, hairline, inset highlight, shadow nhuộm màu nền.
+- Không card nội dung nào có blur.
+- `check:css` pass, không hex/alpha ngoài `tokens/`.
+- Không còn menu hay panel nổi nào giữ radius 6 cũ.
+
+## 7. Motion
 
 - Duration: instant 90ms · fast 150ms · base 180ms · slow 240ms · reveal 320ms.
 - Easing: `--sn-ease-standard`, `--sn-ease-out`, `--sn-ease-in-out`; stagger 40ms.
 - Chỉ animate `background-color`, `border-color`, `color`, `opacity`, `transform` ngắn. Không loop vô hạn trừ spinner/skeleton có mục đích.
 - `base/a11y.css` tắt animation/transition khi `prefers-reduced-motion: reduce` (file duy nhất được dùng `!important`).
 
-## 7. Icon & hình ảnh
+## 8. Icon & hình ảnh
 
 - **Lucide** là bộ icon duy nhất; không trộn Boxicons/FontAwesome, không tự vẽ SVG icon.
 - Size: xs 14 · sm 16 · md 20 · lg 24; stroke mặc định 1.75–2.
 - Icon-only button phải có `aria-label`; icon trang trí `aria-hidden="true"`.
-- Ảnh sản phẩm: tỷ lệ nhất quán (1:1 hoặc 4:3), `object-fit: cover`, có `width/height` hoặc `aspect-ratio` để tránh layout shift.
+- Ảnh sản phẩm: card 1:1 (khớp asset 900×900), gallery 4:5; mỗi component giữ một tỷ lệ nhất quán, `object-fit: cover`, có `aspect-ratio` để tránh layout shift.
 - Không fake screenshot bằng `<div>`, không overlay pill/tag lên ảnh.
 
-## 8. Nội dung & giọng điệu
+## 9. Nội dung & giọng điệu
 
 - Tiếng Việt là mặc định; mọi key phải có trong cả `lang/vi.json` và `lang/en.json`.
 - Câu ngắn, cụ thể, hướng hành động. Không dùng “Nâng tầm”, “Liền mạch”, “Bứt phá”, “Không chỉ là… mà còn…”.
@@ -119,7 +274,7 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 - Không emoji, không “01 / 02 / 03”, không số liệu bịa.
 - CTA ≤ 3 từ ở desktop; một CTA chính mỗi viewport.
 
-## 9. Trạng thái
+## 10. Trạng thái
 
 Mỗi page có dữ liệu phải xử lý:
 
@@ -132,7 +287,7 @@ Mỗi page có dữ liệu phải xử lý:
 
 Không hiển thị `[object Object]`, `NaN`, `undefined`; QA Dusk kiểm tra các chuỗi này.
 
-## 10. Accessibility
+## 11. Accessibility
 
 - `:focus-visible` toàn cục: outline 2px `--sn-color-focus`, offset 2px.
 - Skip link `.sn-skip-link` ở Storefront/Auth/Workspace → `#main-content`; `main` có `tabIndex={-1}`.
@@ -142,13 +297,16 @@ Không hiển thị `[object Object]`, `NaN`, `undefined`; QA Dusk kiểm tra c�
 - Bàn phím: tab qua mọi control, không bẫy focus ngoài dialog.
 - QA: 375–1440, light/dark, zoom 200%, reduced motion.
 
-## 11. Anti-slop checklist
+## 12. Anti-slop checklist
 
 - [ ] Không gradient trang trí (trừ layered tint của glass và skeleton shimmer có mục đích).
 - [ ] Không indigo/violet, không palette Tailwind mặc định.
 - [ ] Không serif, không italic nhấn mạnh, không highlight vàng.
 - [ ] Glass chỉ trên chrome nổi, không glass cho card nội dung, không glow, không blur lồng nhiều lớp.
-- [ ] Không card nội dung bo ≥16px; slab kính 20px là ngoại lệ duy nhất, shadow lớn chỉ cho lớp nổi.
+- [ ] Mỗi vùng tối đa một lớp blur; control trong kính dùng `--sn-glass-field`, không blur.
+- [ ] Bề mặt kính có đủ ba fallback đặc và đạt AA khi đặt trên ảnh tối.
+- [ ] Không dùng glass để che hierarchy yếu; bỏ blur mà bố cục vẫn rõ thì mới đúng.
+- [ ] Không card nội dung thường bo ≥16px; media card 16 và slab kính 20 là ngoại lệ, shadow lớn chỉ cho lớp nổi.
 - [ ] Không badge/pill spam; không chip cho mọi nhãn.
 - [ ] Không icon tự vẽ/emoji/số thứ tự trang trí.
 - [ ] Không card lồng card; không card cho từng dòng bảng.
@@ -159,7 +317,7 @@ Không hiển thị `[object Object]`, `NaN`, `undefined`; QA Dusk kiểm tra c�
 - [ ] Không em-dash/en-dash trong chuỗi hiển thị.
 - [ ] Không heading trung tâm + 3 card bằng nhau + “Tìm hiểu thêm”.
 
-## 12. File map
+## 13. File map
 
 ```
 resources/css/
@@ -174,8 +332,8 @@ resources/css/
 │   ├── typography.css
 │   ├── forms.css
 │   └── a11y.css             # focus-visible, skip link, reduced motion
-├── components/              # 9 file primitive toàn cục
-│   ├── button.css  field.css  file-dropzone.css  overlay.css
+├── components/              # 10 file primitive toàn cục
+│   ├── button.css  field.css  file-dropzone.css  glass.css  overlay.css
 │   ├── feedback.css  navigation.css  data.css  status.css  typography.css
 ├── layouts/
 │   ├── storefront.css  auth.css  account.css  workspace.css
@@ -184,10 +342,15 @@ resources/css/
 
 CSS Modules nằm cạnh page/component (`*.module.css`), chỉ chứa layout/visual đặc thù; primitive dùng class `sn-*` toàn cục.
 
-## 13. Quy tắc kỹ thuật
+Bề mặt kính của chrome workspace nằm ở `components/glass.css` (`.sn-glass-surface`, có đủ ba fallback). Dock vẫn ở `layouts/storefront.css` và menu ở `components/overlay.css`; Phase 9 sẽ chuyển nốt hai consumer này sang primitive chung.
+
+## 14. Quy tắc kỹ thuật
 
 - Không Tailwind, không `@apply`, không `!important` ngoài `utilities.css`/`base/a11y.css`.
 - Không hex/rgb/hsl ngoài `tokens/primitive.css`; không token primitive trong component.
+- Bề mặt kính mới chỉ dùng token `--sn-glass-*`, kèm đủ ba fallback (`@supports`, `prefers-reduced-transparency`, `forced-colors`); không thêm alpha ngoài `tokens/`.
+- Không đặt `backdrop-filter` trên container cuộn dài hoặc lồng trong slab khác.
+- `html[data-js]` được set trong `app.blade.php` cho progressive enhancement; chỉ dùng để ẩn control hover-only (quick action), không ẩn nội dung chính.
 - Class CSS Module đặt camelCase; compose bằng `cx` từ `@/lib/cx`.
 - `npm run check:css` strict; `types`, `format:check`, `lint`, `build`, `build:ssr`, `php artisan test` trước khi commit.
 - Dusk QA: `php artisan dusk --filter=Phase12QaTest` với `.env.dusk.local` + DB QA local.

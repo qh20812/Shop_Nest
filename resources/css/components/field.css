@@ -1,6 +1,8 @@
+/* Hallmark · component: field · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
 /*
  * Bảng Hiệu — form controls.
  * Native controls plus Radix checkbox; every value comes from a token.
+ * Surface glass is alpha only; blur belongs to the slab, never to a control.
  */
 
 @layer sn-components {
@@ -56,7 +58,7 @@
         height: var(--sn-control-md);
         padding-inline: var(--sn-space-4);
         border: 1px solid var(--sn-color-border-strong);
-        border-radius: var(--sn-radius-md);
+        border-radius: var(--sn-radius-control);
         background: var(--sn-color-surface);
         color: var(--sn-color-text);
         font-family: var(--sn-font-sans);
@@ -64,7 +66,8 @@
         line-height: var(--sn-leading-normal);
         transition:
             border-color var(--sn-dur-fast) var(--sn-ease-standard),
-            background-color var(--sn-dur-fast) var(--sn-ease-standard);
+            background-color var(--sn-dur-fast) var(--sn-ease-standard),
+            box-shadow var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
     .sn-input::placeholder,
@@ -90,6 +93,12 @@
     .sn-select:focus-visible {
         outline: 2px solid var(--sn-color-focus);
         outline-offset: 2px;
+    }
+
+    .sn-input[aria-invalid='true']:focus-visible,
+    .sn-textarea[aria-invalid='true']:focus-visible,
+    .sn-select[aria-invalid='true']:focus-visible {
+        outline-color: var(--sn-color-danger);
     }
 
     .sn-input[aria-invalid='true'],
@@ -166,7 +175,7 @@
         min-height: calc(var(--sn-space-14) * 2);
         padding: var(--sn-space-3) var(--sn-space-4);
         border: 1px solid var(--sn-color-border-strong);
-        border-radius: var(--sn-radius-md);
+        border-radius: var(--sn-radius-control);
         background: var(--sn-color-surface);
         color: var(--sn-color-text);
         font-family: var(--sn-font-sans);
@@ -175,7 +184,8 @@
         resize: vertical;
         transition:
             border-color var(--sn-dur-fast) var(--sn-ease-standard),
-            background-color var(--sn-dur-fast) var(--sn-ease-standard);
+            background-color var(--sn-dur-fast) var(--sn-ease-standard),
+            box-shadow var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
     .sn-textarea-wrap {
@@ -196,7 +206,7 @@
         height: var(--sn-control-md);
         padding-inline: var(--sn-space-4) var(--sn-space-10);
         border: 1px solid var(--sn-color-border-strong);
-        border-radius: var(--sn-radius-md);
+        border-radius: var(--sn-radius-control);
         background: var(--sn-color-surface);
         color: var(--sn-color-text);
         font-family: var(--sn-font-sans);
@@ -206,7 +216,8 @@
         cursor: pointer;
         transition:
             border-color var(--sn-dur-fast) var(--sn-ease-standard),
-            background-color var(--sn-dur-fast) var(--sn-ease-standard);
+            background-color var(--sn-dur-fast) var(--sn-ease-standard),
+            box-shadow var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
     .sn-select[data-size='sm'] {
@@ -228,6 +239,38 @@
         transform: translateY(-50%);
         color: var(--sn-color-text-muted);
         pointer-events: none;
+    }
+
+    /* Shape and glass surface */
+    .sn-input[data-shape='pill'],
+    .sn-select[data-shape='pill'] {
+        border-radius: var(--sn-radius-pill);
+    }
+
+    .sn-input[data-surface='glass'],
+    .sn-select[data-surface='glass'],
+    .sn-textarea[data-surface='glass'] {
+        border-color: var(--sn-glass-hairline);
+        background: var(--sn-glass-field);
+        box-shadow: var(--sn-shadow-float);
+    }
+
+    .sn-input[data-surface='glass']:hover,
+    .sn-select[data-surface='glass']:hover,
+    .sn-textarea[data-surface='glass']:hover {
+        border-color: var(--sn-glass-hairline);
+        box-shadow: var(--sn-shadow-glass);
+    }
+
+    .sn-input[data-surface='glass'][readonly] {
+        background: var(--sn-color-surface-sunken);
+        box-shadow: none;
+    }
+
+    .sn-input[data-surface='glass'][aria-invalid='true'],
+    .sn-select[data-surface='glass'][aria-invalid='true'],
+    .sn-textarea[data-surface='glass'][aria-invalid='true'] {
+        border-color: var(--sn-color-danger);
     }
 
     /* Checkbox (Radix) */
@@ -252,6 +295,10 @@
     .sn-checkbox:focus-visible {
         outline: 2px solid var(--sn-color-focus);
         outline-offset: 2px;
+    }
+
+    .sn-checkbox[data-state='unchecked']:hover {
+        border-color: var(--sn-color-text-faint);
     }
 
     .sn-checkbox[data-state='checked'],
@@ -329,6 +376,10 @@
         outline-offset: 2px;
     }
 
+    .sn-switch[data-state='unchecked']:hover {
+        border-color: var(--sn-color-text-faint);
+    }
+
     .sn-switch[data-state='checked'] {
         border-color: var(--sn-color-accent);
         background: var(--sn-color-accent);
@@ -388,7 +439,7 @@
         gap: var(--sn-space-3);
         padding: var(--sn-space-4);
         border: 1px solid var(--sn-color-border);
-        border-radius: var(--sn-radius-lg);
+        border-radius: var(--sn-radius-control);
         background: var(--sn-color-surface);
         cursor: pointer;
         transition:
@@ -505,14 +556,14 @@
         justify-content: center;
         padding: 0;
         border: 0;
-        border-radius: var(--sn-radius-sm);
+        border-radius: var(--sn-radius-pill);
         background: transparent;
         color: var(--sn-color-text-muted);
         cursor: pointer;
     }
 
     .sn-search__clear:hover {
-        background: var(--sn-color-accent-wash);
+        background: var(--sn-color-surface-sunken);
         color: var(--sn-color-text);
     }
 
@@ -543,6 +594,17 @@
 
     .sn-rich-text .tox-tinymce {
         border: 1px solid var(--sn-color-border-strong);
-        border-radius: var(--sn-radius-md);
+        border-radius: var(--sn-radius-control);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sn-input,
+        .sn-textarea,
+        .sn-select,
+        .sn-checkbox,
+        .sn-switch,
+        .sn-radio-card {
+            transition: none;
+        }
     }
 }

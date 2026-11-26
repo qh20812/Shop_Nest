@@ -13,7 +13,7 @@ class ExchangeRateService
 
     /**
      * Get exchange rate from source currency to target currency.
-     * 
+     *
      * @throws \RuntimeException If unable to get exchange rate and no fallback available
      */
     public static function getRate(string $fromCurrency, string $toCurrency = 'USD'): float
@@ -35,6 +35,7 @@ class ExchangeRateService
 
             if ($to === $baseCurrency) {
                 $fromRate = self::resolveRate($rates, $from);
+
                 return $fromRate > 0 ? 1 / $fromRate : 1.0;
             }
 
@@ -48,21 +49,22 @@ class ExchangeRateService
                 'to' => $to,
                 'message' => $exception->getMessage(),
             ]);
-            
+
             // Return hardcoded fallback rate
             $fallbackRates = self::getHardcodedRates();
             $fromRate = $fallbackRates[$from] ?? 1.0;
             $toRate = $fallbackRates[$to] ?? 1.0;
-            
+
             if ($fromRate > 0 && $toRate > 0) {
                 return round($toRate / $fromRate, 6);
             }
-            
+
             // Last resort: return 1.0 to prevent complete failure
             Log::warning('exchange_rate.using_fallback_rate_1', [
                 'from' => $from,
                 'to' => $to,
             ]);
+
             return 1.0;
         }
     }
@@ -73,6 +75,7 @@ class ExchangeRateService
     public static function convert(float $amount, string $fromCurrency, string $toCurrency = 'USD'): float
     {
         $rate = self::getRate($fromCurrency, $toCurrency);
+
         return round($amount * $rate, 2);
     }
 
@@ -82,16 +85,17 @@ class ExchangeRateService
     private static function getRates(string $baseCurrency): array
     {
         $cacheTtl = (int) config('services.exchange_rate.cache_ttl', 3600);
-        $cacheKey = self::CACHE_KEY_PREFIX . $baseCurrency;
+        $cacheKey = self::CACHE_KEY_PREFIX.$baseCurrency;
 
         return Cache::remember($cacheKey, $cacheTtl, function () use ($baseCurrency) {
             $rates = self::fetchRatesFromApi($baseCurrency);
 
-            if (!empty($rates)) {
+            if (! empty($rates)) {
                 return $rates;
             }
 
             Log::warning('exchange_rate.api_fallback', ['base' => $baseCurrency]);
+
             return self::getHardcodedRates();
         });
     }
@@ -105,11 +109,11 @@ class ExchangeRateService
         $apiUrl = $config['api_url'] ?? null;
         $apiKey = $config['api_key'] ?? null;
 
-        if (!$apiUrl || !$apiKey) {
+        if (! $apiUrl || ! $apiKey) {
             return [];
         }
 
-        $url = $apiUrl . $apiKey . '/latest/' . $baseCurrency;
+        $url = $apiUrl.$apiKey.'/latest/'.$baseCurrency;
         $timeout = (int) ($config['timeout'] ?? 5);
 
         try {
@@ -117,18 +121,19 @@ class ExchangeRateService
                 ->retry(2, 200)
                 ->get($url);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('exchange_rate.api_failed', [
                     'base' => $baseCurrency,
                     'status' => $response->status(),
                 ]);
+
                 return [];
             }
 
             $payload = $response->json();
             $rates = Arr::get($payload, 'conversion_rates', []);
 
-            if (!is_array($rates) || empty($rates)) {
+            if (! is_array($rates) || empty($rates)) {
                 return [];
             }
 
@@ -141,6 +146,7 @@ class ExchangeRateService
                 'base' => $baseCurrency,
                 'message' => $exception->getMessage(),
             ]);
+
             return [];
         }
     }
@@ -158,6 +164,7 @@ class ExchangeRateService
         }
 
         $fallbackRates = self::getHardcodedRates();
+
         return (float) ($fallbackRates[$normalized] ?? 1.0);
     }
 

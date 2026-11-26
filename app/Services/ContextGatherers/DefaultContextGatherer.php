@@ -8,7 +8,7 @@ class DefaultContextGatherer implements ContextGathererInterface
 {
     public function gather(?User $user = null): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 

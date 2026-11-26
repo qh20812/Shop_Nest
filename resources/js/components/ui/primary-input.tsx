@@ -1,7 +1,8 @@
-import { ChevronDown } from 'lucide-react';
 import React from 'react';
 
-import InputError from './input-error';
+import { FormField } from './form-field';
+import { Input } from './input';
+import { Select } from './select';
 
 interface Option {
     value: string | number;
@@ -22,6 +23,10 @@ interface PrimaryInputProps {
     autoComplete?: string;
 }
 
+/**
+ * @deprecated Dùng `FormField` + `Input`/`Select` cho code mới.
+ * Wrapper này giữ API cũ cho các form Seller đang dùng.
+ */
 export default function PrimaryInput({
     label,
     name,
@@ -35,52 +40,32 @@ export default function PrimaryInput({
     disabled = false,
     autoComplete,
 }: PrimaryInputProps) {
+    const control =
+        type === 'select' ? (
+            <Select
+                id={name}
+                name={name}
+                value={value}
+                onChange={onChange}
+                disabled={disabled}
+                options={options.map((option) => ({ value: String(option.value), label: option.label }))}
+            />
+        ) : (
+            <Input
+                id={name}
+                type={type}
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                disabled={disabled}
+                autoComplete={autoComplete}
+            />
+        );
+
     return (
-        <div className="sn-field">
-            <label className="sn-field__label" htmlFor={name}>
-                {label}
-                {required && (
-                    <span aria-hidden="true" className="sn-field__required">
-                        *
-                    </span>
-                )}
-            </label>
-
-            {type === 'select' ? (
-                <span className="sn-select-wrap">
-                    <select
-                        id={name}
-                        name={name}
-                        value={value}
-                        onChange={onChange}
-                        disabled={disabled}
-                        aria-invalid={error ? true : undefined}
-                        className="sn-select"
-                    >
-                        {options.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                    <ChevronDown aria-hidden="true" className="sn-select__icon" />
-                </span>
-            ) : (
-                <input
-                    id={name}
-                    type={type}
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    autoComplete={autoComplete}
-                    aria-invalid={error ? true : undefined}
-                    className="sn-input"
-                />
-            )}
-
-            <InputError message={error} />
-        </div>
+        <FormField htmlFor={name} label={label} required={required} error={error}>
+            {control}
+        </FormField>
     );
 }

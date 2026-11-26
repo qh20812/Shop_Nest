@@ -34,7 +34,8 @@ class PaymentWebhookTest extends TestCase
             'currency' => 'VND',
         ]);
 
-        OrderItem::factory()->create(['order_id' => $this->order->order_id]);
+        $item = OrderItem::factory()->create(['order_id' => $this->order->order_id]);
+        $item->variant?->update(['stock_quantity' => 1000]);
     }
 
     private function eventPayload(string $eventId = 'evt_test_1'): array

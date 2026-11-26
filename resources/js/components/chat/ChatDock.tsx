@@ -36,6 +36,7 @@ type ChatDockPageProps = {
 
 const STORAGE_KEY = 'shopnest.chatbot.messages.v2';
 const MAX_STORED_MESSAGES = 40;
+const SEND_TIMEOUT_MS = 30000;
 
 const hiddenPrefixes = [
     '/login',
@@ -173,15 +174,60 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const [error, setError] = React.useState<string | null>(null);
     const [resolvedUnread, setResolvedUnread] = React.useState(unreadCount);
     const [clearing, setClearing] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(false);
     const historySynced = React.useRef(false);
+    const inFlight = React.useRef(false);
+    const sendController = React.useRef<AbortController | null>(null);
+    const persistedStorageKey = React.useRef(storageKey);
+
+    React.useEffect(() => () => sendController.current?.abort(), []);
 
     React.useEffect(() => {
+        if (persistedStorageKey.current !== storageKey) {
+            // Vừa đổi user: không ghi messages của user cũ sang key mới.
+            persistedStorageKey.current = storageKey;
+
+            return;
+        }
+
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
         } catch {
             // Storage can be unavailable in private mode; chat still works for the session.
         }
     }, [messages, storageKey]);
+
+    // Đổi user (storageKey đổi) thì nạp lại đúng lịch sử của user đó.
+    React.useEffect(() => {
+        sendController.current?.abort();
+        historySynced.current = false;
+        setMessages(loadStoredMessages(storageKey));
+        setError(null);
+    }, [storageKey]);
+
+    // Đồng bộ tin nhắn giữa các tab đang mở.
+    React.useEffect(() => {
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key !== storageKey) {
+                return;
+            }
+
+            if (event.newValue === null) {
+                setMessages([greeting]);
+                return;
+            }
+
+            setMessages((current) => {
+                const currentSerialized = JSON.stringify(current.slice(-MAX_STORED_MESSAGES));
+
+                return currentSerialized === event.newValue ? current : loadStoredMessages(storageKey);
+            });
+        };
+
+        window.addEventListener('storage', handleStorage);
+
+        return () => window.removeEventListener('storage', handleStorage);
+    }, [storageKey]);
 
     // Server là nguồn lịch sử chính: đăng nhập máy khác vẫn thấy hội thoại cũ.
     React.useEffect(() => {
@@ -288,9 +334,11 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const handleSend = async (content: string) => {
         const trimmed = content.trim();
 
-        if (trimmed === '' || typing) {
+        if (trimmed === '' || typing || inFlight.current) {
             return;
         }
+
+        inFlight.current = true;
 
         const userMessage: StoredMessage = {
             id: Date.now(),
@@ -303,6 +351,10 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
         setTyping(true);
         setError(null);
 
+        const controller = new AbortController();
+        sendController.current = controller;
+        const timeoutId = window.setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+
         try {
             const response = await fetch('/chatbot/message', {
                 method: 'POST',
@@ -313,6 +365,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                     ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
                 },
                 credentials: 'same-origin',
+                signal: controller.signal,
                 body: JSON.stringify({ message: trimmed }),
             });
 
@@ -340,7 +393,13 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                 },
             ]);
         } catch (requestError) {
-            const message = requestError instanceof Error ? requestError.message : t('Could not connect to the assistant.');
+            const timedOut = requestError instanceof DOMException && requestError.name === 'AbortError';
+            const message = timedOut
+                ? t('The assistant took too long to respond. Please try again.')
+                : requestError instanceof Error
+                  ? requestError.message
+                  : t('Could not connect to the assistant.');
+
             setError(message);
             setMessages((current) => [
                 ...current,
@@ -352,6 +411,13 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                 },
             ]);
         } finally {
+            window.clearTimeout(timeoutId);
+
+            if (sendController.current === controller) {
+                sendController.current = null;
+            }
+
+            inFlight.current = false;
             setTyping(false);
         }
     };
@@ -372,7 +438,7 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             </DialogTrigger>
 
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Content className={cx(shellStyles.dockContent)}>
+                <DialogPrimitive.Content className={cx('sn-glass-surface', shellStyles.dockContent)} data-expanded={expanded ? 'true' : undefined}>
                     <DialogTitle className="sn-visually-hidden">{t('ShopNest assistant')}</DialogTitle>
                     <DialogDescription className="sn-visually-hidden">
                         {t('Chat window with the ShopNest assistant. Press Escape to close.')}
@@ -389,6 +455,8 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                             onDismissError={() => setError(null)}
                             onClearHistory={handleClearHistory}
                             clearing={clearing}
+                            expanded={expanded}
+                            onToggleExpanded={() => setExpanded((current) => !current)}
                         />
                     </React.Suspense>
                 </DialogPrimitive.Content>

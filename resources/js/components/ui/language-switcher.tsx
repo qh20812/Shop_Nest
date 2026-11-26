@@ -13,7 +13,13 @@ interface LanguageOption {
     flag: string;
 }
 
-export default function LanguageSwitcher() {
+type LanguageSwitcherSurface = 'content' | 'glass';
+
+interface LanguageSwitcherProps {
+    surface?: LanguageSwitcherSurface;
+}
+
+export default function LanguageSwitcher({ surface = 'content' }: LanguageSwitcherProps) {
     const { locale } = useTranslation();
 
     const languageOptions: LanguageOption[] = React.useMemo(
@@ -41,11 +47,11 @@ export default function LanguageSwitcher() {
 
     return (
         <div className="sn-lang">
-            <div className="sn-lang__control">
+            <div className="sn-lang__control" data-surface={surface}>
                 <span className="sn-lang__trigger">
                     <span className="sn-lang__value">
                         <img src={activeOption.flag} alt="" aria-hidden="true" className="sn-lang__flag" />
-                        <span>{activeOption.label}</span>
+                        <span className="sn-lang__label">{activeOption.label}</span>
                     </span>
                     <ChevronDown aria-hidden="true" className="sn-lang__chevron" />
                 </span>

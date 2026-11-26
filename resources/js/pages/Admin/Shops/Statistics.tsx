@@ -80,7 +80,7 @@ export default function Statistics() {
                 ]}
             />
 
-            <section className={styles.section}>
+            <section className={`${styles.filterSection} sn-glass-surface`}>
                 <div className={styles.sectionHead}>
                     <h2 className={styles.sectionTitle}>
                         <Filter aria-hidden="true" className={styles.sectionIcon} />
@@ -90,11 +90,17 @@ export default function Statistics() {
                 <div className={styles.filterRow}>
                     <div className={styles.filterField}>
                         <span className={styles.filterLabel}>{t('From')}</span>
-                        <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} aria-label={t('From date')} />
+                        <Input
+                            type="date"
+                            value={from}
+                            onChange={(event) => setFrom(event.target.value)}
+                            aria-label={t('From date')}
+                            surface="glass"
+                        />
                     </div>
                     <div className={styles.filterField}>
                         <span className={styles.filterLabel}>{t('To')}</span>
-                        <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} aria-label={t('To date')} />
+                        <Input type="date" value={to} onChange={(event) => setTo(event.target.value)} aria-label={t('To date')} surface="glass" />
                     </div>
                     <div className={styles.filterActions}>
                         <Button type="button" variant="primary" onClick={applyFilters}>
@@ -106,7 +112,14 @@ export default function Statistics() {
 
             <Insights items={summaryItems} />
 
-            <AnalyticsChart type="line" data={chartData} title={t('Revenue Trend')} description={t('Monthly revenue for this shop')} />
+            <AnalyticsChart
+                type="line"
+                data={chartData}
+                title={t('Revenue Trend')}
+                description={t('Monthly revenue for this shop')}
+                valueFormatter={formatVnd}
+                valueLabel={t('Revenue')}
+            />
 
             <section className={styles.section}>
                 <div className={styles.sectionHead}>

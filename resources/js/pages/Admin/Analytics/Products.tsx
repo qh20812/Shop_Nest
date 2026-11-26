@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
 import styles from '@/components/admin/admin.module.css';
 
@@ -66,7 +66,8 @@ interface ProductsPageProps extends Record<string, unknown> {
     products?: ProductAnalyticsPayload;
     filters?: Record<string, unknown>;
     locale?: string;
-    currency?: string;
+    currency?: string | { code?: string };
+    currencyCode?: string;
 }
 
 type ProductFilterState = AnalyticsFilterState & {
@@ -131,7 +132,7 @@ const Products: React.FC = () => {
     const analytics = useMemo<ProductAnalyticsPayload>(() => props.products ?? {}, [props.products]);
     const initialFilters = props.filters ?? {};
     const locale = typeof props.locale === 'string' ? props.locale : 'vi';
-    const currency = resolveCurrencyCode(props.currency);
+    const currency = resolveCurrencyCode(props.currencyCode ?? props.currency);
     const { t } = useTranslation();
 
     const [filters, setFilters] = useState<ProductFilterState>(() => ({
@@ -154,15 +155,7 @@ const Products: React.FC = () => {
     );
     const lowStock = useMemo<LowStockPoint[]>(() => (Array.isArray(analytics.lowStock) ? analytics.lowStock : []), [analytics]);
 
-    const currencyFormatter = useMemo(
-        () =>
-            new Intl.NumberFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
-                style: 'currency',
-                currency,
-                maximumFractionDigits: 0,
-            }),
-        [currency, locale],
-    );
+    const money = useMemo(() => (value: number) => formatMoney(value, currency, locale), [currency, locale]);
 
     const uniqueProductCount = useMemo(() => {
         const identifiers = new Set<number>();
@@ -258,7 +251,7 @@ const Products: React.FC = () => {
                 label: t('Revenue'),
                 sortable: false,
                 align: 'right',
-                render: (value) => currencyFormatter.format(Number(value ?? 0)),
+                render: (value) => money(Number(value ?? 0)),
             },
             {
                 key: 'netChange',
@@ -282,7 +275,7 @@ const Products: React.FC = () => {
                 },
             },
         ],
-        [currencyFormatter, t],
+        [money, t],
     );
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
@@ -317,47 +310,43 @@ const Products: React.FC = () => {
                     </p>
                 </section>
 
-                <section className={styles.section}>
-                    <AnalyticsFilters
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        title={t('Filter Product Data')}
-                        description={t('Select a timeframe or narrow by seller, category, or brand to focus the analysis.')}
-                        onReset={handleResetFilters}
-                    >
-                        <div className={styles.filterActions}>
-                            <Button type="button" variant="primary" onClick={handleApplyFilters}>
-                                <Filter aria-hidden="true" />
-                                {t('Apply Filters')}
-                            </Button>
-                        </div>
-                    </AnalyticsFilters>
-                </section>
+                <AnalyticsFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    title={t('Filter Product Data')}
+                    description={t('Select a timeframe or narrow by seller, category, or brand to focus the analysis.')}
+                    onReset={handleResetFilters}
+                >
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                            <Filter aria-hidden="true" />
+                            {t('Apply Filters')}
+                        </Button>
+                    </div>
+                </AnalyticsFilters>
 
-                <section className={styles.section}>
-                    <ul className={styles.kpiList}>
-                        <AnalyticsCard
-                            title={t('Tracked Products')}
-                            value={formatNumber(uniqueProductCount)}
-                            tooltip={t('Unique products represented across revenue, turnover, and inventory metrics.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Low Stock Items')}
-                            value={formatNumber(lowStockCount)}
-                            tooltip={t('Variants currently at or below the configured low stock threshold.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Out of Stock Variants')}
-                            value={formatNumber(outOfStockCount)}
-                            tooltip={t('Variants requiring immediate replenishment to avoid lost sales.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Avg Units Sold')}
-                            value={formatNumber(Math.round(avgUnitsSold))}
-                            tooltip={t('Average units sold per tracked product within the selected filters.')}
-                        />
-                    </ul>
-                </section>
+                <ul className={styles.kpiList}>
+                    <AnalyticsCard
+                        title={t('Tracked Products')}
+                        value={formatNumber(uniqueProductCount)}
+                        tooltip={t('Unique products represented across revenue, turnover, and inventory metrics.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Low Stock Items')}
+                        value={formatNumber(lowStockCount)}
+                        tooltip={t('Variants currently at or below the configured low stock threshold.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Out of Stock Variants')}
+                        value={formatNumber(outOfStockCount)}
+                        tooltip={t('Variants requiring immediate replenishment to avoid lost sales.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Avg Units Sold')}
+                        value={formatNumber(Math.round(avgUnitsSold))}
+                        tooltip={t('Average units sold per tracked product within the selected filters.')}
+                    />
+                </ul>
 
                 <section className={styles.chartGrid}>
                     <AnalyticsChart
@@ -365,12 +354,15 @@ const Products: React.FC = () => {
                         data={topProductsChartData}
                         title={t('Top Product Revenue')}
                         description={t('Highest grossing products within the filtered range.')}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
                     />
                     <AnalyticsChart
                         type="pie"
                         data={categoryPerformance}
                         title={t('Category Contribution')}
                         description={t('Revenue distribution across product categories.')}
+                        valueFormatter={money}
                         legend
                     />
                 </section>
@@ -380,6 +372,7 @@ const Products: React.FC = () => {
                     data={inventoryTrendData}
                     title={t('Inventory Net Change by Variant')}
                     description={t('Net quantity movement to highlight fast-selling variants and stock drains.')}
+                    valueLabel={t('Quantity')}
                 />
 
                 <AnalyticsTable

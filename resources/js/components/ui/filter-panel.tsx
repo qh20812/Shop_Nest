@@ -90,7 +90,7 @@ export default function FilterPanel({
             />
 
             <form className="sn-filter-panel" onSubmit={handleSubmit}>
-                <div className="sn-filter-panel__grid">
+                <div className="sn-filter-panel__grid sn-glass-surface">
                     {searchConfig && (
                         <div className="sn-filter-panel__search">
                             <Input
@@ -100,8 +100,9 @@ export default function FilterPanel({
                                 placeholder={t(searchConfig.placeholder)}
                                 aria-label={t(searchConfig.placeholder)}
                                 leadingIcon={Search}
+                                surface="glass"
                             />
-                            <Button type="submit" variant="secondary" size="md">
+                            <Button type="submit" variant="secondary" size="md" surface="glass">
                                 {t('Search')}
                             </Button>
                         </div>
@@ -113,6 +114,7 @@ export default function FilterPanel({
                                 value={filterConfig.value}
                                 onChange={(event) => filterConfig.onChange(event.target.value)}
                                 aria-label={t(filterConfig.label)}
+                                surface="glass"
                             >
                                 <option value="">{t(filterConfig.label)}</option>
                                 {filterConfig.options.map((option) => (

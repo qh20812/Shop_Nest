@@ -6,6 +6,7 @@ import Tooltip from './tooltip';
 
 type IconButtonVariant = 'ghost' | 'secondary' | 'primary' | 'danger';
 type IconButtonSize = 'sm' | 'md' | 'lg';
+type IconButtonSurface = 'content' | 'glass' | 'overlay';
 
 type IconButtonVariantProps = { variant?: IconButtonVariant; size?: IconButtonSize };
 
@@ -14,12 +15,13 @@ const iconButtonVariants: (props?: IconButtonVariantProps) => string = () => 'sn
 type IconButtonProps = React.ComponentProps<'button'> & {
     variant?: IconButtonVariant;
     size?: IconButtonSize;
+    surface?: IconButtonSurface;
     label: string;
     tooltip?: string;
 };
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-    ({ className, variant = 'ghost', size = 'md', label, tooltip, type = 'button', ...props }, ref) => {
+    ({ className, variant = 'ghost', size = 'md', surface = 'content', label, tooltip, type = 'button', ...props }, ref) => {
         const button = (
             <button
                 ref={ref}
@@ -27,6 +29,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
                 data-slot="icon-button"
                 data-variant={variant}
                 data-size={size}
+                data-surface={surface}
                 aria-label={label}
                 title={tooltip ?? label}
                 className={cx('sn-icon-btn', className)}
@@ -45,4 +48,4 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 IconButton.displayName = 'IconButton';
 
 export { IconButton, iconButtonVariants };
-export type { IconButtonProps, IconButtonSize, IconButtonVariant };
+export type { IconButtonProps, IconButtonSize, IconButtonSurface, IconButtonVariant };

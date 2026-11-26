@@ -14,6 +14,7 @@ class ShippingService
         $weightFee = $cartItems->sum(function ($item) {
             // Assume each item has weight, default 0.5kg
             $weight = $item->variant->weight ?? 0.5;
+
             return $weight * $item->quantity * 5000; // 5000 VND per kg
         });
 

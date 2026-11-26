@@ -87,6 +87,8 @@
     /* Shell */
     --sn-header: 3.5rem;
     --sn-topbar: 3.5rem;
+    --sn-shell-inset: 0.75rem;
+    --sn-shell-gap: 0.75rem;
 
     /* Storefront glass dock */
     --sn-header-storefront: 3.75rem;
@@ -102,6 +104,8 @@
     --sn-chat-panel: 23.75rem;
     --sn-chat-panel-height: min(40rem, calc(100dvh - 3rem));
     --sn-chat-sheet-height: 85dvh;
+    --sn-chat-dock-width: 27rem;
+    --sn-chat-dock-height: min(46rem, calc(100dvh - 2.5rem));
 
     /* Avatar */
     --sn-avatar-sm: 1.75rem;
@@ -115,6 +119,9 @@
     --sn-radius-md: 0.375rem;
     --sn-radius-lg: 0.5rem;
     --sn-radius-xl: 0.75rem;
+    --sn-radius-control: 0.75rem;
+    --sn-radius-card: 1rem;
+    --sn-radius-media: 0.625rem;
     --sn-radius-2xl: 1.25rem;
     --sn-radius-3xl: 1.75rem;
     --sn-radius-pill: 9999px;

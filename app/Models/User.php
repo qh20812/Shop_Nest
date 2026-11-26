@@ -343,11 +343,19 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
-     * Seller promotion wallet for this user
+     * Unified ShopNest wallet for this user (customer, seller or admin).
+     */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class, 'user_id', 'id');
+    }
+
+    /**
+     * @deprecated Use wallet() instead. Kept for older promotion code paths.
      */
     public function promotionWallet(): HasOne
     {
-        return $this->hasOne(SellerPromotionWallet::class, 'seller_id', 'id');
+        return $this->hasOne(Wallet::class, 'user_id', 'id');
     }
 
     /**

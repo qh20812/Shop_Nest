@@ -124,7 +124,7 @@ export default function Violations() {
                 ]}
             />
 
-            <section className={styles.section}>
+            <section className={`${styles.filterSection} sn-glass-surface`}>
                 <div className={styles.sectionHead}>
                     <h2 className={styles.sectionTitle}>
                         <Filter aria-hidden="true" className={styles.sectionIcon} />
@@ -135,7 +135,7 @@ export default function Violations() {
                 <div className={styles.filterRow}>
                     <div className={styles.filterField}>
                         <span className={styles.filterLabel}>{t('Status')}</span>
-                        <Select value={status} onChange={(event) => setStatus(event.target.value)} aria-label={t('Status')}>
+                        <Select value={status} onChange={(event) => setStatus(event.target.value)} aria-label={t('Status')} surface="glass">
                             <option value="">{t('All')}</option>
                             <option value="open">{t('Open')}</option>
                             <option value="resolved">{t('Resolved')}</option>
@@ -145,7 +145,7 @@ export default function Violations() {
 
                     <div className={styles.filterField}>
                         <span className={styles.filterLabel}>{t('Severity')}</span>
-                        <Select value={severity} onChange={(event) => setSeverity(event.target.value)} aria-label={t('Severity')}>
+                        <Select value={severity} onChange={(event) => setSeverity(event.target.value)} aria-label={t('Severity')} surface="glass">
                             <option value="">{t('All')}</option>
                             <option value="low">{t('Low')}</option>
                             <option value="medium">{t('Medium')}</option>

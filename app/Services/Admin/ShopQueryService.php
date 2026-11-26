@@ -2,12 +2,10 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ShopQueryService
 {
@@ -88,7 +86,7 @@ class ShopQueryService
             ->selectSub($this->orderRevenueSubquery(), 'total_revenue')
             ->selectSub($this->orderItemsSubquery(), 'items_sold');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($sub) use ($search) {
                 $sub->where('username', 'like', "%{$search}%")
@@ -100,15 +98,15 @@ class ShopQueryService
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->shopStatus($filters['status']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('users.created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('users.created_at', '<=', $filters['date_to']);
         }
 

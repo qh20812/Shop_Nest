@@ -4,11 +4,9 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Seller\TopUpWalletRequest;
-use App\Http\Requests\Seller\TransferFundsRequest;
-use App\Models\SellerWalletTransaction;
+use App\Models\WalletTransaction;
 use App\Services\SellerWalletService;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,9 +15,7 @@ use Inertia\Response;
 
 class WalletController extends Controller
 {
-    public function __construct(private SellerWalletService $walletService)
-    {
-    }
+    public function __construct(private SellerWalletService $walletService) {}
 
     public function show(): Response
     {
@@ -36,11 +32,12 @@ class WalletController extends Controller
         $filters = $request->only(['type', 'date_from', 'date_to', 'per_page']);
 
         $transactions = $this->walletService->getTransactionHistory($wallet->wallet_id, $filters);
-        $transformed = $transactions->through(function (SellerWalletTransaction $transaction) {
+        $transformed = $transactions->through(function (WalletTransaction $transaction) {
             return [
                 'transaction_id' => $transaction->transaction_id,
                 'amount' => $transaction->amount,
                 'type' => $transaction->type,
+                'direction' => $transaction->direction,
                 'description' => $transaction->description,
                 'reference_type' => $transaction->reference_type,
                 'reference_id' => $transaction->reference_id,
@@ -80,36 +77,14 @@ class WalletController extends Controller
         }
     }
 
-    public function topUpStatus(SellerWalletTransaction $transaction): Response
+    public function topUpStatus(WalletTransaction $transaction): Response
     {
-        if ($transaction->wallet->seller_id !== Auth::id()) {
+        if ((int) $transaction->wallet->user_id !== (int) Auth::id()) {
             abort(403);
         }
 
         return Inertia::render('Seller/Wallet/TopUpStatus', [
             'transaction' => $transaction,
         ]);
-    }
-
-    public function transfer(TransferFundsRequest $request): JsonResponse
-    {
-        try {
-            $data = $request->validated();
-            $result = $this->walletService->transferFunds(
-                $data['from_wallet_id'],
-                $data['to_wallet_id'],
-                (float) $data['amount'],
-                $data['description'] ?? 'Fund transfer'
-            );
-
-            return response()->json([
-                'message' => 'Funds transferred successfully.',
-                'transactions' => $result,
-            ]);
-        } catch (Exception $exception) {
-            return response()->json([
-                'error' => $exception->getMessage(),
-            ], 400);
-        }
     }
 }

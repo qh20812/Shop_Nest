@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Notifications\OrderStatusNotification;
 use App\Services\NotificationService;
+use App\Services\PromotionUsageService;
 use Illuminate\Support\Traits\Localizable;
 
 /**
@@ -18,6 +19,8 @@ use Illuminate\Support\Traits\Localizable;
 class OrderObserver
 {
     use Localizable;
+
+    public function __construct(private PromotionUsageService $promotionUsageService) {}
 
     /**
      * Trạng thái đáng gửi mail cho khách. Các bước nội bộ
@@ -41,6 +44,13 @@ class OrderObserver
 
     public function updated(Order $order): void
     {
+        $releasesPromotion = ($order->wasChanged('status') && in_array($order->status?->value, ['cancelled', 'returned'], true))
+            || ($order->wasChanged('payment_status') && $order->payment_status === PaymentStatus::REFUNDED);
+
+        if ($releasesPromotion) {
+            $this->promotionUsageService->releaseForOrder($order);
+        }
+
         if ($order->wasChanged('payment_status') && $order->payment_status === PaymentStatus::REFUNDED) {
             $this->notifyCustomer($order, 'refunded');
 

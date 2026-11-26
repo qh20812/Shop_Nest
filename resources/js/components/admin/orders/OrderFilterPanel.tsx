@@ -38,20 +38,26 @@ export default function OrderFilterPanel({ fromDate: initialFromDate, toDate: in
             <div className={styles.filterRow}>
                 <div className={styles.filterField}>
                     <span className={styles.filterLabel}>{t('From')}</span>
-                    <Input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} aria-label={t('From date')} />
+                    <Input
+                        type="date"
+                        value={fromDate}
+                        onChange={(event) => setFromDate(event.target.value)}
+                        aria-label={t('From date')}
+                        surface="glass"
+                    />
                 </div>
 
                 <div className={styles.filterField}>
                     <span className={styles.filterLabel}>{t('To')}</span>
-                    <Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label={t('To date')} />
+                    <Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} aria-label={t('To date')} surface="glass" />
                 </div>
 
                 <div className={styles.filterActions}>
-                    <Button type="button" variant="secondary" size="md" onClick={handleApply}>
+                    <Button type="button" variant="secondary" size="md" surface="glass" onClick={handleApply}>
                         <Filter aria-hidden="true" />
                         {t('Apply')}
                     </Button>
-                    <Button type="button" variant="ghost" size="md" onClick={handleReset}>
+                    <Button type="button" variant="ghost" size="md" surface="glass" onClick={handleReset}>
                         <RotateCcw aria-hidden="true" />
                         {t('Reset')}
                     </Button>

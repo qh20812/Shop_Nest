@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Baby, CookingPot, Laptop, Shirt, Sofa, Sparkles, type LucideIcon } from 'lucide-react';
+import { Baby, CookingPot, Laptop, Shirt, Sofa, Sparkles, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -58,13 +58,11 @@ export function CategoryShelf({ categories = [], title, action, className }: Cat
         <section id="danh-muc" className={cx(styles.categoryShelf, className)}>
             <PageContainer>
                 <SectionHeader
-                    eyebrow={t('Six core categories')}
                     title={title ?? t('Featured categories')}
                     action={
                         action ?? (
                             <TextLink href="/search" tone="muted" underline={false}>
                                 {t('All categories')}
-                                <ArrowRight aria-hidden="true" className={styles.inlineIcon} />
                             </TextLink>
                         )
                     }

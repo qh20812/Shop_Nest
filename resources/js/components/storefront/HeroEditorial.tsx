@@ -4,9 +4,8 @@ import * as React from 'react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
-import { Eyebrow, Heading, Text } from '@/components/ui/typography';
+import { Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
-import { useTranslation } from '@/lib/i18n';
 
 import styles from './storefront.module.css';
 
@@ -17,7 +16,6 @@ type HeroImage = {
 };
 
 type HeroEditorialProps = {
-    eyebrow?: React.ReactNode;
     title: React.ReactNode;
     subcopy: React.ReactNode;
     cta?: { label: string; href: string };
@@ -25,8 +23,7 @@ type HeroEditorialProps = {
     className?: string;
 };
 
-export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className }: HeroEditorialProps) {
-    const { t } = useTranslation();
+export function HeroEditorial({ title, subcopy, cta, images, className }: HeroEditorialProps) {
     const [lead, ...rest] = images;
 
     return (
@@ -34,7 +31,6 @@ export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className 
             <PageContainer>
                 <div className={styles.heroGrid}>
                     <div className={styles.heroCopy}>
-                        <Eyebrow tone="accent">{eyebrow ?? t('Everything for Vietnamese homes')}</Eyebrow>
                         <Heading level={1} size="display-lg" className={styles.heroTitle}>
                             {title}
                         </Heading>
@@ -52,8 +48,8 @@ export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className 
                     </div>
 
                     {lead && (
-                        <div className={styles.heroMedia}>
-                            <HeroCell image={lead} wide priority />
+                        <div className={styles.heroMedia} data-count={Math.min(images.length, 3)}>
+                            <HeroCell image={lead} lead priority />
                             {rest.slice(0, 2).map((image) => (
                                 <HeroCell key={image.src} image={image} />
                             ))}
@@ -65,14 +61,21 @@ export function HeroEditorial({ eyebrow, title, subcopy, cta, images, className 
     );
 }
 
-function HeroCell({ image, wide = false, priority = false }: { image: HeroImage; wide?: boolean; priority?: boolean }) {
+function HeroCell({ image, lead = false, priority = false }: { image: HeroImage; lead?: boolean; priority?: boolean }) {
     return (
-        <div className={wide ? `${styles.heroLead} ${styles.heroCell}` : styles.heroCell}>
+        <figure className={cx(styles.heroCell, lead && styles.heroLead)}>
             <div className={styles.heroImageBox}>
-                <img src={image.src} alt={image.alt} loading={priority ? 'eager' : 'lazy'} className={styles.heroImage} />
+                <img
+                    src={image.src}
+                    alt={image.alt}
+                    loading={priority ? 'eager' : 'lazy'}
+                    fetchPriority={priority ? 'high' : undefined}
+                    decoding={priority ? 'sync' : 'async'}
+                    className={styles.heroImage}
+                />
             </div>
-            {image.label && <span className={styles.heroCaption}>{image.label}</span>}
-        </div>
+            {image.label && <figcaption className={styles.heroCaption}>{image.label}</figcaption>}
+        </figure>
     );
 }
 

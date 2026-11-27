@@ -30,7 +30,6 @@ export function FlashSaleModule({ endsAt, name, products, onAddToCart, onToggleW
                 <div className={styles.flashPanel}>
                     <div className={styles.flashHead}>
                         <div className={styles.flashCopy}>
-                            <span className="sn-label">{t('Golden hour')}</span>
                             <Heading level={2} size="headline-2" className={styles.flashTitle}>
                                 {name ?? t("Today's flash sale")}
                             </Heading>

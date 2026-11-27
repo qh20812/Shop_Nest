@@ -1,4 +1,4 @@
-import { ArrowRight, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import * as React from 'react';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -45,7 +45,6 @@ export function ProductShelf({
     const fallbackAction = (
         <TextLink href="/search" tone="muted" underline={false}>
             {t('View all')}
-            <ArrowRight aria-hidden="true" className={styles.inlineIcon} />
         </TextLink>
     );
 

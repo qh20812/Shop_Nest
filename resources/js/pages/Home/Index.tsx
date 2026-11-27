@@ -1,7 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { Lock, RotateCcw, ShieldCheck, Truck } from 'lucide-react';
 
-import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { BrandSpotlight } from '@/components/storefront/BrandSpotlight';
 import { CategoryShelf, type CategoryItem } from '@/components/storefront/CategoryShelf';
@@ -10,13 +9,9 @@ import { FlashSaleModule } from '@/components/storefront/FlashSaleModule';
 import { HeroEditorial } from '@/components/storefront/HeroEditorial';
 import { ProductShelf } from '@/components/storefront/ProductShelf';
 import { TrustStrip } from '@/components/storefront/TrustStrip';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
-import { usePageLoading } from '@/hooks/usePageLoading';
 import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
-
-import styles from './Home.module.css';
 
 interface Category {
     id: number;
@@ -164,7 +159,6 @@ function toProductCard(product: Product): ProductCardModel {
 
 export default function Index() {
     const { t } = useTranslation();
-    const isLoading = usePageLoading({ delay: 300, minLoadingTime: 1500 });
     const { success, error: showError, info } = useToast();
     const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [], auth } = usePage<PageProps>().props;
 
@@ -228,20 +222,11 @@ export default function Index() {
         );
     };
 
-    if (isLoading) {
-        return (
-            <StorefrontLayout>
-                <HomeSkeleton />
-            </StorefrontLayout>
-        );
-    }
-
     return (
         <StorefrontLayout>
             <Head title={t('ShopNest. Everything for Vietnamese homes')} />
 
             <HeroEditorial
-                eyebrow={t('Everything for Vietnamese homes')}
                 title={
                     <>
                         {t('Choose carefully,')}
@@ -282,6 +267,7 @@ export default function Index() {
                 title={t('Suggestions for your home')}
                 description={t('Picked for today: work, cooking, childcare or self-care.')}
                 products={suggestedCards}
+                variant="rail"
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
                 emptyTitle={t('No suggestions yet')}
@@ -306,36 +292,5 @@ export default function Index() {
                 }))}
             />
         </StorefrontLayout>
-    );
-}
-
-function HomeSkeleton() {
-    return (
-        <PageContainer className={styles.skeletonPage}>
-            <div className={styles.skeletonGrid}>
-                <div className={styles.skeletonCopy}>
-                    <Skeleton className={styles.skeletonLineShort} />
-                    <Skeleton className={styles.skeletonLine} />
-                    <Skeleton className={styles.skeletonLineHalf} />
-                    <Skeleton className={styles.skeletonLine} />
-                    <Skeleton className={styles.skeletonCta} />
-                </div>
-                <div className={styles.skeletonMedia}>
-                    <Skeleton className={styles.skeletonLead} />
-                    <Skeleton className={styles.skeletonThumb} />
-                    <Skeleton className={styles.skeletonThumb} />
-                </div>
-            </div>
-            <div className={styles.skeletonCategoryGrid}>
-                {Array.from({ length: 6 }).map((_, index) => (
-                    <Skeleton key={index} className={styles.skeletonCategory} />
-                ))}
-            </div>
-            <div className={styles.skeletonProductGrid}>
-                {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className={styles.skeletonProduct} />
-                ))}
-            </div>
-        </PageContainer>
     );
 }

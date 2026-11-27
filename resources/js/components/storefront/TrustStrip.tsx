@@ -26,10 +26,8 @@ export function TrustStrip({ items, className }: TrustStripProps) {
 
                         return (
                             <div key={item.title} className={styles.trustItem}>
-                                <span className={styles.trustIconBox}>
-                                    <Icon aria-hidden="true" className={styles.trustIcon} />
-                                </span>
-                                <div>
+                                <Icon aria-hidden="true" className={styles.trustIcon} />
+                                <div className={styles.trustBody}>
                                     <h3 className={styles.trustTitle}>{item.title}</h3>
                                     <p className={styles.trustText}>{item.description}</p>
                                 </div>

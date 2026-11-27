@@ -1,5 +1,6 @@
 import { useTranslation } from '@/lib/i18n';
 import { MessageCircle, Store } from 'lucide-react';
+import * as React from 'react';
 
 import Avatar from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,15 +19,18 @@ type ShopInfo = {
 
 type ShopIdentityProps = {
     shop: ShopInfo;
+    variant?: 'default' | 'compact';
+    chatLabel?: React.ReactNode;
+    viewShopLabel?: React.ReactNode;
     onChat?: () => void;
     onViewShop?: () => void;
     className?: string;
 };
 
-export function ShopIdentity({ shop, onChat, onViewShop, className }: ShopIdentityProps) {
+export function ShopIdentity({ shop, variant = 'default', chatLabel, viewShopLabel, onChat, onViewShop, className }: ShopIdentityProps) {
     const { t } = useTranslation();
     return (
-        <div className={className ? `${styles.shopIdentity} ${className}` : styles.shopIdentity}>
+        <div className={className ? `${styles.shopIdentity} ${className}` : styles.shopIdentity} data-variant={variant}>
             <div className={styles.shopMain}>
                 <Avatar name={shop.name} src={shop.logo} size="lg" />
                 <div className={styles.shopText}>
@@ -41,13 +45,13 @@ export function ShopIdentity({ shop, onChat, onViewShop, className }: ShopIdenti
             {(onChat || onViewShop) && (
                 <div className={styles.shopActions}>
                     {onChat && (
-                        <Button variant="outline" size="sm" leftIcon={MessageCircle} onClick={onChat}>
-                            Chat
+                        <Button type="button" variant="outline" size="sm" leftIcon={MessageCircle} onClick={onChat}>
+                            {chatLabel ?? t('Chat')}
                         </Button>
                     )}
                     {onViewShop && (
-                        <Button variant="ghost" size="sm" leftIcon={Store} onClick={onViewShop}>
-                            Xem shop
+                        <Button type="button" variant="ghost" size="sm" leftIcon={Store} onClick={onViewShop}>
+                            {viewShopLabel ?? t('View shop')}
                         </Button>
                     )}
                 </div>

@@ -31,6 +31,8 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'inventory_reserved_at',
+        'inventory_committed_at',
         'shipping_address_id',
         'shipper_id',
         'notes',
@@ -51,6 +53,8 @@ class Order extends Model
         'total_amount_base' => 'decimal:2',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'inventory_reserved_at' => 'datetime',
+        'inventory_committed_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo

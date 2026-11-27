@@ -10,6 +10,7 @@ use App\Notifications\WalletTopupNotification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use RuntimeException;
 
 class WalletTopupService
 {
@@ -191,18 +192,29 @@ class WalletTopupService
      */
     public function present(WalletTopup $topup): array
     {
+        $qrUrl = null;
+
+        if ($this->vietQrService->bankInfo()['configured']) {
+            try {
+                $qrUrl = $this->vietQrService->buildUrl((float) $topup->amount_declared, $topup->code);
+            } catch (RuntimeException) {
+                $qrUrl = null;
+            }
+        }
+
         return [
             'topup_id' => $topup->topup_id,
             'code' => $topup->code,
-            'status' => $topup->status,
+            'status' => $topup->status === WalletTopup::STATUS_PENDING && $topup->isExpired() ? WalletTopup::STATUS_EXPIRED : $topup->status,
             'amount_declared' => (float) $topup->amount_declared,
             'amount_received' => $topup->amount_received !== null ? (float) $topup->amount_received : null,
             'transferred_at' => $topup->transferred_at,
             'approved_at' => $topup->approved_at,
             'reject_reason' => $topup->reject_reason,
             'expires_at' => $topup->expires_at,
+            'created_at' => $topup->created_at,
             'metadata' => $topup->metadata,
-            'qr_url' => $this->vietQrService->buildUrl((float) $topup->amount_declared, $topup->code),
+            'qr_url' => $qrUrl,
             'bank' => $this->vietQrService->bankInfo(),
         ];
     }

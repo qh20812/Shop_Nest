@@ -27,11 +27,12 @@ import { useTranslation } from '@/lib/i18n';
 import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
 import { toNumericPrice, type PriceLike } from '@/utils/price';
 
-import styles from './customer.module.css';
+import styles from './Checkout.module.css';
 
 interface ProductImage {
     id: number;
-    image_path: string;
+    image_path: string | null;
+    image_url?: string | null;
 }
 
 interface Product {
@@ -212,7 +213,20 @@ export default function Checkout() {
     const getProductImage = (item: CartItem | OrderItem): string => {
         if ('variant' in item && item.variant?.product?.images) {
             const image = item.variant.product.images[0];
-            return image ? `/storage/${image.image_path}` : '/image/default-product.png';
+
+            if (!image) {
+                return '/image/default-product.png';
+            }
+
+            if (image.image_url) {
+                return image.image_url;
+            }
+
+            if (image.image_path) {
+                return `/storage/${image.image_path.replace(/^\/+/, '')}`;
+            }
+
+            return '/image/default-product.png';
         }
 
         if ('image' in item) {
@@ -315,15 +329,15 @@ export default function Checkout() {
     };
 
     const handleCheckout = async () => {
-        if (!isBuyNowCheckout) {
-            if (addresses.length === 0 || !selectedAddress) {
-                showError(t('Please add and select a shipping address'));
-                return;
-            }
+        if (addresses.length === 0 || !selectedAddress) {
+            showError(t('Please add and select a shipping address'));
+            document.getElementById('shipping-address')?.scrollIntoView({ block: 'start' });
+            return;
         }
 
         if (!selectedPayment) {
             showError(t('Please choose a payment method'));
+            document.getElementById('payment-method')?.scrollIntoView({ block: 'start' });
             return;
         }
 
@@ -334,7 +348,7 @@ export default function Checkout() {
             const endpoint = isBuyNowCheckout && order ? `/buy-now/checkout/${order.order_id}` : '/checkout';
             const payload: Record<string, unknown> = { provider: selectedPayment };
 
-            if (!isBuyNowCheckout && selectedAddress && selectedAddress !== 0) {
+            if (selectedAddress && selectedAddress !== 0) {
                 payload.address_id = selectedAddress;
             }
 
@@ -363,7 +377,7 @@ export default function Checkout() {
 
     if (items.length === 0) {
         return (
-            <StorefrontLayout compactFooter>
+            <StorefrontLayout compactFooter showChatDock={false}>
                 <Head title={t('Checkout')} />
                 <PageContainer className={styles.pageTight}>
                     <EmptyState
@@ -391,13 +405,12 @@ export default function Checkout() {
     }));
 
     return (
-        <StorefrontLayout compactFooter>
+        <StorefrontLayout compactFooter footerClassName={styles.footerWithBar} showChatDock={false}>
             <Head title={t('Checkout')} />
 
             <PageContainer className={styles.page}>
                 <PageHeader
                     breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Cart'), href: '/cart' }, { label: t('Checkout') }]}
-                    eyebrow={t('Final step')}
                     title={t('Complete your order')}
                     description={t('Review the address, payment method and total before placing the order.')}
                     count={t(':count items', { count: items.length })}
@@ -411,7 +424,7 @@ export default function Checkout() {
 
                 <div className={styles.checkoutGrid}>
                     <div className={styles.checkoutMain}>
-                        <section className={styles.checkSection}>
+                        <section id="shipping-address" className={styles.checkSection}>
                             <div className={styles.sectionHead}>
                                 <Heading level={2} size="headline-3">
                                     {t('Shipping address')}
@@ -460,19 +473,17 @@ export default function Checkout() {
                                     {t('Shipping method')}
                                 </Heading>
                             </div>
-                            <Card variant="inset" padding="md">
-                                <div className={styles.shipRow}>
-                                    <Truck aria-hidden="true" className={styles.shipIcon} />
-                                    <div className={styles.shipBody}>
-                                        <span className={styles.shipTitle}>{t('Standard delivery')}</span>
-                                        <span className={styles.shipText}>{t('The carrier is assigned based on your address.')}</span>
-                                    </div>
-                                    <span className={styles.shipPrice}>{finalShipping > 0 ? money(finalShipping) : t('Free')}</span>
+                            <div className={styles.shipRow}>
+                                <Truck aria-hidden="true" className={styles.shipIcon} />
+                                <div className={styles.shipBody}>
+                                    <span className={styles.shipTitle}>{t('Standard delivery')}</span>
+                                    <span className={styles.shipText}>{t('The carrier is assigned based on your address.')}</span>
                                 </div>
-                            </Card>
+                                <span className={styles.shipPrice}>{finalShipping > 0 ? money(finalShipping) : t('Free')}</span>
+                            </div>
                         </section>
 
-                        <section className={styles.checkSection}>
+                        <section id="payment-method" className={styles.checkSection}>
                             <div className={styles.sectionHeadSimple}>
                                 <Heading level={2} size="headline-3">
                                     {t('Payment method')}
@@ -538,10 +549,10 @@ export default function Checkout() {
                             ctaLabel={t('Place order')}
                             onCheckout={handleCheckout}
                             loading={processing}
-                            disabled={(!isBuyNowCheckout && (!selectedAddress || addresses.length === 0)) || !selectedPayment}
+                            mobileActionBar
                             trust={[t('Secure payment'), t('Returns per policy')]}
                             footerNote={
-                                (currency === 'VND' ? '' : t('Converted prices are indicative · payment is charged in VND. ')) +
+                                (currency === 'VND' ? '' : t('Converted prices are indicative. Payment is charged in VND. ')) +
                                 t('By placing the order you agree to the Terms and Privacy Policy.')
                             }
                         />

@@ -22,6 +22,8 @@ class CheckoutEndToEndTest extends TestCase
 
     private User $user;
 
+    private UserAddress $address;
+
     private Product $product;
 
     private ProductVariant $variant;
@@ -33,7 +35,7 @@ class CheckoutEndToEndTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
-        UserAddress::factory()->for($this->user)->create(['is_default' => true]);
+        $this->address = UserAddress::factory()->for($this->user)->create(['is_default' => true]);
 
         $this->product = Product::factory()->create([
             'status' => ProductStatus::PUBLISHED->value,
@@ -129,6 +131,7 @@ class CheckoutEndToEndTest extends TestCase
 
         $this->postJson(route('buy.now.checkout', ['orderId' => $order->order_id]), [
             'provider' => 'stripe',
+            'address_id' => $this->address->id,
         ])->assertOk()->assertJson([
             'success' => true,
             'payment_url' => 'https://checkout.stripe.com/e2e-session',
@@ -154,6 +157,7 @@ class CheckoutEndToEndTest extends TestCase
 
         $response = $this->postJson(route('buy.now.checkout', ['orderId' => $order->order_id]), [
             'provider' => 'cod',
+            'address_id' => $this->address->id,
         ]);
 
         $response->assertOk()->assertJson([

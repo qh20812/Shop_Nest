@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
+use App\Exceptions\InventoryException;
 use App\Models\AdministrativeDivision;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -11,7 +13,9 @@ use App\Models\Promotion;
 use App\Models\PromotionCode;
 use App\Models\User;
 use App\Services\CartService;
+use App\Services\InventoryService;
 use App\Services\PaymentService;
+use App\Services\PromotionEligibilityService;
 use App\Services\PromotionUsageService;
 use App\Support\Localization;
 use Illuminate\Http\JsonResponse;
@@ -29,6 +33,8 @@ class CheckoutController extends Controller
     public function __construct(
         private CartService $cartService,
         private PromotionUsageService $promotionUsageService,
+        private InventoryService $inventoryService,
+        private PromotionEligibilityService $promotionEligibility,
     ) {}
 
     /**
@@ -68,7 +74,10 @@ class CheckoutController extends Controller
         }
 
         $cartItems = $cartItems
-            ->filter(fn (CartItem $item) => $item->variant && $item->variant->product)
+            ->filter(fn (CartItem $item) => $item->variant
+                && $item->variant->product
+                && $item->variant->product->is_active
+                && $item->variant->product->status === ProductStatus::PUBLISHED)
             ->values();
 
         if ($cartItems->isEmpty()) {
@@ -96,7 +105,7 @@ class CheckoutController extends Controller
         });
 
         $shipping = $this->calculateShippingFee($subtotal);
-        $discount = $this->calculatePromotionDiscount($promotion, $subtotal, $shipping);
+        $discount = $this->calculatePromotionDiscount($promotion, $subtotal, $shipping, $cartItems);
         $total = max(0, $subtotal + $shipping - $discount);
 
         $formattedCartItems = $cartItems->map(function (CartItem $item) use ($locale) {
@@ -131,6 +140,7 @@ class CheckoutController extends Controller
                             return [
                                 'id' => (int) $image->id,
                                 'image_path' => $image->image_path,
+                                'image_url' => $image->image_url,
                             ];
                         })->values()->all(),
                     ],
@@ -193,7 +203,10 @@ class CheckoutController extends Controller
         }
 
         $cartItems = $cartItems
-            ->filter(fn (CartItem $item) => $item->variant && $item->variant->product)
+            ->filter(fn (CartItem $item) => $item->variant
+                && $item->variant->product
+                && $item->variant->product->is_active
+                && $item->variant->product->status === ProductStatus::PUBLISHED)
             ->values();
 
         if ($cartItems->isEmpty()) {
@@ -217,7 +230,7 @@ class CheckoutController extends Controller
         });
 
         $shippingFee = $this->calculateShippingFee($subtotal);
-        $discountAmount = $this->calculatePromotionDiscount($promotion, $subtotal, $shippingFee);
+        $discountAmount = $this->calculatePromotionDiscount($promotion, $subtotal, $shippingFee, $cartItems);
         $totalAmount = max(0, $subtotal + $shippingFee - $discountAmount);
 
         DB::beginTransaction();
@@ -256,7 +269,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            if ($promotion) {
+            if ($promotion && $discountAmount > 0) {
                 $order->promotions()->syncWithoutDetaching([
                     $promotion->promotion_id => [
                         'promotion_code_id' => $promotionCode?->promotion_code_id,
@@ -267,9 +280,16 @@ class CheckoutController extends Controller
                 $this->promotionUsageService->recordForOrder($order);
             }
 
-            CartItem::where('user_id', $user->id)->delete();
+            $this->inventoryService->reserveForOrder($order);
 
             DB::commit();
+        } catch (InventoryException $exception) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (\Throwable $exception) {
             DB::rollBack();
 
@@ -284,8 +304,13 @@ class CheckoutController extends Controller
             ], 500);
         }
 
-        $this->cartService->removePromotion($user);
-        session()->forget('applied_promotion');
+        if ($data['provider'] === 'cod') {
+            // COD has no external redirect: commit stock now and clear the cart.
+            $this->inventoryService->commitReservedForOrder($order);
+            $this->cartService->removePromotion($user);
+            session()->forget('applied_promotion');
+            CartItem::where('user_id', $user->id)->delete();
+        }
 
         try {
             $gateway = PaymentService::make($data['provider']);
@@ -311,11 +336,15 @@ class CheckoutController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
-            $order->update(['payment_status' => PaymentStatus::FAILED]);
+            $order->update([
+                'status' => OrderStatus::CANCELLED,
+                'payment_status' => PaymentStatus::FAILED,
+            ]);
+            $this->inventoryService->handleOrderRelease($order);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to initiate payment. Please try again later.',
+                'message' => 'Unable to initiate payment. Please try again.',
             ], 502);
         }
 
@@ -375,9 +404,19 @@ class CheckoutController extends Controller
             ->all();
     }
 
-    private function calculatePromotionDiscount(?Promotion $promotion, float $subtotal, float $shippingFee = 0.0): float
+    private function calculatePromotionDiscount(?Promotion $promotion, float $subtotal, float $shippingFee, iterable $items = []): float
     {
         if (! $promotion || $subtotal <= 0) {
+            return 0.0;
+        }
+
+        if ($promotion->min_order_amount && $subtotal < (float) $promotion->min_order_amount) {
+            return 0.0;
+        }
+
+        $discountable = $this->promotionEligibility->eligibleSubtotal($promotion, $items);
+
+        if ($discountable <= 0) {
             return 0.0;
         }
 
@@ -385,7 +424,7 @@ class CheckoutController extends Controller
         $value = (float) $promotion->value;
 
         $discount = match ($type) {
-            1 => $subtotal * ($value / 100),
+            1 => $discountable * ($value / 100),
             2 => $value,
             3 => $shippingFee,
             default => 0.0,
@@ -395,7 +434,7 @@ class CheckoutController extends Controller
             $discount = min($discount, (float) $promotion->max_discount_amount);
         }
 
-        return max(0.0, min($discount, $subtotal + $shippingFee));
+        return max(0.0, min($discount, $discountable + $shippingFee));
     }
 
     /**
@@ -509,6 +548,10 @@ class CheckoutController extends Controller
     {
         // Check minimum order amount
         if ($promotion->min_order_amount && $subtotal < $promotion->min_order_amount) {
+            return false;
+        }
+
+        if ($this->promotionEligibility->eligibleSubtotal($promotion, $cartItems) <= 0) {
             return false;
         }
 

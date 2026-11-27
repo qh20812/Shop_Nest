@@ -4,7 +4,7 @@ import { Mail, MapPin, Phone } from 'lucide-react';
 import { PaymentMarks } from '@/components/commerce/PaymentMarks';
 import { NewsletterSignup } from '@/components/storefront/NewsletterSignup';
 import { useToast } from '@/components/ui/toast';
-import { Eyebrow, Heading, Text } from '@/components/ui/typography';
+import { Heading, Text } from '@/components/ui/typography';
 import { cx } from '@/lib/cx';
 import { useTranslation } from '@/lib/i18n';
 
@@ -53,13 +53,13 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
     return (
         <footer className="sn-storefront__footer">
             <div className={cx('sn-container sn-footer', className)} data-compact={compact ? 'true' : undefined}>
-                <div className="sn-footer__grid">
+                <div className="sn-footer__masthead">
                     <div className="sn-footer__brand">
                         <Link href="/" className="sn-brand">
                             <BrandMark />
                             <span className="sn-brand__name">ShopNest</span>
                         </Link>
-                        <Text size="body-sm" tone="muted">
+                        <Text size="body-sm" tone="muted" className="sn-footer__intro">
                             {t(
                                 'A curated marketplace for Vietnamese homes and everyday life: electronics, home appliances, furniture, mother & baby, fashion and beauty.',
                             )}
@@ -78,15 +78,24 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                                 hotro@shopnest.vn
                             </a>
                         </div>
-                        <div className="sn-footer__social">
-                            {['Facebook', 'Instagram', 'YouTube'].map((social) => (
-                                <a key={social} href="#" className="sn-footer__social-link">
-                                    {social}
-                                </a>
-                            ))}
-                        </div>
                     </div>
 
+                    {!compact && (
+                        <div className="sn-footer__newsletter">
+                            <div className="sn-footer__newsletter-copy">
+                                <Heading level={3} size="headline-2">
+                                    {t('Get the weekly market letter')}
+                                </Heading>
+                                <Text size="body-sm" tone="muted">
+                                    {t('Handpicked products, seller stories and offers for Vietnamese homes.')}
+                                </Text>
+                            </div>
+                            <NewsletterSignup onSubmit={handleNewsletter} />
+                        </div>
+                    )}
+                </div>
+
+                <div className="sn-footer__directory">
                     <FooterColumn
                         title={t('Services & standards')}
                         links={serviceLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))}
@@ -94,23 +103,6 @@ export function StorefrontFooter({ compact = false, onNewsletterSubmit, classNam
                     <FooterColumn title={t('For partners')} links={partnerLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))} />
                     <FooterColumn title={t('Support')} links={supportLinks.map((link) => ({ label: t(link.labelKey), href: link.href }))} />
                 </div>
-
-                {!compact && (
-                    <div className="sn-footer__newsletter">
-                        <div className="sn-footer__newsletter-copy">
-                            <Eyebrow tone="accent">{t('Weekly market stories')}</Eyebrow>
-                            <Heading level={3} size="headline-3">
-                                {t('Get the weekly market letter')}
-                            </Heading>
-                            <Text size="body-sm" tone="muted">
-                                {t('Handpicked products, seller stories and offers for Vietnamese homes.')}
-                            </Text>
-                        </div>
-                        <div>
-                            <NewsletterSignup onSubmit={handleNewsletter} />
-                        </div>
-                    </div>
-                )}
 
                 <div className="sn-footer__bottom">
                     <p className="sn-footer__copyright">

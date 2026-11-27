@@ -1,5 +1,5 @@
 import { useTranslation } from '@/lib/i18n';
-import { Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import * as React from 'react';
 
 import { IconButton } from '@/components/ui/icon-button';
@@ -26,16 +26,42 @@ type ProductGalleryProps = {
 export function ProductGallery({ images, activeIndex, onChange, productName, wishlisted = false, onToggleWishlist, className }: ProductGalleryProps) {
     const { t } = useTranslation();
     const [imageError, setImageError] = React.useState(false);
-    const activeImage = images[activeIndex] ?? images[0];
+    const safeIndex = Math.min(Math.max(activeIndex, 0), Math.max(images.length - 1, 0));
+    const activeImage = images[safeIndex] ?? images[0];
     const imageUrl = imageError ? '/image/default-product.png' : activeImage?.url;
+    const hasMultiple = images.length > 1;
 
     React.useEffect(() => {
         setImageError(false);
     }, [activeImage?.url]);
 
+    const showImage = (index: number) => {
+        if (!hasMultiple) {
+            return;
+        }
+
+        onChange((index + images.length) % images.length);
+    };
+
     return (
         <div className={cx(styles.gallery, className)}>
-            <div className={styles.galleryMain}>
+            <div
+                className={styles.galleryMain}
+                tabIndex={0}
+                role="group"
+                aria-label={productName}
+                onKeyDown={(event) => {
+                    if (event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        showImage(safeIndex - 1);
+                    }
+
+                    if (event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        showImage(safeIndex + 1);
+                    }
+                }}
+            >
                 {imageUrl ? (
                     <img src={imageUrl} alt={activeImage?.alt ?? productName} onError={() => setImageError(true)} className={styles.galleryImage} />
                 ) : (
@@ -46,6 +72,7 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
                     <IconButton
                         label={wishlisted ? t('Remove from wishlist') : t('Save to wishlist')}
                         variant="secondary"
+                        surface="overlay"
                         size="md"
                         className={styles.galleryWishlist}
                         onClick={onToggleWishlist}
@@ -53,19 +80,49 @@ export function ProductGallery({ images, activeIndex, onChange, productName, wis
                         <Heart aria-hidden="true" className={cx(styles.icon, wishlisted && styles.wishlisted)} />
                     </IconButton>
                 )}
+
+                {hasMultiple && (
+                    <>
+                        <span className={cx(styles.galleryNav, styles.galleryPrev)}>
+                            <IconButton
+                                label={t('Previous image')}
+                                variant="secondary"
+                                surface="overlay"
+                                size="md"
+                                onClick={() => showImage(safeIndex - 1)}
+                            >
+                                <ChevronLeft aria-hidden="true" className={styles.icon} />
+                            </IconButton>
+                        </span>
+                        <span className={cx(styles.galleryNav, styles.galleryNext)}>
+                            <IconButton
+                                label={t('Next image')}
+                                variant="secondary"
+                                surface="overlay"
+                                size="md"
+                                onClick={() => showImage(safeIndex + 1)}
+                            >
+                                <ChevronRight aria-hidden="true" className={styles.icon} />
+                            </IconButton>
+                        </span>
+                        <span className={styles.galleryCounter}>
+                            {safeIndex + 1} / {images.length}
+                        </span>
+                    </>
+                )}
             </div>
 
-            {images.length > 1 && (
+            {hasMultiple && (
                 <div className={styles.galleryThumbs}>
-                    {images.slice(0, 5).map((image, index) => (
+                    {images.map((image, index) => (
                         <button
-                            key={image.id ?? image.url}
+                            key={`${image.id ?? image.url}-${index}`}
                             type="button"
                             aria-label={t('View image :index', { index: index + 1 })}
-                            aria-pressed={index === activeIndex}
+                            aria-pressed={index === safeIndex}
                             onClick={() => onChange(index)}
                             className={styles.galleryThumb}
-                            data-active={index === activeIndex ? 'true' : undefined}
+                            data-active={index === safeIndex ? 'true' : undefined}
                         >
                             <img src={image.url} alt={image.alt ?? `${productName} ${index + 1}`} className={styles.galleryThumbImage} />
                         </button>

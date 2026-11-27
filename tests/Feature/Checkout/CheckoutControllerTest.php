@@ -4,6 +4,7 @@ namespace Tests\Feature\Checkout;
 
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Promotion;
 use App\Models\PromotionCode;
@@ -37,6 +38,7 @@ class CheckoutControllerTest extends TestCase
         ]);
 
         $variant = ProductVariant::factory()->create([
+            'product_id' => Product::factory()->create(['status' => 'published'])->product_id,
             'price' => 250_000,
             'discount_price' => null,
         ]);
@@ -82,6 +84,7 @@ class CheckoutControllerTest extends TestCase
         ]);
 
         $variant = ProductVariant::factory()->create([
+            'product_id' => Product::factory()->create(['status' => 'published'])->product_id,
             'price' => 250_000,
             'discount_price' => null,
         ]);
@@ -152,8 +155,9 @@ class CheckoutControllerTest extends TestCase
         $this->assertSame(250_000.0, (float) $orderItem->unit_price);
         $this->assertSame(500_000.0, (float) $orderItem->total_price);
 
-        $this->assertDatabaseMissing('cart_items', [
+        $this->assertDatabaseHas('cart_items', [
             'user_id' => $user->id,
         ]);
+        $this->assertNotNull($order->fresh()->inventory_reserved_at);
     }
 }

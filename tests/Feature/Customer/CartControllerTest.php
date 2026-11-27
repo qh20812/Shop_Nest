@@ -32,7 +32,7 @@ class CartControllerTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $this->product = Product::factory()->create();
+        $this->product = Product::factory()->create(['status' => 'published']);
         $this->variant = ProductVariant::factory()->create([
             'product_id' => $this->product->product_id,
             'stock_quantity' => 10,

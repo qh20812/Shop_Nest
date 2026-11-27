@@ -77,6 +77,11 @@ class PromotionManagementTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Promotions/Index')
                 ->has('promotions.data', 2)
+                ->where('totalPromotions', 2)
+                ->where('statusCounts.active', 1)
+                ->where('statusCounts.draft', 1)
+                ->where('statusCounts.paused', 0)
+                ->where('statusCounts.expired', 0)
             );
 
         $this->actingAs($this->admin)

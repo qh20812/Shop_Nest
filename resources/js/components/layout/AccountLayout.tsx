@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bell, Lock, MapPin, MessageCircle, Package, Settings, User } from 'lucide-react';
+import { Bell, Lock, MapPin, MessageCircle, Package, Settings, User, Wallet } from 'lucide-react';
 import * as React from 'react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -9,7 +9,7 @@ import type { BreadcrumbItem } from '@/components/ui/breadcrumbs';
 import { cx } from '@/lib/cx';
 import { useTranslation } from '@/lib/i18n';
 
-export type AccountNavKey = 'orders' | 'addresses' | 'profile' | 'password' | 'notifications' | 'messages' | 'settings';
+export type AccountNavKey = 'orders' | 'wallet' | 'addresses' | 'profile' | 'password' | 'notifications' | 'messages' | 'settings';
 
 type AccountNavItem = {
     key: AccountNavKey;
@@ -20,6 +20,7 @@ type AccountNavItem = {
 
 const accountNav: Array<Omit<AccountNavItem, 'label'> & { labelKey: string }> = [
     { key: 'orders', labelKey: 'Orders', href: '/user/orders', icon: Package },
+    { key: 'wallet', labelKey: 'Wallet', href: '/wallet', icon: Wallet },
     { key: 'addresses', labelKey: 'Addresses', href: '/user/addresses', icon: MapPin },
     { key: 'profile', labelKey: 'Profile', href: '/user/profile', icon: User },
     { key: 'password', labelKey: 'Password', href: '/user/change-password', icon: Lock },
@@ -35,6 +36,10 @@ function resolveActiveKey(url: string): AccountNavKey | null {
 
     if (url.startsWith('/user/orders')) {
         return 'orders';
+    }
+
+    if (url.startsWith('/wallet')) {
+        return 'wallet';
     }
 
     if (url.startsWith('/user/addresses')) {

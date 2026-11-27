@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Exceptions\CartException;
+use App\Exceptions\InventoryException;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -220,7 +221,7 @@ class DetailController extends Controller
             DB::beginTransaction();
 
             try {
-                $unitPrice = $variant->sale_price ?? $variant->price;
+                $unitPrice = (float) ($variant->discount_price ?? $variant->price);
                 $subtotal = $unitPrice * $data['quantity'];
                 $shippingFee = $this->calculateShippingFee($subtotal);
                 $totalAmount = max(0, $subtotal + $shippingFee);
@@ -251,6 +252,8 @@ class DetailController extends Controller
                     'original_total_price' => $subtotal,
                 ]);
 
+                $this->inventoryService->reserveForOrder($order);
+
                 DB::commit();
 
                 Log::info('DetailController@buyNow order created', [
@@ -272,6 +275,17 @@ class DetailController extends Controller
                 throw $e;
             }
 
+        } catch (InventoryException $exception) {
+            Log::warning('DetailController@buyNow insufficient_stock', [
+                'product_id' => $productId,
+                'variant_id' => $data['variant_id'] ?? null,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (\Throwable $exception) {
             Log::error('DetailController@buyNow failed', [
                 'product_id' => $productId,
@@ -634,7 +648,8 @@ class DetailController extends Controller
             'order' => $order,
             'orderItems' => $order->items->map(function ($item) use ($locale) {
                 $product = $item->variant?->product;
-                $imagePath = $product?->images->first()?->image_path ?? null;
+                $image = $product?->images->first();
+                $imageUrl = $image?->image_url ?? null;
 
                 return [
                     'id' => (int) $item->order_item_id,
@@ -646,7 +661,7 @@ class DetailController extends Controller
                     'quantity' => (int) $item->quantity,
                     'unit_price' => Localization::resolveNumber($item->unit_price, $locale),
                     'total_price' => Localization::resolveNumber($item->total_price, $locale),
-                    'image' => $imagePath ? '/storage/'.ltrim($imagePath, '/') : null,
+                    'image' => $imageUrl ?: ($image?->image_path ? '/storage/'.ltrim($image->image_path, '/') : null),
                 ];
             }),
             'totals' => [
@@ -670,7 +685,7 @@ class DetailController extends Controller
         // Validate request
         $data = $request->validate([
             'provider' => ['required', 'string', 'in:stripe,cod'],
-            'address_id' => ['nullable', 'exists:user_addresses,id'],
+            'address_id' => ['required', 'integer', 'exists:user_addresses,id'],
         ]);
 
         // Find the order and ensure it belongs to the user
@@ -679,28 +694,21 @@ class DetailController extends Controller
             ->where('status', OrderStatus::PENDING_CONFIRMATION)
             ->firstOrFail();
 
+        $address = UserAddress::where('id', $data['address_id'])
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
         // Keep the order's payment method in sync with the selected provider (1 = COD, 3 = online).
-        $order->update(['payment_method' => $data['provider'] === 'cod' ? 1 : 3]);
-
-        // Update shipping address if provided, otherwise use default
-        if (! empty($data['address_id'])) {
-            $address = UserAddress::where('id', $data['address_id'])
-                ->where('user_id', $user->id)
-                ->firstOrFail();
-
-            $order->update(['shipping_address_id' => $address->id]);
-        } else {
-            // Use default address if no address_id provided
-            $defaultAddress = UserAddress::where('user_id', $user->id)
-                ->where('is_default', true)
-                ->first();
-
-            if ($defaultAddress) {
-                $order->update(['shipping_address_id' => $defaultAddress->id]);
-            }
-        }
+        $order->update([
+            'payment_method' => $data['provider'] === 'cod' ? 1 : 3,
+            'shipping_address_id' => $address->id,
+        ]);
 
         try {
+            if ($data['provider'] === 'cod') {
+                $this->inventoryService->commitReservedForOrder($order);
+            }
+
             $gateway = PaymentService::make($data['provider']);
             $paymentUrl = $gateway->createPayment($order);
 
@@ -737,6 +745,12 @@ class DetailController extends Controller
                 'error' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
             ]);
+
+            $order->update([
+                'status' => OrderStatus::CANCELLED,
+                'payment_status' => PaymentStatus::FAILED,
+            ]);
+            $this->inventoryService->handleOrderRelease($order);
 
             return response()->json([
                 'success' => false,

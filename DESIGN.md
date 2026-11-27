@@ -122,6 +122,8 @@ Glass là vật liệu của **lớp chrome nổi**, không phải hiệu ứng 
 
 **Overlay**: dialog giữ surface đặc (form/modal dài), bo 16. Sheet là slab kính nổi inset 12px, bo 28, nền `--sn-glass-menu` + blur; shell khoá header/footer, chỉ `sn-sheet__body` cuộn. Tooltip là overlay alpha `--sn-glass-menu` + hairline + highlight, bo 10, **không blur**. Filter rail là content panel đặc, bo 12, header/footer đứng yên và body cuộn trong.
 
+**Hero stage (trang chủ)**: hero có thể dùng ảnh shop full-bleed đã blur + wash `--sn-color-canvas` làm nền, nhưng chỉ một lớp blur trên ảnh nền. Panel chữ dùng `--sn-glass-menu` + hairline + inset highlight + `--sn-shadow-glass`, **không thêm `backdrop-filter`** vì nền đã blur; tắt wash và dùng surface đặc khi `prefers-reduced-transparency`, ẩn wash trong `forced-colors`. Ngoại lệ này chỉ áp cho hero trang chủ, không dùng cho card nội dung hay section khác.
+
 Ba luật cứng:
 
 - Một vùng chỉ một lớp blur. Control nằm trong slab dùng `--sn-glass-field` (alpha, không blur).
@@ -230,15 +232,17 @@ Mọi bề mặt kính phải kèm ba fallback, tất cả đặt nền đặc v
 | 4 | Category card, Price/Rating chip | Xong |
 | 5 | Sheet, dialog, tooltip, filter rail | Xong |
 | 6 | Chat dock, panel, composer | Xong |
-| 7 | Footer, newsletter, legal | Tiếp theo |
+| 7 | Footer, newsletter, legal | Xong |
 | 8 | Workspace sidebar, topbar, ambient wash, filter bar, stat card frosted | Xong |
-| 9 | Data table, QA sweep toàn UI | Cuối |
+| 9 | Data table, QA sweep toàn UI | Tiếp theo |
+| 10 | Ví trả trước: sổ cái + phiếu nạp, admin duyệt nạp | Xong |
 
 - Phase 2 đã hấp thụ override navbar (search pill, icon bubble, login pill) vào `button.css` và `field.css`; layout chỉ còn kích thước và trạng thái mở menu.
 - Phase 6: chat dùng một slab kính cho dock (header/footer chrome), message list giữ nền đặc để đọc; composer và quick reply là field alpha, không blur.
 - Phase 4: category tile dùng cùng recipe frosted với media card, ảnh 1:1 inset 8px bo `--sn-radius-media`, hover nhấc 3px + zoom 1.03, focus chỉ đổi border để ring không fade. Rating chip chỉ dùng ở ProductCard và BuyBox; Price discount chip là pill accent-wash.
 - Phase 5: sheet kính nổi inset 12px bo 28, body cuộn riêng; dialog surface đặc bo 16, close 32px hit 44; tooltip overlay 10 không blur; filter rail đặc bo 12, header/footer cố định, body cuộn và clear all luôn tới được.
 - Trang chủ customer đã redesign full composition: hero “storefront window”, flash sale thành band, suggestions thành rail, brand/editorial/trust bỏ card; mobile shelf 2 cột. Chi tiết ở 6.8.
+- Phase 7: footer là content band đặc, masthead brand 5/7 + newsletter, directory 3 cột, bottom bar; bỏ social placeholder; newsletter có label Email.
 - Layout chỉ được override kích thước, vị trí và radius cục bộ; không override tint, blur hay hairline của primitive.
 
 Checklist cho mỗi component:
@@ -260,16 +264,51 @@ Definition of done cho toàn UI:
 
 ### 6.8 Trang chủ
 
-- Hero **storefront window**: copy 5 cột, media 7 cột gồm một ảnh dẫn 4:5 và hai ảnh 4:3 xếp chồng; caption nằm dưới ảnh với hairline, ảnh dẫn `loading="eager"` + `fetchPriority="high"`. Không eyebrow.
+- Hero **storefront wash**: ảnh shop full-bleed `/images/shops/fashionhub.jpg` blur + wash canvas; panel chữ kính 5/12, media 7/12 giữ ảnh dẫn 4:5 + hai ảnh 4:3. Panel dùng `--sn-glass-menu`, radius 20, hairline, inset highlight, shadow-glass, không `backdrop-filter`. Animation: nền scale 1.16 → 1.08 trong 20s, panel/ảnh rise 320ms với stagger 80/160/220/280ms; reduced motion tắt hoàn toàn.
 - Category shelf giữ 6 frosted tile, bỏ eyebrow; flash sale là band có rule accent 2px trên và hairline dưới, không card; best sellers grid 4/2; suggestions rail ngang card 16rem/13rem; brand split ảnh trái 7 cột, copy 5 cột, không card; editorial 5/3/4; trust ledger 4/2/1 cột với hairline dọc.
 - Mobile: best sellers và flash sale 2 cột; rail card 13rem; trust 1 cột dưới 640.
 - Home renders ngay từ Inertia props, không skeleton chặn first paint; `Home.module.css` đã xóa.
+
+### 6.9 Footer
+
+- Footer là content band đặc, nền `--sn-color-canvas-alt`, rule accent 2px trên cùng; **không dùng glass**.
+- Masthead 5/7 ở desktop: brand lockup lớn + câu giới thiệu + contact bên trái; newsletter bên phải với hairline dọc. Mobile stack; compact footer ẩn newsletter và masthead còn 1 cột.
+- Directory 3 cột từ 640px, 1 cột mobile; mỗi cột có top hairline, link 13px muted, hover accent + underline, focus-visible ring.
+- Newsletter dùng label “Email” nhìn thấy, input + button cùng hàng từ 640px; mobile stack. Submit giữ toast hiện tại.
+- Bottom bar: copyright, legal links và PaymentMarks; mobile stack. Social placeholder `href="#"` đã bỏ.
+
+### 6.10 Trang chi tiết sản phẩm
+
+- PDP là **product record**, không dùng tab: top stage rồi `Details`, `Reviews`, `Related products` xếp dọc, mỗi section có top hairline và `scroll-margin-top: calc(var(--sn-header-stuck) + 16px)`.
+- Top stage desktop 6/6, một hairline dọc ở giữa `topGrid` (pseudo-element, không border trên cột) chạy hết chiều cao stage. Mobile thứ tự `intro` (seller, H1, rating, sold), `gallery`, `purchase`.
+- Gallery là frosted media card: `--sn-glass-control` + hairline + inset highlight + `--sn-shadow-card`, bo `--sn-radius-card` 16, ảnh inset 8 bo `--sn-radius-media` 10, tỷ lệ 4:5. Thumb strip cuộn ngang hiển thị toàn bộ ảnh; counter overlay góc dưới trái; prev/next overlay từ 768px; ArrowLeft/ArrowRight trên khung ảnh; wishlist dùng `surface="overlay"`.
+- Cột mua borderless: seller line compact (`ShopIdentity`), H1 28/36px, rating chip link tới `#reviews`, sold count; price line có stock text (success, danger khi hết), variants, quantity, hai CTA 2 cột từ 640px, delivery và assurance ledger 3 dòng. Không lồng panel giá hay panel giao hàng, không lặp shop card ở aside.
+- Sticky cột mua chỉ từ 1024px và viewport cao ≥820px, offset `calc(var(--sn-header-stuck) + var(--sn-space-2))`; dưới ngưỡng đó cột chảy bình thường để CTA không bị cắt.
+- `Details`: mô tả 7 cột + thông số 5 cột ở desktop, 1 cột mobile. Thông số lấy category, brand, SKU và thuộc tính của biến thể đang chọn, không liệt kê toàn bộ giá trị biến thể.
+- `Reviews`: summary 4 cột (score, stars, breakdown tĩnh) + danh sách 8 cột; ngày dùng `created_at_human`; pager chỉ hiện khi `last_page > 1`, gọi `router.get` với `only: ['reviews']`, giữ scroll và cuộn về `#reviews`. Không render button filter khi không có `onFilter`.
+- `Related products`: render `relatedProducts` thật từ controller, `ProductCard` 4 cột desktop / 2 cột mobile, action `Xem tất cả` trỏ category search; ẩn section khi rỗng. Không bịa badge, rating hay giá.
+- Variant không khả dụng bị disable theo variant thật; biến thể hết hàng vẫn chọn được để stock và giá hiển thị đúng. Sản phẩm không có biến thể hoặc hết hàng khoá CTA.
+- Không dùng glass cho section nội dung; chỉ gallery media card dùng recipe frosted, không blur. Ảnh 375/768/1440, light/dark, zoom 200%, reduced motion phải qua.
+
+### 6.11 Trang thanh toán
+
+- Checkout là **app screen**, không hero, không section rhythm marketing; nền tảng là form + order slip. Toàn bộ nội dung, route, field, handler và dữ liệu đơn giữ nguyên.
+- Header: breadcrumb, H1, count badge, mô tả ngắn; **không eyebrow**, không label in hoa. Count badge giữ một pill duy nhất.
+- Stepper là rail 3 cột đều, marker tròn + label, active đậm và accent, không dấu `/`, không thanh accent rời; mobile thu label về `--sn-text-xs`, vẫn một hàng.
+- Desktop 7/5: form bên trái, order slip bên phải. Form dùng hairline section, address và payment là radio card, shipping là ledger row phẳng không card, note là field. Payment marks nằm dưới description, không chen vào head để title không bị ép.
+- Order slip là content card đặc: item ảnh 1:1 48px, promo, totals, total `--sn-text-2xl`, CTA primary. Desktop sticky theo `calc(var(--sn-header-stuck) + var(--sn-space-2))`. Mobile là disclosure, CTA trong card ẩn dưới 1024.
+- Mobile có fixed bottom bar gồm `Tổng cộng`, total và `Đặt hàng`; bar dùng `--sn-z-sticky`, surface đặc, hairline trên, safe-area padding. ChatDock ẩn trên checkout để không đè CTA; footer checkout có bottom padding bằng chiều cao bar.
+- CTA không disabled ở trạng thái nghỉ; click validate, toast và cuộn tới `#shipping-address` hoặc `#payment-method`. Chỉ loading khi request chạy.
+- Ảnh order item lấy `image_url` trước, fallback `/storage/{image_path}`, cuối cùng default; `width`/`height`/`alt=""`/`onError` để không CLS và không lặp tên.
+- Legal note dưới CTA dùng `--sn-text-xs` muted, căn trái, không middle dot; note tiền tệ là hai câu. Trust dùng check icon, không dùng lock cho "Đổi trả".
+- Không card lồng card; không glass cho content; không thêm claim, delivery date hay badge mới. Ảnh 375/768/1024/1440, light/dark, zoom 200%, reduced motion, empty/processing/promo error phải qua.
 
 ## 7. Motion
 
 - Duration: instant 90ms · fast 150ms · base 180ms · slow 240ms · reveal 320ms.
 - Easing: `--sn-ease-standard`, `--sn-ease-out`, `--sn-ease-in-out`; stagger 40ms.
 - Chỉ animate `background-color`, `border-color`, `color`, `opacity`, `transform` ngắn. Không loop vô hạn trừ spinner/skeleton có mục đích.
+- Hero trang chủ: wash scale 1.16 → 1.08 trong 20s một lần; panel và ảnh rise 320ms, stagger 80/160/220/280ms; tắt hoàn toàn khi `prefers-reduced-motion`.
 - `base/a11y.css` tắt animation/transition khi `prefers-reduced-motion: reduce` (file duy nhất được dùng `!important`).
 
 ## 8. Icon & hình ảnh

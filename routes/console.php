@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Clean up stale inventory reservations every hour
-Schedule::command('reservations:cleanup --force')
+Schedule::command('reservations:cleanup')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();

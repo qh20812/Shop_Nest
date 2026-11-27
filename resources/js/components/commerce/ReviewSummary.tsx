@@ -23,6 +23,8 @@ type ReviewSummaryProps = {
 
 export function ReviewSummary({ rating, count, breakdown, activeFilter, onFilter, className }: ReviewSummaryProps) {
     const { t } = useTranslation();
+    const interactive = Boolean(onFilter);
+
     return (
         <div className={cx(styles.reviewSummary, className)}>
             <div className={styles.reviewSummaryLeft}>
@@ -32,21 +34,38 @@ export function ReviewSummary({ rating, count, breakdown, activeFilter, onFilter
             </div>
 
             <div className={styles.reviewBreakdown}>
-                {breakdown.map((item) => (
-                    <button
-                        key={item.rating}
-                        type="button"
-                        onClick={() => onFilter?.(activeFilter === item.rating ? null : item.rating)}
-                        className={styles.reviewBreakdownRow}
-                        data-active={activeFilter === item.rating ? 'true' : undefined}
-                    >
-                        <span className={styles.reviewBreakdownLabel}>{item.rating} sao</span>
-                        <Progress value={item.percentage} tone="warning" className={styles.reviewBreakdownBar} />
-                        <span className={styles.reviewBreakdownCount}>
-                            {item.percentage}% ({formatNumber(item.count)})
-                        </span>
-                    </button>
-                ))}
+                {breakdown.map((item) => {
+                    const content = (
+                        <>
+                            <span className={styles.reviewBreakdownLabel}>{t(':rating stars', { rating: item.rating })}</span>
+                            <Progress value={item.percentage} tone="warning" className={styles.reviewBreakdownBar} />
+                            <span className={styles.reviewBreakdownCount}>
+                                {item.percentage}% ({formatNumber(item.count)})
+                            </span>
+                        </>
+                    );
+
+                    if (interactive) {
+                        return (
+                            <button
+                                key={item.rating}
+                                type="button"
+                                onClick={() => onFilter?.(activeFilter === item.rating ? null : item.rating)}
+                                className={styles.reviewBreakdownRow}
+                                data-interactive="true"
+                                data-active={activeFilter === item.rating ? 'true' : undefined}
+                            >
+                                {content}
+                            </button>
+                        );
+                    }
+
+                    return (
+                        <div key={item.rating} className={styles.reviewBreakdownRow}>
+                            {content}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

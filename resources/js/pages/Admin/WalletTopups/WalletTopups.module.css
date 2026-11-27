@@ -1,0 +1,234 @@
+/* Hallmark · v2.0.0 · screen: admin top-up queue · scope: app · system: Bảng Hiệu 2.0 (DESIGN.md) · shape: app screen · nav: workspace shell · footer: none
+ * Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V5 · weakest: S, the queue is only as specific as its status vocabulary; led with waiting age and the declared-versus-received difference
+ */
+
+.rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sn-space-4);
+    margin: 0;
+    padding: var(--sn-space-4) 0;
+    border-top: 1px solid var(--sn-color-border);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+@media (min-width: 768px) {
+    .rail {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+.railItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+}
+
+.railItem:last-child {
+    grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+    .railItem {
+        padding-left: var(--sn-space-4);
+        border-left: 1px solid var(--sn-color-border);
+    }
+
+    .railItem:first-child {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .railItem:last-child {
+        grid-column: auto;
+    }
+}
+
+.railLabel {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.railValue {
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-xl);
+    font-weight: var(--sn-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--sn-leading-snug);
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-3);
+    align-items: end;
+    padding: var(--sn-space-4);
+}
+
+@media (min-width: 768px) {
+    .filters {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    }
+}
+
+.filterActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sn-space-2);
+}
+
+.userCell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+    min-width: 0;
+}
+
+.userName {
+    color: var(--sn-color-text);
+    font-weight: var(--sn-weight-medium);
+}
+
+.userEmail {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    overflow-wrap: break-word;
+}
+
+.code {
+    color: var(--sn-color-text);
+    font-weight: var(--sn-weight-semibold);
+    letter-spacing: var(--sn-tracking-wide);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.amount {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.muted {
+    color: var(--sn-color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.amountCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--sn-space-1);
+}
+
+.delta {
+    color: var(--sn-color-warning-text);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.newRow {
+    background: var(--sn-color-accent-wash);
+    transition: background-color var(--sn-dur-slow) var(--sn-ease-standard);
+}
+
+@media (max-width: 767.98px) {
+    .hideSm {
+        display: none;
+    }
+}
+
+/* Review dialog */
+
+.dialogBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+}
+
+.dialogSummary {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border-top: 1px solid var(--sn-color-border);
+}
+
+.dialogRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sn-space-3);
+    align-items: baseline;
+    padding: var(--sn-space-2) 0;
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.dialogLabel {
+    margin: 0;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.dialogValue {
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-base);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    overflow-wrap: break-word;
+}
+
+.difference {
+    margin: 0;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.differenceStrong {
+    color: var(--sn-color-text);
+    font-weight: var(--sn-weight-medium);
+}
+
+.dialogActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+}
+
+.actionButton {
+    width: 100%;
+}
+
+.rejectToggle {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--sn-color-danger-text);
+    font: inherit;
+    font-size: var(--sn-text-sm);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+}
+
+.rejectToggle:focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+    border-radius: var(--sn-radius-sm);
+}
+
+.rejectBlock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-3);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-canvas-alt);
+}
+
+.rejectActions {
+    display: flex;
+    justify-content: flex-end;
+}

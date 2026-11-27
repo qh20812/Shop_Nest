@@ -66,6 +66,10 @@
     --sn-color-selection: var(--sn-accent-100);
     --sn-color-scrim: rgb(21 22 15 / 0.08);
 
+    /* QR paper: a scannable code needs a light quiet zone in both themes */
+    --sn-color-qr-paper: var(--sn-neutral-0);
+    --sn-color-qr-ink: var(--sn-neutral-950);
+
     /* Glass dock */
     --sn-color-canvas-deep: var(--sn-neutral-150);
     --sn-glass-tint: rgb(255 255 255 / 0.78);
@@ -150,6 +154,10 @@
     --sn-color-selection: #4a2a1e;
     --sn-color-scrim: rgb(0 0 0 / 0.32);
 
+    /* QR paper */
+    --sn-color-qr-paper: var(--sn-neutral-0);
+    --sn-color-qr-ink: var(--sn-neutral-950);
+
     /* Glass dock */
     --sn-color-canvas-deep: var(--sn-graphite-950);
     --sn-glass-tint: rgb(28 32 26 / 0.62);
@@ -213,6 +221,8 @@
         --sn-color-overlay: rgb(0 0 0 / 0.66);
         --sn-color-selection: #4a2a1e;
         --sn-color-scrim: rgb(0 0 0 / 0.32);
+        --sn-color-qr-paper: var(--sn-neutral-0);
+        --sn-color-qr-ink: var(--sn-neutral-950);
         --sn-color-canvas-deep: var(--sn-graphite-950);
         --sn-glass-tint: rgb(28 32 26 / 0.62);
         --sn-glass-control: rgb(255 255 255 / 0.06);

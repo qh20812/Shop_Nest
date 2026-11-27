@@ -41,7 +41,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
                     <span className={styles.reviewDate}>{review.createdAt}</span>
                 </div>
                 <Rating value={review.rating} compact showValue={false} />
-                <p className={styles.reviewText}>{review.comment}</p>
+                {review.comment && <p className={styles.reviewText}>{review.comment}</p>}
             </div>
         </article>
     );

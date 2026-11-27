@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Payments\Gateways\StripeGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ class BuyNowCheckoutTest extends TestCase
 
     private User $user;
 
+    private UserAddress $address;
+
     private Order $order;
 
     protected function setUp(): void
@@ -26,6 +29,10 @@ class BuyNowCheckoutTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
+        $this->address = UserAddress::factory()->create([
+            'user_id' => $this->user->id,
+            'is_default' => true,
+        ]);
 
         $product = Product::factory()->create([
             'seller_id' => $this->user->id,
@@ -74,6 +81,7 @@ class BuyNowCheckoutTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson("/buy-now/checkout/{$this->order->order_id}", [
                 'provider' => 'stripe',
+                'address_id' => $this->address->id,
             ]);
 
         $response->assertOk()->assertJson([
@@ -89,6 +97,7 @@ class BuyNowCheckoutTest extends TestCase
         $response = $this->actingAs($this->user)
             ->postJson("/buy-now/checkout/{$this->order->order_id}", [
                 'provider' => 'cod',
+                'address_id' => $this->address->id,
             ]);
 
         $response->assertOk()->assertJson([
@@ -104,7 +113,10 @@ class BuyNowCheckoutTest extends TestCase
     {
         foreach (['paypal', 'vnpay', 'momo'] as $provider) {
             $this->actingAs($this->user)
-                ->postJson("/buy-now/checkout/{$this->order->order_id}", ['provider' => $provider])
+                ->postJson("/buy-now/checkout/{$this->order->order_id}", [
+                    'provider' => $provider,
+                    'address_id' => $this->address->id,
+                ])
                 ->assertStatus(422);
         }
     }

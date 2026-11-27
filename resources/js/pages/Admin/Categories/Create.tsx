@@ -1,29 +1,24 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
 
-import CategoryForm from '@/components/admin/categories/CategoryForm';
+import CategoryForm, { type CategoryParentOption } from '@/components/admin/categories/CategoryForm';
 import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
-import Header from '@/components/ui/header';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 
-interface Category {
-    category_id: number;
-    name: { en: string; vi: string };
-    description?: { en?: string; vi?: string };
-    parent_category_id?: number | null;
-    is_active: boolean;
-}
+import adminStyles from '@/components/admin/admin.module.css';
 
 interface PageProps {
-    parentCategories: Category[];
+    parentCategories: CategoryParentOption[];
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
 export default function Create() {
     const { t } = useTranslation();
-    const { parentCategories, flash } = usePage<PageProps>().props;
+    const { parentCategories = [], flash } = usePage<PageProps>().props;
 
     const { data, setData, post, processing, errors } = useForm({
         name: { en: '', vi: '' },
@@ -44,24 +39,31 @@ export default function Create() {
 
             {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
-            <Header
-                title={t('Create New Category')}
-                breadcrumbs={[
-                    { label: t('Dashboard'), href: '/admin/dashboard' },
-                    { label: t('Categories'), href: '/admin/categories' },
-                    { label: t('Create'), href: '/admin/categories/create', active: true },
-                ]}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Categories'), href: '/admin/categories' },
+                        { label: t('Create New Category'), current: true },
+                    ]}
+                    title={t('Create New Category')}
+                    actions={
+                        <Button asChild variant="secondary" size="sm">
+                            <Link href="/admin/categories">{t('Back to List')}</Link>
+                        </Button>
+                    }
+                />
 
-            <CategoryForm
-                data={data}
-                setData={setData}
-                errors={errors}
-                processing={processing}
-                parentCategories={parentCategories}
-                onSubmit={handleSubmit}
-                submitLabel={t('Create Category')}
-            />
+                <CategoryForm
+                    data={data}
+                    setData={setData}
+                    errors={errors}
+                    processing={processing}
+                    parentCategories={parentCategories}
+                    onSubmit={handleSubmit}
+                    submitLabel={t('Create Category')}
+                />
+            </div>
         </WorkspaceLayout>
     );
 }

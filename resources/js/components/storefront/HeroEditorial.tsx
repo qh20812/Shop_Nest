@@ -20,15 +20,21 @@ type HeroEditorialProps = {
     subcopy: React.ReactNode;
     cta?: { label: string; href: string };
     images: HeroImage[];
+    backdropImage?: string;
     className?: string;
 };
 
-export function HeroEditorial({ title, subcopy, cta, images, className }: HeroEditorialProps) {
+export function HeroEditorial({ title, subcopy, cta, images, backdropImage, className }: HeroEditorialProps) {
     const [lead, ...rest] = images;
 
     return (
         <section className={cx(styles.hero, className)}>
-            <PageContainer>
+            {backdropImage && (
+                <div className={styles.heroWash} aria-hidden="true">
+                    <img src={backdropImage} alt="" loading="eager" decoding="async" fetchPriority="low" className={styles.heroWashImage} />
+                </div>
+            )}
+            <PageContainer className={styles.heroStage}>
                 <div className={styles.heroGrid}>
                     <div className={styles.heroCopy}>
                         <Heading level={1} size="display-lg" className={styles.heroTitle}>

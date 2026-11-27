@@ -2,75 +2,29 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ProductVariant;
+use App\Services\InventoryService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CleanupStaleReservations extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'reservations:cleanup
-                            {--force : Force cleanup without confirmation}';
+                            {--hours=24 : Cancel pending orders with reservations older than this}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Clean up stale inventory reservations from abandoned checkout sessions';
+    protected $description = 'Cancel abandoned pending orders and release their stock reservations';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle(): int
+    public function handle(InventoryService $inventoryService): int
     {
-        $this->info('Checking for stale reservations...');
+        $hours = max(1, (int) $this->option('hours'));
 
-        $variants = ProductVariant::where('reserved_quantity', '>', 0)->get();
+        $cancelled = $inventoryService->releaseStaleReservations($hours);
 
-        if ($variants->isEmpty()) {
-            $this->info('✅ No stale reservations found.');
-            return self::SUCCESS;
-        }
-
-        $this->warn("Found {$variants->count()} variant(s) with reservations:");
-        
-        foreach ($variants->take(10) as $variant) {
-            $this->line(sprintf(
-                '  - Variant %d: stock=%d, reserved=%d',
-                $variant->variant_id,
-                $variant->stock_quantity,
-                $variant->reserved_quantity
-            ));
-        }
-
-        if ($variants->count() > 10) {
-            $this->line('  ... and ' . ($variants->count() - 10) . ' more');
-        }
-
-        if (!$this->option('force') && !$this->confirm('Do you want to reset these reservations?', true)) {
-            $this->info('Cleanup cancelled.');
-            return self::SUCCESS;
-        }
-
-        $this->info('Resetting reservations...');
-
-        $updated = DB::transaction(function () {
-            return ProductVariant::where('reserved_quantity', '>', 0)
-                ->update(['reserved_quantity' => 0]);
-        });
-
-        Log::info('Stale reservations cleaned up', [
-            'variants_updated' => $updated,
-            'command' => 'reservations:cleanup',
+        Log::info('Stale order reservations cleaned up', [
+            'orders_cancelled' => $cancelled,
+            'older_than_hours' => $hours,
         ]);
 
-        $this->info("✅ Successfully reset {$updated} reservation(s).");
+        $this->info("Cancelled {$cancelled} abandoned order(s) and released their reservations.");
 
         return self::SUCCESS;
     }

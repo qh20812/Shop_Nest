@@ -1,19 +1,33 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Eye, Globe, Pencil, Plus, Search, Store, Tag, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import PromotionStatusBadge from '@/components/admin/promotions/PromotionStatusBadge';
+import {
+    promotionScopeLabel,
+    promotionStatusLabel,
+    promotionTypeLabel,
+    promotionValueLabel,
+    type PromotionSeller,
+} from '@/components/admin/promotions/promotion-display';
 import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import StatusBadge from '@/components/ui/status-badge';
-import { formatDate, formatVnd } from '@/lib/format';
+import { Select } from '@/components/ui/select';
+import { cx } from '@/lib/cx';
+import { formatDate, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
-import styles from '@/components/admin/admin.module.css';
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Promotions.module.css';
 
 interface Promotion {
     promotion_id: number;
@@ -29,6 +43,9 @@ interface Promotion {
     spent_budget?: number | string | null;
     roi_percentage?: number | string | null;
     status: string;
+    created_by_type?: string | null;
+    seller_id?: number | null;
+    seller?: PromotionSeller | null;
 }
 
 interface PaginationLink {
@@ -40,12 +57,17 @@ interface PaginationLink {
 interface PromotionPaginator {
     data: Promotion[];
     links: PaginationLink[];
+    from?: number | null;
+    to?: number | null;
+    total?: number;
 }
 
 interface PageProps {
     promotions: PromotionPaginator;
     typeOptions: Record<string, string>;
     statusFilters: string[];
+    statusCounts: Record<string, number>;
+    totalPromotions: number;
     filters?: Record<string, string>;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
@@ -57,23 +79,19 @@ interface ConfirmState {
     promotionName: string;
 }
 
-const toNumber = (value?: number | string | null): number | null => {
+const formatBudget = (value?: number | string | null): string => {
     if (value === null || value === undefined || value === '') {
-        return null;
+        return '-';
     }
 
-    const numeric = typeof value === 'string' ? Number.parseFloat(value) : Number(value);
-    return Number.isNaN(numeric) ? null : numeric;
-};
+    const numeric = Number(value);
 
-const formatBudget = (value?: number | string | null): string => {
-    const numeric = toNumber(value);
-    return numeric === null ? '-' : formatVnd(numeric);
+    return Number.isFinite(numeric) ? formatVnd(numeric) : '-';
 };
 
 export default function Index() {
     const { t } = useTranslation();
-    const { promotions, typeOptions, statusFilters, filters = {}, flash } = usePage<PageProps>().props;
+    const { promotions, typeOptions, statusFilters, statusCounts, totalPromotions, filters = {}, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
@@ -94,6 +112,11 @@ export default function Index() {
             setToast({ type: 'error', message: flash.error });
         }
     }, [flash?.success, flash?.error]);
+
+    const total = promotions.total ?? totalPromotions;
+    const hasFilters = Boolean(filters.search || filters.status || filters.type);
+    const rangeLabel =
+        total > 0 ? `${formatNumber(promotions.from ?? 0)}-${formatNumber(promotions.to ?? 0)} / ${formatNumber(total)}` : formatNumber(0);
 
     const applyFilters = () => {
         router.get(
@@ -119,44 +142,55 @@ export default function Index() {
             return;
         }
 
+        setConfirmState({ open: false, promotionId: null, promotionName: '' });
         router.delete(`/admin/promotions/${confirmState.promotionId}`, { preserveScroll: true });
     };
+
+    const summaryItems = [
+        { key: 'draft', label: t('Upcoming'), value: statusCounts.draft ?? 0 },
+        { key: 'active', label: t('Active'), value: statusCounts.active ?? 0 },
+        { key: 'paused', label: t('Paused'), value: statusCounts.paused ?? 0 },
+        { key: 'expired', label: t('Expired'), value: statusCounts.expired ?? 0 },
+    ];
 
     const columns = useMemo(
         () => [
             {
-                key: 'name',
+                key: 'promotion',
                 header: t('Promotion Name'),
-                cell: (promotion: Promotion) => (
-                    <div className={styles.cellStack}>
-                        <span className={styles.cellTitle}>{promotion.name || t('Unnamed Promotion')}</span>
-                        <span className={styles.cellMeta}>
-                            {formatDate(promotion.start_date)} - {formatDate(promotion.end_date)}
-                        </span>
-                    </div>
-                ),
-            },
-            {
-                key: 'type',
-                header: t('Type'),
-                cell: (promotion: Promotion) => <span className={styles.muted}>{typeOptions[promotion.type] ?? promotion.type}</span>,
+                cell: (promotion: Promotion) => {
+                    const isSeller = promotion.created_by_type === 'seller';
+                    const ScopeIcon = isSeller ? Store : Globe;
+
+                    return (
+                        <div className={styles.promotion}>
+                            <span className={styles.promotionName}>{promotion.name || t('Unnamed Promotion')}</span>
+                            <div className={styles.promotionMeta}>
+                                <Badge tone="neutral" size="sm" icon={ScopeIcon}>
+                                    {promotionScopeLabel(promotion, t)}
+                                </Badge>
+                                <span>{promotionTypeLabel(promotion.type, typeOptions, t)}</span>
+                            </div>
+                            <span className={styles.dateLine}>
+                                {formatDate(promotion.start_date)} - {formatDate(promotion.end_date)}
+                            </span>
+                        </div>
+                    );
+                },
             },
             {
                 key: 'value',
                 header: t('Discount Value'),
-                cell: (promotion: Promotion) => (
-                    <span className={styles.priceAccent}>
-                        {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString('vi-VN')}%` : formatBudget(promotion.value)}
-                    </span>
-                ),
+                cell: (promotion: Promotion) => <span className={styles.value}>{promotionValueLabel(promotion.type, promotion.value)}</span>,
             },
             {
                 key: 'budget',
                 header: t('Budget'),
+                align: 'right' as const,
                 cell: (promotion: Promotion) => (
-                    <div className={styles.cellStack}>
-                        <span className={styles.price}>{formatBudget(promotion.allocated_budget)}</span>
-                        <span className={styles.cellMeta}>
+                    <div className={styles.budgetCell}>
+                        <span className={styles.value}>{formatBudget(promotion.allocated_budget)}</span>
+                        <span className={styles.spent}>
                             {t('Spent')}: {formatBudget(promotion.spent_budget)}
                         </span>
                     </div>
@@ -165,16 +199,19 @@ export default function Index() {
             {
                 key: 'usage',
                 header: t('Usage'),
+                align: 'right' as const,
                 cell: (promotion: Promotion) => (
-                    <span className={styles.numeric}>
-                        {promotion.usage_limit ? `${promotion.used_count} / ${promotion.usage_limit}` : `${promotion.used_count}`}
+                    <span className={styles.usage}>
+                        {promotion.usage_limit
+                            ? `${formatNumber(promotion.used_count)} / ${formatNumber(promotion.usage_limit)}`
+                            : formatNumber(promotion.used_count)}
                     </span>
                 ),
             },
             {
                 key: 'status',
                 header: t('Status'),
-                cell: (promotion: Promotion) => <StatusBadge status={promotion.status} />,
+                cell: (promotion: Promotion) => <PromotionStatusBadge status={promotion.status} />,
             },
             {
                 key: 'actions',
@@ -217,67 +254,103 @@ export default function Index() {
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <FilterPanel
-                title={t('Promotion Management')}
-                breadcrumbs={[
-                    { label: t('Dashboard'), href: '/admin/dashboard' },
-                    { label: t('Promotions'), href: '/admin/promotions', active: true },
-                ]}
-                onApplyFilters={applyFilters}
-                searchConfig={{
-                    value: search,
-                    onChange: setSearch,
-                    placeholder: t('Search promotions, sellers, products...'),
-                }}
-                filterConfigs={[
-                    {
-                        value: status,
-                        onChange: setStatus,
-                        label: t('-- All Statuses --'),
-                        options: statusFilters.map((item) => ({ value: item, label: t(ucfirst(item)) })),
-                    },
-                    {
-                        value: type,
-                        onChange: setType,
-                        label: t('-- All Types --'),
-                        options: Object.keys(typeOptions).map((key) => ({ value: key, label: t(typeOptions[key]) })),
-                    },
-                ]}
-                buttonConfigs={[
-                    {
-                        href: '/admin/promotions/create',
-                        label: t('Create Promotion'),
-                        icon: Plus,
-                        color: 'primary',
-                    },
-                ]}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Promotions'), current: true },
+                    ]}
+                    title={t('Promotion Management')}
+                    count={formatNumber(total)}
+                    actions={
+                        <Button asChild variant="primary" size="sm">
+                            <Link href="/admin/promotions/create">
+                                <Plus aria-hidden="true" />
+                                {t('Create Promotion')}
+                            </Link>
+                        </Button>
+                    }
+                />
 
-            <DataTable
-                columns={columns}
-                data={promotions.data}
-                headerTitle={t('Promotions')}
-                headerIcon={Tag}
-                emptyMessage={t('No promotions found')}
-            />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <FormField label={t('Search')} htmlFor="promotion-search">
+                        <Input
+                            id="promotion-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={t('Search by promotion name...')}
+                            leadingIcon={Search}
+                            surface="glass"
+                        />
+                    </FormField>
 
-            <Pagination links={promotions.links} filters={{ search, status, type }} />
+                    <FormField label={t('Status')} htmlFor="promotion-status-filter">
+                        <Select id="promotion-status-filter" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Statuses --')}</option>
+                            {statusFilters.map((value) => (
+                                <option key={value} value={value}>
+                                    {promotionStatusLabel(value, t)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Type')} htmlFor="promotion-type-filter">
+                        <Select id="promotion-type-filter" value={type} onChange={(event) => setType(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Types --')}</option>
+                            {Object.entries(typeOptions).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {t(label)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <div className={styles.filterActions}>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <dl className={styles.summaryRail}>
+                    {summaryItems.map((item) => (
+                        <div key={item.key} className={styles.summary}>
+                            <dt className={styles.summaryLabel}>{item.label}</dt>
+                            <dd className={styles.summaryValue}>{formatNumber(item.value)}</dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={columns}
+                        data={promotions.data}
+                        headerTitle={t('Promotions')}
+                        headerIcon={Tag}
+                        headerMeta={rangeLabel}
+                        emptyMessage={hasFilters ? t('No promotions match the filters.') : t('No promotions found')}
+                    />
+                </div>
+
+                <Pagination links={promotions.links} filters={{ search, status, type }} />
+            </div>
 
             <ConfirmationModal
                 isOpen={confirmState.open}
                 onClose={() => setConfirmState({ open: false, promotionId: null, promotionName: '' })}
                 onConfirm={handleConfirmDelete}
                 title={t('Delete Promotion')}
-                message={t('Are you sure you want to delete this promotion?')}
+                message={`${t('Are you sure you want to delete this promotion?')} "${confirmState.promotionName}"`}
             />
         </WorkspaceLayout>
     );
 }
-
-const ucfirst = (value: string) => {
-    if (!value) {
-        return value;
-    }
-
-    return value.charAt(0).toUpperCase() + value.slice(1);
-};

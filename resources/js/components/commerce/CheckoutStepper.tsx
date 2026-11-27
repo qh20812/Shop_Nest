@@ -1,5 +1,4 @@
 import { useTranslation } from '@/lib/i18n';
-import * as React from 'react';
 
 import styles from './commerce.module.css';
 
@@ -23,18 +22,10 @@ export function CheckoutStepper({ steps, current, className }: CheckoutStepperPr
                     const state = step.state ?? (current === index ? 'active' : current !== undefined && index < current ? 'done' : 'upcoming');
 
                     return (
-                        <React.Fragment key={step.label}>
-                            {index > 0 && (
-                                <span aria-hidden="true" className={styles.stepperSeparator}>
-                                    /
-                                </span>
-                            )}
-                            <li aria-current={state === 'active' ? 'step' : undefined} className={styles.stepperItem} data-state={state}>
-                                <span aria-hidden="true" className={styles.stepperMarker} />
-                                <span className={styles.stepperLabel}>{step.label}</span>
-                                {state === 'active' ? <span aria-hidden="true" className={styles.stepperBar} /> : null}
-                            </li>
-                        </React.Fragment>
+                        <li key={step.label} aria-current={state === 'active' ? 'step' : undefined} className={styles.stepperItem} data-state={state}>
+                            <span aria-hidden="true" className={styles.stepperMarker} />
+                            <span className={styles.stepperLabel}>{step.label}</span>
+                        </li>
                     );
                 })}
             </ol>

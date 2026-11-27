@@ -8,37 +8,72 @@ use App\Services\WalletTopupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Inertia\Response;
 use InvalidArgumentException;
 
 class WalletTopupController extends Controller
 {
     public function __construct(private WalletTopupService $topupService) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|Response
     {
         $filters = $request->validate([
-            'status' => ['nullable', 'in:pending,transferred,approved,rejected,expired'],
+            'status' => ['nullable', 'in:pending,transferred,approved,rejected,expired,all'],
             'code' => ['nullable', 'string', 'max:6'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $topups = WalletTopup::query()
+        $statusFilter = $filters['status'] ?? WalletTopup::STATUS_TRANSFERRED;
+        $statusFilter = $statusFilter === 'all' ? null : $statusFilter;
+
+        $query = WalletTopup::query()
             ->with(['user:id,username,email', 'wallet', 'approvedBy:id,username'])
-            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
-            ->when($filters['code'] ?? null, fn ($query, $code) => $query->where('code', strtoupper($code)))
-            ->orderByDesc('topup_id')
+            ->when($statusFilter, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['code'] ?? null, fn ($query, $code) => $query->where('code', strtoupper($code)));
+
+        // The review queue is worked oldest first; every other view is newest first.
+        if ($statusFilter === WalletTopup::STATUS_TRANSFERRED) {
+            $query->orderByRaw('transferred_at is null')->orderBy('transferred_at');
+        } else {
+            $query->orderByDesc('topup_id');
+        }
+
+        $topups = $query
             ->paginate((int) ($filters['per_page'] ?? 20))
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (WalletTopup $topup) => $this->presentAdmin($topup));
+
+        if ($request->header('X-Inertia') || ! $request->wantsJson()) {
+            return Inertia::render('Admin/WalletTopups/Index', [
+                'topups' => $topups,
+                'filters' => [
+                    'status' => $filters['status'] ?? WalletTopup::STATUS_TRANSFERRED,
+                    'code' => $filters['code'] ?? '',
+                ],
+                'statusOptions' => $this->statusOptions(),
+                'statusCounts' => $this->statusCounts(),
+                'server_time' => now()->toIso8601String(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $topups->getCollection()->map(fn (WalletTopup $topup) => $this->presentAdmin($topup))->values(),
+            'data' => $topups->getCollection(),
             'pagination' => [
                 'current_page' => $topups->currentPage(),
                 'last_page' => $topups->lastPage(),
                 'per_page' => $topups->perPage(),
                 'total' => $topups->total(),
+                'from' => $topups->firstItem(),
+                'to' => $topups->lastItem(),
             ],
+            'statusCounts' => $this->statusCounts(),
+            'filters' => [
+                'status' => $filters['status'] ?? WalletTopup::STATUS_TRANSFERRED,
+                'code' => $filters['code'] ?? '',
+            ],
+            'server_time' => now()->toIso8601String(),
         ]);
     }
 
@@ -70,6 +105,7 @@ class WalletTopupController extends Controller
             'success' => true,
             'message' => 'Top-up approved and wallet credited.',
             'topup' => $this->presentAdmin($topup),
+            'statusCounts' => $this->statusCounts(),
         ]);
     }
 
@@ -91,7 +127,45 @@ class WalletTopupController extends Controller
             'success' => true,
             'message' => 'Top-up rejected.',
             'topup' => $this->presentAdmin($topup),
+            'statusCounts' => $this->statusCounts(),
         ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function statusOptions(): array
+    {
+        return [
+            'transferred' => 'Reported as transferred',
+            'pending' => 'Waiting for transfer',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'expired' => 'Expired',
+            'all' => 'All statuses',
+        ];
+    }
+
+    /**
+     * @return array{transferred: int, pending: int, approved: int, rejected: int, expired: int, all: int}
+     */
+    private function statusCounts(): array
+    {
+        $counts = WalletTopup::query()
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $total = (int) $counts->sum();
+
+        return [
+            'transferred' => (int) ($counts[WalletTopup::STATUS_TRANSFERRED] ?? 0),
+            'pending' => (int) ($counts[WalletTopup::STATUS_PENDING] ?? 0),
+            'approved' => (int) ($counts[WalletTopup::STATUS_APPROVED] ?? 0),
+            'rejected' => (int) ($counts[WalletTopup::STATUS_REJECTED] ?? 0),
+            'expired' => (int) ($counts[WalletTopup::STATUS_EXPIRED] ?? 0),
+            'all' => $total,
+        ];
     }
 
     /**

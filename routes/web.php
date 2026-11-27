@@ -10,6 +10,7 @@ use App\Http\Controllers\DetailController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SearchProductController;
+use App\Http\Controllers\WalletController;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
@@ -67,6 +68,12 @@ Route::post('/currency', CurrencyController::class)->name('currency.switch');
 
 // Protected routes that require authentication
 Route::middleware(['auth', 'verified.optional'])->group(function () {
+    // Prepaid wallet: one page for every signed-in role, layout picked by role.
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+    Route::get('/wallet/state', [WalletController::class, 'state'])
+        ->middleware('throttle:60,1')
+        ->name('wallet.state');
+
     // Chatbot API endpoint (moved from api.php to use web session auth)
     Route::post('/chatbot/message', [ChatbotController::class, 'send'])
         ->middleware('throttle:10,1')

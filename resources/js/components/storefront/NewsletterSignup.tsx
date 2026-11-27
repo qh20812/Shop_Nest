@@ -16,6 +16,7 @@ type NewsletterSignupProps = {
 
 export function NewsletterSignup({ onSubmit, loading = false, className }: NewsletterSignupProps) {
     const { t } = useTranslation();
+    const inputId = React.useId();
     const [email, setEmail] = React.useState('');
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -31,18 +32,23 @@ export function NewsletterSignup({ onSubmit, loading = false, className }: Newsl
 
     return (
         <form onSubmit={handleSubmit} className={cx(styles.newsletterForm, className)}>
-            <Input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder={t('Your email')}
-                aria-label={t('Newsletter email')}
-                autoComplete="email"
-                required
-            />
-            <Button type="submit" loading={loading} rightIcon={Send} className={styles.newsletterButton}>
-                {t('Subscribe')}
-            </Button>
+            <label htmlFor={inputId} className={styles.newsletterLabel}>
+                {t('Email')}
+            </label>
+            <div className={styles.newsletterRow}>
+                <Input
+                    id={inputId}
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder={t('Your email')}
+                    autoComplete="email"
+                    required
+                />
+                <Button type="submit" loading={loading} rightIcon={Send} className={styles.newsletterButton}>
+                    {t('Subscribe')}
+                </Button>
+            </div>
         </form>
     );
 }

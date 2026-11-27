@@ -16,6 +16,7 @@ export interface DataTableColumn<T> {
     /** Stable React key; falls back to the column index. */
     key?: string;
     width?: string;
+    className?: string;
 }
 
 interface DataTableProps<T> {
@@ -26,6 +27,7 @@ interface DataTableProps<T> {
     headerMeta?: React.ReactNode;
     emptyMessage?: string;
     className?: string;
+    rowClassName?: (row: T) => string | undefined;
 }
 
 function renderAccessor<T>(row: T, accessorKey: keyof T): React.ReactNode {
@@ -50,6 +52,7 @@ export default function DataTable<T>({
     headerMeta,
     emptyMessage = 'No data found',
     className,
+    rowClassName,
 }: DataTableProps<T>) {
     const { t } = useTranslation();
 
@@ -58,6 +61,7 @@ export default function DataTable<T>({
         header: column.header,
         align: column.align,
         width: column.width,
+        className: column.className,
         cell: column.cell ?? (column.accessorKey ? (row: T) => renderAccessor(row, column.accessorKey as keyof T) : undefined),
     }));
 
@@ -72,6 +76,7 @@ export default function DataTable<T>({
             <Table
                 columns={tableColumns}
                 data={data}
+                rowClassName={rowClassName}
                 empty={
                     <span className={styles.empty}>
                         <Info aria-hidden="true" className={styles.emptyIcon} />

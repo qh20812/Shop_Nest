@@ -58,6 +58,7 @@ type TableProps<T> = {
     empty?: React.ReactNode;
     className?: string;
     onRowClick?: (row: T) => void;
+    rowClassName?: (row: T) => string | undefined;
 };
 
 function getRowKey<T>(row: T, index: number, rowKey?: keyof T | ((row: T, index: number) => string | number)): string | number {
@@ -86,6 +87,7 @@ export function Table<T>({
     empty,
     className,
     onRowClick,
+    rowClassName,
 }: TableProps<T>) {
     return (
         <TableRoot className={className}>
@@ -126,6 +128,7 @@ export function Table<T>({
                         <TableRow
                             key={getRowKey(row, index, rowKey)}
                             data-clickable={onRowClick ? 'true' : undefined}
+                            className={rowClassName?.(row)}
                             onClick={onRowClick ? () => onRowClick(row) : undefined}
                         >
                             {columns.map((column) => (

@@ -9,10 +9,11 @@ use App\Http\Requests\Admin\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Services\ImageValidationService;
 use App\Services\NotificationService;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -23,7 +24,9 @@ class CategoryController extends Controller
     protected ImageValidationService $imageValidator;
 
     private const PAGINATION_LIMIT = 10;
+
     private const STORAGE_PATH = 'categories';
+
     private const STORAGE_DISK = 'public';
 
     public function __construct(ImageValidationService $imageValidator)
@@ -32,40 +35,73 @@ class CategoryController extends Controller
     }
 
     /**
-     * Apply filters to the category query
+     * Build a depth-first list of parent category options.
      *
-     * @param Builder $query
-     * @param Request $request
-     * @return Builder
+     * @return array<int, array{category_id:int, name:string, depth:int, is_active:bool}>
      */
-    protected function applyFilters(Builder $query, Request $request): Builder
+    protected function parentCategoryOptions(?Category $exclude = null): array
     {
-        // Filter by status
-        $status = $request->get('status');
-        if ($status === 'trashed') {
-            $query->onlyTrashed();
-        } elseif ($status === 'active') {
-            $query->where('is_active', true);
-        } elseif ($status === 'inactive') {
-            $query->where('is_active', false);
+        $categories = Category::query()
+            ->select('category_id', 'name', 'parent_category_id', 'is_active')
+            ->get();
+
+        $excluded = [];
+
+        if ($exclude) {
+            $excluded = [$exclude->category_id, ...$this->descendantIds($exclude, $categories)];
         }
 
-        // Add search functionality
-        if ($request->filled('search')) {
-            $searchTerm = $request->get('search');
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name->en', 'like', "%{$searchTerm}%")
-                  ->orWhere('name->vi', 'like', "%{$searchTerm}%");
-            });
+        $childrenByParent = $categories->groupBy(fn (Category $category) => $category->parent_category_id ?? 0);
+
+        $options = [];
+
+        $walk = function (int $parentId, int $depth) use (&$walk, &$options, $childrenByParent, $excluded) {
+            foreach ($childrenByParent->get($parentId, collect()) as $category) {
+                if (in_array($category->category_id, $excluded, true)) {
+                    continue;
+                }
+
+                $options[] = [
+                    'category_id' => $category->category_id,
+                    'name' => $category->getTranslation('name', app()->getLocale()),
+                    'depth' => $depth,
+                    'is_active' => (bool) $category->is_active,
+                ];
+
+                $walk($category->category_id, $depth + 1);
+            }
+        };
+
+        $walk(0, 0);
+
+        return $options;
+    }
+
+    /**
+     * Collect the ids of every descendant of a category.
+     *
+     * @param  Collection<int, Category>  $categories
+     * @return array<int, int>
+     */
+    protected function descendantIds(Category $category, $categories): array
+    {
+        $descendants = [];
+        $stack = [$category->category_id];
+
+        while ($stack !== []) {
+            $parentId = array_pop($stack);
+
+            foreach ($categories->where('parent_category_id', $parentId) as $child) {
+                $descendants[] = $child->category_id;
+                $stack[] = $child->category_id;
+            }
         }
 
-        return $query;
+        return $descendants;
     }
 
     /**
      * Get current actor name for notifications
-     *
-     * @return string
      */
     protected function getCurrentActor(): string
     {
@@ -75,9 +111,8 @@ class CategoryController extends Controller
     /**
      * Handle image upload with validation and cleanup
      *
-     * @param UploadedFile $file
-     * @param string|null $oldImageUrl
      * @return string The storage path
+     *
      * @throws \Exception
      */
     protected function handleImageUpload(UploadedFile $file, ?string $oldImageUrl = null): string
@@ -93,62 +128,79 @@ class CategoryController extends Controller
         // Store the validated image
         $imagePath = $file->store(self::STORAGE_PATH, self::STORAGE_DISK);
 
-        return '/storage/' . $imagePath;
+        return '/storage/'.$imagePath;
     }
+
     /**
      * Display a listing of the resource.
      * Function: A-101 (CRUD - Read)
-     *
-     * @param Request $request
-     * @return Response
      */
     public function index(Request $request): Response
     {
-        $query = Category::latest();
+        $search = trim((string) $request->get('search', ''));
+        $status = (string) $request->get('status', '');
 
-        // Apply filters using the reusable method
-        $query = $this->applyFilters($query, $request);
+        $baseQuery = Category::query()
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $query->where(function (Builder $query) use ($search) {
+                    $query->where('name->en', 'like', "%{$search}%")
+                        ->orWhere('name->vi', 'like', "%{$search}%");
+                });
+            });
 
-        // Get paginated results and total count from the same query
-        $categories = $query->paginate(self::PAGINATION_LIMIT);
+        $statusCounts = [
+            'total' => (clone $baseQuery)->count(),
+            'active' => (clone $baseQuery)->where('is_active', true)->count(),
+            'inactive' => (clone $baseQuery)->where('is_active', false)->count(),
+            'trashed' => (clone $baseQuery)->onlyTrashed()->count(),
+        ];
 
-        // Calculate total from the base query (without pagination)
-        $totalQuery = clone $query;
-        $totalCategories = $totalQuery->count();
+        $query = (clone $baseQuery)
+            ->with(['parent:category_id,name'])
+            ->withCount(['children', 'products'])
+            ->when($status === 'trashed', fn (Builder $builder) => $builder->onlyTrashed())
+            ->when($status === 'active', fn (Builder $builder) => $builder->where('is_active', true))
+            ->when($status === 'inactive', fn (Builder $builder) => $builder->where('is_active', false));
+
+        $categories = $query->latest()->paginate(self::PAGINATION_LIMIT)->withQueryString();
+
+        $categories->getCollection()->transform(function (Category $category) {
+            if (
+                $category->image_url
+                && ! preg_match('/^https?:\/\//i', (string) $category->image_url)
+                && ! str_starts_with((string) $category->image_url, '/')
+            ) {
+                $category->image_url = Storage::url($category->image_url);
+            }
+
+            return $category;
+        });
 
         return Inertia::render('Admin/Categories/Index', [
             'categories' => $categories,
-            'totalCategories' => $totalCategories,
+            'totalCategories' => $categories->total(),
+            'statusCounts' => $statusCounts,
             'filters' => [
-                'search' => $request->get('search'),
-                'status' => $request->get('status'),
-            ]
+                'search' => $search,
+                'status' => $status,
+            ],
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      * Function: A-101 (CRUD - Create Form)
-     *
-     * @return Response
      */
     public function create(): Response
     {
-        $parentCategories = Category::whereNull('parent_category_id')
-            ->where('is_active', true)
-            ->get();
-        
         return Inertia::render('Admin/Categories/Create', [
-            'parentCategories' => $parentCategories
+            'parentCategories' => $this->parentCategoryOptions(),
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      * Function: A-101 (CRUD - Create)
-     *
-     * @param StoreCategoryRequest $request
-     * @return RedirectResponse
      */
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
@@ -177,30 +229,26 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      * Function: A-101 (CRUD - Edit Form)
-     *
-     * @param Category $category
-     * @return Response
      */
     public function edit(Category $category): Response
     {
-        $parentCategories = Category::whereNull('parent_category_id')
-            ->where('is_active', true)
-            ->where('category_id', '!=', $category->category_id)
-            ->get();
-        
+        if (
+            $category->image_url
+            && ! preg_match('/^https?:\/\//i', (string) $category->image_url)
+            && ! str_starts_with((string) $category->image_url, '/')
+        ) {
+            $category->image_url = Storage::url($category->image_url);
+        }
+
         return Inertia::render('Admin/Categories/Edit', [
             'category' => $category,
-            'parentCategories' => $parentCategories
+            'parentCategories' => $this->parentCategoryOptions($category),
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      * Function: A-101 (CRUD - Update)
-     *
-     * @param UpdateCategoryRequest $request
-     * @param Category $category
-     * @return RedirectResponse
      */
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
@@ -228,6 +276,7 @@ class CategoryController extends Controller
 
         return redirect()->route('admin.categories.index')->with('success', 'Cập nhật danh mục thành công.');
     }
+
     public function destroy(Category $category): RedirectResponse
     {
         $categoryName = $category->getTranslation('name', app()->getLocale());
@@ -243,20 +292,42 @@ class CategoryController extends Controller
             $category,
             route('admin.categories.index')
         );
+
         return redirect()->route('admin.categories.index')->with('success', 'Ẩn danh mục thành công.');
     }
 
     /**
+     * Activate an inactive category.
+     */
+    public function activate(Category $category): RedirectResponse
+    {
+        if ($category->trashed()) {
+            abort(404);
+        }
+
+        $category->update(['is_active' => true]);
+
+        $actor = $this->getCurrentActor();
+        NotificationService::sendToRole(
+            'admin',
+            'Category Activated',
+            sprintf('Category "%s" was activated by %s.', $category->getTranslation('name', app()->getLocale()), $actor),
+            NotificationType::ADMIN_CATALOG_MANAGEMENT,
+            $category,
+            route('admin.categories.index')
+        );
+
+        return redirect()->route('admin.categories.index')->with('success', 'Kích hoạt danh mục thành công.');
+    }
+
+    /**
      * Restore a soft-deleted category.
-     *
-     * @param int $id
-     * @return RedirectResponse
      */
     public function restore(int $id): RedirectResponse
     {
         $category = Category::withTrashed()->findOrFail($id);
         $category->restore();
-        
+
         $actor = $this->getCurrentActor();
         NotificationService::sendToRole(
             'admin',
@@ -266,15 +337,12 @@ class CategoryController extends Controller
             $category,
             route('admin.categories.index')
         );
-        
+
         return redirect()->route('admin.categories.index')->with('success', 'Khôi phục danh mục thành công.');
     }
 
     /**
      * Permanently delete a category.
-     *
-     * @param int $id
-     * @return RedirectResponse
      */
     public function forceDelete(int $id): RedirectResponse
     {
@@ -292,7 +360,7 @@ class CategoryController extends Controller
         );
 
         $category->forceDelete();
-        
+
         return redirect()->route('admin.categories.index')->with('success', 'Xóa vĩnh viễn danh mục thành công.');
     }
 }

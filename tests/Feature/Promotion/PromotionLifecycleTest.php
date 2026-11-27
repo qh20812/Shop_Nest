@@ -5,6 +5,7 @@ namespace Tests\Feature\Promotion;
 use App\Enums\OrderStatus;
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Promotion;
 use App\Models\PromotionCode;
@@ -36,6 +37,7 @@ class PromotionLifecycleTest extends TestCase
         ]);
 
         $this->variant = ProductVariant::factory()->create([
+            'product_id' => Product::factory()->create(['status' => 'published'])->product_id,
             'price' => 250000,
             'discount_price' => null,
             'stock_quantity' => 20,

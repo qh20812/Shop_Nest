@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\ExchangeRateService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
 
 class OrderController extends Controller
 {
@@ -24,13 +24,13 @@ class OrderController extends Controller
     {
         $query = Order::with(['customer:id,first_name,last_name,email'])
             ->select([
-                'order_id', 
-                'customer_id', 
-                'order_number', 
-                'total_amount', 
-                'status', 
-                'payment_status', 
-                'created_at'
+                'order_id',
+                'customer_id',
+                'order_number',
+                'total_amount',
+                'status',
+                'payment_status',
+                'created_at',
             ]);
 
         // Apply filters
@@ -54,11 +54,11 @@ class OrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                      $customerQuery->where('first_name', 'like', "%{$search}%")
-                                   ->orWhere('last_name', 'like', "%{$search}%")
-                                   ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                        $customerQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -101,21 +101,21 @@ class OrderController extends Controller
         // Get filter options for the frontend
         $statusOptions = [
             'pending_confirmation' => 'Pending Confirmation',
-            'processing' => 'Processing', 
+            'processing' => 'Processing',
             'pending_assignment' => 'Pending Assignment',
             'assigned_to_shipper' => 'Assigned to Shipper',
             'delivering' => 'Delivering',
             'delivered' => 'Delivered',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
-            'returned' => 'Returned'
+            'returned' => 'Returned',
         ];
 
         $paymentStatusOptions = [
             'unpaid' => 'Unpaid',
             'paid' => 'Paid',
             'failed' => 'Failed',
-            'refunded' => 'Refunded'
+            'refunded' => 'Refunded',
         ];
 
         return Inertia::render('Admin/Orders/Index', [
@@ -141,18 +141,28 @@ class OrderController extends Controller
     {
         $order->load([
             'customer:id,first_name,last_name,email,phone_number',
-            'shippingAddress:id,address_line_1,address_line_2,city,state,postal_code,country',
-            'items.variant.product:id,name,image_url',
-            'items.variant:id,product_id,sku,price,attributes',
-            'promotions:promotion_id,name,type,value'
+            'shippingAddress:id,user_id,full_name,phone_number,street_address,ward_id,district_id,province_id,country_id,postal_code',
+            'shippingAddress.ward:id,name',
+            'shippingAddress.district:id,name',
+            'shippingAddress.province:id,name',
+            'shippingAddress.country:id,name',
+            'shipper:id,first_name,last_name,email',
+            'items.variant:variant_id,product_id,variant_name,sku,price,option_values,image_id',
+            'items.variant.product:product_id,name',
+            'items.variant.product.images:image_id,product_id,image_url,is_primary,display_order',
+            'promotions:promotion_id,name,type,value',
         ]);
+
+        if ($order->shippingAddress) {
+            $order->shippingAddress->append('full_address');
+        }
 
         // Get available shippers for assignment
         $availableShippers = User::whereHas('roles', function ($query) {
-            $query->where('name', 'Shipper');
+            $query->where('name->en', 'Shipper');
         })->where('is_active', true)
-          ->select('id', 'first_name', 'last_name', 'email')
-          ->get();
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->get();
 
         // Calculate order totals
         $orderSummary = [
@@ -161,13 +171,13 @@ class OrderController extends Controller
             'discount_amount' => $order->discount_amount,
             'total_amount' => $order->total_amount,
             'paid_amount' => $this->calculatePaidAmount($order),
-            'refunded_amount' => $this->calculateRefundedAmount($order)
+            'refunded_amount' => $this->calculateRefundedAmount($order),
         ];
 
         return Inertia::render('Admin/Orders/Show', [
             'order' => $order,
             'availableShippers' => $availableShippers,
-            'orderSummary' => $orderSummary
+            'orderSummary' => $orderSummary,
         ]);
     }
 
@@ -179,13 +189,15 @@ class OrderController extends Controller
         $request->validate([
             'shipper_id' => [
                 'required',
-                'exists:users,id',
                 Rule::exists('users', 'id')->where(function ($query) {
-                    $query->whereHas('roles', function ($roleQuery) {
-                        $roleQuery->where('name', 'Shipper');
-                    })->where('is_active', true);
-                })
-            ]
+                    $query->where('is_active', true)
+                        ->whereIn('id', User::query()
+                            ->whereHas('roles', function ($roleQuery) {
+                                $roleQuery->where('name->en', 'Shipper');
+                            })
+                            ->select('id'));
+                }),
+            ],
         ]);
 
         try {
@@ -193,7 +205,7 @@ class OrderController extends Controller
                 // Update order with shipper assignment
                 $order->update([
                     'shipper_id' => $request->shipper_id,
-                    'status' => 'assigned_to_shipper' // Set to assigned when assigned to shipper
+                    'status' => 'assigned_to_shipper', // Set to assigned when assigned to shipper
                 ]);
 
                 // Create shipment journey record if the table exists
@@ -201,11 +213,10 @@ class OrderController extends Controller
                     DB::table('shipment_journeys')->insert([
                         'order_id' => $order->order_id,
                         'shipper_id' => $request->shipper_id,
-                        'journey_type' => 'last_mile',
+                        'leg_type' => 'last_mile',
                         'status' => 'assigned',
-                        'assigned_at' => now(),
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
                 }
             });
@@ -230,32 +241,35 @@ class OrderController extends Controller
                 'required',
                 'numeric',
                 'min:0.01',
-                "max:{$availableForRefund}"
+                "max:{$availableForRefund}",
             ],
-            'reason' => 'required|string|max:500'
+            'reason' => 'required|string|max:500',
         ]);
 
         try {
-            DB::transaction(function () use ($request, $order, $availableForRefund) {
+            DB::transaction(function () use ($request, $order) {
                 // Create transaction record if the table exists
                 if (DB::getSchemaBuilder()->hasTable('transactions')) {
                     DB::table('transactions')->insert([
                         'order_id' => $order->order_id,
                         'type' => 'refund',
                         'amount' => $request->amount,
-                        'reason' => $request->reason,
+                        'currency' => $order->currency ?? 'VND',
+                        'gateway' => 'admin',
                         'status' => 'completed',
-                        'processed_by' => Auth::id(),
-                        'processed_at' => now(),
+                        'raw_payload' => json_encode([
+                            'reason' => $request->reason,
+                            'processed_by' => Auth::id(),
+                        ]),
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
                 }
 
                 // Update order status based on refund amount
                 $newRefundedAmount = $this->calculateRefundedAmount($order) + $request->amount;
                 $paidAmount = $this->calculatePaidAmount($order);
-                
+
                 if ($newRefundedAmount >= $paidAmount) {
                     $order->update(['payment_status' => 'refunded']);
                 } else {
@@ -275,7 +289,7 @@ class OrderController extends Controller
      */
     private function calculatePaidAmount(Order $order): float
     {
-        if (!DB::getSchemaBuilder()->hasTable('transactions')) {
+        if (! DB::getSchemaBuilder()->hasTable('transactions')) {
             return $order->total_amount; // Fallback if transactions table doesn't exist
         }
 
@@ -291,7 +305,7 @@ class OrderController extends Controller
      */
     private function calculateRefundedAmount(Order $order): float
     {
-        if (!DB::getSchemaBuilder()->hasTable('transactions')) {
+        if (! DB::getSchemaBuilder()->hasTable('transactions')) {
             return 0; // Fallback if transactions table doesn't exist
         }
 

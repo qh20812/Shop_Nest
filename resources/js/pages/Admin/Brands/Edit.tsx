@@ -1,17 +1,25 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import React from 'react';
 
 import BrandForm from '@/components/admin/brands/BrandForm';
+import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
-import Header from '@/components/ui/header';
+import { Button } from '@/components/ui/button';
+import StatusBadge from '@/components/ui/status-badge';
 import { useTranslation } from '@/lib/i18n';
+
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Brands.module.css';
 
 interface Brand {
     brand_id: number;
     name: string;
-    description: string;
+    description: string | null;
     logo_url: string | null;
     is_active: boolean;
+    products_count: number;
+    created_at: string;
 }
 
 interface BrandFormData {
@@ -24,12 +32,13 @@ interface BrandFormData {
 
 interface PageProps {
     brand: Brand;
+    flash?: { success?: string; error?: string };
     [key: string]: unknown;
 }
 
 export default function Edit() {
     const { t } = useTranslation();
-    const { brand } = usePage<PageProps>().props;
+    const { brand, flash } = usePage<PageProps>().props;
 
     const { data, setData, post, processing, errors } = useForm<BrandFormData>({
         _method: 'PUT',
@@ -46,18 +55,43 @@ export default function Edit() {
 
     return (
         <WorkspaceLayout>
-            <Head title={t('Edit Brand')} />
+            <Head title={`${t('Edit Brand')} - ${brand.name}`} />
 
-            <Header
-                title={t('Edit Brand')}
-                breadcrumbs={[
-                    { label: t('Dashboard'), href: '/admin/dashboard' },
-                    { label: t('Brands'), href: '/admin/brands' },
-                    { label: t('Edit Brand'), href: `/admin/brands/${brand.brand_id}/edit`, active: true },
-                ]}
-            />
+            {flash?.error && <Toast type="error" message={flash.error} onClose={() => {}} />}
 
-            <BrandForm data={data} setData={setData} errors={errors} processing={processing} onSubmit={handleSubmit} submitLabel="Update Brand" />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Brands'), href: '/admin/brands' },
+                        { label: t('Edit'), current: true },
+                    ]}
+                    title={t('Edit Brand')}
+                    description={
+                        <span className={styles.headerMeta}>
+                            <StatusBadge status={brand.is_active ? 'active' : 'inactive'} />
+                            <span>{brand.name}</span>
+                        </span>
+                    }
+                    actions={
+                        <Button asChild variant="secondary" size="sm">
+                            <Link href="/admin/brands">{t('Back to List')}</Link>
+                        </Button>
+                    }
+                />
+
+                <BrandForm
+                    data={data}
+                    setData={setData}
+                    errors={errors}
+                    processing={processing}
+                    onSubmit={handleSubmit}
+                    submitLabel={t('Update Brand')}
+                    currentLogoUrl={brand.logo_url}
+                    createdAt={brand.created_at}
+                    productsCount={brand.products_count}
+                />
+            </div>
         </WorkspaceLayout>
     );
 }

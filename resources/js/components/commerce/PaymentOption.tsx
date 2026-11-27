@@ -48,9 +48,13 @@ export function PaymentOption({
                 </span>
             }
             description={description}
-            meta={marks && marks.length > 0 ? <PaymentMarks methods={marks} /> : undefined}
             className={cx(className)}
         >
+            {marks && marks.length > 0 ? (
+                <span className={styles.paymentMarksRow}>
+                    <PaymentMarks methods={marks} />
+                </span>
+            ) : null}
             {children}
         </RadioCard>
     );

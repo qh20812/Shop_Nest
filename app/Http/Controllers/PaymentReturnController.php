@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\HandlesOrderPayments;
 use App\Http\Requests\PaymentReturnRequest;
-use App\Models\CartItem;
 use App\Models\Order;
 use App\Services\CartService;
 use App\Services\InventoryService;
@@ -44,20 +44,20 @@ class PaymentReturnController extends Controller
         $payload = $request->all();
         $result = $gateway->handleReturn($payload);
 
-        $orderId = $request->query('order_id')
+        $orderId = $result['order_id']
+            ?? $request->query('order_id')
             ?? $request->input('orderId')
-            ?? $result['order_id'] ?? null;
+            ?? null;
 
         $sanitizedOrderId = $this->sanitizeOrderId($orderId);
         $status = $result['status'] ?? 'failed';
         $shouldClearCart = false;
 
         $processedOrder = null;
-        $shouldRestoreInventory = false;
 
         if ($sanitizedOrderId) {
             try {
-                DB::transaction(function () use ($sanitizedOrderId, $provider, $payload, $result, $status, &$shouldClearCart, &$shouldRestoreInventory, &$processedOrder) {
+                DB::transaction(function () use ($sanitizedOrderId, $provider, $payload, $result, $status, &$shouldClearCart, &$processedOrder) {
                     $order = Order::lockForUpdate()->find($sanitizedOrderId);
 
                     if (! $order) {
@@ -81,6 +81,18 @@ class PaymentReturnController extends Controller
                         return;
                     }
 
+                    if ($order->status === OrderStatus::CANCELLED && $order->payment_status !== PaymentStatus::PAID) {
+                        Log::warning('payment_return.order_cancelled', [
+                            'provider' => $provider,
+                            'order_id' => $order->order_id,
+                            'status' => $status,
+                        ]);
+
+                        return;
+                    }
+
+                    $wasPaid = $order->payment_status === PaymentStatus::PAID;
+
                     $this->persistPayment($order, $provider, [
                         'status' => $status,
                         'gateway_transaction_id' => $result['transaction_id'] ?? null,
@@ -90,27 +102,33 @@ class PaymentReturnController extends Controller
                         'currency' => $result['currency'] ?? null,
                     ]);
 
-                    $shouldClearCart = $order->payment_status === PaymentStatus::PAID;
-                    $shouldRestoreInventory = $order->payment_status === PaymentStatus::FAILED;
+                    $isNowPaid = $order->payment_status === PaymentStatus::PAID;
+                    $shouldClearCart = $isNowPaid;
 
-                    // If payment failed or canceled, create a refund transaction
-                    if ($shouldRestoreInventory) {
-                        $order->transactions()->create([
-                            'type' => 'refund',
-                            'amount' => $order->total_amount,
-                            'currency' => $order->currency ?? 'VND',
-                            'gateway' => $provider,
-                            'gateway_transaction_id' => $result['transaction_id'] ?? null,
-                            'gateway_event_id' => $eventId,
-                            'status' => 'completed',
-                            'raw_payload' => $payload,
-                        ]);
+                    if ($isNowPaid) {
+                        $this->inventoryService->commitReservedForOrder($order);
+                    }
 
-                        Log::info('payment_return.refund_created', [
-                            'provider' => $provider,
-                            'order_id' => $order->order_id,
-                            'reason' => 'payment_failed',
+                    if (! $isNowPaid && in_array($status, ['failed', 'canceled', 'cancelled'], true)) {
+                        $order->update([
+                            'status' => OrderStatus::CANCELLED,
+                            'payment_status' => PaymentStatus::FAILED,
                         ]);
+                        $this->inventoryService->handleOrderRelease($order);
+
+                        if ($wasPaid) {
+                            // Only a previously paid order needs a refund record.
+                            $order->transactions()->create([
+                                'type' => 'refund',
+                                'amount' => $order->total_amount,
+                                'currency' => $order->currency ?? 'VND',
+                                'gateway' => $provider,
+                                'gateway_transaction_id' => $result['transaction_id'] ?? null,
+                                'gateway_event_id' => $eventId,
+                                'status' => 'completed',
+                                'raw_payload' => $payload,
+                            ]);
+                        }
                     }
 
                     $processedOrder = $order->fresh('items.variant.product');
@@ -143,37 +161,10 @@ class PaymentReturnController extends Controller
                 'order_id' => $sanitizedOrderId,
             ]);
 
-            // Clear the cart for this user
             $this->cartService->clearCart(Auth::user());
+            $this->cartService->removePromotion(Auth::user());
 
-            // Verify cart was cleared
-            $remainingItems = CartItem::where('user_id', Auth::id())->count();
-
-            if ($remainingItems > 0) {
-                Log::warning('payment_return.cart_not_fully_cleared', [
-                    'user_id' => Auth::id(),
-                    'remaining_items' => $remainingItems,
-                ]);
-            } else {
-                Log::info('payment_return.cart_cleared_successfully', [
-                    'user_id' => Auth::id(),
-                ]);
-            }
-
-            // Clear any promotion session data
             session()->forget('applied_promotion');
-        }
-
-        if ($shouldRestoreInventory && $processedOrder) {
-            try {
-                $this->inventoryService->restoreInventoryForOrder($processedOrder);
-            } catch (Throwable $exception) {
-                Log::error('payment_return.restore_inventory_failed', [
-                    'provider' => $provider,
-                    'order_id' => $processedOrder->order_id ?? null,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
         }
 
         $orderPayload = null;

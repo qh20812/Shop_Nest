@@ -34,7 +34,7 @@ class CheckoutPaymentTest extends TestCase
             'is_default' => true,
         ]);
 
-        $product = Product::factory()->create(['status' => 1]);
+        $product = Product::factory()->create(['status' => 'published']);
 
         $this->variant = ProductVariant::factory()->create([
             'product_id' => $product->product_id,
@@ -79,7 +79,9 @@ class CheckoutPaymentTest extends TestCase
         $this->assertNotNull($order);
         $this->assertSame(3, (int) $order->payment_method);
         $this->assertSame(PaymentStatus::UNPAID, $order->payment_status);
-        $this->assertSame(0, CartItem::where('user_id', $this->user->id)->count());
+        $this->assertNotNull($order->inventory_reserved_at);
+        $this->assertNull($order->inventory_committed_at);
+        $this->assertSame(1, CartItem::where('user_id', $this->user->id)->count());
     }
 
     #[Test]

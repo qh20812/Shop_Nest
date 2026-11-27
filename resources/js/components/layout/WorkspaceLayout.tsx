@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Boxes, Gift, LayoutDashboard, Package, Receipt, Settings, ShoppingBag, Store, Tags, Users } from 'lucide-react';
+import { Boxes, Gift, LayoutDashboard, ListChecks, Package, Receipt, Settings, ShoppingBag, Store, Tags, Users, Wallet } from 'lucide-react';
 import * as React from 'react';
 
 import { useTranslation } from '@/lib/i18n';
@@ -148,6 +148,8 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                 { icon: Tags, label: t('Categories'), href: '/admin/categories' },
                 { icon: Store, label: t('Brands'), href: '/admin/brands' },
                 { icon: Receipt, label: t('Orders'), href: '/admin/orders' },
+                { icon: Wallet, label: t('Wallet'), href: '/wallet' },
+                { icon: ListChecks, label: t('Review top-ups'), href: '/admin/wallet-topups' },
                 { icon: ShoppingBag, label: t('Shops'), href: '/admin/shops' },
             ],
             seller: [
@@ -156,10 +158,12 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                 { icon: Receipt, label: t('Orders'), href: '/seller/orders' },
                 { icon: Store, label: t('Shop Profile'), href: '/seller/shop' },
                 { icon: Gift, label: t('Promotions'), href: '/seller/promotions' },
+                { icon: Wallet, label: t('Wallet'), href: '/wallet' },
                 { icon: Settings, label: t('navbar.settings'), href: '/settings' },
             ],
             shipper: [
                 { icon: LayoutDashboard, label: t('Shipper Dashboard'), href: '/shipper/dashboard' },
+                { icon: Wallet, label: t('Wallet'), href: '/wallet' },
                 { icon: Settings, label: t('navbar.settings'), href: '/settings' },
             ],
         }),

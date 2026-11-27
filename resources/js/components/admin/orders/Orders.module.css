@@ -1,0 +1,192 @@
+/* Hallmark · component: admin order ledger · genre: editorial · theme: project glass · shape: app screen · states: full/empty/error · contrast: pass · v2.0.0 */
+/* Hallmark · the order number leads the row; placed time, customer and money stay on one quiet line */
+/* Hallmark · waive 26b · the module defines layout only · controls are Button, Input, Select and Badge primitives whose states live in their own files */
+
+.filters {
+    display: grid;
+    grid-template-areas:
+        'search'
+        'status'
+        'payment'
+        'dates'
+        'actions';
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+}
+
+.filters :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.searchField {
+    grid-area: search;
+}
+
+.statusField {
+    grid-area: status;
+}
+
+.paymentField {
+    grid-area: payment;
+}
+
+.dates {
+    grid-area: dates;
+}
+
+.dateGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-3);
+}
+
+.filterActions {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: actions;
+    justify-content: flex-end;
+    gap: var(--sn-space-3);
+}
+
+.register {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
+}
+
+.registerItem {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+    padding: var(--sn-space-4) var(--sn-space-5);
+}
+
+.registerItem:nth-child(n + 3) {
+    border-block-start: 1px solid var(--sn-color-border);
+}
+
+.registerItem:nth-child(2n) {
+    border-inline-start: 1px solid var(--sn-color-border);
+}
+
+.registerValue {
+    order: -1;
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-2xl);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-tight);
+    font-variant-numeric: tabular-nums;
+}
+
+.registerLabel {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    line-height: var(--sn-leading-snug);
+}
+
+.table {
+    min-width: 0;
+}
+
+/* DataTable owns a top margin; the stack gap already provides rhythm */
+.table > section {
+    margin-top: 0;
+}
+
+.orderCell {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.orderNumber {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.orderDate {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.customerName {
+    display: block;
+    overflow: hidden;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.customerMeta {
+    display: block;
+    overflow: hidden;
+    max-width: 18rem;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.amount {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (min-width: 480px) {
+    .dateGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 640px) {
+    .filters {
+        grid-template-areas:
+            'search search'
+            'status payment'
+            'dates dates'
+            'actions actions';
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .filters {
+        grid-template-areas:
+            'search search status'
+            'payment dates dates'
+            'actions actions actions';
+        grid-template-columns: minmax(14rem, 1.8fr) minmax(11rem, 1fr) minmax(11rem, 1fr);
+        align-items: end;
+    }
+
+    .register {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .registerItem:nth-child(n + 3) {
+        border-block-start: 0;
+    }
+
+    .registerItem + .registerItem {
+        border-inline-start: 1px solid var(--sn-color-border);
+    }
+}

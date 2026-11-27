@@ -1,9 +1,7 @@
-import { CheckCircle2, Clock, Receipt, XCircle } from 'lucide-react';
-
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
-import styles from '../admin.module.css';
+import styles from './Orders.module.css';
 
 interface OrderSummaryCardsProps {
     orderSummary: {
@@ -17,30 +15,21 @@ interface OrderSummaryCardsProps {
 export default function OrderSummaryCards({ orderSummary }: OrderSummaryCardsProps) {
     const { t } = useTranslation();
 
-    const cards = [
-        { icon: Receipt, title: t('Total Orders'), value: orderSummary.totalCount },
-        { icon: Clock, title: t('Pending Orders'), value: orderSummary.pendingCount },
-        { icon: CheckCircle2, title: t('Completed Orders'), value: orderSummary.completedCount },
-        { icon: XCircle, title: t('Cancelled Orders'), value: orderSummary.cancelledCount },
+    const items = [
+        { key: 'total', label: t('Total Orders'), value: orderSummary.totalCount },
+        { key: 'pending', label: t('Pending Orders'), value: orderSummary.pendingCount },
+        { key: 'completed', label: t('Completed Orders'), value: orderSummary.completedCount },
+        { key: 'cancelled', label: t('Cancelled Orders'), value: orderSummary.cancelledCount },
     ];
 
     return (
-        <div className={styles.metricGrid}>
-            {cards.map((card) => {
-                const Icon = card.icon;
-
-                return (
-                    <div key={card.title} className={styles.metricCard}>
-                        <span className={styles.metricIcon}>
-                            <Icon aria-hidden="true" />
-                        </span>
-                        <div className={styles.metricBody}>
-                            <span className={styles.metricValue}>{formatNumber(card.value)}</span>
-                            <span className={styles.metricLabel}>{card.title}</span>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
+        <dl className={styles.register} aria-label={t('Order Summary')}>
+            {items.map((item) => (
+                <div key={item.key} className={styles.registerItem}>
+                    <dt className={styles.registerLabel}>{item.label}</dt>
+                    <dd className={styles.registerValue}>{formatNumber(item.value)}</dd>
+                </div>
+            ))}
+        </dl>
     );
 }

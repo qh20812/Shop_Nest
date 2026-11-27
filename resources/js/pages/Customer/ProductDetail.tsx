@@ -1,9 +1,11 @@
 import { Head, router } from '@inertiajs/react';
-import { MessageCircle, Package, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import * as React from 'react';
 
 import { BuyBox } from '@/components/commerce/BuyBox';
+import { ProductCard } from '@/components/commerce/ProductCard';
 import { ProductGallery } from '@/components/commerce/ProductGallery';
+import { Rating } from '@/components/commerce/Rating';
 import { ReviewCard } from '@/components/commerce/ReviewCard';
 import { ReviewSummary } from '@/components/commerce/ReviewSummary';
 import { ShopIdentity } from '@/components/commerce/ShopIdentity';
@@ -12,13 +14,13 @@ import { VariantSelector } from '@/components/commerce/VariantSelector';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Tabs } from '@/components/ui/tabs';
+import { IconButton } from '@/components/ui/icon-button';
+import { TextLink } from '@/components/ui/text-link';
 import { useToast } from '@/components/ui/toast';
 import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
+import type { ProductCardModel } from '@/types/commerce';
 
 import styles from './ProductDetail.module.css';
 
@@ -99,6 +101,7 @@ interface Review {
     rating: number;
     comment: string;
     created_at: string;
+    created_at_human: string;
 }
 
 interface ReviewsData {
@@ -115,16 +118,37 @@ interface ReviewsData {
     };
 }
 
+interface RelatedProduct {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    max_price: number;
+    rating: number;
+    sold_count: number;
+}
+
 interface DetailProps {
     product: Product;
     reviews: ReviewsData;
     rating: Rating;
     sold_count: number;
+    relatedProducts?: RelatedProduct[];
 }
 
-type DetailTab = 'description' | 'specs' | 'reviews';
+function normalizeImage(src: string | null | undefined): string {
+    if (!src) {
+        return '/image/default-product.png';
+    }
 
-export default function Detail({ product, reviews, rating, sold_count }: DetailProps) {
+    if (/^https?:\/\//.test(src) || src.startsWith('/')) {
+        return src;
+    }
+
+    return `/storage/${src.replace(/^\/+/, '')}`;
+}
+
+export default function Detail({ product, reviews, rating, sold_count, relatedProducts = [] }: DetailProps) {
     const { t } = useTranslation();
     const [selectedVariant, setSelectedVariant] = React.useState<Variant | null>(
         product.variants.find((variant) => variant.variant_id === product.default_variant_id) || product.variants[0] || null,
@@ -141,7 +165,6 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
         return initial;
     });
     const [quantity, setQuantity] = React.useState(1);
-    const [activeTab, setActiveTab] = React.useState<DetailTab>('description');
     const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
     const [isAddingToCart, setIsAddingToCart] = React.useState(false);
     const [isBuyingNow, setIsBuyingNow] = React.useState(false);
@@ -168,13 +191,29 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
         setQuantity((current) => Math.min(Math.max(1, current), Math.max(1, selectedVariant.available_quantity)));
     }, [selectedVariant]);
 
+    const matchesSelection = (variant: Variant, selection: Record<number, number>) => {
+        if (product.attributes.length === 0) {
+            return true;
+        }
+
+        return product.attributes.every((attribute) =>
+            variant.attribute_values.some(
+                (value) => value.attribute_id === attribute.attribute_id && value.attribute_value_id === selection[attribute.attribute_id],
+            ),
+        );
+    };
+
+    const isValueAvailable = (attributeId: number, valueId: number) => {
+        const next = { ...selectedAttributes, [attributeId]: valueId };
+
+        return product.variants.some((variant) => matchesSelection(variant, next));
+    };
+
     const handleAttributeSelect = (attributeId: number, valueId: number) => {
         const next = { ...selectedAttributes, [attributeId]: valueId };
         setSelectedAttributes(next);
 
-        const matchingVariant = product.variants.find((variant) =>
-            variant.attribute_values.every((value) => next[value.attribute_id] === value.attribute_value_id),
-        );
+        const matchingVariant = product.variants.find((variant) => matchesSelection(variant, next));
 
         if (matchingVariant) {
             setSelectedVariant(matchingVariant);
@@ -283,6 +322,21 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
         }
     };
 
+    const goToReviewPage = (page: number) => {
+        if (page < 1 || page > reviews.meta.last_page || page === reviews.meta.current_page) {
+            return;
+        }
+
+        router.get(window.location.pathname, page > 1 ? { page } : {}, {
+            only: ['reviews'],
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                document.getElementById('reviews')?.scrollIntoView({ block: 'start' });
+            },
+        });
+    };
+
     const shopInfo = product.shop
         ? {
               id: product.shop.id,
@@ -290,21 +344,44 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
               logo: product.shop.logo,
               rating: product.shop.rating,
               totalProducts: product.shop.total_products,
-              lastActiveAt: product.shop.last_active_at ?? undefined,
           }
         : undefined;
 
-    const specRows = product.attributes.map((attribute) => ({
-        label: attribute.name,
-        value: attribute.values.map((value) => value.value).join(', '),
-    }));
+    const specRows: Array<{ label: string; value: string }> = [];
 
-    if (product.brand) {
-        specRows.unshift({ label: t('Brand'), value: product.brand.name });
-    }
     if (product.category) {
-        specRows.unshift({ label: t('Category'), value: product.category.name });
+        specRows.push({ label: t('Category'), value: product.category.name });
     }
+    if (product.brand) {
+        specRows.push({ label: t('Brand'), value: product.brand.name });
+    }
+    if (selectedVariant?.sku) {
+        specRows.push({ label: t('SKU'), value: selectedVariant.sku });
+    }
+    if (selectedVariant) {
+        selectedVariant.attribute_values.forEach((value) => {
+            const attribute = product.attributes.find((item) => item.attribute_id === value.attribute_id);
+
+            if (attribute) {
+                specRows.push({ label: attribute.name, value: value.value });
+            }
+        });
+    }
+
+    const hasDescription = product.description.replace(/<[^>]*>/g, '').trim().length > 0;
+    const hasSpecs = specRows.length > 0;
+    const relatedHref = product.category ? `/search?category_ids[]=${product.category.id}` : '/search';
+
+    const relatedCards: ProductCardModel[] = relatedProducts.map((item) => ({
+        id: item.id,
+        slug: String(item.id),
+        name: item.name,
+        image: normalizeImage(item.image),
+        imageAlt: item.name,
+        shopName: '',
+        price: item.price,
+        rating: item.rating > 0 ? item.rating : undefined,
+    }));
 
     const reviewItems = reviews.data.map((review) => ({
         id: review.id,
@@ -314,7 +391,7 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
         },
         rating: review.rating,
         comment: review.comment,
-        createdAt: review.created_at,
+        createdAt: review.created_at_human || review.created_at,
     }));
 
     return (
@@ -344,127 +421,161 @@ export default function Detail({ product, reviews, rating, sold_count }: DetailP
                     </div>
 
                     <div className={styles.buyCol}>
-                        <BuyBox
-                            title={product.name}
-                            shop={shopInfo}
-                            rating={rating.average}
-                            reviewCount={rating.count}
-                            soldCount={sold_count}
-                            price={currentPrice}
-                            compareAt={compareAt}
-                            stock={selectedVariant?.available_quantity}
-                            quantity={quantity}
-                            maxQuantity={maxQuantity}
-                            onQuantityChange={setQuantity}
-                            onAddToCart={handleAddToCart}
-                            onBuyNow={handleBuyNow}
-                            adding={isAddingToCart}
-                            buying={isBuyingNow}
-                            trust={[t('Returns per policy'), t('Warranty by the shop')]}
-                        >
-                            <VariantSelector
-                                groups={product.attributes.map((attribute) => ({
-                                    id: attribute.attribute_id,
-                                    name: attribute.name,
-                                    values: attribute.values.map((value) => ({
-                                        id: value.attribute_value_id,
-                                        label: value.value,
-                                        disabled: false,
-                                    })),
-                                }))}
-                                selected={selectedAttributes}
-                                onChange={handleAttributeSelect}
-                            />
-                        </BuyBox>
-                    </div>
-                </div>
-
-                <div className={styles.tabsBar}>
-                    <Tabs
-                        value={activeTab}
-                        onValueChange={(value) => setActiveTab(value as DetailTab)}
-                        variant="underline"
-                        ariaLabel={t('Product information')}
-                        items={[
-                            { value: 'description', label: t('Product description') },
-                            { value: 'specs', label: t('Specifications'), count: specRows.length },
-                            { value: 'reviews', label: t('Reviews'), count: rating.count },
-                        ]}
-                    />
-                </div>
-
-                <div className={styles.contentGrid}>
-                    <div className={styles.mainCol}>
-                        {activeTab === 'description' && (
-                            <div className={styles.description}>
-                                <div dangerouslySetInnerHTML={{ __html: product.description }} />
-                            </div>
-                        )}
-
-                        {activeTab === 'specs' && <SpecTable rows={specRows} />}
-
-                        {activeTab === 'reviews' && (
-                            <div className={styles.reviews}>
-                                <ReviewSummary
-                                    rating={rating.average}
-                                    count={rating.count}
-                                    breakdown={rating.breakdown.map((item) => ({
-                                        ...item,
-                                        percentage: rating.count > 0 ? Math.round((item.count / rating.count) * 100) : 0,
-                                    }))}
+                        <div className={styles.introCol}>
+                            {shopInfo && (
+                                <ShopIdentity
+                                    shop={shopInfo}
+                                    variant="compact"
+                                    chatLabel={t('Chat with the shop')}
+                                    viewShopLabel={t('See more products')}
+                                    onChat={() => toast.info(t('Shop chat is coming soon'))}
+                                    onViewShop={() => router.visit(relatedHref)}
                                 />
-                                {reviewItems.length === 0 ? (
-                                    <EmptyState
-                                        icon={MessageCircle}
-                                        title={t('No reviews yet')}
-                                        description={t('This product has no customer reviews yet.')}
-                                    />
-                                ) : (
-                                    <div>
-                                        {reviewItems.map((review) => (
-                                            <ReviewCard key={review.id} review={review} />
-                                        ))}
-                                    </div>
+                            )}
+
+                            <h1 className={styles.title}>{product.name}</h1>
+
+                            <div className={styles.metaRow}>
+                                {rating.average > 0 && (
+                                    <a href="#reviews" className={styles.ratingLink}>
+                                        <Rating value={rating.average} count={rating.count} compact chip />
+                                    </a>
                                 )}
+                                <span>{t('Sold :count', { count: formatNumber(sold_count) })}</span>
                             </div>
-                        )}
+                        </div>
+
+                        <div className={styles.purchaseCol}>
+                            <BuyBox
+                                price={currentPrice}
+                                compareAt={compareAt}
+                                stock={selectedVariant?.available_quantity}
+                                canBuy={Boolean(selectedVariant)}
+                                quantity={quantity}
+                                maxQuantity={maxQuantity}
+                                onQuantityChange={setQuantity}
+                                onAddToCart={handleAddToCart}
+                                onBuyNow={handleBuyNow}
+                                adding={isAddingToCart}
+                                buying={isBuyingNow}
+                                trust={[t('Returns per policy'), t('Warranty by the shop'), t('The shop delivers nationwide')]}
+                            >
+                                <VariantSelector
+                                    groups={product.attributes.map((attribute) => ({
+                                        id: attribute.attribute_id,
+                                        name: attribute.name,
+                                        values: attribute.values.map((value) => ({
+                                            id: value.attribute_value_id,
+                                            label: value.value,
+                                            disabled: !isValueAvailable(attribute.attribute_id, value.attribute_value_id),
+                                        })),
+                                    }))}
+                                    selected={selectedAttributes}
+                                    onChange={handleAttributeSelect}
+                                />
+                            </BuyBox>
+                        </div>
+                    </div>
+                </div>
+
+                {(hasDescription || hasSpecs) && (
+                    <section id="details" className={styles.section}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>{t('Details')}</h2>
+                        </div>
+
+                        <div className={styles.detailsGrid} data-single={!hasDescription || !hasSpecs ? 'true' : undefined}>
+                            {hasDescription && (
+                                <div className={styles.detailsCol}>
+                                    <h3 className={styles.subTitle}>{t('Product description')}</h3>
+                                    <div className={styles.description} dangerouslySetInnerHTML={{ __html: product.description }} />
+                                </div>
+                            )}
+
+                            {hasSpecs && (
+                                <div className={styles.detailsCol}>
+                                    <h3 className={styles.subTitle}>{t('Specifications')}</h3>
+                                    <SpecTable rows={specRows} />
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                )}
+
+                <section id="reviews" className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Reviews')}</h2>
                     </div>
 
-                    <aside className={styles.asideCol}>
-                        {product.shop && (
-                            <Card padding="lg" className={styles.shopCard}>
-                                <ShopIdentity shop={shopInfo!} />
-                                <div className={styles.shopStats}>
-                                    <div className={styles.shopStat}>
-                                        <span className={styles.shopStatValue}>{product.shop.rating.toFixed(1)}</span>
-                                        <span className={styles.shopStatLabel}>{t('Shop rating')}</span>
-                                    </div>
-                                    <div className={styles.shopStat}>
-                                        <span className={styles.shopStatValue}>{formatNumber(product.shop.total_products)}</span>
-                                        <span className={styles.shopStatLabel}>{t('Products')}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.shopActions}>
-                                    <Button
+                    <div className={styles.reviewGrid}>
+                        <ReviewSummary
+                            rating={rating.average}
+                            count={rating.count}
+                            breakdown={rating.breakdown.map((item) => ({
+                                ...item,
+                                percentage: rating.count > 0 ? Math.round((item.count / rating.count) * 100) : 0,
+                            }))}
+                        />
+
+                        <div className={styles.reviewList}>
+                            {reviewItems.length === 0 ? (
+                                <EmptyState
+                                    icon={MessageCircle}
+                                    title={t('No reviews yet')}
+                                    description={t('This product has no customer reviews yet.')}
+                                />
+                            ) : (
+                                reviewItems.map((review) => <ReviewCard key={review.id} review={review} />)
+                            )}
+
+                            {reviews.meta.last_page > 1 && (
+                                <div className={styles.reviewPager}>
+                                    <IconButton
+                                        label={t('Previous page')}
                                         variant="secondary"
                                         size="sm"
-                                        leftIcon={MessageCircle}
-                                        onClick={() => toast.info(t('Shop chat is coming soon'))}
+                                        disabled={reviews.meta.current_page <= 1}
+                                        onClick={() => goToReviewPage(reviews.meta.current_page - 1)}
                                     >
-                                        {t('Chat with the shop')}
-                                    </Button>
-                                    <Button variant="ghost" size="sm" leftIcon={ShoppingBag} onClick={() => router.visit('/search')}>
-                                        {t('See more products')}
-                                    </Button>
+                                        <ChevronLeft aria-hidden="true" className={styles.pagerIcon} />
+                                    </IconButton>
+                                    <span className={styles.pagerStatus}>
+                                        {t('Page :current of :total', {
+                                            current: reviews.meta.current_page,
+                                            total: reviews.meta.last_page,
+                                        })}
+                                    </span>
+                                    <IconButton
+                                        label={t('Next page')}
+                                        variant="secondary"
+                                        size="sm"
+                                        disabled={reviews.meta.current_page >= reviews.meta.last_page}
+                                        onClick={() => goToReviewPage(reviews.meta.current_page + 1)}
+                                    >
+                                        <ChevronRight aria-hidden="true" className={styles.pagerIcon} />
+                                    </IconButton>
                                 </div>
-                                <div className={styles.shopNote}>
-                                    <Package aria-hidden="true" className={styles.shopNoteIcon} />
-                                    {t('The shop delivers nationwide')}
-                                </div>
-                            </Card>
-                        )}
-                    </aside>
-                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                {relatedCards.length > 0 && (
+                    <section className={styles.section}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>{t('Related products')}</h2>
+                            <TextLink href={relatedHref} tone="muted" underline={false}>
+                                {t('View all')}
+                            </TextLink>
+                        </div>
+
+                        <div className={styles.relatedGrid}>
+                            {relatedCards.map((card, index) => (
+                                <ProductCard key={card.id} product={card} priority={index < 2} />
+                            ))}
+                        </div>
+                    </section>
+                )}
             </PageContainer>
         </StorefrontLayout>
     );

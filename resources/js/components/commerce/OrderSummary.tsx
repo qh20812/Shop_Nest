@@ -1,5 +1,5 @@
 import { useTranslation } from '@/lib/i18n';
-import { ChevronDown, Lock } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ type OrderSummaryProps = {
     loading?: boolean;
     disabled?: boolean;
     showItems?: boolean;
+    mobileActionBar?: boolean;
     trust?: string[];
     footerNote?: string;
     className?: string;
@@ -51,6 +52,7 @@ export function OrderSummary({
     loading = false,
     disabled = false,
     showItems = true,
+    mobileActionBar = false,
     trust = [],
     footerNote,
     className,
@@ -87,7 +89,15 @@ export function OrderSummary({
                     }
                 }}
             >
-                <summary className={styles.summaryToggle}>
+                <summary
+                    className={styles.summaryToggle}
+                    tabIndex={isDesktop ? -1 : undefined}
+                    onClick={(event) => {
+                        if (isDesktop) {
+                            event.preventDefault();
+                        }
+                    }}
+                >
                     <span className={styles.summaryToggleLabel}>{t('Order summary')}</span>
                     <span className={styles.summaryToggleMeta}>
                         <span className={styles.summaryToggleValue}>{money(total)}</span>
@@ -102,7 +112,19 @@ export function OrderSummary({
                         <ul className={styles.summaryItems}>
                             {items.map((item) => (
                                 <li key={item.id} className={styles.summaryItem}>
-                                    {item.image ? <img src={item.image} alt={item.name} className={styles.summaryItemMedia} /> : null}
+                                    {item.image ? (
+                                        <img
+                                            src={item.image}
+                                            alt=""
+                                            width={48}
+                                            height={48}
+                                            decoding="async"
+                                            onError={(event) => {
+                                                event.currentTarget.src = '/image/default-product.png';
+                                            }}
+                                            className={styles.summaryItemMedia}
+                                        />
+                                    ) : null}
                                     <div className={styles.summaryItemBody}>
                                         <span className={styles.summaryItemName}>{item.name}</span>
                                         {item.variant ? <span className={styles.summaryItemVariant}>{item.variant}</span> : null}
@@ -143,7 +165,13 @@ export function OrderSummary({
                     {children}
 
                     {onCheckout && (
-                        <Button className={styles.summaryCta} size="lg" loading={loading} disabled={disabled} onClick={onCheckout}>
+                        <Button
+                            className={cx(styles.summaryCta, mobileActionBar && styles.summaryCtaWithBar)}
+                            size="lg"
+                            loading={loading}
+                            disabled={disabled}
+                            onClick={onCheckout}
+                        >
                             {resolvedCtaLabel}
                         </Button>
                     )}
@@ -154,7 +182,7 @@ export function OrderSummary({
                         <div className={styles.summaryTrust}>
                             {trust.map((item) => (
                                 <span key={item} className={styles.summaryTrustItem}>
-                                    <Lock aria-hidden="true" className={styles.summaryTrustIcon} />
+                                    <Check aria-hidden="true" className={styles.summaryTrustIcon} />
                                     {item}
                                 </span>
                             ))}
@@ -162,6 +190,18 @@ export function OrderSummary({
                     )}
                 </div>
             </details>
+
+            {mobileActionBar && onCheckout && (
+                <div className={styles.summaryMobileBar}>
+                    <div className={styles.summaryMobileTotal}>
+                        <span>{t('Total')}</span>
+                        <strong>{money(total)}</strong>
+                    </div>
+                    <Button size="lg" loading={loading} disabled={disabled} onClick={onCheckout}>
+                        {resolvedCtaLabel}
+                    </Button>
+                </div>
+            )}
         </aside>
     );
 }

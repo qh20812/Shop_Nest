@@ -10,11 +10,12 @@ import { StorefrontHeader } from './StorefrontHeader';
 type StorefrontLayoutProps = {
     children: React.ReactNode;
     compactFooter?: boolean;
+    footerClassName?: string;
     showChatDock?: boolean;
     className?: string;
 };
 
-export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, className }: StorefrontLayoutProps) {
+export function StorefrontLayout({ children, compactFooter = false, footerClassName, showChatDock = true, className }: StorefrontLayoutProps) {
     const { t } = useTranslation();
 
     return (
@@ -26,7 +27,7 @@ export function StorefrontLayout({ children, compactFooter = false, showChatDock
             <main id="main-content" tabIndex={-1} className="sn-storefront__main">
                 {children}
             </main>
-            <StorefrontFooter compact={compactFooter} />
+            <StorefrontFooter compact={compactFooter} className={footerClassName} />
             {showChatDock && <ChatDock />}
         </div>
     );

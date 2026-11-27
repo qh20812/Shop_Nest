@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
 use App\Events\Cart\LowStockDetected;
 use App\Exceptions\CartException;
 use App\Models\CartItem;
@@ -29,7 +30,10 @@ class CartService
 
     private const SESSION_GUEST_ITEMS_KEY = 'cart.guest_items';
 
-    public function __construct(private CacheRepository $cache) {}
+    public function __construct(
+        private CacheRepository $cache,
+        private PromotionEligibilityService $promotionEligibility,
+    ) {}
 
     public function getCartItems(?User $user): Collection
     {
@@ -159,6 +163,10 @@ class CartService
             throw CartException::promotionMinimumNotMet($code);
         }
 
+        if ($this->promotionEligibility->eligibleSubtotal($promotion, $cartItems) <= 0) {
+            throw new CartException('This promotion does not apply to the products in your cart.');
+        }
+
         if ($user && $promotion->per_customer_limit !== null) {
             $usageCount = Order::where('customer_id', $user->id)
                 ->whereHas('promotions', function (Builder $query) use ($promotion) {
@@ -249,7 +257,7 @@ class CartService
         $discount = 0.0;
 
         if ($promotion) {
-            $discount = $this->calculatePromotionDiscount($promotion, $subtotal);
+            $discount = $this->calculatePromotionDiscount($promotion, $subtotal, $cartItems);
         }
 
         $total = max(0, $subtotal - $discount);
@@ -346,6 +354,7 @@ class CartService
 
             $newQuantity = $quantity + ($existing?->quantity ?? 0);
 
+            $this->assertPurchasable($variant);
             $this->ensureStock($variant, $newQuantity);
 
             $cartItem = CartItem::updateOrCreate(
@@ -376,6 +385,7 @@ class CartService
         $currentQuantity = $index !== false ? (int) $items[$index]['quantity'] : 0;
         $newQuantity = $currentQuantity + $quantity;
 
+        $this->assertPurchasable($variant);
         $this->ensureStock($variant, $newQuantity);
 
         if ($index === false) {
@@ -561,6 +571,7 @@ class CartService
                 'reserved_quantity' => (int) ($variant->reserved_quantity ?? 0),
                 'product' => $product ? [
                     'product_id' => $product->product_id,
+                    'category_id' => $product->category_id,
                     'name' => $product->name,
                     'images' => $product->relationLoaded('images')
                         ? $product->images->map(fn ($img) => ['image_url' => $img->image_url])->toArray()
@@ -568,6 +579,15 @@ class CartService
                 ] : null,
             ],
         ];
+    }
+
+    private function assertPurchasable(ProductVariant $variant): void
+    {
+        $product = $variant->product;
+
+        if (! $product || ! $product->is_active || $product->status !== ProductStatus::PUBLISHED) {
+            throw new CartException('This product is not available for purchase.');
+        }
     }
 
     private function ensureStock(ProductVariant $variant, int $desiredQuantity): void
@@ -614,25 +634,31 @@ class CartService
         return $cartItems->sum(fn (array $item) => (float) ($item['price'] ?? $item['variant']['price'] ?? 0) * (int) ($item['quantity'] ?? 0));
     }
 
-    private function calculatePromotionDiscount(Promotion $promotion, float $subtotal): float
+    private function calculatePromotionDiscount(Promotion $promotion, float $subtotal, iterable $items): float
     {
         if ($promotion->min_order_amount && $subtotal < (float) $promotion->min_order_amount) {
             return 0.0;
         }
 
+        $discountable = $this->promotionEligibility->eligibleSubtotal($promotion, $items);
+
+        if ($discountable <= 0) {
+            return 0.0;
+        }
+
         if ((int) $promotion->type === 1) {
-            $discount = $subtotal * ((float) $promotion->value / 100);
+            $discount = $discountable * ((float) $promotion->value / 100);
             $maxDiscount = $promotion->max_discount_amount ? (float) $promotion->max_discount_amount : null;
 
             if ($maxDiscount !== null && $discount > $maxDiscount) {
                 $discount = $maxDiscount;
             }
 
-            return $discount;
+            return min($discount, $discountable);
         }
 
         if ((int) $promotion->type === 2) {
-            return min((float) $promotion->value, $subtotal);
+            return min((float) $promotion->value, $discountable);
         }
 
         return 0.0;

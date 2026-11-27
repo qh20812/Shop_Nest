@@ -49,7 +49,24 @@ class PromotionController extends Controller
             'type' => $request->string('type')->toString(),
         ];
 
-        $query = Promotion::query()
+        $baseQuery = Promotion::query()
+            ->when($filters['search'], function ($builder, $search) {
+                $builder->where('name', 'like', "%{$search}%");
+            })
+            ->when($filters['type'], function ($builder, $type) {
+                $builder->where('type', $this->promotionService->mapTypeForQuery($type));
+            });
+
+        $statusCounts = [
+            'draft' => (clone $baseQuery)->ofStatus('draft')->count(),
+            'active' => (clone $baseQuery)->ofStatus('active')->count(),
+            'paused' => (clone $baseQuery)->ofStatus('paused')->count(),
+            'expired' => (clone $baseQuery)->ofStatus('expired')->count(),
+        ];
+
+        $totalPromotions = (clone $baseQuery)->count();
+
+        $query = (clone $baseQuery)
             ->select([
                 'promotion_id',
                 'name',
@@ -63,13 +80,10 @@ class PromotionController extends Controller
                 'allocated_budget',
                 'spent_budget',
                 'roi_percentage',
+                'created_by_type',
+                'seller_id',
             ])
-            ->when($filters['search'], function ($builder, $search) {
-                $builder->where('name', 'like', "%{$search}%");
-            })
-            ->when($filters['type'], function ($builder, $type) {
-                $builder->where('type', $this->promotionService->mapTypeForQuery($type));
-            })
+            ->with('seller:id,username,first_name,last_name')
             ->when($filters['status'], function ($builder, $status) {
                 $builder->ofStatus($status);
             })
@@ -91,6 +105,8 @@ class PromotionController extends Controller
             'promotions' => $promotions,
             'typeOptions' => $this->promotionService->getPromotionTypeOptions(),
             'statusFilters' => self::STATUS_OPTIONS,
+            'statusCounts' => $statusCounts,
+            'totalPromotions' => $totalPromotions,
             'ruleOptions' => $this->getRuleOptions(),
             'filters' => array_filter($filters, static fn ($value) => $value !== null && $value !== ''),
         ]);
@@ -152,6 +168,7 @@ class PromotionController extends Controller
         $promotion->load([
             'products',
             'categories',
+            'seller:id,username,first_name,last_name,email',
         ]);
 
         // Format data without modifying the model
@@ -174,6 +191,7 @@ class PromotionController extends Controller
         $promotion->load([
             'products',
             'categories',
+            'seller:id,username,first_name,last_name,email',
         ]);
 
         // Format data without modifying the model

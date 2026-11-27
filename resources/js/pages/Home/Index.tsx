@@ -227,6 +227,7 @@ export default function Index() {
             <Head title={t('ShopNest. Everything for Vietnamese homes')} />
 
             <HeroEditorial
+                backdropImage="/images/shops/fashionhub.jpg"
                 title={
                     <>
                         {t('Choose carefully,')}

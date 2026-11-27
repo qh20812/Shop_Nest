@@ -30,7 +30,6 @@ export function VariantSelector({ groups, selected, onChange, className }: Varia
     return (
         <div className={cx(styles.variantRoot, className)}>
             {groups.map((group) => {
-                const isColor = /màu|color/i.test(group.name);
                 const activeLabel = group.values.find((value) => value.id === selected[group.id])?.label;
 
                 return (
@@ -53,7 +52,6 @@ export function VariantSelector({ groups, selected, onChange, className }: Varia
                                         className={styles.variantOption}
                                         data-active={active ? 'true' : undefined}
                                     >
-                                        {isColor && <span aria-hidden="true" className={styles.variantSwatch} />}
                                         <span>{value.label}</span>
                                         {value.meta && <span className={styles.variantMeta}>{value.meta}</span>}
                                     </button>

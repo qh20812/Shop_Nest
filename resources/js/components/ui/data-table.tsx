@@ -23,6 +23,7 @@ interface DataTableProps<T> {
     data: T[];
     headerTitle: string;
     headerIcon?: IconProp;
+    headerMeta?: React.ReactNode;
     emptyMessage?: string;
     className?: string;
 }
@@ -41,7 +42,15 @@ function headerIconNode(icon: IconProp) {
     return renderIcon(icon);
 }
 
-export default function DataTable<T>({ columns, data, headerTitle, headerIcon, emptyMessage = 'No data found', className }: DataTableProps<T>) {
+export default function DataTable<T>({
+    columns,
+    data,
+    headerTitle,
+    headerIcon,
+    headerMeta,
+    emptyMessage = 'No data found',
+    className,
+}: DataTableProps<T>) {
     const { t } = useTranslation();
 
     const tableColumns: TableColumnDef<T>[] = columns.map((column, index) => ({
@@ -57,6 +66,7 @@ export default function DataTable<T>({ columns, data, headerTitle, headerIcon, e
             <div className={styles.head}>
                 {headerIcon && <span className={styles.headIcon}>{headerIconNode(headerIcon)}</span>}
                 <h2 className={styles.title}>{t(headerTitle)}</h2>
+                {headerMeta !== undefined && headerMeta !== null && <span className={styles.headMeta}>{headerMeta}</span>}
             </div>
 
             <Table

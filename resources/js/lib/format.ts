@@ -96,6 +96,15 @@ export function formatDate(value: DateInput): string {
 }
 
 /**
+ * Format a 24-hour time, e.g. "14:30".
+ */
+export function formatTime(value: DateInput): string {
+    const date = toDate(value);
+
+    return date ? timeFormatter.format(date) : '';
+}
+
+/**
  * Format a date and 24-hour time, e.g. "12/11/2026 · 14:30".
  */
 export function formatDateTime(value: DateInput): string {

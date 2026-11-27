@@ -578,11 +578,9 @@ a.tag:hover {
 }
 
 .filterLabel {
-    color: var(--sn-color-text-faint);
-    font-size: var(--sn-text-2xs);
-    font-weight: var(--sn-weight-semibold);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-medium);
 }
 
 .filterActions {

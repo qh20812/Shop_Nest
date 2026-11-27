@@ -301,16 +301,26 @@
         gap: var(--sn-space-3);
         min-height: var(--sn-tap);
         padding: var(--sn-space-2) var(--sn-space-3);
-        border-radius: var(--sn-radius-md);
+        border-radius: var(--sn-radius-item);
         font-size: var(--sn-text-base);
         font-weight: var(--sn-weight-medium);
         color: var(--sn-color-text);
         text-decoration: none;
+        transition: background-color var(--sn-dur-fast) var(--sn-ease-standard);
     }
 
     .sn-mobile-nav__link:hover {
-        background: var(--sn-color-surface-sunken);
+        background: var(--sn-glass-hover);
         color: var(--sn-color-text);
+    }
+
+    .sn-mobile-nav__link:active {
+        background: var(--sn-glass-press);
+    }
+
+    .sn-mobile-nav__link:focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
     }
 
     .sn-mobile-nav__icon {
@@ -326,8 +336,9 @@
 
     .sn-mobile-nav__badge {
         padding: 0.125rem var(--sn-space-2);
+        border: 1px solid var(--sn-glass-hairline);
         border-radius: var(--sn-radius-pill);
-        background: var(--sn-color-surface-sunken);
+        background: var(--sn-glass-control);
         color: var(--sn-color-text-muted);
         font-size: var(--sn-text-2xs);
         font-variant-numeric: tabular-nums;

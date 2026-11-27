@@ -74,10 +74,15 @@ export function CategoryShelf({ categories = [], title, action, className }: Cat
                         const Icon = getCategoryIcon(category.name);
 
                         return (
-                            <Link key={`${category.id ?? category.name}`} href={getCategoryHref(category)} className={styles.categoryTile}>
+                            <Link
+                                key={`${category.id ?? category.name}`}
+                                href={getCategoryHref(category)}
+                                data-slot="category-tile"
+                                className={styles.categoryTile}
+                            >
                                 <div className={styles.categoryMedia}>
                                     {category.imageUrl ? (
-                                        <img src={category.imageUrl} alt={category.name} loading="lazy" className={styles.categoryImage} />
+                                        <img src={category.imageUrl} alt="" loading="lazy" decoding="async" className={styles.categoryImage} />
                                     ) : (
                                         <Icon aria-hidden="true" className={styles.categoryIcon} />
                                     )}

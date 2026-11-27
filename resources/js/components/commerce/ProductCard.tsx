@@ -155,7 +155,7 @@ export function ProductCard({
 
                 {variant !== 'compact' && product.metadata ? <span className={styles.productMeta}>{product.metadata}</span> : null}
 
-                {typeof product.rating === 'number' ? <Rating value={product.rating} count={product.reviewCount} compact /> : null}
+                {typeof product.rating === 'number' ? <Rating value={product.rating} count={product.reviewCount} compact chip /> : null}
 
                 <div className={styles.productFooter}>
                     <Price value={product.price} compareAt={product.compareAt} showDiscount={false} size={variant === 'compact' ? 'sm' : 'md'} />

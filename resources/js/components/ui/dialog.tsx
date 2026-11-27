@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 const DialogRoot = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -32,19 +33,23 @@ const DialogContent = React.forwardRef<
         showClose?: boolean;
         showOverlay?: boolean;
     }
->(({ className, children, size = 'md', showClose = true, showOverlay = true, ...props }, ref) => (
-    <DialogPortal>
-        {showOverlay && <DialogOverlay />}
-        <DialogPrimitive.Content ref={ref} data-slot="dialog" data-size={contentSizes[size]} className={cx('sn-dialog', className)} {...props}>
-            {children}
-            {showClose && (
-                <DialogPrimitive.Close aria-label="Đóng" className="sn-dialog__close">
-                    <X aria-hidden="true" />
-                </DialogPrimitive.Close>
-            )}
-        </DialogPrimitive.Content>
-    </DialogPortal>
-));
+>(({ className, children, size = 'md', showClose = true, showOverlay = true, ...props }, ref) => {
+    const { t } = useTranslation();
+
+    return (
+        <DialogPortal>
+            {showOverlay && <DialogOverlay />}
+            <DialogPrimitive.Content ref={ref} data-slot="dialog" data-size={contentSizes[size]} className={cx('sn-dialog', className)} {...props}>
+                {children}
+                {showClose && (
+                    <DialogPrimitive.Close aria-label={t('Close')} className="sn-dialog__close">
+                        <X aria-hidden="true" />
+                    </DialogPrimitive.Close>
+                )}
+            </DialogPrimitive.Content>
+        </DialogPortal>
+    );
+});
 
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 

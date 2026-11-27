@@ -96,9 +96,11 @@ Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)`
 - Card nội dung dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Media card dùng `--sn-radius-card` 16, ảnh bên trong `--sn-radius-media` 10. Chỉ chrome nổi được dùng `2xl` 20px (slab kính) và `3xl` 28px (sheet).
 - Quy tắc shape của hệ glass: **slab 20px, menu 16px, media card 16px (ảnh 10px), stat card frosted 16px, control 12px trên nội dung và pill trên chrome, media 12px**. Không trộn radius khác trong cùng một cụm.
 - Menu dùng `--sn-radius-menu` 16 cho panel và `--sn-radius-item` 10 cho từng item. Menu kính chỉ dành cho chrome nổi (`sn-dropdown--glass`), menu trong workspace giữ nền đặc.
+- Overlay dùng shape riêng: dialog `--sn-radius-menu` 16, sheet `--sn-radius-3xl` 28 và nổi cách viewport 12px, tooltip `--sn-radius-item` 10. Filter rail là content panel bo `--sn-radius-xl` 12 và cuộn trong, không dùng glass.
 - Shadow chỉ cho lớp nổi: `--sn-shadow-popover`, `--sn-shadow-overlay` (popover/overlay), `--sn-shadow-glass` (dock kính), `--sn-shadow-float` (control nổi trong kính), `--sn-shadow-accent` (CTA accent). Không shadow cho card tĩnh.
 - Bề mặt kính: đúng một lớp blur trên slab, không blur control con; chi tiết vật liệu, fallback và tầng ở mục 6.
 - Border 1px `--sn-color-border`; border mạnh cho hover/selected.
+- Chip dữ liệu (giảm giá, rating compact) dùng pill 20–24px cao, padding ngang 8, hairline + `--sn-glass-control` (rating) hoặc accent-wash (giảm giá). Tối đa hai chip metadata trên một product card; tag trạng thái vẫn tối đa hai.
 
 ## 6. Glass system
 
@@ -117,6 +119,8 @@ Glass là vật liệu của **lớp chrome nổi**, không phải hiệu ứng 
 **Frosted media card**: product card và category card dùng `--sn-glass-control` + `--sn-glass-hairline` + inset highlight + `--sn-shadow-card`, **không blur**. Control nằm trên ảnh (wishlist, quick action) dùng `surface="overlay"` với `--sn-glass-menu` để giữ tương phản trên mọi ảnh.
 
 **Frosted stat card**: Insights, AnalyticsCard và metric card của workspace dùng cùng recipe frosted (glass-control, hairline, inset highlight, `--sn-shadow-card`, radius 16), **không blur**; chỉ filter bar và shell mới dùng slab blur.
+
+**Overlay**: dialog giữ surface đặc (form/modal dài), bo 16. Sheet là slab kính nổi inset 12px, bo 28, nền `--sn-glass-menu` + blur; shell khoá header/footer, chỉ `sn-sheet__body` cuộn. Tooltip là overlay alpha `--sn-glass-menu` + hairline + highlight, bo 10, **không blur**. Filter rail là content panel đặc, bo 12, header/footer đứng yên và body cuộn trong.
 
 Ba luật cứng:
 
@@ -150,7 +154,7 @@ Dark: kính phải sáng hơn canvas, không bao giờ tối hơn. Light: kính 
 
 ### 6.3 Recipe
 
-Recipe chuẩn của slab nằm ở `components/glass.css` dưới class `.sn-glass-surface` (workspace sidebar/topbar, filter bar). Menu kính vẫn giữ recipe cục bộ `.sn-dropdown--glass`; dock vẫn dùng `.sn-storefront__card` cho tới Phase 9.
+Recipe chuẩn của slab nằm ở `components/glass.css` dưới class `.sn-glass-surface` (workspace sidebar/topbar, filter bar). Menu kính vẫn giữ recipe cục bộ `.sn-dropdown--glass`; sheet giữ recipe cục bộ `.sn-sheet` trong `overlay.css`; dock vẫn dùng `.sn-storefront__card` cho tới Phase 9.
 
 ```css
 .sn-glass-surface {
@@ -223,15 +227,17 @@ Mọi bề mặt kính phải kèm ba fallback, tất cả đặt nền đặc v
 | 1 | Storefront dock, BrandMark, dropdown locale/account | Xong |
 | 2 | Button, input, field toàn cục | Xong |
 | 3 | Product card: frosted media card + quick-action pill | Xong |
-| 4 | Category card, Price/Rating chip | Tiếp theo |
-| 5 | Sheet, dialog, tooltip, filter rail | |
+| 4 | Category card, Price/Rating chip | Xong |
+| 5 | Sheet, dialog, tooltip, filter rail | Xong |
 | 6 | Chat dock, panel, composer | Xong |
-| 7 | Footer, newsletter, legal | |
+| 7 | Footer, newsletter, legal | Tiếp theo |
 | 8 | Workspace sidebar, topbar, ambient wash, filter bar, stat card frosted | Xong |
-| 9 | Data table, QA sweep toàn UI | Tiếp theo |
+| 9 | Data table, QA sweep toàn UI | Cuối |
 
 - Phase 2 đã hấp thụ override navbar (search pill, icon bubble, login pill) vào `button.css` và `field.css`; layout chỉ còn kích thước và trạng thái mở menu.
 - Phase 6: chat dùng một slab kính cho dock (header/footer chrome), message list giữ nền đặc để đọc; composer và quick reply là field alpha, không blur.
+- Phase 4: category tile dùng cùng recipe frosted với media card, ảnh 1:1 inset 8px bo `--sn-radius-media`, hover nhấc 3px + zoom 1.03, focus chỉ đổi border để ring không fade. Rating chip chỉ dùng ở ProductCard và BuyBox; Price discount chip là pill accent-wash.
+- Phase 5: sheet kính nổi inset 12px bo 28, body cuộn riêng; dialog surface đặc bo 16, close 32px hit 44; tooltip overlay 10 không blur; filter rail đặc bo 12, header/footer cố định, body cuộn và clear all luôn tới được.
 - Layout chỉ được override kích thước, vị trí và radius cục bộ; không override tint, blur hay hairline của primitive.
 
 Checklist cho mỗi component:

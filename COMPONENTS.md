@@ -46,9 +46,9 @@ Quy tắc:
 | `tabs.tsx` | `Tabs` | `variant`: underline/pill/filter; `surface`: content/glass; `ariaLabel`; `items[]` |
 | `breadcrumbs.tsx` | `Breadcrumbs` | `items`, `as="nav"` |
 | `dropdown-menu.tsx` | `DropdownMenu` | Radix; item config |
-| `dialog.tsx` | Dialog | Radix root/trigger/content/title/description |
-| `sheet.tsx` | `Sheet` | Drawer trái/phải; mobile nav, filter |
-| `tooltip.tsx` | `Tooltip` | delay mặc định 300ms |
+| `dialog.tsx` | Dialog | Radix root/trigger/content/title/description; `Dialog` shell + primitives; `size`: sm/md/lg/xl; surface đặc bo 16, close 32px hit 44 |
+| `sheet.tsx` | `Sheet` | Kính nổi inset 12px bo 28; `side`: right/left/bottom; shell header + `SheetBody` cuộn + footer; mobile nav, filter |
+| `tooltip.tsx` | `Tooltip` | Overlay `--sn-glass-menu` bo 10 không blur; delay 300ms, sideOffset 6, collision 8 |
 | `confirmation-modal.tsx` | `ConfirmationModal` | wrapper `isOpen/onClose/onConfirm/title/message` |
 | `alert.tsx` | `Alert` | `tone`: info/success/warning/danger; title/description/action |
 | `toast.tsx` | `Toast`, `Toaster`, `ToastProvider`, `toast()` | tone success/error/warning/info; auto-dismiss |
@@ -99,11 +99,17 @@ Workspace chrome dùng `.sn-glass-surface` từ `components/glass.css`: topbar l
 
 `DropdownMenu` nhận `selected?: boolean` (render check trailing + `data-selected`) và `className="sn-dropdown--glass"` cho menu trong dock. Menu kính bo 16, item bo 10, hover dùng ink wash, selected dùng accent-wash + accent-text.
 
+`CategoryShelf` là frosted media tile: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; mỗi tile padding 8, ảnh 1:1 inset theo padding, bo `--sn-radius-media` 10, icon fallback 32px. Tên 2 dòng đổi accent khi hover, meta "Xem sản phẩm" dùng sans 12px muted. Hover nhấc 3px + zoom ảnh 1.03; focus-visible chỉ đổi border để ring xuất hiện tức thì; reduced-motion bỏ transform, reduced-transparency dùng surface đặc.
+
 ### Commerce
 
 `Price`, `Rating`, `ReviewCard`, `ReviewSummary`, `QuantityStepper`, `VariantSelector`, `ProductGallery`, `ProductGrid`, `BuyBox`, `SpecTable`, `OrderTable`, `OrderSummary`, `OrderItemRow`, `OrderTimeline`, `OrderAnnouncementCard`, `PaymentOption`, `PaymentMarks`, `CheckoutStepper`, `CheckoutAddressForm`, `AddressCard`, `CartLine`, `PromoField`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills`, `Countdown`, `NotificationRow`, `ShopIdentity`.
 
 `ProductCard` là frosted media card: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; ảnh 1:1 inset 8px bo `--sn-radius-media` 10. Sale pill trên ảnh, wishlist và quick-action pill dùng `surface="overlay"`. Quick pill label "Choose options", hiện khi hover/focus, luôn hiện dưới 768px hoặc thiết bị không hover. `actionLabel`/`actionIcon` cho phép override nhãn và icon hành động (mặc định "Choose options" + `ShoppingCart`).
+
+`Price` render discount dưới dạng pill accent-wash 20px cao, hairline, tabular-nums; value thêm tracking snug. `Rating` nhận `chip?: boolean`; chỉ có tác dụng khi `compact` và render pill 24px (glass-control + hairline + inset highlight) bo tròn, dùng ở `ProductCard` và `BuyBox`. `BuyBox` chỉ render rating khi `rating > 0` để không hiện chip "0 (0)". `ShopIdentity`, `ReviewCard`, `ReviewSummary` và trang đơn hàng giữ rating dạng text để tránh pill spam.
+
+`FilterRail` là content panel đặc: surface, hairline, bo `--sn-radius-xl` 12; desktop sticky với `max-height: calc(100dvh - var(--sn-header-stuck) - 16px)`, `.filterRailBody` cuộn riêng, header và nút "Xoá tất cả" đứng yên. `variant="sheet"` bỏ nền/border/max-height để sheet là bề mặt duy nhất và ẩn header trùng với tiêu đề sheet. `FilterGroup` dùng `summary` có hit area, hover wash và focus ring; count là pill neutral, active count là pill accent-wash.
 
 `PaymentMarks` dùng `payment-marks.module.css` riêng để footer không kéo toàn bộ commerce CSS.
 
@@ -112,6 +118,16 @@ Workspace chrome dùng `.sn-glass-surface` từ `components/glass.css`: topbar l
 `AnalyticsCard`, `AnalyticsChart` (recharts + token), `AnalyticsTable`, `AnalyticsFilters`, `QuickFilter`, `ExportButton`, `ShipperInfoCard`.
 
 `AnalyticsCard` và `Insights` dùng frosted stat card (glass-control + hairline + inset highlight + `--sn-shadow-card`, radius 16, không blur). Metric card của Seller thêm `metricCardFrosted` khi đứng trực tiếp trên canvas; bên trong `Card` nội dung thì giữ nền đặc để không lồng card. `AnalyticsFilters` mặc định là glass slab (`surface="glass"`, blur) và đặt thẳng trên nền `canvas-deep`; khi nằm trong panel kính khác thì truyền `surface="content"`. `FilterPanel` dùng `.sn-glass-surface` cho grid; control bên trong dùng `surface="glass"`. Chart card và data table giữ bề mặt đặc.
+
+`Admin/Dashboard` dùng composition 3 dải: KPI instrument rail (`dl` frosted, 4 register, doanh thu rộng hơn), signal grid (doanh thu area 2fr + user growth bar 1fr), ledger grid (Recent Orders `DataTable` 2fr + New Users ledger 1fr). `DataTable` nhận `headerMeta` tuỳ chọn để hiện count bên phải head; New Users dùng head + rows hairline, không card.
+
+`Admin/Users` là directory ledger: `PageHeader` (badge tổng user), filter toolbar kính có label Tìm kiếm/Vai trò/Trạng thái + nút Áp dụng, `DataTable` gộp identity (avatar, tên, #id, email) và `headerMeta` là range phân trang thật. Search/role/status state, auto-search, confirm toggle, toast, modal và pagination giữ nguyên; role badge neutral.
+
+`Admin/Users/Edit` là account record: `PageHeader` (breadcrumb Dashboard > Users > tên user, action quay lại danh sách), grid 2 cột ≥1024 gồm form panel đặc và rail hồ sơ. Form chia section Thông tin tài khoản (họ, tên, email + hint đăng nhập) và Quyền truy cập (status, role register dùng `description` thật từ `RoleSeeder`); rail hiện avatar, username, ID, ngày tham gia, email xác minh. Tự sửa mình khoá status/role ở cả UI và backend (403), form chỉ gửi họ tên/email; không card lồng card, `Save changes` có loading.
+
+`Admin/Products` là directory 5 cột: `PageHeader` (badge totalProducts filtered), filter toolbar kính có label Tìm kiếm/Danh mục/Thương hiệu/Trạng thái + nút Áp dụng, `DataTable` với ProductInfoCell, Seller + brand, Price + stock, Status, Actions; `headerMeta` là range phân trang. Status actions, toast, modal, pagination giữ nguyên; giá dùng text thường, không accent.
+
+`Admin/Inventory` là stock ledger: `PageHeader`, filter toolbar kính có label Tìm kiếm/Người bán/Danh mục/Thương hiệu/Trạng thái tồn + nút Áp dụng, stock rail 4 register (tổng biến thể filtered, trên trang, tồn thấp trang, hết hàng trang) và `DataTable` 5 cột (Product 3 dòng, Seller, Price + discount, Stock + status, Actions). `headerMeta` là range phân trang; View/History, pagination, filter state và toast giữ nguyên.
 
 Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; không gradient.
 
@@ -159,9 +175,10 @@ Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; kh�
 
 ### Dialog / Sheet / Confirm
 
-- Dialog dùng Radix; luôn có title + description (có thể `.sn-visually-hidden`).
-- Xoá/suspend dùng `ConfirmationModal` hoặc `ConfirmDialog`.
-- Mobile nav/filter dùng `Sheet`.
+- Dialog dùng Radix; luôn có title + description (có thể `.sn-visually-hidden`). Surface đặc `--sn-color-surface`, hairline, bo 16, padding 20/24, close 32px (hit 44) và `aria-label` lấy từ `t('Close')`.
+- Sheet dùng Radix Dialog primitive nhưng là glass slab nổi inset 12px, bo 28; header và footer cố định, chỉ `.sn-sheet__body` cuộn. `SheetBody` là wrapper chuẩn cho nội dung.
+- Xoá/suspend dùng `ConfirmationModal` hoặc `ConfirmDialog`; mobile nav/filter dùng `Sheet` và đưa action chính vào prop `footer` để luôn thấy.
+- Tooltip chỉ dành cho icon-only hoặc nhãn cần giải thích; nội dung lấy từ `t()`, không đặt tooltip lên control đã có text.
 
 ### Feedback
 

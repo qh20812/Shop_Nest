@@ -1,19 +1,19 @@
 import { Head, usePage } from '@inertiajs/react';
-import { Clock, HeartPulse, Receipt, TrendingUp, UserPlus, Wallet } from 'lucide-react';
+import { Receipt, UserPlus } from 'lucide-react';
 import { useMemo } from 'react';
 
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import Avatar from '@/components/ui/avatar';
 import DataTable from '@/components/ui/data-table';
-import Header from '@/components/ui/header';
-import Insights from '@/components/ui/insights';
 import StatusBadge from '@/components/ui/status-badge';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatNumber, formatTime } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatCurrency, formatMoney, resolveCurrencyCode } from '@/lib/utils';
 
-import styles from '@/components/admin/admin.module.css';
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Dashboard.module.css';
 
 interface Stats {
     total_revenue: number;
@@ -100,32 +100,24 @@ export default function Index() {
 
     const money = useMemo(() => (value: number) => formatMoney(value, currencyCode, locale), [currencyCode, locale]);
 
+    const generatedAt = typeof props.meta?.generatedAt === 'string' ? props.meta.generatedAt : null;
+    const updatedLabel =
+        generatedAt && !Number.isNaN(new Date(generatedAt).getTime())
+            ? `${t('Last updated at')} ${formatDate(generatedAt)} ${formatTime(generatedAt)}`
+            : undefined;
+
     const breadcrumbs = [
         { label: t('Dashboard'), href: '/admin/dashboard' },
-        { label: t('Overview'), href: '#', active: true },
+        { label: t('Overview'), current: true },
     ];
 
-    const insightsData = [
+    const growth = Number.isFinite(stats.user_growth_monthly) ? stats.user_growth_monthly.toFixed(2) : '0.00';
+    const health = Number.isFinite(stats.system_health) ? stats.system_health.toFixed(2) : '0.00';
+
+    const kpis = [
         {
-            icon: Clock,
-            value: stats.pending_orders.toLocaleString('vi-VN'),
-            label: t('Pending Orders'),
-            tooltip: t('Pending orders awaiting action'),
-        },
-        {
-            icon: TrendingUp,
-            value: `${Number.isFinite(stats.user_growth_monthly) ? stats.user_growth_monthly.toFixed(2) : '0.00'}%`,
-            label: t('User Growth (Monthly)'),
-            tooltip: t('User growth compared to last month'),
-        },
-        {
-            icon: HeartPulse,
-            value: `${Number.isFinite(stats.system_health) ? stats.system_health.toFixed(2) : '0.00'}%`,
-            label: t('System Health'),
-            tooltip: t('Percentage of orders completed successfully'),
-        },
-        {
-            icon: Wallet,
+            key: 'revenue',
+            label: t('Total Revenue'),
             value: formatCurrency(stats.total_revenue, {
                 from: currencyCode,
                 to: currencyCode,
@@ -133,8 +125,25 @@ export default function Index() {
                 locale,
                 abbreviate: true,
             }),
-            label: t('Total Revenue'),
             tooltip: money(stats.total_revenue),
+        },
+        {
+            key: 'pending',
+            label: t('Pending Orders'),
+            value: formatNumber(stats.pending_orders),
+            tooltip: t('Pending orders awaiting action'),
+        },
+        {
+            key: 'growth',
+            label: t('User Growth (Monthly)'),
+            value: `${growth}%`,
+            tooltip: t('User growth compared to last month'),
+        },
+        {
+            key: 'health',
+            label: t('System Health'),
+            value: `${health}%`,
+            tooltip: t('Percentage of orders completed successfully'),
         },
     ];
 
@@ -163,9 +172,9 @@ export default function Index() {
                     }
 
                     return (
-                        <div className={styles.avatarCell}>
+                        <div className={adminStyles.avatarCell}>
                             <Avatar user={userForAvatar} size={36} />
-                            <span className={styles.avatarName}>{userForAvatar.username}</span>
+                            <span className={adminStyles.avatarName}>{userForAvatar.username}</span>
                         </div>
                     );
                 },
@@ -173,7 +182,7 @@ export default function Index() {
             {
                 key: 'created_at',
                 header: t('Order Date'),
-                cell: (order: Order) => <span className={styles.numeric}>{formatDate(order.created_at)}</span>,
+                cell: (order: Order) => <span className={adminStyles.numeric}>{formatDate(order.created_at)}</span>,
             },
             {
                 key: 'status',
@@ -192,7 +201,7 @@ export default function Index() {
                             : Number(order.total_amount ?? order.total_amount_base ?? 0);
 
                     return (
-                        <span className={styles.price}>
+                        <span className={adminStyles.price}>
                             {formatCurrency(totalForDisplay, {
                                 from: orderCurrency,
                                 to: orderCurrency,
@@ -210,58 +219,78 @@ export default function Index() {
     return (
         <WorkspaceLayout>
             <Head title={t('Dashboard')} />
-            <Header title={t('Dashboard')} breadcrumbs={breadcrumbs} />
 
-            <Insights items={insightsData} />
+            <div className={styles.page}>
+                <PageHeader breadcrumbs={breadcrumbs} title={t('Dashboard')} description={updatedLabel} />
 
-            <section className={styles.chartGrid} aria-label={t('Overview charts')}>
-                <AnalyticsChart
-                    type="line"
-                    data={revenueChartData}
-                    title={t('Revenue Trend')}
-                    description={t('Last 7 days')}
-                    valueFormatter={money}
-                    valueLabel={t('Revenue')}
-                />
-                <AnalyticsChart
-                    type="bar"
-                    data={userGrowthChartData}
-                    title={t('User Growth')}
-                    description={t('Last 4 weeks')}
-                    valueLabel={t('Users')}
-                />
-            </section>
+                <h2 className="sn-visually-hidden">{t('Overview')}</h2>
 
-            <DataTable
-                columns={orderColumns}
-                data={recentOrders}
-                headerTitle={t('Recent Orders')}
-                headerIcon={Receipt}
-                emptyMessage={t('No recent orders')}
-            />
+                <dl className={styles.kpiRail}>
+                    {kpis.map((kpi) => (
+                        <div key={kpi.key} className={styles.kpi} title={kpi.tooltip}>
+                            <dt className={styles.kpiLabel}>{kpi.label}</dt>
+                            <dd className={styles.kpiValue}>{kpi.value}</dd>
+                        </div>
+                    ))}
+                </dl>
 
-            <section className={styles.section}>
-                <div className={styles.sectionHead}>
-                    <h2 className={styles.sectionTitle}>
-                        <UserPlus aria-hidden="true" className={styles.sectionIcon} />
-                        {t('New Users')}
-                    </h2>
-                    <span className={styles.sectionMeta}>{newUsers.length}</span>
-                </div>
+                <section className={styles.signalGrid} aria-label={t('Overview charts')}>
+                    <AnalyticsChart
+                        type="area"
+                        data={revenueChartData}
+                        title={t('Revenue Trend')}
+                        description={t('Last 7 days')}
+                        height={300}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
+                    />
+                    <AnalyticsChart
+                        type="bar"
+                        data={userGrowthChartData}
+                        title={t('User Growth')}
+                        description={t('Last 4 weeks')}
+                        height={300}
+                        colors={['var(--sn-color-accent)']}
+                        valueLabel={t('Users')}
+                    />
+                </section>
 
-                {newUsers.length > 0 ? (
-                    <div className={styles.stackTight}>
-                        {newUsers.map((user) => (
-                            <div key={user.id} className={styles.avatarCell}>
-                                <span className={styles.avatarName}>{user.username}</span>
-                                <span className={styles.avatarMeta}>{formatDate(user.created_at)}</span>
-                            </div>
-                        ))}
+                <div className={styles.ledgerGrid}>
+                    <div className={styles.orders}>
+                        <DataTable
+                            columns={orderColumns}
+                            data={recentOrders}
+                            headerTitle={t('Recent Orders')}
+                            headerIcon={Receipt}
+                            headerMeta={recentOrders.length}
+                            emptyMessage={t('No recent orders')}
+                        />
                     </div>
-                ) : (
-                    <p className={styles.muted}>{t('No new users')}</p>
-                )}
-            </section>
+
+                    <section className={styles.arrivals} aria-labelledby="dashboard-new-users">
+                        <div className={styles.ledgerHead}>
+                            <h2 id="dashboard-new-users" className={styles.ledgerTitle}>
+                                <UserPlus aria-hidden="true" className={styles.ledgerIcon} />
+                                {t('New Users')}
+                            </h2>
+                            <span className={styles.ledgerMeta}>{newUsers.length}</span>
+                        </div>
+
+                        {newUsers.length > 0 ? (
+                            <ul className={styles.ledgerList}>
+                                {newUsers.map((user) => (
+                                    <li key={user.id} className={styles.ledgerRow}>
+                                        <span className={styles.ledgerName}>{user.username}</span>
+                                        <span className={styles.ledgerDate}>{formatDate(user.created_at)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className={styles.ledgerEmpty}>{t('No new users')}</p>
+                        )}
+                    </section>
+                </div>
+            </div>
         </WorkspaceLayout>
     );
 }

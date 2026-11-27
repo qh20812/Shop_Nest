@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 const SheetRoot = DialogPrimitive.Root;
 const SheetTrigger = DialogPrimitive.Trigger;
@@ -22,22 +23,30 @@ const SheetContent = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
         side?: SheetSide;
     }
->(({ className, children, side = 'right', ...props }, ref) => (
-    <DialogPrimitive.Portal>
-        <SheetOverlay />
-        <DialogPrimitive.Content ref={ref} data-slot="sheet" data-side={side} className={cx('sn-sheet', className)} {...props}>
-            {children}
-            <DialogPrimitive.Close aria-label="Đóng" className="sn-sheet__close">
-                <X aria-hidden="true" />
-            </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
-));
+>(({ className, children, side = 'right', ...props }, ref) => {
+    const { t } = useTranslation();
+
+    return (
+        <DialogPrimitive.Portal>
+            <SheetOverlay />
+            <DialogPrimitive.Content ref={ref} data-slot="sheet" data-side={side} className={cx('sn-sheet', className)} {...props}>
+                {children}
+                <DialogPrimitive.Close aria-label={t('Close')} className="sn-sheet__close">
+                    <X aria-hidden="true" />
+                </DialogPrimitive.Close>
+            </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+    );
+});
 
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
 function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
     return <div className={cx('sn-sheet__header', className)} {...props} />;
+}
+
+function SheetBody({ className, ...props }: React.ComponentProps<'div'>) {
+    return <div className={cx('sn-sheet__body', className)} {...props} />;
 }
 
 function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
@@ -78,12 +87,12 @@ function Sheet({ open, onOpenChange, side = 'right', title, description, footer,
                         {description && <SheetDescription>{description}</SheetDescription>}
                     </SheetHeader>
                 )}
-                {children}
+                <SheetBody>{children}</SheetBody>
                 {footer && <SheetFooter>{footer}</SheetFooter>}
             </SheetContent>
         </SheetRoot>
     );
 }
 
-export { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetRoot, SheetTitle, SheetTrigger };
+export { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetRoot, SheetTitle, SheetTrigger };
 export type { SheetProps, SheetSide };

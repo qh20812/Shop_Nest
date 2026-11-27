@@ -1,0 +1,118 @@
+/* Hallmark · component: admin users directory · genre: editorial · theme: project glass · states: n/a · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the module defines layout only · controls are Button, Input and Select primitives whose active and disabled states live in button.css and field.css */
+/* Hallmark · the filter bar is chrome; the directory table stays bare so rows read as a ledger */
+
+.filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+}
+
+.filters :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.filterActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.identity {
+    display: flex;
+    max-width: 32rem;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.identityName {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+}
+
+.identityNameText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.you {
+    flex-shrink: 0;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-regular);
+}
+
+.identityMeta {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    line-height: var(--sn-leading-snug);
+}
+
+.identityId {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.identityEmail {
+    min-width: 0;
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sn-space-2);
+}
+
+.table {
+    min-width: 0;
+}
+
+/* DataTable owns a top margin; the stack gap already provides rhythm */
+.table > section {
+    margin-top: 0;
+}
+
+@media (min-width: 640px) {
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filters > :first-child {
+        grid-column: 1 / -1;
+    }
+
+    .filterActions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 1024px) {
+    .filters {
+        grid-template-columns: minmax(14rem, 2fr) minmax(8.5rem, 1fr) minmax(8.5rem, 1fr) auto;
+        align-items: end;
+    }
+
+    .filters > :first-child {
+        grid-column: auto;
+    }
+
+    .filterActions {
+        grid-column: auto;
+    }
+}

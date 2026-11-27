@@ -1,3 +1,5 @@
+/* Hallmark · component: search page · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the filter sheet owns no aria-disabled control · active and disabled states live in the Button primitive in button.css */
 .page {
     padding-block: var(--sn-space-8) var(--sn-space-10);
 }
@@ -53,10 +55,13 @@
     font-size: var(--sn-text-xs);
 }
 
-.sheetContent {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sn-space-2);
+.sheetAction {
+    width: 100%;
+}
+
+.sheetAction:focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
 }
 
 .filterList {

@@ -14,6 +14,12 @@ Schedule::command('reservations:cleanup --force')
     ->withoutOverlapping()
     ->runInBackground();
 
+// Expire wallet top-up requests after their 24h bank-transfer window
+Schedule::command('wallet-topups:expire')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 // Xoá lịch sử chatbot quá thời hạn lưu trữ (mặc định 90 ngày).
 Schedule::command('chatbot:prune')
     ->daily()

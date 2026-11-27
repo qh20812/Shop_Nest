@@ -1,20 +1,26 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Check, Eye, EyeOff, Package, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Package, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
 import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { Select } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/status-badge';
-import { formatVnd } from '@/lib/format';
+import { cx } from '@/lib/cx';
+import { formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
-import styles from '@/components/admin/admin.module.css';
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Products.module.css';
 
 interface Category {
     category_id: number;
@@ -43,6 +49,9 @@ interface PageProps {
     products: {
         data: Product[];
         links: { url: string | null; label: string; active: boolean }[];
+        total?: number;
+        from?: number | null;
+        to?: number | null;
     };
     categories: Category[];
     brands: Brand[];
@@ -169,6 +178,12 @@ export default function Index() {
         });
     };
 
+    const filteredTotal = products.total ?? totalProducts;
+    const rangeLabel =
+        filteredTotal > 0
+            ? `${formatNumber(products.from ?? 0)}-${formatNumber(products.to ?? 0)} / ${formatNumber(filteredTotal)}`
+            : formatNumber(0);
+
     const productColumns = [
         {
             key: 'product',
@@ -176,32 +191,27 @@ export default function Index() {
             cell: (product: Product) => <ProductInfoCell product={product} />,
         },
         {
-            key: 'category',
-            header: t('Category'),
-            cell: (product: Product) => <span className={styles.muted}>{product.category?.name || t('No Category')}</span>,
-        },
-        {
             key: 'seller',
             header: t('Seller'),
-            cell: (product: Product) => <span className={styles.muted}>{getSellerName(product.seller)}</span>,
-        },
-        {
-            key: 'brand',
-            header: t('Brand'),
-            cell: (product: Product) => <span className={styles.muted}>{product.brand?.name}</span>,
+            cell: (product: Product) => (
+                <div className={styles.seller}>
+                    <span className={styles.sellerName}>{getSellerName(product.seller)}</span>
+                    <span className={styles.brand}>{product.brand?.name || t('No Brand')}</span>
+                </div>
+            ),
         },
         {
             key: 'price',
             header: t('Price'),
-            cell: (product: Product) => <span className={styles.priceAccent}>{getProductPrice(product)}</span>,
-        },
-        {
-            key: 'stock',
-            header: t('Stock'),
             cell: (product: Product) => (
-                <span className={`${styles.stockBadge} ${product.variants_sum_stock_quantity > 0 ? styles.stockIn : styles.stockOut}`.trim()}>
-                    {product.variants_sum_stock_quantity || 0} {t('units')}
-                </span>
+                <div className={styles.priceCell}>
+                    <span className={adminStyles.price}>{getProductPrice(product)}</span>
+                    <span
+                        className={`${adminStyles.stockBadge} ${product.variants_sum_stock_quantity > 0 ? adminStyles.stockIn : adminStyles.stockOut}`.trim()}
+                    >
+                        {product.variants_sum_stock_quantity || 0} {t('units')}
+                    </span>
+                </div>
             ),
         },
         {
@@ -279,54 +289,88 @@ export default function Index() {
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <FilterPanel
-                title={t('Product Management')}
-                breadcrumbs={[
-                    { label: t('Dashboard'), href: '/admin/dashboard' },
-                    { label: t('Products'), href: '/admin/products', active: true },
-                ]}
-                searchConfig={{
-                    value: search,
-                    onChange: setSearch,
-                    placeholder: t('Search by product name or SKU...'),
-                }}
-                filterConfigs={[
-                    {
-                        value: categoryId,
-                        onChange: setCategoryId,
-                        label: t('-- All Categories --'),
-                        options: categories.map((category) => ({ value: category.category_id, label: category.name })),
-                    },
-                    {
-                        value: brandId,
-                        onChange: setBrandId,
-                        label: t('-- All Brands --'),
-                        options: brands.map((brand) => ({ value: brand.brand_id, label: brand.name })),
-                    },
-                    {
-                        value: status,
-                        onChange: setStatus,
-                        label: t('-- All Statuses --'),
-                        options: [
-                            { value: 'draft', label: t('Draft') },
-                            { value: 'pending_approval', label: t('Pending Approval') },
-                            { value: 'published', label: t('Published') },
-                            { value: 'hidden', label: t('Hidden') },
-                        ],
-                    },
-                ]}
-                onApplyFilters={applyFilters}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Products'), current: true },
+                    ]}
+                    title={t('Product Management')}
+                    count={formatNumber(totalProducts)}
+                />
 
-            <DataTable
-                columns={productColumns}
-                data={products.data}
-                headerTitle={`${t('Product List')} (${totalProducts})`}
-                headerIcon={Package}
-                emptyMessage={t('No products found')}
-            />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <FormField label={t('Search')} htmlFor="product-search">
+                        <Input
+                            id="product-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={t('Search by product name or SKU...')}
+                            leadingIcon={Search}
+                            surface="glass"
+                        />
+                    </FormField>
 
-            <Pagination links={products.links} />
+                    <FormField label={t('Category')} htmlFor="product-category">
+                        <Select id="product-category" value={categoryId} onChange={(event) => setCategoryId(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Categories --')}</option>
+                            {categories.map((category) => (
+                                <option key={category.category_id} value={category.category_id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Brand')} htmlFor="product-brand">
+                        <Select id="product-brand" value={brandId} onChange={(event) => setBrandId(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Brands --')}</option>
+                            {brands.map((brand) => (
+                                <option key={brand.brand_id} value={brand.brand_id}>
+                                    {brand.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Status')} htmlFor="product-status">
+                        <Select id="product-status" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Statuses --')}</option>
+                            <option value="draft">{t('Draft')}</option>
+                            <option value="pending_approval">{t('Pending Approval')}</option>
+                            <option value="published">{t('Published')}</option>
+                            <option value="hidden">{t('Hidden')}</option>
+                        </Select>
+                    </FormField>
+
+                    <div className={styles.filterActions}>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={productColumns}
+                        data={products.data}
+                        headerTitle={t('Product List')}
+                        headerIcon={Package}
+                        headerMeta={rangeLabel}
+                        emptyMessage={t('No products found')}
+                    />
+                </div>
+
+                <Pagination links={products.links} />
+            </div>
 
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}

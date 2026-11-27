@@ -40,6 +40,7 @@ ShopNest is a Laravel 13 + Inertia 3 + React 19 marketplace with four roles (adm
 - Stock changes go through `App\Services\InventoryService` (`adjustStock`, `setStock`, `bulkAdjust`, `adjustInventoryForOrder`, `restoreInventoryForOrder`) so `InventoryLog`/caches stay consistent. Never write `stock_quantity` directly.
 - Payments: `PaymentService::make($provider)` supports only `stripe` and `cod` (`app/Payments/Gateways/`); webhook/return handling is in `PaymentWebhookController`/`PaymentReturnController`.
 - Wallets: one `wallets` row per user with `wallet_transactions`; all balance changes go through `App\Services\WalletService`. Seller promotion budgets debit/refund this wallet. Legacy `seller_promotion_wallets`/`seller_wallet_transactions` are migrated and read-only; VietQR top-up + admin approval is backlog.
+- Wallet top-ups (backend only): user JSON `/wallet/topups` (`index/store/show/transferred/cancel`), admin JSON `/admin/wallet-topups` (`index/show/approve/reject`); 6-letter memo code, 24h expiry via `wallet-topups:expire`. VietQR config lives in `config/wallet.php` (`VIETQR_*` env). UI pages are not built yet.
 
 ## Data & tests
 

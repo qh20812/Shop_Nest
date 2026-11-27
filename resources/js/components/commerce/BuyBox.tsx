@@ -66,7 +66,7 @@ export function BuyBox({
             <div>
                 <h1 className={styles.buyBoxTitle}>{title}</h1>
                 <div className={styles.buyBoxRating}>
-                    {typeof rating === 'number' && <Rating value={rating} count={reviewCount} compact />}
+                    {typeof rating === 'number' && rating > 0 && <Rating value={rating} count={reviewCount} compact chip />}
                     {typeof soldCount === 'number' && <span>{t('Sold :count', { count: formatNumber(soldCount) })}</span>}
                 </div>
             </div>

@@ -1,3 +1,4 @@
+/* Hallmark · component: storefront · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
 /* Storefront domain module — Phase 4. Tokens only. */
 
 /* Hero */
@@ -83,11 +84,8 @@
 }
 
 .heroCaption {
-    color: var(--sn-color-text-faint);
-    font-family: var(--sn-font-numeric);
-    font-size: var(--sn-text-2xs);
-    letter-spacing: var(--sn-tracking-wide);
-    text-transform: uppercase;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
 }
 
 /* Category shelf */
@@ -105,13 +103,26 @@
     display: flex;
     flex-direction: column;
     gap: var(--sn-space-2);
-    padding: var(--sn-space-3);
-    border: 1px solid var(--sn-color-border);
-    border-radius: var(--sn-radius-lg);
-    background: var(--sn-color-surface);
+    padding: var(--sn-space-2);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
+    transition:
+        border-color var(--sn-dur-fast) var(--sn-ease-standard),
+        box-shadow var(--sn-dur-fast) var(--sn-ease-standard),
+        transform var(--sn-dur-fast) var(--sn-ease-out);
 }
 
 .categoryTile:hover {
+    border-color: var(--sn-color-border-strong);
+    box-shadow: var(--sn-shadow-glass);
+    transform: translateY(-3px);
+}
+
+.categoryTile:focus-visible {
     border-color: var(--sn-color-border-strong);
 }
 
@@ -121,7 +132,8 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: var(--sn-radius-xs);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-media);
     background: var(--sn-color-surface-sunken);
 }
 
@@ -129,12 +141,22 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform var(--sn-dur-slow) var(--sn-ease-out);
+}
+
+.categoryTile:hover .categoryImage {
+    transform: scale(1.03);
 }
 
 .categoryIcon {
     width: 2rem;
     height: 2rem;
     color: var(--sn-color-text-muted);
+    transition: color var(--sn-dur-fast) var(--sn-ease-standard);
+}
+
+.categoryTile:hover .categoryIcon {
+    color: var(--sn-color-accent-text);
 }
 
 .categoryName {
@@ -146,18 +168,40 @@
     line-height: var(--sn-leading-snug);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    transition: color var(--sn-dur-fast) var(--sn-ease-standard);
 }
 
 .categoryTile:hover .categoryName {
     color: var(--sn-color-accent-text);
-    text-decoration: underline;
-    text-underline-offset: 3px;
 }
 
 .categoryMeta {
-    color: var(--sn-color-text-faint);
-    font-family: var(--sn-font-numeric);
-    font-size: var(--sn-text-2xs);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .categoryTile:hover {
+        transform: none;
+    }
+
+    .categoryTile:hover .categoryImage {
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .categoryTile {
+        background: var(--sn-color-surface);
+    }
+}
+
+@media (forced-colors: active) {
+    .categoryTile {
+        border-color: CanvasText;
+        background: Canvas;
+        box-shadow: none;
+    }
 }
 
 /* Product shelf */
@@ -348,10 +392,8 @@
 
 .flashTimeLabel {
     color: var(--sn-color-text-muted);
-    font-size: var(--sn-text-2xs);
-    font-weight: var(--sn-weight-semibold);
-    letter-spacing: var(--sn-tracking-wider);
-    text-transform: uppercase;
+    font-size: var(--sn-text-xs);
+    font-weight: var(--sn-weight-medium);
 }
 
 .flashGrid {

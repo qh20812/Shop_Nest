@@ -12,6 +12,7 @@ use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\WishlistController;
+use App\Http\Controllers\WalletTopupController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -55,6 +56,17 @@ Route::middleware(['auth', 'verified.optional'])
 
         // Theo dõi đơn hàng
         Route::get('{order}/track', [OrderController::class, 'trackDelivery'])->name('track');
+    });
+
+Route::middleware(['auth', 'verified.optional'])
+    ->prefix('wallet/topups')
+    ->as('wallet.topups.')
+    ->group(function () {
+        Route::get('/', [WalletTopupController::class, 'index'])->name('index');
+        Route::post('/', [WalletTopupController::class, 'store'])->name('store');
+        Route::get('/{topup}', [WalletTopupController::class, 'show'])->name('show');
+        Route::post('/{topup}/transferred', [WalletTopupController::class, 'transferred'])->name('transferred');
+        Route::post('/{topup}/cancel', [WalletTopupController::class, 'cancel'])->name('cancel');
     });
 
 Route::middleware(['auth', 'verified.optional'])

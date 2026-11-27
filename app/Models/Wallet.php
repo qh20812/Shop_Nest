@@ -39,6 +39,12 @@ class Wallet extends Model
             ->orderByDesc('created_at');
     }
 
+    public function topups(): HasMany
+    {
+        return $this->hasMany(WalletTopup::class, 'wallet_id', 'wallet_id')
+            ->orderByDesc('created_at');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

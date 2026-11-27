@@ -10,18 +10,19 @@ type RatingProps = {
     value: number;
     count?: number;
     compact?: boolean;
+    chip?: boolean;
     showValue?: boolean;
     className?: string;
 };
 
-export function Rating({ value, count, compact = false, showValue = true, className }: RatingProps) {
+export function Rating({ value, count, compact = false, chip = false, showValue = true, className }: RatingProps) {
     const { t } = useTranslation();
     const safeValue = Math.min(Math.max(value, 0), 5);
 
     if (compact) {
         return (
             <span
-                className={cx(styles.rating, className)}
+                className={cx(styles.rating, chip && styles.ratingChip, className)}
                 aria-label={
                     t(':value out of 5', { value: formatDecimal(safeValue) }) +
                     (typeof count === 'number' ? `, ${t(':count reviews', { count: formatNumber(count) })}` : '')

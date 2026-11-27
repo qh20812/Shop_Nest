@@ -1,20 +1,27 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Lock, LockOpen, Pencil, Receipt } from 'lucide-react';
+import { Lock, LockOpen, Pencil, Search, Users as UsersIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
+import { Select } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/status-badge';
+import { cx } from '@/lib/cx';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
-import styles from '@/components/admin/admin.module.css';
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Users.module.css';
 
 interface Role {
     id: number;
@@ -44,6 +51,9 @@ interface PageProps {
     users: {
         data: User[];
         links: { url: string | null; label: string; active: boolean }[];
+        total?: number;
+        from?: number | null;
+        to?: number | null;
     };
     roles: string[];
     totalUsers: number;
@@ -121,15 +131,19 @@ export default function Index() {
         setConfirmModal({ isOpen: false, userId: null, userName: '' });
     };
 
+    const breadcrumbs = [
+        { label: t('Dashboard'), href: '/admin/dashboard' },
+        { label: t('Users'), current: true },
+    ];
+
+    const filteredTotal = users.total ?? totalUsers;
+    const rangeLabel =
+        filteredTotal > 0 ? `${formatNumber(users.from ?? 0)}-${formatNumber(users.to ?? 0)} / ${formatNumber(filteredTotal)}` : formatNumber(0);
+
     const userColumns = [
         {
-            key: 'id',
-            header: 'ID',
-            cell: (user: User) => <span className={styles.numeric}>#{user.id}</span>,
-        },
-        {
-            key: 'name',
-            header: t('Full Name'),
+            key: 'user',
+            header: t('User'),
             cell: (user: User) => {
                 const isCurrentUser = user.id === currentUserId;
                 const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
@@ -141,32 +155,34 @@ export default function Index() {
                 }
 
                 return (
-                    <div className={styles.avatarCell}>
+                    <div className={adminStyles.avatarCell}>
                         <Avatar user={userForAvatar} />
-                        <div className={styles.avatarBody}>
-                            <span className={styles.avatarName}>{displayName}</span>
-                            {isCurrentUser && <span className={styles.avatarMeta}>({t('You')})</span>}
+                        <div className={styles.identity}>
+                            <span className={styles.identityName}>
+                                <span className={styles.identityNameText}>{displayName}</span>
+                                {isCurrentUser && <span className={styles.you}>({t('You')})</span>}
+                            </span>
+                            <span className={styles.identityMeta}>
+                                <span className={styles.identityId}>#{user.id}</span>
+                                <span className={styles.identityEmail} title={user.email}>
+                                    {user.email}
+                                </span>
+                            </span>
                         </div>
                     </div>
                 );
             },
         },
         {
-            key: 'email',
-            header: 'Email',
-            cell: (user: User) => <span className={styles.muted}>{user.email}</span>,
-        },
-        {
             key: 'roles',
             header: t('Role'),
             cell: (user: User) => (
-                <div className={styles.actions}>
+                <div className={styles.roles}>
                     {user.roles.map((userRole) => {
                         const roleName = userRole.name[locale] || userRole.name['en'];
-                        const isAdmin = roleName === 'Admin' || roleName === 'Quản trị viên';
 
                         return (
-                            <Badge key={userRole.id} tone={isAdmin ? 'danger' : 'accent'}>
+                            <Badge key={userRole.id} tone="neutral">
                                 {roleName}
                             </Badge>
                         );
@@ -214,46 +230,68 @@ export default function Index() {
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <FilterPanel
-                title="User Management"
-                breadcrumbs={[
-                    { label: t('Users'), href: '#' },
-                    { label: t('Overview'), href: '#', active: true },
-                ]}
-                searchConfig={{
-                    value: search,
-                    onChange: setSearch,
-                    placeholder: 'Search by name or email...',
-                }}
-                filterConfigs={[
-                    {
-                        value: role,
-                        onChange: setRole,
-                        label: t('-- All Roles --'),
-                        options: roles.map((roleName) => ({ value: roleName, label: roleName })),
-                    },
-                    {
-                        value: status,
-                        onChange: setStatus,
-                        label: t('-- All Statuses --'),
-                        options: [
-                            { value: '1', label: t('Active') },
-                            { value: '0', label: t('Inactive') },
-                        ],
-                    },
-                ]}
-                onApplyFilters={applyFilters}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader breadcrumbs={breadcrumbs} title={t('User Management')} count={formatNumber(totalUsers)} />
 
-            <DataTable
-                columns={userColumns}
-                data={users.data}
-                headerTitle={`${t('User List')} (${totalUsers})`}
-                headerIcon={Receipt}
-                emptyMessage={t('No users found')}
-            />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <FormField label={t('Search')} htmlFor="user-search">
+                        <Input
+                            id="user-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={t('Search by name or email...')}
+                            leadingIcon={Search}
+                            surface="glass"
+                        />
+                    </FormField>
 
-            <Pagination links={users.links} />
+                    <FormField label={t('Role')} htmlFor="user-role">
+                        <Select id="user-role" value={role} onChange={(event) => setRole(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Roles --')}</option>
+                            {roles.map((roleName) => (
+                                <option key={roleName} value={roleName}>
+                                    {roleName}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Status')} htmlFor="user-status">
+                        <Select id="user-status" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Statuses --')}</option>
+                            <option value="1">{t('Active')}</option>
+                            <option value="0">{t('Inactive')}</option>
+                        </Select>
+                    </FormField>
+
+                    <div className={styles.filterActions}>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={userColumns}
+                        data={users.data}
+                        headerTitle={t('Users')}
+                        headerIcon={UsersIcon}
+                        headerMeta={rangeLabel}
+                        emptyMessage={t('No users found')}
+                    />
+                </div>
+
+                <Pagination links={users.links} />
+            </div>
 
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}

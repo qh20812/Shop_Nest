@@ -384,13 +384,20 @@ export default function SearchPage() {
                 </div>
             </PageContainer>
 
-            <Sheet open={mobileFilters.isOpen} onOpenChange={mobileFilters.setOpen} side="bottom" title={t('Product filters')}>
-                <div className={styles.sheetContent}>
-                    <FilterRail variant="sheet" onClear={clearAll} activeCount={activeFilterItems.length}>
-                        {filterContent}
-                    </FilterRail>
-                    <Button onClick={mobileFilters.close}>{t('View :count results', { count: formatNumber(products.total) })}</Button>
-                </div>
+            <Sheet
+                open={mobileFilters.isOpen}
+                onOpenChange={mobileFilters.setOpen}
+                side="bottom"
+                title={t('Product filters')}
+                footer={
+                    <Button className={styles.sheetAction} onClick={mobileFilters.close}>
+                        {t('View :count results', { count: formatNumber(products.total) })}
+                    </Button>
+                }
+            >
+                <FilterRail variant="sheet" onClear={clearAll} activeCount={activeFilterItems.length}>
+                    {filterContent}
+                </FilterRail>
             </Sheet>
         </StorefrontLayout>
     );

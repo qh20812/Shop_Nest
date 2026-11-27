@@ -1,3 +1,4 @@
+/* Hallmark · component: data table · genre: editorial · theme: project glass · states: n/a · contrast: pass · v2.0.0 */
 /* Workspace data table panel. Tokens only. */
 
 .panel {
@@ -40,6 +41,13 @@
     font-size: var(--sn-text-lg);
     font-weight: var(--sn-weight-semibold);
     line-height: var(--sn-leading-snug);
+}
+
+.headMeta {
+    margin-left: auto;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-2xs);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Design spec: workspace rows are 48px tall. */

@@ -11,9 +11,16 @@ const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
     React.ElementRef<typeof TooltipPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 6, ...props }, ref) => (
+>(({ className, sideOffset = 6, collisionPadding = 8, ...props }, ref) => (
     <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content ref={ref} sideOffset={sideOffset} data-slot="tooltip" className={cx('sn-tooltip', className)} {...props} />
+        <TooltipPrimitive.Content
+            ref={ref}
+            sideOffset={sideOffset}
+            collisionPadding={collisionPadding}
+            data-slot="tooltip"
+            className={cx('sn-tooltip', className)}
+            {...props}
+        />
     </TooltipPrimitive.Portal>
 ));
 

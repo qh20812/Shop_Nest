@@ -28,7 +28,7 @@ export function FilterRail({ children, onClear, activeCount = 0, title, variant 
                 </div>
                 {activeCount > 0 && <span className={styles.filterActiveCount}>{t(':count selected', { count: activeCount })}</span>}
             </div>
-            <div>{children}</div>
+            <div className={styles.filterRailBody}>{children}</div>
             {onClear && (
                 <Button variant="ghost" size="sm" className={styles.filterClear} leftIcon={X} onClick={onClear}>
                     {t('Clear all filters')}

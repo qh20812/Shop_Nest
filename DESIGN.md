@@ -238,6 +238,7 @@ Mọi bề mặt kính phải kèm ba fallback, tất cả đặt nền đặc v
 - Phase 6: chat dùng một slab kính cho dock (header/footer chrome), message list giữ nền đặc để đọc; composer và quick reply là field alpha, không blur.
 - Phase 4: category tile dùng cùng recipe frosted với media card, ảnh 1:1 inset 8px bo `--sn-radius-media`, hover nhấc 3px + zoom 1.03, focus chỉ đổi border để ring không fade. Rating chip chỉ dùng ở ProductCard và BuyBox; Price discount chip là pill accent-wash.
 - Phase 5: sheet kính nổi inset 12px bo 28, body cuộn riêng; dialog surface đặc bo 16, close 32px hit 44; tooltip overlay 10 không blur; filter rail đặc bo 12, header/footer cố định, body cuộn và clear all luôn tới được.
+- Trang chủ customer đã redesign full composition: hero “storefront window”, flash sale thành band, suggestions thành rail, brand/editorial/trust bỏ card; mobile shelf 2 cột. Chi tiết ở 6.8.
 - Layout chỉ được override kích thước, vị trí và radius cục bộ; không override tint, blur hay hairline của primitive.
 
 Checklist cho mỗi component:
@@ -256,6 +257,13 @@ Definition of done cho toàn UI:
 - Không card nội dung nào có blur.
 - `check:css` pass, không hex/alpha ngoài `tokens/`.
 - Không còn menu hay panel nổi nào giữ radius 6 cũ.
+
+### 6.8 Trang chủ
+
+- Hero **storefront window**: copy 5 cột, media 7 cột gồm một ảnh dẫn 4:5 và hai ảnh 4:3 xếp chồng; caption nằm dưới ảnh với hairline, ảnh dẫn `loading="eager"` + `fetchPriority="high"`. Không eyebrow.
+- Category shelf giữ 6 frosted tile, bỏ eyebrow; flash sale là band có rule accent 2px trên và hairline dưới, không card; best sellers grid 4/2; suggestions rail ngang card 16rem/13rem; brand split ảnh trái 7 cột, copy 5 cột, không card; editorial 5/3/4; trust ledger 4/2/1 cột với hairline dọc.
+- Mobile: best sellers và flash sale 2 cột; rail card 13rem; trust 1 cột dưới 640.
+- Home renders ngay từ Inertia props, không skeleton chặn first paint; `Home.module.css` đã xóa.
 
 ## 7. Motion
 

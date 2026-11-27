@@ -1,4 +1,5 @@
 /* Hallmark · component: storefront · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the storefront module owns sections and links, not form controls · active and disabled states live in the Button and IconButton primitives */
 /* Storefront domain module — Phase 4. Tokens only. */
 
 /* Hero */
@@ -584,6 +585,11 @@
 
     .editorialItem:nth-child(3) {
         grid-column: span 4;
+    }
+
+    .editorialMedia {
+        aspect-ratio: auto;
+        height: clamp(13rem, 20vw, 16rem);
     }
 }
 

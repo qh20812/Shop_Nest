@@ -1,18 +1,19 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { AlertTriangle, ArrowLeft, Boxes, History, Layers, Package, PackageX } from 'lucide-react';
+import { Activity, ArrowLeft, History as HistoryIcon, Layers } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { PageHeader } from '@/components/layout/PageHeader';
 import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
 import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table';
-import Header from '@/components/ui/header';
-import Insights from '@/components/ui/insights';
-import { formatDateTime, formatNumber, formatVnd } from '@/lib/format';
+import { formatDate, formatNumber, formatTime, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 
-import styles from '@/components/admin/admin.module.css';
+import adminStyles from '@/components/admin/admin.module.css';
+import railStyles from './Inventory.module.css';
+import styles from './InventoryDetail.module.css';
 
 const LOW_STOCK_THRESHOLD = 10;
 
@@ -52,63 +53,6 @@ const resolveText = (value: unknown, locale: string, fallback: string): string =
     return String(value);
 };
 
-interface Person {
-    first_name?: string;
-    last_name?: string;
-    name?: string | Record<string, string>;
-    username?: string;
-}
-
-interface Category {
-    category_id: number;
-    name?: string | Record<string, string>;
-}
-
-interface Brand {
-    brand_id: number;
-    name?: string | Record<string, string>;
-}
-
-interface InventoryLog {
-    id?: number;
-    quantity_change: number;
-    reason: string;
-    created_at: string;
-    user?: Person;
-}
-
-interface AttributeValue {
-    value?: string;
-    name?: string | Record<string, string>;
-}
-
-interface InventoryVariant {
-    variant_id: number;
-    sku?: string;
-    stock_quantity?: number;
-    reserved_quantity?: number;
-    price?: number;
-    discount_price?: number;
-    attribute_values?: AttributeValue[];
-    attributeValues?: AttributeValue[];
-    inventory_logs?: InventoryLog[];
-    inventoryLogs?: InventoryLog[];
-}
-
-interface Product {
-    product_id: number;
-    name?: string | Record<string, string>;
-    seller?: Person;
-    category?: Category;
-    brand?: Brand;
-    variants?: InventoryVariant[];
-}
-
-interface PageProps extends Record<string, unknown> {
-    product: Product;
-    locale: string;
-}
-
 const resolvePersonName = (person: Person | undefined, locale: string, fallback: string): string => {
     if (!person) {
         return fallback;
@@ -130,14 +74,24 @@ const resolvePersonName = (person: Person | undefined, locale: string, fallback:
     return fallback;
 };
 
-const getStockStatusValue = (stockQuantity?: number): 'in_stock' | 'low_stock' | 'out_of_stock' => {
-    const quantity = stockQuantity ?? 0;
+const toNumber = (value: number | string | null | undefined): number | null => {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
 
-    if (quantity <= 0) {
+    const numeric = Number(value);
+
+    return Number.isFinite(numeric) ? numeric : null;
+};
+
+const getStockStatusValue = (quantity?: number | string | null): 'in_stock' | 'low_stock' | 'out_of_stock' => {
+    const stock = Number(quantity ?? 0);
+
+    if (stock <= 0) {
         return 'out_of_stock';
     }
 
-    if (quantity <= LOW_STOCK_THRESHOLD) {
+    if (stock <= LOW_STOCK_THRESHOLD) {
         return 'low_stock';
     }
 
@@ -156,88 +110,175 @@ const getStockTone = (status: 'in_stock' | 'low_stock' | 'out_of_stock') => {
     return 'danger' as const;
 };
 
-const getVariantLogs = (variant: InventoryVariant): InventoryLog[] => variant.inventory_logs ?? variant.inventoryLogs ?? [];
-
 const getVariantAttributes = (variant: InventoryVariant, locale: string): string[] => {
-    const source = variant.attribute_values ?? variant.attributeValues;
-    if (!Array.isArray(source)) {
-        return [];
+    const attributeValues = (variant.attributeValues ?? [])
+        .map((attribute) => attribute.value ?? resolveText(attribute.name ?? attribute.attribute?.name, locale, ''))
+        .filter((text): text is string => Boolean(text));
+
+    if (attributeValues.length > 0) {
+        return attributeValues;
     }
 
-    return source.map((attribute) => attribute.value ?? resolveText(attribute.name, locale, '')).filter((text): text is string => Boolean(text));
+    return (variant.option_values ?? []).map((option) => [option.name, option.value].filter(Boolean).join(': ')).filter((text) => Boolean(text));
 };
 
+const getVariantLogs = (variant: InventoryVariant): InventoryLog[] => variant.inventoryLogs ?? [];
+
+interface Person {
+    first_name?: string;
+    last_name?: string;
+    name?: string | Record<string, string>;
+    username?: string;
+}
+
+interface Category {
+    category_id: number;
+    name?: string | Record<string, string>;
+}
+
+interface Brand {
+    brand_id: number;
+    name?: string | Record<string, string>;
+}
+
+interface AttributeValue {
+    value?: string;
+    name?: string | Record<string, string>;
+    attribute?: {
+        name?: string | Record<string, string>;
+    };
+}
+
+interface InventoryLog {
+    id?: number;
+    quantity_change: number;
+    reason: string;
+    created_at: string;
+    user?: Person;
+}
+
+interface InventoryVariant {
+    variant_id: number;
+    sku?: string | null;
+    stock_quantity?: number | string | null;
+    reserved_quantity?: number | string | null;
+    price?: number | string | null;
+    discount_price?: number | string | null;
+    attributeValues?: AttributeValue[];
+    option_values?: Array<{ name?: string | null; value?: string | null }> | null;
+    inventoryLogs?: InventoryLog[];
+}
+
+interface Product {
+    product_id: number;
+    name?: string | Record<string, string>;
+    seller?: Person;
+    category?: Category;
+    brand?: Brand;
+    variants?: InventoryVariant[];
+}
+
+interface PageProps extends Record<string, unknown> {
+    product: Product;
+    locale: string;
+}
+
 export default function Show() {
-    const { t } = useTranslation();
-    const { product, locale } = usePage<PageProps>().props;
+    const { t, locale } = useTranslation();
+    const { product } = usePage<PageProps>().props;
 
     const variants = useMemo(() => product?.variants ?? [], [product]);
-    const stockStatusLabels = useMemo(
-        () => ({
-            in_stock: t('In Stock'),
-            low_stock: t('Low Stock'),
-            out_of_stock: t('Out of Stock'),
-        }),
-        [t],
-    );
-
     const productName = resolveText(product?.name, locale, t('Unnamed Product'));
     const sellerName = resolvePersonName(product?.seller, locale, t('Unknown Seller'));
     const categoryName = resolveText(product?.category?.name, locale, t('No Category'));
     const brandName = resolveText(product?.brand?.name, locale, t('No Brand'));
 
-    const totalStock = useMemo(() => variants.reduce((sum, variant) => sum + (variant.stock_quantity ?? 0), 0), [variants]);
-    const lowStockCount = useMemo(() => variants.filter((variant) => getStockStatusValue(variant.stock_quantity) === 'low_stock').length, [variants]);
-    const outOfStockCount = useMemo(
-        () => variants.filter((variant) => getStockStatusValue(variant.stock_quantity) === 'out_of_stock').length,
-        [variants],
-    );
+    const totalStock = variants.reduce((sum, variant) => sum + (toNumber(variant.stock_quantity) ?? 0), 0);
+    const totalReserved = variants.reduce((sum, variant) => sum + (toNumber(variant.reserved_quantity) ?? 0), 0);
+    const lowStockCount = variants.filter((variant) => getStockStatusValue(variant.stock_quantity) === 'low_stock').length;
+    const outOfStockCount = variants.filter((variant) => getStockStatusValue(variant.stock_quantity) === 'out_of_stock').length;
 
-    const historyLink = `/admin/inventory/${product.product_id}/history`;
+    const historyHref = `/admin/inventory/${product.product_id}/history`;
+
+    const summaryItems = [
+        { key: 'total', label: t('Total Stock'), value: formatNumber(totalStock) },
+        { key: 'reserved', label: t('Reserved'), value: formatNumber(totalReserved) },
+        { key: 'low', label: t('Low Stock Variants'), value: formatNumber(lowStockCount) },
+        { key: 'out', label: t('Out of Stock Variants'), value: formatNumber(outOfStockCount) },
+    ];
+
+    const recentMovements = useMemo(() => {
+        return variants
+            .flatMap((variant) =>
+                getVariantLogs(variant).map((log) => ({
+                    log,
+                    variant,
+                    time: log.created_at ? new Date(log.created_at).getTime() : 0,
+                })),
+            )
+            .sort((first, second) => second.time - first.time)
+            .slice(0, 8);
+    }, [variants]);
 
     const columns = useMemo(
         () => [
             {
-                key: 'sku',
-                header: t('SKU'),
-                cell: (variant: InventoryVariant) => <span className={styles.numeric}>{variant.sku ?? `#${variant.variant_id}`}</span>,
-            },
-            {
-                key: 'attributes',
-                header: t('Attributes'),
+                key: 'variant',
+                header: t('Variant'),
                 cell: (variant: InventoryVariant) => {
                     const attributes = getVariantAttributes(variant, locale);
-                    return <span className={styles.muted}>{attributes.length > 0 ? attributes.join(', ') : '-'}</span>;
+
+                    return (
+                        <div className={styles.variant}>
+                            <span className={styles.variantSku}>{variant.sku ?? `#${variant.variant_id}`}</span>
+                            <span className={styles.variantAttributes}>{attributes.length > 0 ? attributes.join(', ') : '-'}</span>
+                        </div>
+                    );
+                },
+            },
+            {
+                key: 'price',
+                header: t('Price'),
+                align: 'right' as const,
+                cell: (variant: InventoryVariant) => {
+                    const price = toNumber(variant.price);
+                    const discount = toNumber(variant.discount_price);
+                    const hasDiscount = price !== null && discount !== null && discount < price;
+
+                    return (
+                        <div className={styles.priceCell}>
+                            <span className={adminStyles.price}>{price !== null ? formatVnd(price) : t('N/A')}</span>
+                            {hasDiscount && (
+                                <span className={styles.discount}>
+                                    {t('Discount')} {formatVnd(discount ?? 0)}
+                                </span>
+                            )}
+                        </div>
+                    );
                 },
             },
             {
                 key: 'reserved',
                 header: t('Reserved'),
                 align: 'right' as const,
-                cell: (variant: InventoryVariant) => <span className={styles.numeric}>{formatNumber(variant.reserved_quantity ?? 0)}</span>,
-            },
-            {
-                key: 'price',
-                header: t('Price'),
-                align: 'right' as const,
                 cell: (variant: InventoryVariant) => (
-                    <span className={styles.price}>
-                        {variant.price !== undefined && variant.price !== null ? formatVnd(variant.price) : t('N/A')}
-                    </span>
+                    <span className={styles.reserved}>{formatNumber(toNumber(variant.reserved_quantity) ?? 0)}</span>
                 ),
             },
             {
-                key: 'quantity',
-                header: t('Qty'),
+                key: 'stock',
+                header: t('Stock'),
                 align: 'right' as const,
-                cell: (variant: InventoryVariant) => <span className={styles.numeric}>{formatNumber(variant.stock_quantity ?? 0)}</span>,
-            },
-            {
-                key: 'status',
-                header: t('Status'),
                 cell: (variant: InventoryVariant) => {
-                    const statusValue = getStockStatusValue(variant.stock_quantity);
-                    return <Badge tone={getStockTone(statusValue)}>{stockStatusLabels[statusValue]}</Badge>;
+                    const status = getStockStatusValue(variant.stock_quantity);
+                    const statusLabel = status === 'in_stock' ? t('In Stock') : status === 'low_stock' ? t('Low Stock') : t('Out of Stock');
+
+                    return (
+                        <div className={styles.stockCell}>
+                            <span className={adminStyles.numeric}>{formatNumber(toNumber(variant.stock_quantity) ?? 0)}</span>
+                            <Badge tone={getStockTone(status)}>{statusLabel}</Badge>
+                        </div>
+                    );
                 },
             },
             {
@@ -247,168 +288,123 @@ export default function Show() {
                     const actions: ActionConfig[] = [
                         {
                             type: 'link',
-                            href: `${historyLink}?variant=${variant.variant_id}`,
-                            icon: History,
+                            href: `${historyHref}?variant=${variant.variant_id}`,
+                            icon: HistoryIcon,
                             label: t('History'),
                             variant: 'primary',
                         },
                     ];
+
                     return <ActionButtons actions={actions} />;
                 },
             },
         ],
-        [historyLink, locale, stockStatusLabels, t],
+        [historyHref, locale, t],
     );
-
-    const summaryItems = [
-        { icon: Package, value: formatNumber(totalStock), label: t('Total Stock') },
-        { icon: AlertTriangle, value: formatNumber(lowStockCount), label: t('Low Stock Variants') },
-        { icon: PackageX, value: formatNumber(outOfStockCount), label: t('Out of Stock Variants') },
-        { icon: Layers, value: formatNumber(variants.length), label: t('Total Variants') },
-    ];
-
-    const hasAnyLogs = useMemo(() => variants.some((variant) => getVariantLogs(variant).length > 0), [variants]);
 
     return (
         <WorkspaceLayout>
-            <Head title={`${productName} - ${t('Inventory')}`} />
+            <Head title={`${productName} - ${t('Inventory Details')}`} />
 
-            <Header
-                title={t('Inventory Details')}
-                breadcrumbs={[
-                    { label: t('Dashboard'), href: '/admin/dashboard' },
-                    { label: t('Inventory'), href: '/admin/inventory' },
-                    { label: productName, href: `/admin/inventory/${product.product_id}`, active: true },
-                ]}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Inventory'), href: '/admin/inventory' },
+                        { label: productName, current: true },
+                    ]}
+                    title={productName}
+                    description={
+                        <span className={styles.headerMeta}>
+                            <span>#{product.product_id}</span>
+                            <span>{sellerName}</span>
+                            <span>
+                                {categoryName} / {brandName}
+                            </span>
+                        </span>
+                    }
+                    actions={
+                        <>
+                            <Button asChild variant="secondary" size="sm">
+                                <Link href="/admin/inventory">
+                                    <ArrowLeft aria-hidden="true" />
+                                    {t('Back to Inventory')}
+                                </Link>
+                            </Button>
+                            <Button asChild variant="primary" size="sm">
+                                <Link href={historyHref}>
+                                    <HistoryIcon aria-hidden="true" />
+                                    {t('View History')}
+                                </Link>
+                            </Button>
+                        </>
+                    }
+                />
 
-            <div className={styles.actions}>
-                <Button asChild variant="secondary">
-                    <Link href="/admin/inventory">
-                        <ArrowLeft aria-hidden="true" />
-                        {t('Back to Inventory')}
-                    </Link>
-                </Button>
-                <Button asChild variant="primary">
-                    <Link href={historyLink}>
-                        <History aria-hidden="true" />
-                        {t('View History')}
-                    </Link>
-                </Button>
+                <dl className={railStyles.summaryRail}>
+                    {summaryItems.map((item) => (
+                        <div key={item.key} className={railStyles.summary}>
+                            <dt className={railStyles.summaryLabel}>{item.label}</dt>
+                            <dd className={railStyles.summaryValue}>{item.value}</dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={columns}
+                        data={variants}
+                        headerTitle={t('Variant Inventory')}
+                        headerIcon={Layers}
+                        headerMeta={formatNumber(variants.length)}
+                        emptyMessage={t('No variants found')}
+                    />
+                </div>
+
+                <section className={styles.timelinePanel}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>
+                            <Activity aria-hidden="true" className={styles.sectionIcon} />
+                            {t('Recent movements')}
+                        </h2>
+                    </div>
+
+                    {recentMovements.length > 0 ? (
+                        <ul className={styles.movementList}>
+                            {recentMovements.map(({ log, variant }) => {
+                                const changeClass =
+                                    log.quantity_change > 0
+                                        ? adminStyles.changePositive
+                                        : log.quantity_change < 0
+                                          ? adminStyles.changeNegative
+                                          : adminStyles.changeNeutral;
+                                const signedChange = `${log.quantity_change > 0 ? '+' : log.quantity_change < 0 ? '-' : ''}${formatNumber(Math.abs(log.quantity_change))}`;
+
+                                return (
+                                    <li key={log.id ?? `${variant.variant_id}-${log.created_at}`} className={styles.movement}>
+                                        <div className={styles.movementTime}>
+                                            <span className={styles.movementDate}>{formatDate(log.created_at)}</span>
+                                            <span>{formatTime(log.created_at)}</span>
+                                        </div>
+                                        <div className={styles.movementBody}>
+                                            <div className={styles.movementTop}>
+                                                <span className={changeClass}>{signedChange}</span>
+                                                <span className={styles.movementReason}>{log.reason}</span>
+                                            </div>
+                                            <div className={styles.movementMeta}>
+                                                <span>{variant.sku ?? `#${variant.variant_id}`}</span>
+                                                <span>{resolvePersonName(log.user, locale, t('System'))}</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <p className={styles.emptyNote}>{t('No inventory activity recorded yet.')}</p>
+                    )}
+                </section>
             </div>
-
-            <section className={styles.section}>
-                <div className={styles.sectionHead}>
-                    <h2 className={styles.sectionTitle}>
-                        <Boxes aria-hidden="true" className={styles.sectionIcon} />
-                        {t('Product Overview')}
-                    </h2>
-                </div>
-
-                <div className={styles.detailGrid}>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Product')}</span>
-                        <span className={styles.detailValue}>{productName}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Product ID')}</span>
-                        <span className={styles.detailValue}>#{product.product_id}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Seller')}</span>
-                        <span className={styles.detailValue}>{sellerName}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Category')}</span>
-                        <span className={styles.detailValue}>{categoryName}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Brand')}</span>
-                        <span className={styles.detailValue}>{brandName}</span>
-                    </div>
-                    <div className={styles.detailItem}>
-                        <span className={styles.detailLabel}>{t('Total Stock')}</span>
-                        <span className={styles.detailValue}>{formatNumber(totalStock)}</span>
-                    </div>
-                </div>
-            </section>
-
-            <Insights items={summaryItems} />
-
-            <DataTable
-                columns={columns}
-                data={variants}
-                headerTitle={t('Variant Inventory')}
-                headerIcon={Layers}
-                emptyMessage={t('No variants found')}
-            />
-
-            <section className={styles.section}>
-                <div className={styles.sectionHead}>
-                    <h2 className={styles.sectionTitle}>
-                        <History aria-hidden="true" className={styles.sectionIcon} />
-                        {t('Recent Inventory Activity')}
-                    </h2>
-                </div>
-                <p className={styles.note}>{t('Showing the latest 20 changes per variant.')}</p>
-
-                {hasAnyLogs ? (
-                    <div className={styles.logGrid}>
-                        {variants.map((variant) => {
-                            const logs = getVariantLogs(variant);
-                            const statusValue = getStockStatusValue(variant.stock_quantity);
-                            const attributes = getVariantAttributes(variant, locale);
-
-                            return (
-                                <div key={variant.variant_id} className={styles.logCard}>
-                                    <div className={styles.logCardHead}>
-                                        <span className={styles.cellTitle}>{variant.sku ?? `${t('Variant')} #${variant.variant_id}`}</span>
-                                        <Badge tone={getStockTone(statusValue)}>{stockStatusLabels[statusValue]}</Badge>
-                                    </div>
-
-                                    {attributes.length > 0 && (
-                                        <span className={styles.cellMeta}>
-                                            {t('Attributes')}: {attributes.join(', ')}
-                                        </span>
-                                    )}
-
-                                    <ul className={styles.logList}>
-                                        {logs.length > 0 ? (
-                                            logs.map((log, index) => {
-                                                const changeClass =
-                                                    log.quantity_change > 0
-                                                        ? styles.changePositive
-                                                        : log.quantity_change < 0
-                                                          ? styles.changeNegative
-                                                          : styles.changeNeutral;
-                                                const formattedChange = formatNumber(Math.abs(log.quantity_change));
-                                                const signedChange = `${log.quantity_change > 0 ? '+' : log.quantity_change < 0 ? '-' : ''}${formattedChange}`;
-
-                                                return (
-                                                    <li key={log.id ?? `${variant.variant_id}-${log.created_at}-${index}`} className={styles.logItem}>
-                                                        <div className={styles.logTop}>
-                                                            <span className={changeClass}>{signedChange}</span>
-                                                            <span className={styles.logReason}>{log.reason}</span>
-                                                        </div>
-                                                        <div className={styles.logMeta}>
-                                                            <span>{resolvePersonName(log.user, locale, t('System'))}</span>
-                                                            <span>{formatDateTime(log.created_at)}</span>
-                                                        </div>
-                                                    </li>
-                                                );
-                                            })
-                                        ) : (
-                                            <li className={styles.muted}>{t('No recent movements for this variant.')}</li>
-                                        )}
-                                    </ul>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div className={styles.emptyBox}>{t('No inventory activity recorded yet.')}</div>
-                )}
-            </section>
         </WorkspaceLayout>
     );
 }

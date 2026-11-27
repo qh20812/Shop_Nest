@@ -99,13 +99,19 @@ Workspace chrome dùng `.sn-glass-surface` từ `components/glass.css`: topbar l
 
 `DropdownMenu` nhận `selected?: boolean` (render check trailing + `data-selected`) và `className="sn-dropdown--glass"` cho menu trong dock. Menu kính bo 16, item bo 10, hover dùng ink wash, selected dùng accent-wash + accent-text.
 
-`CategoryShelf` là frosted media tile: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; mỗi tile padding 8, ảnh 1:1 inset theo padding, bo `--sn-radius-media` 10, icon fallback 32px. Tên 2 dòng đổi accent khi hover, meta "Xem sản phẩm" dùng sans 12px muted. Hover nhấc 3px + zoom ảnh 1.03; focus-visible chỉ đổi border để ring xuất hiện tức thì; reduced-motion bỏ transform, reduced-transparency dùng surface đặc.
+`CategoryShelf` là frosted media tile: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; mỗi tile padding 8, ảnh 1:1 inset theo padding, bo `--sn-radius-media` 10, icon fallback 32px. Tên 2 dòng đổi accent khi hover, meta "Xem sản phẩm" dùng sans 12px muted. Hover nhấc 3px + zoom ảnh 1.03; focus-visible chỉ đổi border để ring xuất hiện tức thì; reduced-motion bỏ transform, reduced-transparency dùng surface đặc. Trang chủ bỏ eyebrow và mũi tên ở action "Tất cả danh mục".
+
+`HeroEditorial` là “storefront window”: grid 5/7 ở desktop, copy trái, media phải; media gồm ảnh dẫn 4:5 và hai ảnh 4:3 xếp chồng, ảnh bo `--sn-radius-card` 16, caption dưới ảnh có hairline. Ảnh dẫn eager + `fetchPriority="high"`; không render eyebrow.
+
+`FlashSaleModule` là band full-width, không card: rule accent 2px trên, hairline dưới, header title + countdown, grid 4/2. `BrandSpotlight` là split 12 cột ảnh trái 7/copy 5, ảnh 4:3 bo 16, không card. `EditorialPillars` dùng 5/3/4 với top hairline, ảnh 4:3 bo 16. `TrustStrip` là service ledger 4/2/1 cột, hairline dọc, icon inline 18px, không icon box.
 
 ### Commerce
 
 `Price`, `Rating`, `ReviewCard`, `ReviewSummary`, `QuantityStepper`, `VariantSelector`, `ProductGallery`, `ProductGrid`, `BuyBox`, `SpecTable`, `OrderTable`, `OrderSummary`, `OrderItemRow`, `OrderTimeline`, `OrderAnnouncementCard`, `PaymentOption`, `PaymentMarks`, `CheckoutStepper`, `CheckoutAddressForm`, `AddressCard`, `CartLine`, `PromoField`, `FilterRail`, `FilterGroup`, `ActiveFilters`, `CategoryPills`, `Countdown`, `NotificationRow`, `ShopIdentity`.
 
 `ProductCard` là frosted media card: nền `--sn-glass-control`, hairline, inset highlight, `--sn-shadow-card`, bo `--sn-radius-card` 16; ảnh 1:1 inset 8px bo `--sn-radius-media` 10. Sale pill trên ảnh, wishlist và quick-action pill dùng `surface="overlay"`. Quick pill label "Choose options", hiện khi hover/focus, luôn hiện dưới 768px hoặc thiết bị không hover. `actionLabel`/`actionIcon` cho phép override nhãn và icon hành động (mặc định "Choose options" + `ShoppingCart`).
+
+`ProductShelf` render `variant="grid"` 2 cột mobile / 4 cột desktop hoặc `variant="rail"` cuộn ngang với card 16rem desktop, 13rem mobile và scroll-snap. Trang chủ dùng grid cho best sellers, rail cho suggestions; action mặc định "Xem tất cả" không mũi tên.
 
 `Price` render discount dưới dạng pill accent-wash 20px cao, hairline, tabular-nums; value thêm tracking snug. `Rating` nhận `chip?: boolean`; chỉ có tác dụng khi `compact` và render pill 24px (glass-control + hairline + inset highlight) bo tròn, dùng ở `ProductCard` và `BuyBox`. `BuyBox` chỉ render rating khi `rating > 0` để không hiện chip "0 (0)". `ShopIdentity`, `ReviewCard`, `ReviewSummary` và trang đơn hàng giữ rating dạng text để tránh pill spam.
 
@@ -130,6 +136,10 @@ Workspace chrome dùng `.sn-glass-surface` từ `components/glass.css`: topbar l
 `Admin/Products/Show` là product record: `PageHeader` (badge trạng thái + danh mục/thương hiệu trong description, actions kiểm duyệt theo ngữ cảnh), grid 2 cột gồm gallery + tabs Mô tả/Đánh giá bên trái và rail hồ sơ bên phải (seller + link shop, Product ID, danh mục, thương hiệu, Created/Updated, tổng biến thể/tồn/khoảng giá), bảng biến thể full width (SKU, thuộc tính, giá + giảm giá, tồn + badge). Approve/Reject/Activate/Deactivate dùng `ConfirmationModal`, gửi `redirect_to=show` để ở lại trang; review chưa duyệt có badge "Chờ duyệt".
 
 `Admin/Inventory` là stock ledger: `PageHeader`, filter toolbar kính có label Tìm kiếm/Người bán/Danh mục/Thương hiệu/Trạng thái tồn + nút Áp dụng, stock rail 4 register (tổng biến thể filtered, trên trang, tồn thấp trang, hết hàng trang) và `DataTable` 5 cột (Product 3 dòng, Seller, Price + discount, Stock + status, Actions). `headerMeta` là range phân trang; View/History, pagination, filter state và toast giữ nguyên.
+
+`Admin/Inventory/Show` là product stock record: `PageHeader` (tên sản phẩm, #ID/seller/danh mục/thương hiệu trong description), stock rail 4 register (tổng tồn, đã giữ, tồn thấp, hết hàng), `DataTable` biến thể 5 cột (Variant SKU + thuộc tính, Price + discount, Reserved, Stock + badge, History) và timeline "Biến động gần đây" 8 log mới nhất. Link History theo biến thể truyền `?variant=`.
+
+`Admin/Inventory/History` là movement ledger: `PageHeader` (tên sản phẩm + seller), filter bar kính Biến thể/Loại biến động + Áp dụng (state trên URL), summary rail 4 register tính trên tập đã lọc (tổng thay đổi, lượt nhập, lượt xuất, cập nhật cuối), `DataTable` 5 cột (Time, Variant, Change, Reason, User), `headerMeta` range thật và `Pagination` giữ filter. Trang dùng chung `InventoryDetail.module.css` với Show.
 
 Chart: `YAxis` dùng compact formatter (`N`/`Tr`/`NT`) + width 64; grid 1px; không gradient.
 

@@ -1,23 +1,30 @@
-import React, { useState } from 'react';
-import { useTranslation } from '../../../lib/i18n';
-import ActionButton from '../../ui/action-button';
-import PrimaryInput from '../../ui/primary-input';
-import RichTextEditor from '../../ui/rich-text-editor';
+import { router } from '@inertiajs/react';
+import { Image, Settings, Tags } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-interface Category {
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import RichTextEditor from '@/components/ui/rich-text-editor';
+import { Select } from '@/components/ui/select';
+import StatusBadge from '@/components/ui/status-badge';
+import { formatDate } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './CategoryForm.module.css';
+
+export interface CategoryParentOption {
     category_id: number;
-    name: { en: string; vi: string };
-    description?: { en?: string; vi?: string };
-    parent_category_id?: number | null;
+    name: string;
+    depth: number;
     is_active: boolean;
-    image_url?: string;
 }
 
 interface CategoryFormProps {
     data: {
         name: { en: string; vi: string };
         description: { en: string; vi: string };
-        parent_category_id: number | string;
+        parent_category_id: number | string | null;
         is_active: boolean;
         image?: File | null;
         image_url?: string;
@@ -25,9 +32,10 @@ interface CategoryFormProps {
     setData: (key: string, value: unknown) => void;
     errors: Record<string, string>;
     processing: boolean;
-    parentCategories: Category[];
+    parentCategories: CategoryParentOption[];
     onSubmit: (e: React.FormEvent) => void;
     submitLabel?: string;
+    createdAt?: string | null;
 }
 
 export default function CategoryForm({
@@ -38,59 +46,71 @@ export default function CategoryForm({
     parentCategories,
     onSubmit,
     submitLabel = 'Save Category',
+    createdAt,
 }: CategoryFormProps) {
     const { t } = useTranslation();
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-    const handleCancel = () => {
-        window.location.href = '/admin/categories';
+    useEffect(() => {
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        setData('image', file);
+        setImagePreview(URL.createObjectURL(file));
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setData('image', file);
-            // Create preview URL
-            const previewUrl = URL.createObjectURL(file);
-            setImagePreview(previewUrl);
-        }
-    };
+    const selectedParent = parentCategories.find((category) => String(category.category_id) === String(data.parent_category_id ?? ''));
+    const parentLabel = selectedParent ? `${selectedParent.name}${selectedParent.is_active ? '' : ` (${t('Inactive')})`}` : t('No Parent Category');
+    const previewSource = imagePreview || data.image_url || null;
 
     return (
-        <div className="bottom-data">
-            <div className="orders">
-                <div className="header">
-                    <i className="bx bx-edit"></i>
-                    <h3>{t('Category Information')}</h3>
-                </div>
-                <form onSubmit={onSubmit} style={{ padding: '20px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                        {/* English Name */}
-                        <div>
-                            <PrimaryInput
-                                label={t('Category Name (English)')}
-                                name="name_en"
-                                value={data.name.en}
-                                onChange={(e) => setData('name', { ...data.name, en: e.target.value })}
-                                error={errors['name.en']}
-                                required
-                            />
+        <div className={styles.layout}>
+            <div className={styles.panel}>
+                <form className={styles.form} onSubmit={onSubmit}>
+                    <section className={styles.section} aria-labelledby="category-information">
+                        <div className={styles.sectionHead}>
+                            <h2 id="category-information" className={styles.sectionTitle}>
+                                <Tags aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Category Information')}
+                            </h2>
                         </div>
 
-                        {/* Vietnamese Name */}
-                        <div>
-                            <PrimaryInput
-                                label={t('Category Name (Vietnamese)')}
-                                name="name_vi"
-                                value={data.name.vi}
-                                onChange={(e) => setData('name', { ...data.name, vi: e.target.value })}
-                                error={errors['name.vi']}
-                                required
-                            />
+                        <div className={styles.fieldGrid}>
+                            <FormField label={t('Category Name (English)')} htmlFor="category-name-en" required error={errors['name.en']}>
+                                <Input
+                                    id="category-name-en"
+                                    name="name_en"
+                                    value={data.name.en}
+                                    onChange={(event) => setData('name', { ...data.name, en: event.target.value })}
+                                    invalid={Boolean(errors['name.en'])}
+                                    required
+                                />
+                            </FormField>
+
+                            <FormField label={t('Category Name (Vietnamese)')} htmlFor="category-name-vi" required error={errors['name.vi']}>
+                                <Input
+                                    id="category-name-vi"
+                                    name="name_vi"
+                                    value={data.name.vi}
+                                    onChange={(event) => setData('name', { ...data.name, vi: event.target.value })}
+                                    invalid={Boolean(errors['name.vi'])}
+                                    required
+                                />
+                            </FormField>
                         </div>
 
-                        {/* English Description */}
-                        <div>
+                        <div className={styles.descriptionStack}>
                             <RichTextEditor
                                 label={t('Description (English)')}
                                 value={data.description.en}
@@ -99,10 +119,7 @@ export default function CategoryForm({
                                 placeholder={t('Enter description in English...')}
                                 height="200px"
                             />
-                        </div>
 
-                        {/* Vietnamese Description */}
-                        <div>
                             <RichTextEditor
                                 label={t('Description (Vietnamese)')}
                                 value={data.description.vi}
@@ -112,121 +129,124 @@ export default function CategoryForm({
                                 height="200px"
                             />
                         </div>
+                    </section>
 
-                        {/* Parent Category */}
-                        <div>
-                            <PrimaryInput
-                                label={t('Parent Category')}
-                                name="parent_category_id"
-                                type="select"
-                                value={data.parent_category_id}
-                                onChange={(e) => setData('parent_category_id', e.target.value || null)}
-                                error={errors.parent_category_id}
-                                options={[
-                                    { value: '', label: t('No Parent Category') },
-                                    ...parentCategories.map((category) => ({
-                                        value: category.category_id,
-                                        label: category.name.en,
-                                    })),
-                                ]}
-                            />
+                    <section className={styles.section} aria-labelledby="category-settings">
+                        <div className={styles.sectionHead}>
+                            <h2 id="category-settings" className={styles.sectionTitle}>
+                                <Settings aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Settings')}
+                            </h2>
                         </div>
 
-                        {/* Status */}
-                        <div>
-                            <PrimaryInput
-                                label={t('Status')}
-                                name="is_active"
-                                type="select"
-                                value={data.is_active ? '1' : '0'}
-                                onChange={(e) => setData('is_active', e.target.value === '1')}
-                                error={errors.is_active}
-                                required
-                                options={[
-                                    { value: '1', label: t('Active') },
-                                    { value: '0', label: t('Inactive') },
-                                ]}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Category Image Section */}
-                    <div style={{ marginBottom: '20px' }}>
-                        <div>
-                            <label className="form-label">{t('Category Image')}</label>
-                            <input
-                                type="file"
-                                name="image"
-                                onChange={handleImageChange}
-                                className={`form-input-field ${errors.image ? 'error' : ''}`}
-                                accept="image/*"
-                            />
-                            {errors.image && <div className="input-error">{errors.image}</div>}
-                        </div>
-
-                        {/* Image Preview */}
-                        <div style={{ marginTop: '10px' }}>
-                            {imagePreview ? (
-                                <div>
-                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>{t('New Image Preview')}:</p>
-                                    <img
-                                        src={imagePreview}
-                                        alt="Preview"
-                                        style={{
-                                            width: '200px',
-                                            height: '150px',
-                                            objectFit: 'cover',
-                                            borderRadius: '8px',
-                                            border: '1px solid #ddd',
-                                        }}
-                                    />
-                                </div>
-                            ) : data.image_url ? (
-                                <div>
-                                    <p style={{ marginBottom: '5px', fontSize: '14px', color: '#666' }}>{t('Current Image')}:</p>
-                                    <img
-                                        src={data.image_url}
-                                        alt="Current category"
-                                        style={{
-                                            width: '200px',
-                                            height: '150px',
-                                            objectFit: 'cover',
-                                            borderRadius: '8px',
-                                            border: '1px solid #ddd',
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div
-                                    style={{
-                                        width: '200px',
-                                        height: '150px',
-                                        backgroundColor: '#f5f5f5',
-                                        border: '2px dashed #ddd',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#999',
-                                    }}
+                        <div className={styles.fieldGrid}>
+                            <FormField label={t('Parent Category')} htmlFor="category-parent" error={errors.parent_category_id}>
+                                <Select
+                                    id="category-parent"
+                                    name="parent_category_id"
+                                    value={String(data.parent_category_id ?? '')}
+                                    onChange={(event) => setData('parent_category_id', event.target.value || null)}
                                 >
-                                    {t('No image selected')}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                    <option value="">{t('No Parent Category')}</option>
+                                    {parentCategories.map((category) => {
+                                        const isCurrent = String(category.category_id) === String(data.parent_category_id ?? '');
+                                        const prefix = '\u00A0\u00A0'.repeat(category.depth);
+                                        const suffix = category.is_active ? '' : ` (${t('Inactive')})`;
 
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <ActionButton type="button" variant="secondary" onClick={handleCancel} disabled={processing}>
+                                        return (
+                                            <option
+                                                key={category.category_id}
+                                                value={category.category_id}
+                                                disabled={!category.is_active && !isCurrent}
+                                            >
+                                                {`${prefix}${category.name}${suffix}`}
+                                            </option>
+                                        );
+                                    })}
+                                </Select>
+                            </FormField>
+
+                            <FormField label={t('Status')} htmlFor="category-status" required error={errors.is_active}>
+                                <Select
+                                    id="category-status"
+                                    name="is_active"
+                                    value={data.is_active ? '1' : '0'}
+                                    onChange={(event) => setData('is_active', event.target.value === '1')}
+                                >
+                                    <option value="1">{t('Active')}</option>
+                                    <option value="0">{t('Inactive')}</option>
+                                </Select>
+                            </FormField>
+                        </div>
+                    </section>
+
+                    <div className={styles.footer}>
+                        <Button type="button" variant="secondary" disabled={processing} onClick={() => router.get('/admin/categories')}>
                             {t('Cancel')}
-                        </ActionButton>
-                        <ActionButton type="submit" variant="primary" disabled={processing}>
+                        </Button>
+                        <Button type="submit" variant="primary" loading={processing}>
                             {processing ? t('Saving...') : t(submitLabel)}
-                        </ActionButton>
+                        </Button>
                     </div>
                 </form>
             </div>
+
+            <aside className={styles.rail}>
+                <section className={styles.railSection}>
+                    <h2 className={styles.railTitle}>
+                        <Image aria-hidden="true" className={styles.sectionIcon} />
+                        {t('Category Image')}
+                    </h2>
+
+                    <FormField
+                        label={t('Category Image')}
+                        htmlFor="category-image"
+                        error={errors.image}
+                        hint={t('JPG, PNG or WebP. Square images work best.')}
+                    >
+                        <input
+                            id="category-image"
+                            name="image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleImageChange}
+                            className={styles.fileInput}
+                        />
+                    </FormField>
+
+                    <div className={styles.previewFrame}>
+                        {previewSource ? (
+                            <img src={previewSource} alt={t('Category Image')} className={styles.previewImage} />
+                        ) : (
+                            <span className={styles.previewEmpty}>{t('No image selected')}</span>
+                        )}
+                    </div>
+
+                    {previewSource && <span className={styles.previewLabel}>{imagePreview ? t('New Image Preview') : t('Current Image')}</span>}
+                </section>
+
+                <section className={styles.railSection}>
+                    <h2 className={styles.railTitle}>{t('Summary')}</h2>
+                    <dl className={styles.facts}>
+                        <div className={styles.fact}>
+                            <dt className={styles.factLabel}>{t('Status')}</dt>
+                            <dd className={styles.factValue}>
+                                <StatusBadge status={data.is_active ? 'active' : 'inactive'} />
+                            </dd>
+                        </div>
+                        <div className={styles.fact}>
+                            <dt className={styles.factLabel}>{t('Parent Category')}</dt>
+                            <dd className={styles.factValue}>{parentLabel}</dd>
+                        </div>
+                        {createdAt && (
+                            <div className={styles.fact}>
+                                <dt className={styles.factLabel}>{t('Created Date')}</dt>
+                                <dd className={styles.factValue}>{formatDate(createdAt)}</dd>
+                            </div>
+                        )}
+                    </dl>
+                </section>
+            </aside>
         </div>
     );
 }

@@ -4,12 +4,12 @@ namespace Database\Factories;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\Shop;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ * @extends Factory<Product>
  */
 class ProductFactory extends Factory
 {
@@ -22,18 +22,18 @@ class ProductFactory extends Factory
     {
         $englishName = fake()->words(2, true);
         $vietnameseName = $this->generateVietnameseName();
-        
+
         $englishDescription = fake()->paragraph();
         $vietnameseDescription = $this->generateVietnameseDescription();
-        
+
         return [
             'name' => [
                 'en' => $englishName,
-                'vi' => $vietnameseName
+                'vi' => $vietnameseName,
             ],
             'description' => [
                 'en' => $englishDescription,
-                'vi' => $vietnameseDescription
+                'vi' => $vietnameseDescription,
             ],
             'category_id' => Category::factory(),
             'brand_id' => Brand::factory(),
@@ -66,12 +66,12 @@ class ProductFactory extends Factory
             'Áo khoác',
             'Giày boot',
             'Váy đầm',
-            'Áo len'
+            'Áo len',
         ];
-        
+
         $adjectives = ['cao cấp', 'thời trang', 'hiện đại', 'sang trọng', 'tiện dụng', 'chất lượng'];
-        
-        return fake()->randomElement($vietnameseProducts) . ' ' . fake()->randomElement($adjectives);
+
+        return fake()->randomElement($vietnameseProducts).' '.fake()->randomElement($adjectives);
     }
 
     /**
@@ -84,9 +84,9 @@ class ProductFactory extends Factory
             'Được làm từ chất liệu cao cấp, đảm bảo độ bền và tính thẩm mỹ.',
             'Phù hợp cho mọi lứa tuổi, mang lại sự thoải mái và phong cách.',
             'Thiết kế độc đáo, màu sắc đa dạng, phù hợp với xu hướng thời trang.',
-            'Sản phẩm được kiểm tra chất lượng nghiêm ngặt trước khi đến tay khách hàng.'
+            'Sản phẩm được kiểm tra chất lượng nghiêm ngặt trước khi đến tay khách hàng.',
         ];
-        
+
         return fake()->randomElement($descriptions);
     }
 }

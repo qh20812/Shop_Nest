@@ -1,9 +1,9 @@
-import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Link } from '@inertiajs/react';
-import type { LucideIcon } from 'lucide-react';
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { Check, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 const DropdownMenuRoot = DropdownMenuPrimitive.Root;
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
@@ -18,10 +18,8 @@ const DropdownMenuContent = React.forwardRef<
         <DropdownMenuPrimitive.Content
             ref={ref}
             sideOffset={sideOffset}
-            className={cn(
-                'z-dropdown min-w-48 overflow-hidden rounded-control border border-border bg-warm-porcelain p-1 text-ink shadow-float',
-                className,
-            )}
+            data-slot="dropdown-menu"
+            className={cx('sn-dropdown', className)}
             {...props}
         />
     </DropdownMenuPrimitive.Portal>
@@ -34,16 +32,15 @@ const DropdownMenuItem = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
         inset?: boolean;
         destructive?: boolean;
+        selected?: boolean;
     }
->(({ className, inset, destructive, ...props }, ref) => (
+>(({ className, inset, destructive, selected, ...props }, ref) => (
     <DropdownMenuPrimitive.Item
         ref={ref}
-        className={cn(
-            'relative flex cursor-pointer select-none items-center gap-2 rounded-chip px-3 py-2 text-body-sm text-ink outline-none transition-colors focus:bg-lacquer-wash data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0',
-            inset && 'pl-9',
-            destructive && 'text-brick focus:bg-brick-soft',
-            className,
-        )}
+        data-inset={inset ? 'true' : undefined}
+        data-destructive={destructive ? 'true' : undefined}
+        data-selected={selected ? 'true' : undefined}
+        className={cx('sn-dropdown__item', className)}
         {...props}
     />
 ));
@@ -53,22 +50,14 @@ DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 const DropdownMenuLabel = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Label>,
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label>
->(({ className, ...props }, ref) => (
-    <DropdownMenuPrimitive.Label
-        ref={ref}
-        className={cn('px-3 py-2 font-sans text-label-micro uppercase tracking-[0.12em] text-ink-faint', className)}
-        {...props}
-    />
-));
+>(({ className, ...props }, ref) => <DropdownMenuPrimitive.Label ref={ref} className={cx('sn-dropdown__label', className)} {...props} />);
 
 DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
 
 const DropdownMenuSeparator = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
->(({ className, ...props }, ref) => (
-    <DropdownMenuPrimitive.Separator ref={ref} className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />
-));
+>(({ className, ...props }, ref) => <DropdownMenuPrimitive.Separator ref={ref} className={cx('sn-dropdown__separator', className)} {...props} />);
 
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
@@ -79,6 +68,7 @@ type DropdownMenuItemConfig = {
     href?: string;
     destructive?: boolean;
     disabled?: boolean;
+    selected?: boolean;
     separatorBefore?: boolean;
 };
 
@@ -101,6 +91,11 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                         <>
                             {Icon && <Icon aria-hidden="true" />}
                             <span>{item.label}</span>
+                            {item.selected && (
+                                <span className="sn-dropdown__check">
+                                    <Check aria-hidden="true" />
+                                </span>
+                            )}
                         </>
                     );
 
@@ -108,7 +103,12 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                         <React.Fragment key={`${String(item.label)}-${index}`}>
                             {item.separatorBefore && <DropdownMenuSeparator />}
                             {item.href ? (
-                                <DropdownMenuItem asChild destructive={item.destructive} disabled={item.disabled}>
+                                <DropdownMenuItem
+                                    asChild
+                                    destructive={item.destructive}
+                                    disabled={item.disabled}
+                                    selected={item.selected}
+                                >
                                     {isExternal(item.href) ? (
                                         <a href={item.href} target="_blank" rel="noreferrer noopener">
                                             {content}
@@ -121,6 +121,7 @@ function DropdownMenu({ trigger, items, align = 'end', className }: DropdownMenu
                                 <DropdownMenuItem
                                     destructive={item.destructive}
                                     disabled={item.disabled}
+                                    selected={item.selected}
                                     onSelect={item.onSelect}
                                 >
                                     {content}

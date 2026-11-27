@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react';
+import { Maximize2, Minimize2, ShieldCheck, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import { ChatComposer } from '@/components/chat/ChatComposer';
@@ -6,7 +6,12 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MessageList, type MessageListItem } from '@/components/chat/MessageList';
 import { QuickReplies } from '@/components/chat/QuickReplies';
 import { Alert } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './chat.module.css';
 
 type ChatbotPanelProps = {
     messages: MessageListItem[];
@@ -17,11 +22,15 @@ type ChatbotPanelProps = {
     loading?: boolean;
     error?: string | null;
     onDismissError?: () => void;
+    onClearHistory?: () => void;
+    clearing?: boolean;
+    expanded?: boolean;
+    onToggleExpanded?: () => void;
     quickReplies?: Array<string | { id?: string; label: string; value?: string }>;
     className?: string;
 };
 
-const defaultQuickReplies = ['Tra cứu đơn hàng', 'Chính sách đổi trả', 'Tư vấn sản phẩm'];
+const defaultQuickReplyKeys = ['Track my order', 'Return policy', 'Product advice'];
 
 export function ChatbotPanel({
     messages,
@@ -32,10 +41,17 @@ export function ChatbotPanel({
     loading = false,
     error,
     onDismissError,
-    quickReplies = defaultQuickReplies,
+    onClearHistory,
+    clearing = false,
+    expanded = false,
+    onToggleExpanded,
+    quickReplies,
     className,
 }: ChatbotPanelProps) {
+    const { t } = useTranslation();
+    const resolvedQuickReplies = quickReplies ?? defaultQuickReplyKeys.map((key) => t(key));
     const [draft, setDraft] = React.useState('');
+    const [confirmingClear, setConfirmingClear] = React.useState(false);
 
     const send = (value: string) => {
         const trimmed = value.trim();
@@ -44,28 +60,87 @@ export function ChatbotPanel({
             return;
         }
 
+        setConfirmingClear(false);
         onSend(trimmed);
         setDraft('');
     };
 
+    const handleClear = () => {
+        if (!onClearHistory || clearing) {
+            return;
+        }
+
+        setConfirmingClear(false);
+        onClearHistory();
+    };
+
     return (
-        <div className={cn('flex h-full min-h-0 flex-col bg-warm-porcelain', className)} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-            <ChatHeader variant="assistant" title="Trợ lý ShopNest" subtitle="Trực tuyến" online onClose={onClose} onMinimize={onMinimize} />
+        <div className={cx(styles.panel, className)}>
+            <ChatHeader
+                variant="assistant"
+                title={t('ShopNest assistant')}
+                subtitle={t('Online')}
+                online
+                onClose={onClose}
+                onMinimize={onMinimize}
+                actions={
+                    onToggleExpanded || onClearHistory ? (
+                        <>
+                            {onToggleExpanded ? (
+                                <IconButton
+                                    label={t(expanded ? 'Collapse chat' : 'Expand chat')}
+                                    tooltip={t(expanded ? 'Collapse chat' : 'Expand chat')}
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onToggleExpanded}
+                                >
+                                    {expanded ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+                                </IconButton>
+                            ) : null}
+                            {onClearHistory ? (
+                                <IconButton
+                                    label={t('Clear conversation')}
+                                    tooltip={t('Clear conversation')}
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={clearing}
+                                    onClick={() => setConfirmingClear((current) => !current)}
+                                >
+                                    <Trash2 aria-hidden="true" />
+                                </IconButton>
+                            ) : null}
+                        </>
+                    ) : null
+                }
+            />
 
             <MessageList
                 messages={messages}
                 loading={loading}
                 typing={typing}
-                typingLabel="Trợ lý đang soạn tin"
-                emptyTitle="Xin chào!"
-                emptyDescription="Hỏi mình về đơn hàng, đổi trả hoặc chọn sản phẩm phù hợp."
-                className="min-h-0"
+                typingLabel={t('Assistant is typing')}
+                emptyTitle={t('Hi!')}
+                emptyDescription={t('Ask me about your order, returns or picking the right product.')}
             />
 
-            <div className="flex flex-col gap-3 border-t border-border p-3">
-                {error && <Alert tone="danger" title="Trợ lý đang bận" description={error} onDismiss={onDismissError} />}
+            <div className={styles.panelFooter}>
+                {error ? <Alert tone="danger" title={t('The assistant is busy')} description={error} onDismiss={onDismissError} /> : null}
 
-                <QuickReplies items={quickReplies} onSelect={send} disabled={typing} />
+                {confirmingClear ? (
+                    <div className={styles.clearConfirm} role="alert">
+                        <span className={styles.clearConfirmText}>{t('Clear the whole conversation? This cannot be undone.')}</span>
+                        <div className={styles.clearConfirmActions}>
+                            <Button type="button" size="sm" variant="destructive" loading={clearing} onClick={handleClear}>
+                                {t('Clear')}
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" disabled={clearing} onClick={() => setConfirmingClear(false)}>
+                                {t('Cancel')}
+                            </Button>
+                        </div>
+                    </div>
+                ) : null}
+
+                <QuickReplies items={resolvedQuickReplies} onSelect={send} disabled={typing} />
 
                 <ChatComposer
                     value={draft}
@@ -73,12 +148,12 @@ export function ChatbotPanel({
                     onSend={() => send(draft)}
                     loading={typing}
                     disabled={typing}
-                    placeholder="Hỏi trợ lý ShopNest..."
+                    placeholder={t('Ask the ShopNest assistant...')}
                 />
 
-                <p className="flex items-start gap-1.5 text-label-micro text-ink-faint">
-                    <ShieldCheck aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-                    Trợ lý có thể sai sót. Kiểm tra thông tin quan trọng trước khi đặt hàng.
+                <p className={styles.panelNote}>
+                    <ShieldCheck aria-hidden="true" className={styles.panelNoteIcon} />
+                    {t('The assistant can make mistakes. Verify important details before ordering.')}
                 </p>
             </div>
         </div>

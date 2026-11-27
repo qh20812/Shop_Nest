@@ -19,8 +19,12 @@ import Select from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/toast';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { formatNumber, formatVnd } from '@/lib/format';
+import { useMoney } from '@/hooks/useMoney';
+import { formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
+
+import styles from './Search.module.css';
 
 interface ProductCardData {
     id: number;
@@ -65,6 +69,9 @@ interface SearchPageProps extends Record<string, unknown> {
         sortOptions: { value: string; label: string }[];
     };
     activeFilters: ActiveFiltersData;
+    auth?: {
+        user: { id: number } | null;
+    } | null;
 }
 
 type FilterValue = string | number | boolean | null | Array<string | number | boolean | null>;
@@ -96,8 +103,7 @@ function toCard(product: ProductCardData): ProductCardModel {
         name: product.name,
         image: product.image || '/image/default-product.png',
         imageAlt: product.name,
-        shopName: product.isNew ? 'Shop mới' : 'Shop Việt',
-        shopBadge: 'shop-viet',
+        shopName: '',
         price: product.currentPrice ?? 0,
         compareAt: product.originalPrice ?? undefined,
         rating: product.rating ?? undefined,
@@ -108,8 +114,10 @@ function toCard(product: ProductCardData): ProductCardModel {
 }
 
 export default function SearchPage() {
-    const { query, products, filters, activeFilters } = usePage<SearchPageProps>().props;
-    const { success, error: showError } = useToast();
+    const { query, products, filters, activeFilters, auth } = usePage<SearchPageProps>().props;
+    const { money } = useMoney();
+    const { t } = useTranslation();
+    const { success, error: showError, info } = useToast();
     const mobileFilters = useDisclosure();
     const [searchValue, setSearchValue] = React.useState(query ?? '');
     const [priceMin, setPriceMin] = React.useState(activeFilters.price_min ? String(activeFilters.price_min) : '');
@@ -138,24 +146,24 @@ export default function SearchPage() {
     const activeFilterItems: ActiveFilter[] = [];
     selectedCategoryIds.forEach((id) => {
         const category = filters.categories.find((item) => item.id === id);
-        if (category) activeFilterItems.push({ key: `category-${id}`, label: 'Danh mục', value: category.name });
+        if (category) activeFilterItems.push({ key: `category-${id}`, label: t('Categories'), value: category.name });
     });
     selectedBrandIds.forEach((id) => {
         const brand = filters.brands.find((item) => item.id === id);
-        if (brand) activeFilterItems.push({ key: `brand-${id}`, label: 'Thương hiệu', value: brand.name });
+        if (brand) activeFilterItems.push({ key: `brand-${id}`, label: t('Brand'), value: brand.name });
     });
     if (activeFilters.price_min || activeFilters.price_max) {
         activeFilterItems.push({
             key: 'price',
-            label: 'Giá',
-            value: `${activeFilters.price_min ? formatVnd(activeFilters.price_min) : '0 ₫'} – ${activeFilters.price_max ? formatVnd(activeFilters.price_max) : 'Không giới hạn'}`,
+            label: t('Price'),
+            value: `${activeFilters.price_min ? money(activeFilters.price_min) : money(0)} - ${activeFilters.price_max ? money(activeFilters.price_max) : t('No limit')}`,
         });
     }
     if (activeFilters.rating_min) {
-        activeFilterItems.push({ key: 'rating', label: 'Đánh giá', value: `${activeFilters.rating_min} sao trở lên` });
+        activeFilterItems.push({ key: 'rating', label: t('Rating'), value: `${activeFilters.rating_min} ${t('stars and up')}` });
     }
     selectedStates.forEach((state) => {
-        activeFilterItems.push({ key: `state-${state}`, label: 'Tình trạng', value: state === 'new' ? 'Mới' : 'Giảm giá' });
+        activeFilterItems.push({ key: `state-${state}`, label: t('Condition'), value: state === 'new' ? t('New') : t('On sale') });
     });
 
     const removeFilter = (key: string) => {
@@ -208,107 +216,113 @@ export default function SearchPage() {
 
     const filterContent = (
         <>
-            <FilterGroup title="Danh mục" count={selectedCategoryIds.length}>
-                <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
-                    {filters.categories.map((category) => (
-                        <Checkbox
-                            key={category.id}
-                            checked={selectedCategoryIds.includes(category.id)}
-                            onCheckedChange={(checked) => toggleNumberFilter('category_ids', category.id, checked === true)}
-                            label={category.name}
-                        />
-                    ))}
-                </div>
-            </FilterGroup>
-
-            <FilterGroup title="Thương hiệu" count={selectedBrandIds.length}>
-                <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
-                    {filters.brands.map((brand) => (
-                        <Checkbox
-                            key={brand.id}
-                            checked={selectedBrandIds.includes(brand.id)}
-                            onCheckedChange={(checked) => toggleNumberFilter('brand_ids', brand.id, checked === true)}
-                            label={brand.name}
-                        />
-                    ))}
-                </div>
-            </FilterGroup>
-
-            <FilterGroup title="Khoảng giá">
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                        <InputPrice value={priceMin} onChange={setPriceMin} placeholder="Từ" />
-                        <span className="text-ink-faint">–</span>
-                        <InputPrice value={priceMax} onChange={setPriceMax} placeholder="Đến" />
+            {filters.categories.length > 0 && (
+                <FilterGroup title={t('Categories')} count={selectedCategoryIds.length}>
+                    <div className={styles.filterList}>
+                        {filters.categories.map((category) => (
+                            <Checkbox
+                                key={category.id}
+                                checked={selectedCategoryIds.includes(category.id)}
+                                onCheckedChange={(checked) => toggleNumberFilter('category_ids', category.id, checked === true)}
+                                label={category.name}
+                            />
+                        ))}
                     </div>
-                    <Button type="button" variant="secondary" size="sm" onClick={applyPrice}>
-                        Áp dụng giá
-                    </Button>
+                </FilterGroup>
+            )}
+
+            {filters.brands.length > 0 && (
+                <FilterGroup title={t('Brand')} count={selectedBrandIds.length}>
+                    <div className={styles.filterList}>
+                        {filters.brands.map((brand) => (
+                            <Checkbox
+                                key={brand.id}
+                                checked={selectedBrandIds.includes(brand.id)}
+                                onCheckedChange={(checked) => toggleNumberFilter('brand_ids', brand.id, checked === true)}
+                                label={brand.name}
+                            />
+                        ))}
+                    </div>
+                </FilterGroup>
+            )}
+
+            <FilterGroup title={t('Price range')}>
+                <div className={styles.priceRow}>
+                    <InputPrice value={priceMin} onChange={setPriceMin} placeholder={t('From')} />
+                    <span className={styles.priceSeparator}>-</span>
+                    <InputPrice value={priceMax} onChange={setPriceMax} placeholder={t('To')} />
                 </div>
+                <Button type="button" variant="secondary" size="sm" onClick={applyPrice}>
+                    {t('Apply price')}
+                </Button>
             </FilterGroup>
 
-            <FilterGroup title="Đánh giá">
-                <div className="flex flex-col gap-2">
-                    {filters.ratingOptions.map((rating) => (
-                        <Checkbox
-                            key={rating}
-                            checked={activeFilters.rating_min === rating}
-                            onCheckedChange={(checked) => updateFilters({ rating_min: checked === true ? rating : null })}
-                            label={`${rating} sao trở lên`}
-                        />
-                    ))}
-                </div>
-            </FilterGroup>
+            {filters.ratingOptions.length > 0 && (
+                <FilterGroup title={t('Rating')}>
+                    <div className={styles.filterList}>
+                        {filters.ratingOptions.map((rating) => (
+                            <Checkbox
+                                key={rating}
+                                checked={activeFilters.rating_min === rating}
+                                onCheckedChange={(checked) => updateFilters({ rating_min: checked === true ? rating : null })}
+                                label={`${rating} ${t('stars and up')}`}
+                            />
+                        ))}
+                    </div>
+                </FilterGroup>
+            )}
 
-            <FilterGroup title="Tình trạng">
-                <div className="flex flex-col gap-2">
-                    {filters.states.map((state) => (
-                        <Checkbox
-                            key={state}
-                            checked={selectedStates.includes(state)}
-                            onCheckedChange={(checked) => toggleState(state, checked === true)}
-                            label={state === 'new' ? 'Mới' : state === 'sale' ? 'Đang giảm giá' : state}
-                        />
-                    ))}
-                </div>
-            </FilterGroup>
+            {filters.states.length > 0 && (
+                <FilterGroup title={t('Condition')}>
+                    <div className={styles.filterList}>
+                        {filters.states.map((state) => (
+                            <Checkbox
+                                key={state}
+                                checked={selectedStates.includes(state)}
+                                onCheckedChange={(checked) => toggleState(state, checked === true)}
+                                label={state === 'new' ? t('New') : state === 'sale' ? t('On sale') : state}
+                            />
+                        ))}
+                    </div>
+                </FilterGroup>
+            )}
         </>
     );
 
     return (
         <StorefrontLayout compactFooter>
-            <Head title={query ? `Tìm kiếm: ${query}` : 'Tìm sản phẩm'} />
+            <Head title={query ? t('Search: :query', { query }) : t('Search products')} />
 
-            <PageContainer className="py-8 md:py-10">
+            <PageContainer className={styles.page}>
                 <PageHeader
-                    breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tìm kiếm' }]}
-                    eyebrow={query ? 'Kết quả tìm kiếm' : 'Toàn bộ sản phẩm'}
-                    title={query ? `Kết quả cho “${query}”` : 'Tìm món đồ cho tổ ấm'}
-                    description={`Tìm thấy ${formatNumber(products.total)} món phù hợp.`}
+                    breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Search') }]}
+                    eyebrow={query ? t('Search results') : t('All products')}
+                    title={query ? t('Results for “:query”', { query }) : t('Find something for your home')}
+                    description={t(':count items found.', { count: formatNumber(products.total) })}
                     actions={
-                        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+                        <div className={styles.headerActions}>
                             <SearchInput
                                 value={searchValue}
                                 onChange={(event) => setSearchValue(event.target.value)}
                                 onSubmit={(value) => updateFilters({ search: value })}
-                                placeholder="Tìm laptop, nồi chiên, xe đẩy..."
-                                className="sm:w-72"
+                                placeholder={t('Search for laptops, air fryers, strollers...')}
+                                className={styles.searchField}
                             />
                             <Select
                                 value={activeFilters.sort ?? 'popular'}
                                 onChange={(event) => updateFilters({ sort: event.target.value })}
                                 options={filters.sortOptions}
-                                className="sm:w-52"
-                                aria-label="Sắp xếp sản phẩm"
+                                className={styles.sortField}
+                                aria-label={t('Sort products')}
                             />
                         </div>
                     }
                 />
 
-                <div className="mt-5 flex flex-col gap-4">
+                <div className={styles.toolbar}>
                     <CategoryPills
                         items={[
-                            { value: '', label: 'Tất cả' },
+                            { value: '', label: t('All') },
                             ...filters.categories.map((category) => ({ value: category.id, label: category.name })),
                         ]}
                         value={selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : ''}
@@ -317,40 +331,49 @@ export default function SearchPage() {
                     <ActiveFilters filters={activeFilterItems} onRemove={removeFilter} onClear={clearAll} />
                 </div>
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-12">
-                    <div className="hidden lg:col-span-3 lg:block">
+                <div className={styles.layout}>
+                    <div className={styles.rail}>
                         <FilterRail onClear={clearAll} activeCount={activeFilterItems.length}>
                             {filterContent}
                         </FilterRail>
                     </div>
 
-                    <section className="lg:col-span-9" aria-label="Kết quả tìm kiếm">
-                        <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+                    <section className={styles.results} aria-label={t('Search results')}>
+                        <div className={styles.mobileBar}>
                             <Button variant="secondary" size="sm" leftIcon={SlidersHorizontal} onClick={mobileFilters.open}>
-                                Bộ lọc
+                                {t('Filters')}
                             </Button>
-                            <span className="font-mono text-label-code text-ink-muted">{formatNumber(products.total)} món</span>
+                            <span className={styles.mobileCount}>{t(':count results', { count: formatNumber(products.total) })}</span>
                         </div>
 
                         <ProductGrid
                             products={productCards}
                             columns={3}
-                            onAddToCart={(product) => router.visit(`/product/${product.id}`)}
+                            onAddToCart={(product) => {
+                                info(t('Choose a product variant'), product.name);
+                                router.visit(`/product/${product.id}`);
+                            }}
                             onToggleWishlist={(product) => {
+                                if (!auth?.user) {
+                                    router.visit('/login');
+
+                                    return;
+                                }
+
                                 router.post(
                                     `/user/wishlist/items/${product.id}`,
                                     {},
                                     {
                                         preserveScroll: true,
-                                        onSuccess: () => success('Đã lưu sản phẩm', product.name),
-                                        onError: () => showError('Chưa thể lưu sản phẩm', 'Vui lòng đăng nhập để dùng danh sách yêu thích.'),
+                                        onSuccess: () => success(t('Saved to your wishlist'), product.name),
+                                        onError: () => showError(t('Could not save this item'), t('Sign in to use your wishlist.')),
                                     },
                                 );
                             }}
                         />
 
                         <Pagination
-                            className="mt-8"
+                            className={styles.pagination}
                             page={products.current_page}
                             pageCount={products.last_page}
                             total={products.total}
@@ -361,13 +384,20 @@ export default function SearchPage() {
                 </div>
             </PageContainer>
 
-            <Sheet open={mobileFilters.isOpen} onOpenChange={mobileFilters.setOpen} side="bottom" title="Bộ lọc sản phẩm">
-                <FilterRail onClear={clearAll} activeCount={activeFilterItems.length} className="border-0 bg-transparent p-0">
+            <Sheet
+                open={mobileFilters.isOpen}
+                onOpenChange={mobileFilters.setOpen}
+                side="bottom"
+                title={t('Product filters')}
+                footer={
+                    <Button className={styles.sheetAction} onClick={mobileFilters.close}>
+                        {t('View :count results', { count: formatNumber(products.total) })}
+                    </Button>
+                }
+            >
+                <FilterRail variant="sheet" onClear={clearAll} activeCount={activeFilterItems.length}>
                     {filterContent}
                 </FilterRail>
-                <Button className="mt-4 w-full" onClick={mobileFilters.close}>
-                    Xem {formatNumber(products.total)} kết quả
-                </Button>
             </Sheet>
         </StorefrontLayout>
     );

@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type BreadcrumbItem = {
     label: React.ReactNode;
@@ -14,59 +14,66 @@ type BreadcrumbsProps = {
     items: BreadcrumbItem[];
     maxItems?: number;
     className?: string;
+    as?: 'nav' | 'div';
 };
+
+type VisibleCrumb = { type: 'item'; item: BreadcrumbItem } | { type: 'ellipsis' };
 
 function isExternal(href: string): boolean {
     return /^https?:\/\//.test(href);
 }
 
-export function Breadcrumbs({ items, maxItems, className }: BreadcrumbsProps) {
+function toVisibleCrumbs(items: BreadcrumbItem[], maxItems?: number): VisibleCrumb[] {
+    if (!maxItems || items.length <= maxItems) {
+        return items.map((item) => ({ type: 'item', item }));
+    }
+
+    return [{ type: 'item', item: items[0] }, { type: 'ellipsis' }, ...items.slice(-(maxItems - 2)).map((item) => ({ type: 'item' as const, item }))];
+}
+
+export function Breadcrumbs({ items, maxItems, className, as = 'nav' }: BreadcrumbsProps) {
     if (items.length === 0) {
         return null;
     }
 
-    let visibleItems = items;
-
-    if (maxItems && items.length > maxItems) {
-        const head = items.slice(0, 1);
-        const tail = items.slice(-(maxItems - 2));
-        visibleItems = [...head, { label: <MoreHorizontal aria-hidden="true" className="size-4" /> }, ...tail];
-    }
+    const visibleItems = toVisibleCrumbs(items, maxItems);
+    const Comp = as;
 
     return (
-        <nav aria-label="Breadcrumb" className={cn('w-full', className)}>
-            <ol className="flex flex-wrap items-center gap-1.5 text-body-sm text-ink-muted">
-                {visibleItems.map((item, index) => {
-                    const isLast = index === visibleItems.length - 1 || item.current;
+        <Comp aria-label="Breadcrumb" role={as === 'div' ? 'navigation' : undefined} className={cx('sn-breadcrumbs', className)}>
+            <ol className="sn-breadcrumbs__list">
+                {visibleItems.map((crumb, index) => {
+                    const isLast = index === visibleItems.length - 1;
 
                     return (
-                        <li key={index} className="inline-flex min-w-0 items-center gap-1.5">
-                            {index > 0 && <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-faint" />}
-                            {item.href && !isLast ? (
-                                isExternal(item.href) ? (
-                                    <a
-                                        href={item.href}
-                                        className="truncate transition-colors hover:text-ink focus-ring"
-                                        target="_blank"
-                                        rel="noreferrer noopener"
-                                    >
-                                        {item.label}
+                        <li key={index} className="sn-breadcrumbs__item">
+                            {index > 0 && <ChevronRight aria-hidden="true" className="sn-breadcrumbs__sep" />}
+                            {crumb.type === 'ellipsis' ? (
+                                <MoreHorizontal aria-hidden="true" className="sn-breadcrumbs__icon" />
+                            ) : crumb.item.href && !isLast && !crumb.item.current ? (
+                                isExternal(crumb.item.href) ? (
+                                    <a href={crumb.item.href} className="sn-breadcrumbs__link" target="_blank" rel="noreferrer noopener">
+                                        {crumb.item.label}
                                     </a>
                                 ) : (
-                                    <Link href={item.href} className="truncate transition-colors hover:text-ink focus-ring">
-                                        {item.label}
+                                    <Link href={crumb.item.href} className="sn-breadcrumbs__link">
+                                        {crumb.item.label}
                                     </Link>
                                 )
                             ) : (
-                                <span aria-current={isLast ? 'page' : undefined} className={cn('truncate', isLast && 'font-medium text-ink')}>
-                                    {item.label}
+                                <span
+                                    aria-current={isLast || crumb.item.current ? 'page' : undefined}
+                                    data-current={isLast || crumb.item.current ? 'true' : undefined}
+                                    className="sn-breadcrumbs__current"
+                                >
+                                    {crumb.item.label}
                                 </span>
                             )}
                         </li>
                     );
                 })}
             </ol>
-        </nav>
+        </Comp>
     );
 }
 

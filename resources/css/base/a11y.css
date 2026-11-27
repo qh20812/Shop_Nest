@@ -1,0 +1,43 @@
+/*
+ * Bảng Hiệu — accessibility layer.
+ * This is the only CSS file allowed to use !important, for reduced motion.
+ */
+
+@layer sn-base {
+    .sn-skip-link {
+        position: fixed;
+        top: var(--sn-space-3);
+        left: var(--sn-space-3);
+        z-index: var(--sn-z-toast);
+        padding: var(--sn-space-2) var(--sn-space-4);
+        border: 1px solid var(--sn-color-border);
+        border-radius: var(--sn-radius-md);
+        background: var(--sn-color-surface);
+        color: var(--sn-color-text);
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-semibold);
+        box-shadow: var(--sn-shadow-popover);
+        transform: translateY(calc(-100% - var(--sn-space-6)));
+        transition: transform var(--sn-dur-fast) var(--sn-ease-standard);
+    }
+
+    .sn-skip-link:focus {
+        transform: translateY(0);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--sn-color-focus);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\HandlesOrderPayments;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
@@ -106,7 +109,19 @@ class PaymentWebhookController extends Controller
                 return;
             }
 
-            $this->inventoryService->adjustInventoryForOrder($order);
+            if ($order->status === OrderStatus::CANCELLED) {
+                Log::warning('webhooks.payment.order_cancelled', [
+                    'provider' => $provider,
+                    'order_id' => $order->order_id,
+                    'event_id' => $eventId,
+                ]);
+
+                return;
+            }
+
+            $wasPaid = $order->payment_status === PaymentStatus::PAID;
+
+            $this->inventoryService->commitReservedForOrder($order);
 
             $this->persistPayment($order, $provider, [
                 'status' => 'succeeded',
@@ -114,6 +129,12 @@ class PaymentWebhookController extends Controller
                 'gateway_event_id' => $eventId,
                 'raw_payload' => $payload,
             ]);
+
+            if (! $wasPaid && $order->payment_status === PaymentStatus::PAID) {
+                CartItem::where('user_id', $order->customer_id)
+                    ->whereIn('variant_id', $order->items->pluck('variant_id'))
+                    ->delete();
+            }
 
             Log::info('webhooks.payment.completed', [
                 'provider' => $provider,

@@ -1,8 +1,6 @@
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
-
 export type ToastTone = 'success' | 'error' | 'warning' | 'info';
 
 export type ToastAction = {
@@ -121,13 +119,6 @@ export function useToast() {
     return { toasts: items, addToast, removeToast, success, error, warning, info, toast };
 }
 
-const toneClasses: Record<ToastTone, string> = {
-    success: 'bg-jade-soft text-jade',
-    error: 'bg-brick-soft text-brick',
-    warning: 'bg-turmeric-soft text-turmeric',
-    info: 'bg-lacquer-wash text-lacquer-deep',
-};
-
 const toneIcons = {
     success: CheckCircle2,
     error: XCircle,
@@ -154,21 +145,17 @@ export function Toast({ item, onClose }: ToastProps) {
     }, [item.duration, item.id, onClose]);
 
     return (
-        <div
-            role="status"
-            aria-live="polite"
-            className="flex w-full items-start gap-3 rounded-card border border-border bg-warm-porcelain p-4 shadow-float"
-        >
-            <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-chip', toneClasses[item.tone])}>
-                <Icon aria-hidden="true" className="size-5" />
+        <div role="status" aria-live="polite" data-slot="toast" className="sn-toast">
+            <span data-tone={item.tone} className="sn-toast__icon">
+                <Icon aria-hidden="true" />
             </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-body-sm font-semibold text-ink">{item.title}</span>
-                {item.description && <span className="text-body-sm text-ink-muted">{item.description}</span>}
+            <div className="sn-toast__body">
+                <span className="sn-toast__title">{item.title}</span>
+                {item.description && <span className="sn-toast__description">{item.description}</span>}
                 {item.action && (
                     <button
                         type="button"
-                        className="mt-1 w-fit text-body-sm font-medium text-lacquer-red underline-offset-4 hover:underline focus-ring"
+                        className="sn-toast__action"
                         onClick={() => {
                             item.action?.onClick();
                             onClose(item.id);
@@ -178,13 +165,8 @@ export function Toast({ item, onClose }: ToastProps) {
                     </button>
                 )}
             </div>
-            <button
-                type="button"
-                aria-label="Đóng thông báo"
-                className="flex size-control-sm shrink-0 items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink focus-ring"
-                onClick={() => onClose(item.id)}
-            >
-                <X aria-hidden="true" className="size-4" />
+            <button type="button" aria-label="Đóng thông báo" className="sn-toast__close" onClick={() => onClose(item.id)}>
+                <X aria-hidden="true" />
             </button>
         </div>
     );
@@ -198,10 +180,7 @@ export function Toaster() {
     }
 
     return (
-        <div
-            aria-label="Thông báo"
-            className="fixed bottom-4 left-4 right-4 z-toast flex flex-col gap-3 sm:bottom-6 sm:left-auto sm:right-6 sm:w-chat-panel"
-        >
+        <div aria-label="Thông báo" className="sn-toaster">
             {items.map((item) => (
                 <Toast key={item.id} item={item} onClose={dismissToast} />
             ))}

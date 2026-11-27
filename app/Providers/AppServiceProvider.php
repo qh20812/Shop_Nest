@@ -3,11 +3,18 @@
 namespace App\Providers;
 
 use App\Http\Middleware\IsSeller;
+use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Observers\OrderObserver;
 use App\Observers\ProductVariantObserver;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use Stripe\ApiRequestor;
+use Stripe\HttpClient\CurlClient;
 use Stripe\StripeClient;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
             // Configure HTTP client for local development
             if (config('app.env') === 'local') {
                 // Set global HTTP client for Stripe SDK
-                \Stripe\ApiRequestor::setHttpClient(new \Stripe\HttpClient\CurlClient([
+                ApiRequestor::setHttpClient(new CurlClient([
                     CURLOPT_SSL_VERIFYPEER => false,
                     CURLOPT_SSL_VERIFYHOST => false,
                 ]));
@@ -42,26 +49,27 @@ class AppServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('isSeller', IsSeller::class);
 
         ProductVariant::observe(ProductVariantObserver::class);
+        Order::observe(OrderObserver::class);
 
-        // Disable SSL verification for local development (Google OAuth)
+        // Disable SSL verification for local development (Google OAuth).
+        // Guzzle 8 không cho truyền CURLOPT_SSL_VERIFYPEER trong option "curl";
+        // chỉ dùng option "verify" để tránh lỗi khi Socialite đổi token.
         if (config('app.env') === 'local') {
             $guzzleConfig = [
                 'verify' => false,
-                'curl' => [
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_SSL_VERIFYHOST => false,
-                ]
+                'timeout' => 10,
             ];
-            
-            \Laravel\Socialite\Facades\Socialite::extend('google', function ($app) use ($guzzleConfig) {
+
+            Socialite::extend('google', function ($app) use ($guzzleConfig) {
                 $config = $app['config']['services.google'];
-                $driver = new \Laravel\Socialite\Two\GoogleProvider(
+                $driver = new GoogleProvider(
                     $app['request'],
                     $config['client_id'],
                     $config['client_secret'],
                     $config['redirect']
                 );
-                $driver->setHttpClient(new \GuzzleHttp\Client($guzzleConfig));
+                $driver->setHttpClient(new Client($guzzleConfig));
+
                 return $driver;
             });
             $request = request();

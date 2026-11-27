@@ -2,23 +2,32 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Role;
-use App\Models\SellerPromotionParticipation;
-use App\Models\SellerPromotionWallet;
+use Illuminate\Support\Str;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Locales the application and its emails support.
+     *
+     * @var list<string>
+     */
+    public const SUPPORTED_LOCALES = ['vi', 'en'];
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_name',
         'phone_number',
         'email',
+        'locale',
         'is_active',
         'default_address_id',
         'password',
@@ -76,27 +86,33 @@ class User extends Authenticatable implements MustVerifyEmail
             'shop_settings' => 'array',
         ];
     }
+
     public function role(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user');
     }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'seller_id');
     }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(UserAddress::class);
     }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id', 'id');
     }
+
     public function isAdmin(): bool
     {
         return $this->roles()->where('name->en', 'Admin')->exists();
     }
-    public function roles():BelongsToMany
+
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
     }
@@ -139,7 +155,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public static function generateUniqueUsername(): string
     {
         do {
-            $username = 'user_' . \Illuminate\Support\Str::random(8);
+            $username = 'user_'.Str::random(8);
             $exists = static::where('username', $username)->exists();
         } while ($exists);
 
@@ -151,7 +167,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
+        return trim($this->last_name.' '.$this->first_name) ?: $this->username;
     }
 
     /**
@@ -164,18 +180,18 @@ class User extends Authenticatable implements MustVerifyEmail
             if (str_starts_with($this->avatar, 'http')) {
                 return $this->avatar;
             }
-            
+
             // If it's a local file path, return storage URL
-            return asset('storage/' . $this->avatar);
+            return asset('storage/'.$this->avatar);
         }
 
         // Generate avatar from first letter of name or username
         $name = $this->first_name ?: $this->username;
         $initial = strtoupper(substr($name, 0, 1));
-        
+
         // Generate placeholder avatar URL using UI Avatars service
-        return "https://ui-avatars.com/api/?name=" . urlencode($initial) . 
-               "&color=fff&background=1976D2&size=100&rounded=true";
+        return 'https://ui-avatars.com/api/?name='.urlencode($initial).
+               '&color=fff&background=1976D2&size=100&rounded=true';
     }
 
     /**
@@ -327,11 +343,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Seller promotion wallet for this user
+     * Unified ShopNest wallet for this user (customer, seller or admin).
+     */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class, 'user_id', 'id');
+    }
+
+    /**
+     * @deprecated Use wallet() instead. Kept for older promotion code paths.
      */
     public function promotionWallet(): HasOne
     {
-        return $this->hasOne(SellerPromotionWallet::class, 'seller_id', 'id');
+        return $this->hasOne(Wallet::class, 'user_id', 'id');
     }
 
     /**
@@ -356,11 +380,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRoleNameAttribute(): ?string
     {
         $role = $this->role()->first();
-        if (!$role) {
+        if (! $role) {
             return null;
         }
-        
+
         $roleName = $role->name['en'] ?? null;
+
         return $roleName ? strtolower($roleName) : null;
     }
 
@@ -393,11 +418,11 @@ class User extends Authenticatable implements MustVerifyEmail
             $value = str_replace(' ', '', $value);
             // If starts with 0, replace with +84 (assuming Vietnam)
             if (str_starts_with($value, '0')) {
-                $value = '+84' . substr($value, 1);
+                $value = '+84'.substr($value, 1);
             }
             // Ensure it starts with +
-            if (!str_starts_with($value, '+')) {
-                $value = '+' . $value;
+            if (! str_starts_with($value, '+')) {
+                $value = '+'.$value;
             }
         }
         $this->attributes['phone_number'] = $value;
@@ -411,12 +436,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasVerifiedEmail(): bool
     {
         // If no email, consider verified (phone/username registration)
-        if (!$this->email) {
+        if (! $this->email) {
             return true;
         }
-        
+
         // If has email, check if it's verified
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     /**
@@ -430,17 +455,52 @@ class User extends Authenticatable implements MustVerifyEmail
                 'email_verified_at' => $this->freshTimestamp(),
             ])->save();
         }
+
         return true; // Consider verified if no email
     }
 
     /**
      * Send the email verification notification.
      * Only send if user has an email address.
+     *
+     * Notification được queue để SMTP không chặn/làm hỏng request đăng ký.
      */
     public function sendEmailVerificationNotification(): void
     {
         if ($this->email) {
-            parent::sendEmailVerificationNotification();
+            $this->notify(new VerifyEmailNotification);
         }
+    }
+
+    /**
+     * Send the password reset notification (queued).
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Locale used for outgoing email/notifications.
+     *
+     * Users can switch language at /language; the choice is stored on the
+     * account so mails sent from another device (or from a queue worker
+     * without a session) still use the same language.
+     */
+    public function preferredLocale(): string
+    {
+        $locale = $this->getAttribute('locale');
+
+        return in_array($locale, self::SUPPORTED_LOCALES, true) ? $locale : config('app.locale', 'vi');
+    }
+
+    /**
+     * Name used in email greetings, falling back to the username.
+     */
+    public function mailName(): string
+    {
+        $name = trim((string) ($this->first_name ?? '').' '.(string) ($this->last_name ?? ''));
+
+        return $name !== '' ? $name : (string) ($this->username ?? '');
     }
 }

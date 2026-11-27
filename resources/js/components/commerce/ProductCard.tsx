@@ -1,14 +1,16 @@
 import { Link } from '@inertiajs/react';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { BadgeCheck, Heart, ShoppingCart, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 import { Price } from './Price';
 import { Rating } from './Rating';
+import styles from './commerce.module.css';
 
 type ProductCardProps = {
     product: ProductCardModel;
@@ -17,15 +19,25 @@ type ProductCardProps = {
     priority?: boolean;
     onAddToCart?: (product: ProductCardModel) => void;
     onToggleWishlist?: (product: ProductCardModel) => void;
+    actionLabel?: string;
+    actionIcon?: LucideIcon;
     className?: string;
 };
 
-const badgeLabels = {
-    sale: 'Giảm giá',
-    new: 'Mới',
-    'fast-ship': 'Giao nhanh',
-    official: 'Chính hãng',
-    'low-stock': 'Sắp hết',
+const statusLabels = {
+    new: 'New',
+    'fast-ship': 'Fast delivery',
+    official: 'Official',
+    'low-stock': 'Low stock',
+} as const;
+
+type StatusBadge = keyof typeof statusLabels;
+
+const statusTone: Record<StatusBadge, string> = {
+    new: styles.productTagNew,
+    'fast-ship': styles.productTagFast,
+    official: styles.productTagOfficial,
+    'low-stock': styles.productTagLow,
 };
 
 export function ProductCard({
@@ -35,130 +47,131 @@ export function ProductCard({
     priority = false,
     onAddToCart,
     onToggleWishlist,
+    actionLabel,
+    actionIcon,
     className,
 }: ProductCardProps) {
+    const { t } = useTranslation();
     const href = `/product/${product.id}`;
     const [imageSrc, setImageSrc] = React.useState(product.image);
-    const isOutOfStock = product.stock === 'out';
 
     React.useEffect(() => {
         setImageSrc(product.image);
     }, [product.image]);
+
+    const badges = product.badges ?? [];
+    const isOutOfStock = product.stock === 'out';
+    const isLowStock = product.stock === 'low' || badges.includes('low-stock');
     const discount = product.compareAt && product.compareAt > product.price ? Math.round((1 - product.price / product.compareAt) * 100) : null;
+    const saleLabel = discount !== null ? `-${discount}%` : badges.includes('sale') ? t('Sale') : null;
+    const trusted = product.shopBadge === 'verified' || product.shopBadge === 'official' || badges.includes('official');
+
+    const statusBadges: StatusBadge[] = [];
+    if (isLowStock) {
+        statusBadges.push('low-stock');
+    }
+    if (badges.includes('new')) {
+        statusBadges.push('new');
+    }
+    if (badges.includes('fast-ship')) {
+        statusBadges.push('fast-ship');
+    }
+    if (badges.includes('official') && !product.shopName) {
+        statusBadges.push('official');
+    }
+    const visibleStatus = statusBadges.slice(0, 2);
+
+    const resolvedActionLabel = actionLabel ?? (isOutOfStock ? t('Out of stock') : t('Choose options'));
+    const ActionIcon = actionIcon ?? ShoppingCart;
 
     return (
-        <article
-            className={cn(
-                'group flex w-full flex-col rounded-card border border-border bg-warm-porcelain p-3 transition-colors duration-150 ease-nep hover:border-lacquer-red/40',
-                variant === 'wishlist' && 'overflow-hidden p-0',
-                className,
-            )}
-        >
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-card bg-raw-linen">
-                <Link href={href} aria-label={product.name}>
+        <article className={cx(styles.productCard, className)} data-variant={variant}>
+            <div className={styles.productMedia} data-out={isOutOfStock ? 'true' : undefined}>
+                <Link href={href} tabIndex={-1} aria-hidden="true" className={styles.productImageLink}>
                     <img
                         src={imageSrc}
-                        alt={product.imageAlt ?? product.name}
+                        alt=""
                         loading={priority ? 'eager' : 'lazy'}
+                        decoding="async"
                         onError={() => setImageSrc('/image/default-product.png')}
-                        className="size-full object-cover transition-transform duration-300 ease-nep group-hover:scale-[1.02]"
+                        className={styles.productImage}
                     />
                 </Link>
 
-                <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1.5">
-                    {discount !== null && discount > 0 && (
-                        <Badge tone="accent" size="sm">
-                            -{discount}%
-                        </Badge>
-                    )}
-                    {product.badges
-                        ?.filter((badge) => badge !== 'sale')
-                        .slice(0, 2)
-                        .map((badge) => (
-                            <Badge key={badge} tone={badge === 'low-stock' ? 'warning' : 'neutral'} size="sm">
-                                {badgeLabels[badge]}
-                            </Badge>
-                        ))}
-                    {product.stock === 'low' && !product.badges?.includes('low-stock') && (
-                        <Badge tone="warning" size="sm">
-                            Sắp hết
-                        </Badge>
-                    )}
-                </div>
+                {saleLabel ? <span className={styles.productSale}>{saleLabel}</span> : null}
 
-                {onToggleWishlist && (
+                {onToggleWishlist ? (
                     <IconButton
-                        label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
+                        label={wishlisted ? t('Remove from wishlist') : t('Save to wishlist')}
                         size="sm"
                         variant="secondary"
-                        className="absolute top-2.5 right-2.5"
+                        surface="overlay"
                         onClick={() => onToggleWishlist(product)}
+                        className={styles.productWishlist}
                     >
-                        <Heart aria-hidden="true" className={wishlisted ? 'fill-lacquer-red text-lacquer-red' : undefined} />
+                        <Heart aria-hidden="true" className={cx(styles.icon, wishlisted && styles.wishlisted)} />
                     </IconButton>
-                )}
+                ) : null}
 
-                {isOutOfStock && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-ink/35">
-                        <Badge tone="ink" size="md">
-                            Hết hàng
-                        </Badge>
-                    </div>
-                )}
+                {onAddToCart && variant !== 'wishlist' ? (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        surface="overlay"
+                        shape="pill"
+                        leftIcon={ActionIcon}
+                        disabled={isOutOfStock}
+                        onClick={() => onAddToCart(product)}
+                        className={styles.productQuick}
+                    >
+                        {resolvedActionLabel}
+                    </Button>
+                ) : null}
+
+                {isOutOfStock ? <span className={styles.productOutOverlay}>{t('Out of stock')}</span> : null}
             </div>
 
-            <div className={cn('flex flex-1 flex-col pt-3', variant === 'wishlist' && 'px-3 pb-3')}>
-                <div className="mb-1 flex items-center gap-1.5">
-                    <Badge tone="accent" size="sm">
-                        {product.shopBadge === 'official' ? 'Chính hãng' : product.shopBadge === 'verified' ? 'Đã duyệt' : 'Shop Việt'}
-                    </Badge>
-                    <span className="truncate text-body-sm text-ink-muted">{product.shopName}</span>
-                </div>
+            <div className={styles.productBody}>
+                {product.shopName ? (
+                    <div className={styles.productShopRow}>
+                        <span className={styles.productShop}>{product.shopName}</span>
+                        {trusted ? <BadgeCheck aria-hidden="true" className={styles.productShopCheck} /> : null}
+                    </div>
+                ) : null}
 
-                <Link href={href} className="focus-ring rounded-chip">
-                    <h3
-                        className={cn(
-                            'line-clamp-2 text-body-sm leading-snug font-semibold text-ink transition-colors group-hover:text-lacquer-red',
-                            variant === 'compact' && 'text-body-sm',
-                        )}
-                    >
-                        {product.name}
-                    </h3>
+                <Link href={href} className={styles.productTitleLink}>
+                    <h3 className={styles.productTitle}>{product.name}</h3>
                 </Link>
 
-                {variant !== 'compact' && product.metadata && (
-                    <p className="mt-1.5 line-clamp-1 rounded-chip bg-raw-linen/60 p-1.5 font-mono text-label-code text-ink-muted">
-                        {product.metadata}
-                    </p>
-                )}
+                {visibleStatus.length > 0 ? (
+                    <div className={styles.productTagList}>
+                        {visibleStatus.map((badge) => (
+                            <span key={badge} className={cx(styles.productTag, statusTone[badge])}>
+                                {t(statusLabels[badge])}
+                            </span>
+                        ))}
+                    </div>
+                ) : null}
 
-                <div className="mt-2 flex items-center gap-2 text-body-sm text-ink-muted">
-                    {typeof product.rating === 'number' && <Rating value={product.rating} count={product.reviewCount} compact />}
-                </div>
+                {variant !== 'compact' && product.metadata ? <span className={styles.productMeta}>{product.metadata}</span> : null}
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2.5">
-                    <Price value={product.price} compareAt={product.compareAt} size={variant === 'compact' ? 'sm' : 'md'} showDiscount={false} />
-                    {variant === 'wishlist' ? (
-                        <button
-                            type="button"
-                            disabled={isOutOfStock}
-                            onClick={() => onAddToCart?.(product)}
-                            className="inline-flex h-control-sm items-center justify-center gap-1.5 rounded-control border border-border bg-transparent px-3 text-body-sm font-medium text-ink transition-colors hover:bg-lacquer-wash disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <ShoppingCart aria-hidden="true" className="size-4" />
-                            Thêm vào giỏ
-                        </button>
-                    ) : (
-                        <IconButton
-                            label={isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
-                            size="sm"
+                {typeof product.rating === 'number' ? <Rating value={product.rating} count={product.reviewCount} compact chip /> : null}
+
+                <div className={styles.productFooter}>
+                    <Price value={product.price} compareAt={product.compareAt} showDiscount={false} size={variant === 'compact' ? 'sm' : 'md'} />
+
+                    {onAddToCart && variant === 'wishlist' ? (
+                        <Button
                             variant="secondary"
+                            size="sm"
+                            leftIcon={ActionIcon}
                             disabled={isOutOfStock}
-                            onClick={() => onAddToCart?.(product)}
+                            onClick={() => onAddToCart(product)}
+                            className={styles.productAdd}
                         >
-                            <ShoppingCart aria-hidden="true" />
-                        </IconButton>
-                    )}
+                            {resolvedActionLabel}
+                        </Button>
+                    ) : null}
                 </div>
             </div>
         </article>

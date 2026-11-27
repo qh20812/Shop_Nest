@@ -12,12 +12,22 @@ class DisputeSeeder extends Seeder
     public function run(): void
     {
         // Chỉ lấy các đơn hàng có ít nhất 1 item và có status phù hợp
-        $orders = Order::whereHas('items')->whereIn('status', [2, 3, 4])->with('customer', 'items.variant.product')->get();
+        $orders = Order::whereHas('items')
+            ->whereIn('status', ['processing', 'delivering', 'delivered', 'completed'])
+            ->with('customer', 'items.variant.product')
+            ->get();
         $admins = Role::where('name->en', 'Admin')->first()?->users;
 
         if ($orders->count() < 30 || $admins->isEmpty()) {
-             $this->command->info('Không đủ đơn hàng hoặc admin để tạo khiếu nại.');
-             return;
+            $this->command->info('Không đủ đơn hàng hoặc admin để tạo khiếu nại.');
+
+            return;
+        }
+
+        if (Dispute::query()->exists()) {
+            $this->command->info('Disputes already seeded, skipping.');
+
+            return;
         }
 
         // Tạo khoảng 30 khiếu nại
@@ -26,7 +36,7 @@ class DisputeSeeder extends Seeder
                 'order_id' => $order->order_id,
                 'customer_id' => $order->customer_id,
                 'seller_id' => $order->items->first()->variant->product->seller_id,
-                'subject' => 'Khiếu nại về đơn hàng ' . $order->order_number,
+                'subject' => 'Khiếu nại về đơn hàng '.$order->order_number,
                 'description' => fake()->paragraph,
                 'status' => fake()->randomElement(['open', 'under_review', 'resolved', 'closed']),
                 'type' => fake()->numberBetween(1, 3),

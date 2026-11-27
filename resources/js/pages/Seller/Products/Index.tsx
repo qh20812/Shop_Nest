@@ -1,14 +1,19 @@
-import '@/../css/Page.css';
 import ProductInfoCell from '@/components/admin/products/ProductInfoCell';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
-import DataTable from '@/components/ui/data-table';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Badge } from '@/components/ui/badge';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
 import Pagination from '@/components/ui/pagination';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
+import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
+import { Eye, Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface Category {
     category_id: number;
@@ -30,7 +35,7 @@ interface Product {
     name: string | Record<string, string>;
     category?: { category_id: number; name: string | Record<string, string> } | null;
     brand?: { brand_id: number; name: string | Record<string, string> } | null;
-    status: number;
+    status: string;
     variants?: ProductVariant[];
     variants_count?: number;
     variants_sum_stock_quantity?: number | string | null;
@@ -73,6 +78,7 @@ export default function Index() {
     const [categoryId, setCategoryId] = useState(filters?.category_id ? String(filters.category_id) : '');
     const [brandId, setBrandId] = useState(filters?.brand_id ? String(filters.brand_id) : '');
     const [status, setStatus] = useState(filters?.status ? String(filters.status) : '');
+    const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
 
     useEffect(() => {
         setSearch(filters?.search ? String(filters.search) : '');
@@ -105,58 +111,50 @@ export default function Index() {
         return value[locale] || value['en'] || value['vi'] || Object.values(value)[0] || '';
     }, []);
 
-    const getProductStatus = useCallback((productStatus: number) => {
+    const getProductStatus = useCallback((productStatus: string) => {
         switch (productStatus) {
-            case 1:
+            case 'draft':
+            case 'pending_approval':
                 return 'pending';
-            case 2:
+            case 'published':
                 return 'active';
-            case 3:
+            case 'hidden':
                 return 'inactive';
             default:
                 return 'pending';
         }
     }, []);
 
-    const getProductPrice = useCallback(
-        (product: Product) => {
-            if (!product.variants || product.variants.length === 0) {
-                return t('No variants');
-            }
+    const getProductPrice = useCallback((product: Product) => {
+        if (!product.variants || product.variants.length === 0) {
+            return null;
+        }
 
-            const prices = product.variants.map((variant) => Number(variant.price)).filter((price) => !Number.isNaN(price));
+        const prices = product.variants.map((variant) => Number(variant.price)).filter((price) => !Number.isNaN(price));
 
-            if (prices.length === 0) {
-                return t('No variants');
-            }
+        if (prices.length === 0) {
+            return null;
+        }
 
-            const minPrice = Math.min(...prices);
-            const maxPrice = Math.max(...prices);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
 
-            if (minPrice === maxPrice) {
-                return `${minPrice.toLocaleString()} VND`;
-            }
+        if (minPrice === maxPrice) {
+            return formatVnd(minPrice);
+        }
 
-            return `${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()} VND`;
-        },
-        [t],
-    );
+        return `${formatVnd(minPrice)} - ${formatVnd(maxPrice)}`;
+    }, []);
 
-    const handleDelete = useCallback(
-        (product: Product) => {
-            if (!window.confirm(t('Are you sure you want to delete this product?'))) {
-                return;
-            }
+    const handleDelete = useCallback(() => {
+        if (!pendingDelete) {
+            return;
+        }
 
-            router.delete(`/seller/products/${product.product_id}`, {
-                preserveScroll: true,
-                onError: () => {
-                    console.error('Failed to delete product');
-                },
-            });
-        },
-        [t],
-    );
+        router.delete(`/seller/products/${pendingDelete.product_id}`, {
+            preserveScroll: true,
+        });
+    }, [pendingDelete]);
 
     const productData = useMemo(() => products?.data ?? [], [products]);
 
@@ -173,78 +171,77 @@ export default function Index() {
         [t],
     );
 
-    const productColumns = useMemo(
+    const productColumns = useMemo<DataTableColumn<Product>[]>(
         () => [
             {
-                id: 'product_info',
+                key: 'product_info',
                 header: t('Product'),
-                cell: (product: Product) => <ProductInfoCell product={adaptProductForCell(product)} />,
+                cell: (product) => <ProductInfoCell product={adaptProductForCell(product)} />,
             },
             {
-                id: 'category_name',
+                key: 'category_name',
                 header: t('Category'),
-                cell: (product: Product) => (
-                    <span style={{ color: 'var(--dark)' }}>{getStringValue(product.category?.name) || t('No Category')}</span>
-                ),
+                cell: (product) => <span className={styles.cellMeta}>{getStringValue(product.category?.name) || t('No Category')}</span>,
             },
             {
-                id: 'brand_name',
+                key: 'brand_name',
                 header: t('Brand'),
-                cell: (product: Product) => <span style={{ color: 'var(--dark)' }}>{getStringValue(product.brand?.name) || t('No Brand')}</span>,
+                cell: (product) => <span className={styles.cellMeta}>{getStringValue(product.brand?.name) || t('No Brand')}</span>,
             },
             {
-                id: 'price_range',
+                key: 'price_range',
                 header: t('Price'),
-                cell: (product: Product) => <span style={{ color: 'var(--primary)', fontWeight: 500 }}>{getProductPrice(product)}</span>,
+                align: 'right',
+                cell: (product) => {
+                    const price = getProductPrice(product);
+
+                    return price ? <span className={styles.price}>{price}</span> : <span className={styles.cellMeta}>{t('No variants')}</span>;
+                },
             },
             {
-                id: 'stock_quantity',
+                key: 'stock_quantity',
                 header: t('Stock'),
-                cell: (product: Product) => (
-                    <div
-                        style={{
-                            padding: '4px 8px',
-                            background: Number(product.variants_sum_stock_quantity ?? 0) > 0 ? 'var(--light-success)' : 'var(--light-danger)',
-                            color: Number(product.variants_sum_stock_quantity ?? 0) > 0 ? 'var(--success)' : 'var(--danger)',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            textAlign: 'center',
-                        }}
-                    >
-                        {Number(product.variants_sum_stock_quantity ?? 0).toLocaleString()} {t('units')}
-                    </div>
-                ),
+                align: 'right',
+                cell: (product) => {
+                    const stock = Number(product.variants_sum_stock_quantity ?? 0);
+
+                    return (
+                        <Badge tone={stock > 0 ? 'success' : 'danger'} size="sm">
+                            {stock.toLocaleString('vi-VN')} {t('units')}
+                        </Badge>
+                    );
+                },
             },
             {
-                id: 'status',
+                key: 'status',
                 header: t('Status'),
-                cell: (product: Product) => <StatusBadge status={getProductStatus(product.status)} />,
+                cell: (product) => <StatusBadge status={getProductStatus(product.status)} />,
             },
             {
-                id: 'actions',
+                key: 'actions',
                 header: t('Actions'),
-                cell: (product: Product) => {
+                align: 'right',
+                cell: (product) => {
                     const actions: ActionConfig[] = [
                         {
                             type: 'link',
                             href: `/seller/products/${product.product_id}`,
                             variant: 'primary',
-                            icon: 'bx bx-show',
+                            icon: Eye,
                             label: 'View',
                         },
                         {
                             type: 'link',
                             href: `/seller/products/${product.product_id}/edit`,
                             variant: 'primary',
-                            icon: 'bx bx-edit',
+                            icon: Pencil,
                             label: 'Edit',
                         },
                         {
                             type: 'button',
-                            onClick: () => handleDelete(product),
+                            onClick: () => setPendingDelete(product),
                             variant: 'danger',
-                            icon: 'bx bx-trash',
+                            icon: Trash2,
                             label: 'Delete',
                         },
                     ];
@@ -253,11 +250,11 @@ export default function Index() {
                 },
             },
         ],
-        [adaptProductForCell, getProductPrice, getProductStatus, getStringValue, handleDelete, t],
+        [adaptProductForCell, getProductPrice, getProductStatus, getStringValue, t],
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Seller Product Management')} />
 
             <FilterPanel
@@ -267,8 +264,8 @@ export default function Index() {
                     { label: t('Products'), href: '/seller/products', active: true },
                 ]}
                 reportButtonConfig={{
-                    label: 'Tạo sản phẩm',
-                    icon: 'bx bx-plus',
+                    label: t('Create Product'),
+                    icon: Plus,
                     onClick: () => router.visit('/seller/products/create'),
                 }}
                 searchConfig={{
@@ -300,9 +297,10 @@ export default function Index() {
                         onChange: setStatus,
                         label: t('-- All Statuses --'),
                         options: [
-                            { value: '1', label: t('Pending Approval') },
-                            { value: '2', label: t('Active') },
-                            { value: '3', label: t('Inactive') },
+                            { value: 'draft', label: t('Draft') },
+                            { value: 'pending_approval', label: t('Pending Approval') },
+                            { value: 'published', label: t('Published') },
+                            { value: 'hidden', label: t('Hidden') },
                         ],
                     },
                 ]}
@@ -313,11 +311,23 @@ export default function Index() {
                 columns={productColumns}
                 data={productData}
                 headerTitle={`${t('Product List')} (${totalProducts})`}
-                headerIcon="bx-package"
+                headerIcon={Package}
                 emptyMessage={t('No products found')}
             />
 
             <Pagination links={products?.links ?? []} />
-        </AppLayout>
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open) setPendingDelete(null);
+                }}
+                title={t('Delete product')}
+                description={`${t('Are you sure you want to delete this product?')} ${pendingDelete ? getStringValue(pendingDelete.name) : ''}`}
+                confirmLabel={t('Delete')}
+                cancelLabel={t('Cancel')}
+                onConfirm={handleDelete}
+            />
+        </WorkspaceLayout>
     );
 }

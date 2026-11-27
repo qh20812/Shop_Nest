@@ -1,25 +1,19 @@
+import { useTranslation } from '@/lib/i18n';
 import { CheckCircle2, ShoppingCart, Truck, Zap } from 'lucide-react';
 import * as React from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 import { Price } from './Price';
 import { QuantityStepper } from './QuantityStepper';
-import { Rating } from './Rating';
-import { ShopIdentity, type ShopInfo } from './ShopIdentity';
+import styles from './commerce.module.css';
 
 type BuyBoxProps = {
-    title: string;
-    shop?: ShopInfo;
-    rating?: number;
-    reviewCount?: number;
-    soldCount?: number;
     price: number;
     compareAt?: number;
     stock?: number;
+    canBuy?: boolean;
     quantity: number;
     maxQuantity: number;
     onQuantityChange: (quantity: number) => void;
@@ -34,14 +28,10 @@ type BuyBoxProps = {
 };
 
 export function BuyBox({
-    title,
-    shop,
-    rating,
-    reviewCount,
-    soldCount,
     price,
     compareAt,
     stock,
+    canBuy = true,
     quantity,
     maxQuantity,
     onQuantityChange,
@@ -49,70 +39,63 @@ export function BuyBox({
     onBuyNow,
     adding = false,
     buying = false,
-    deliveryNote = 'Giao trong 2–4 ngày tại TP.HCM.',
-    trust = ['Shop đã kiểm duyệt', 'Đổi trả 7 ngày'],
+    deliveryNote,
+    trust = [],
     children,
     className,
 }: BuyBoxProps) {
-    const inStock = (stock ?? maxQuantity) > 0;
+    const { t } = useTranslation();
+    const resolvedDeliveryNote = deliveryNote ?? t('By shipping address.');
+    const inStock = typeof stock === 'number' ? stock > 0 : true;
+    const purchasable = canBuy && inStock;
 
     return (
-        <div className={cn('flex flex-col gap-5 rounded-surface border border-border bg-warm-porcelain p-5 lg:sticky lg:top-24', className)}>
-            {shop && <ShopIdentity shop={shop} />}
-
-            <div className="flex flex-col gap-2">
-                <h1 className="text-headline-3 text-ink">{title}</h1>
-                <div className="flex flex-wrap items-center gap-3 text-body-sm text-ink-muted">
-                    {typeof rating === 'number' && <Rating value={rating} count={reviewCount} compact />}
-                    {typeof soldCount === 'number' && <span>· Đã bán {formatNumber(soldCount)}</span>}
-                </div>
-            </div>
-
-            <div className="rounded-card border border-border bg-rice-paper/60 p-4">
+        <div className={className ? `${styles.buyBox} ${className}` : styles.buyBox}>
+            <div className={styles.buyBoxPrice}>
                 <Price value={price} compareAt={compareAt} size="xl" />
-                {stock !== undefined && (
-                    <div className="mt-2">
-                        <Badge tone={inStock ? 'success' : 'danger'} dot size="sm">
-                            {inStock ? `Còn ${formatNumber(stock)} sản phẩm` : 'Tạm hết hàng'}
-                        </Badge>
-                    </div>
+                {typeof stock === 'number' && (
+                    <span className={styles.buyBoxStock} data-out={!inStock ? 'true' : undefined}>
+                        {inStock ? t(':count items left', { count: formatNumber(stock) }) : t('Out of stock')}
+                    </span>
                 )}
             </div>
 
             {children}
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <QuantityStepper value={quantity} min={1} max={Math.max(1, maxQuantity)} onChange={onQuantityChange} disabled={!inStock} />
-                <span className="text-body-sm text-ink-muted">Tối đa {Math.max(1, maxQuantity)} món</span>
+            <div className={styles.buyBoxQuantity}>
+                <QuantityStepper value={quantity} min={1} max={Math.max(1, maxQuantity)} onChange={onQuantityChange} disabled={!purchasable} />
+                <span>{t('Max :count items', { count: Math.max(1, maxQuantity) })}</span>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-                <Button size="lg" className="flex-1" leftIcon={ShoppingCart} loading={adding} disabled={!inStock} onClick={onAddToCart}>
-                    Thêm vào giỏ
+            <div className={styles.buyBoxActions}>
+                <Button type="button" size="lg" leftIcon={ShoppingCart} loading={adding} disabled={!purchasable} onClick={onAddToCart}>
+                    {t('Add to cart')}
                 </Button>
-                <Button size="lg" variant="secondary" className="flex-1" leftIcon={Zap} loading={buying} disabled={!inStock} onClick={onBuyNow}>
-                    Mua ngay
+                <Button type="button" size="lg" variant="secondary" leftIcon={Zap} loading={buying} disabled={!purchasable} onClick={onBuyNow}>
+                    {t('Buy now')}
                 </Button>
             </div>
 
-            <div className="flex items-start gap-3 rounded-control border border-border bg-raw-linen/50 p-3">
-                <Truck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-jade" />
-                <div className="flex flex-col gap-0.5">
-                    <span className="text-body-sm font-medium text-ink">Dự kiến nhận hàng</span>
-                    <span className="text-body-sm text-ink-muted">{deliveryNote}</span>
+            <div className={styles.buyBoxAssurance}>
+                <div className={styles.buyBoxDelivery}>
+                    <Truck aria-hidden="true" className={styles.buyBoxDeliveryIcon} />
+                    <div className={styles.buyBoxDeliveryText}>
+                        <span className={styles.buyBoxDeliveryTitle}>{t('Estimated delivery')}</span>
+                        <span>{resolvedDeliveryNote}</span>
+                    </div>
                 </div>
-            </div>
 
-            {trust.length > 0 && (
-                <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-border pt-4">
-                    {trust.map((item) => (
-                        <span key={item} className="inline-flex items-center gap-1.5 text-body-sm text-ink-muted">
-                            <CheckCircle2 aria-hidden="true" className="size-4 text-jade" />
-                            {item}
-                        </span>
-                    ))}
-                </div>
-            )}
+                {trust.length > 0 && (
+                    <div className={styles.buyBoxTrust}>
+                        {trust.map((item) => (
+                            <span key={item} className={styles.buyBoxTrustItem}>
+                                <CheckCircle2 aria-hidden="true" className={styles.buyBoxTrustIcon} />
+                                {item}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

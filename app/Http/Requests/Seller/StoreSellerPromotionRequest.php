@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Seller;
 
 use App\Services\SellerPromotionService;
-use App\Services\SellerWalletService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -38,7 +38,7 @@ class StoreSellerPromotionRequest extends FormRequest
         $validator->after(function (Validator $validator) {
             $sellerId = $this->user()?->id;
 
-            if (!$sellerId) {
+            if (! $sellerId) {
                 return;
             }
 
@@ -51,21 +51,24 @@ class StoreSellerPromotionRequest extends FormRequest
 
             $promotionService = app(SellerPromotionService::class);
             $productIds = $this->input('product_ids', []);
-            if (!$promotionService->validateSellerOwnership($productIds, $sellerId)) {
+            if (! $promotionService->validateSellerOwnership($productIds, $sellerId)) {
                 $validator->errors()->add('product_ids', 'You can only create promotions for products you own.');
             }
 
             $allocatedBudget = (float) $this->input('allocated_budget', 0);
-            $walletService = app(SellerWalletService::class);
-            $wallet = $walletService->getWallet($sellerId);
+            $walletService = app(WalletService::class);
+            $wallet = $walletService->findForUser($sellerId);
 
-            if ($wallet->status !== 'active') {
-                $validator->errors()->add('allocated_budget', 'Your wallet is not active.');
-                return;
-            }
+            if ($allocatedBudget > 0) {
+                if (! $wallet || ! $wallet->isActive()) {
+                    $validator->errors()->add('allocated_budget', 'Your wallet is not active.');
 
-            if ($wallet->balance < $allocatedBudget) {
-                $validator->errors()->add('allocated_budget', 'Insufficient wallet balance.');
+                    return;
+                }
+
+                if ((float) $wallet->balance < $allocatedBudget) {
+                    $validator->errors()->add('allocated_budget', 'Insufficient wallet balance.');
+                }
             }
         });
     }

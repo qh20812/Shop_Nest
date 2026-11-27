@@ -1,0 +1,245 @@
+/*
+ * Bảng Hiệu — semantic tokens.
+ *
+ * Components use these roles only. Primitive values live in primitive.css.
+ * `[data-theme='dark']` is the only dark selector; the legacy `.dark` mirror
+ * was removed in Phase 11 together with Page.css/base.css/legacy-tokens.
+ */
+
+:root,
+[data-theme='light'] {
+    color-scheme: light;
+
+    /* Surface */
+    --sn-color-canvas: var(--sn-neutral-100);
+    --sn-color-canvas-alt: var(--sn-neutral-50);
+    --sn-color-surface: var(--sn-neutral-0);
+    --sn-color-surface-sunken: var(--sn-neutral-150);
+    --sn-color-surface-strong: var(--sn-neutral-900);
+    --sn-color-surface-inverse: var(--sn-neutral-950);
+
+    /* Text */
+    --sn-color-text: var(--sn-neutral-950);
+    --sn-color-text-muted: var(--sn-neutral-700);
+    --sn-color-text-faint: var(--sn-neutral-600);
+    --sn-color-text-inverse: var(--sn-neutral-25);
+    --sn-color-text-on-strong: var(--sn-neutral-25);
+
+    /* Line */
+    --sn-color-border: var(--sn-neutral-300);
+    --sn-color-border-strong: var(--sn-neutral-500);
+    --sn-color-border-inverse: var(--sn-neutral-700);
+
+    /* Accent */
+    --sn-color-accent: var(--sn-accent-600);
+    --sn-color-accent-hover: var(--sn-accent-700);
+    --sn-color-accent-text: var(--sn-accent-700);
+    --sn-color-accent-wash: var(--sn-accent-50);
+    --sn-color-on-accent: var(--sn-neutral-0);
+    --sn-color-focus: var(--sn-accent-600);
+
+    /* Success */
+    --sn-color-success: var(--sn-success-500);
+    --sn-color-success-text: var(--sn-success-700);
+    --sn-color-success-wash: var(--sn-success-50);
+    --sn-color-on-success: var(--sn-neutral-0);
+
+    /* Warning */
+    --sn-color-warning: var(--sn-warning-500);
+    --sn-color-warning-text: var(--sn-warning-600);
+    --sn-color-warning-wash: var(--sn-warning-50);
+    --sn-color-on-warning: var(--sn-neutral-0);
+
+    /* Danger */
+    --sn-color-danger: var(--sn-danger-500);
+    --sn-color-danger-text: var(--sn-danger-600);
+    --sn-color-danger-wash: var(--sn-danger-50);
+    --sn-color-on-danger: var(--sn-neutral-0);
+
+    /* Neutral badge */
+    --sn-color-neutral: var(--sn-neutral-700);
+    --sn-color-neutral-text: var(--sn-neutral-800);
+    --sn-color-neutral-wash: var(--sn-neutral-150);
+
+    /* Utility */
+    --sn-color-overlay: rgb(21 22 15 / 0.52);
+    --sn-color-selection: var(--sn-accent-100);
+    --sn-color-scrim: rgb(21 22 15 / 0.08);
+
+    /* QR paper: a scannable code needs a light quiet zone in both themes */
+    --sn-color-qr-paper: var(--sn-neutral-0);
+    --sn-color-qr-ink: var(--sn-neutral-950);
+
+    /* Glass dock */
+    --sn-color-canvas-deep: var(--sn-neutral-150);
+    --sn-glass-tint: rgb(255 255 255 / 0.78);
+    --sn-glass-control: rgb(255 255 255 / 0.62);
+    --sn-glass-control-hover: rgb(255 255 255 / 0.9);
+    --sn-glass-field: var(--sn-color-surface);
+    --sn-glass-menu: rgb(255 255 255 / 0.92);
+    --sn-glass-hover: rgb(21 22 15 / 0.06);
+    --sn-glass-press: rgb(21 22 15 / 0.1);
+    --sn-glass-hairline: rgb(21 22 15 / 0.1);
+    --sn-glass-highlight: rgb(255 255 255 / 0.9);
+    --sn-glass-ring: rgb(255 255 255 / 0.92);
+    --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 44px -26px rgb(21 22 15 / 0.4), 0 4px 10px -6px rgb(21 22 15 / 0.14);
+    --sn-shadow-card: 0 1px 2px rgb(21 22 15 / 0.04), 0 14px 30px -24px rgb(21 22 15 / 0.3);
+    --sn-shadow-float: 0 1px 2px rgb(21 22 15 / 0.06), 0 6px 16px -10px rgb(21 22 15 / 0.3);
+    --sn-shadow-accent: 0 10px 20px -12px rgb(194 65 12 / 0.55);
+
+    /* Workspace ambient wash — material layer behind floating chrome */
+    --sn-workspace-wash-warm: rgb(194 65 12 / 0.07);
+    --sn-workspace-wash-cool: rgb(21 22 15 / 0.035);
+    --sn-workspace-wash:
+        radial-gradient(58rem 42rem at 6% -4%, var(--sn-workspace-wash-warm), transparent 62%),
+        radial-gradient(46rem 34rem at 98% 2%, var(--sn-workspace-wash-cool), transparent 58%);
+}
+
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    /* Surface */
+    --sn-color-canvas: var(--sn-graphite-950);
+    --sn-color-canvas-alt: var(--sn-graphite-900);
+    --sn-color-surface: var(--sn-graphite-850);
+    --sn-color-surface-sunken: var(--sn-graphite-900);
+    --sn-color-surface-strong: var(--sn-graphite-50);
+    --sn-color-surface-inverse: var(--sn-graphite-50);
+
+    /* Text */
+    --sn-color-text: var(--sn-graphite-50);
+    --sn-color-text-muted: var(--sn-graphite-200);
+    --sn-color-text-faint: var(--sn-graphite-300);
+    --sn-color-text-inverse: var(--sn-graphite-950);
+    --sn-color-text-on-strong: var(--sn-graphite-950);
+
+    /* Line */
+    --sn-color-border: var(--sn-graphite-600);
+    --sn-color-border-strong: var(--sn-graphite-350);
+    --sn-color-border-inverse: var(--sn-graphite-300);
+
+    /* Accent */
+    --sn-color-accent: var(--sn-signal-accent);
+    --sn-color-accent-hover: var(--sn-signal-accent-hover);
+    --sn-color-accent-text: var(--sn-signal-accent);
+    --sn-color-accent-wash: #3a241c;
+    --sn-color-on-accent: #1a0e08;
+    --sn-color-focus: var(--sn-signal-accent);
+
+    /* Success */
+    --sn-color-success: #3aa87a;
+    --sn-color-success-text: var(--sn-signal-success);
+    --sn-color-success-wash: #12291f;
+    --sn-color-on-success: #07150f;
+
+    /* Warning */
+    --sn-color-warning: #b07416;
+    --sn-color-warning-text: var(--sn-signal-warning);
+    --sn-color-warning-wash: #2e2413;
+    --sn-color-on-warning: #1a1205;
+
+    /* Danger */
+    --sn-color-danger: #e05a50;
+    --sn-color-danger-text: var(--sn-signal-danger);
+    --sn-color-danger-wash: #2e1714;
+    --sn-color-on-danger: #1a0a08;
+
+    /* Neutral badge */
+    --sn-color-neutral: var(--sn-graphite-300);
+    --sn-color-neutral-text: var(--sn-graphite-200);
+    --sn-color-neutral-wash: var(--sn-graphite-700);
+
+    /* Utility */
+    --sn-color-overlay: rgb(0 0 0 / 0.66);
+    --sn-color-selection: #4a2a1e;
+    --sn-color-scrim: rgb(0 0 0 / 0.32);
+
+    /* QR paper */
+    --sn-color-qr-paper: var(--sn-neutral-0);
+    --sn-color-qr-ink: var(--sn-neutral-950);
+
+    /* Glass dock */
+    --sn-color-canvas-deep: var(--sn-graphite-950);
+    --sn-glass-tint: rgb(28 32 26 / 0.62);
+    --sn-glass-control: rgb(255 255 255 / 0.06);
+    --sn-glass-control-hover: rgb(255 255 255 / 0.1);
+    --sn-glass-field: rgb(255 255 255 / 0.07);
+    --sn-glass-menu: rgb(28 32 26 / 0.88);
+    --sn-glass-hover: rgb(255 255 255 / 0.07);
+    --sn-glass-press: rgb(255 255 255 / 0.11);
+    --sn-glass-hairline: rgb(255 255 255 / 0.12);
+    --sn-glass-highlight: rgb(255 255 255 / 0.08);
+    --sn-glass-ring: rgb(28 32 26 / 0.95);
+    --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+    --sn-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 36px -26px rgb(0 0 0 / 0.7);
+    --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+    --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
+
+    --sn-workspace-wash-warm: rgb(255 138 91 / 0.06);
+    --sn-workspace-wash-cool: rgb(255 255 255 / 0.03);
+}
+
+/* Fallback khi chưa có JS: theo hệ điều hành */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        color-scheme: dark;
+        --sn-color-canvas: var(--sn-graphite-950);
+        --sn-color-canvas-alt: var(--sn-graphite-900);
+        --sn-color-surface: var(--sn-graphite-850);
+        --sn-color-surface-sunken: var(--sn-graphite-900);
+        --sn-color-surface-strong: var(--sn-graphite-50);
+        --sn-color-surface-inverse: var(--sn-graphite-50);
+        --sn-color-text: var(--sn-graphite-50);
+        --sn-color-text-muted: var(--sn-graphite-200);
+        --sn-color-text-faint: var(--sn-graphite-300);
+        --sn-color-text-inverse: var(--sn-graphite-950);
+        --sn-color-text-on-strong: var(--sn-graphite-950);
+        --sn-color-border: var(--sn-graphite-600);
+        --sn-color-border-strong: var(--sn-graphite-350);
+        --sn-color-border-inverse: var(--sn-graphite-300);
+        --sn-color-accent: var(--sn-signal-accent);
+        --sn-color-accent-hover: var(--sn-signal-accent-hover);
+        --sn-color-accent-text: var(--sn-signal-accent);
+        --sn-color-accent-wash: #3a241c;
+        --sn-color-on-accent: #1a0e08;
+        --sn-color-focus: var(--sn-signal-accent);
+        --sn-color-success: #3aa87a;
+        --sn-color-success-text: var(--sn-signal-success);
+        --sn-color-success-wash: #12291f;
+        --sn-color-on-success: #07150f;
+        --sn-color-warning: #b07416;
+        --sn-color-warning-text: var(--sn-signal-warning);
+        --sn-color-warning-wash: #2e2413;
+        --sn-color-on-warning: #1a1205;
+        --sn-color-danger: #e05a50;
+        --sn-color-danger-text: var(--sn-signal-danger);
+        --sn-color-danger-wash: #2e1714;
+        --sn-color-on-danger: #1a0a08;
+        --sn-color-neutral: var(--sn-graphite-300);
+        --sn-color-neutral-text: var(--sn-graphite-200);
+        --sn-color-neutral-wash: var(--sn-graphite-700);
+        --sn-color-overlay: rgb(0 0 0 / 0.66);
+        --sn-color-selection: #4a2a1e;
+        --sn-color-scrim: rgb(0 0 0 / 0.32);
+        --sn-color-qr-paper: var(--sn-neutral-0);
+        --sn-color-qr-ink: var(--sn-neutral-950);
+        --sn-color-canvas-deep: var(--sn-graphite-950);
+        --sn-glass-tint: rgb(28 32 26 / 0.62);
+        --sn-glass-control: rgb(255 255 255 / 0.06);
+        --sn-glass-control-hover: rgb(255 255 255 / 0.1);
+        --sn-glass-field: rgb(255 255 255 / 0.07);
+        --sn-glass-menu: rgb(28 32 26 / 0.88);
+        --sn-glass-hover: rgb(255 255 255 / 0.07);
+        --sn-glass-press: rgb(255 255 255 / 0.11);
+        --sn-glass-hairline: rgb(255 255 255 / 0.12);
+        --sn-glass-highlight: rgb(255 255 255 / 0.08);
+        --sn-glass-ring: rgb(28 32 26 / 0.95);
+        --sn-shadow-glass: inset 0 1px 0 var(--sn-glass-highlight), 0 20px 48px -28px rgb(0 0 0 / 0.8), 0 2px 8px -4px rgb(0 0 0 / 0.5);
+        --sn-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 36px -26px rgb(0 0 0 / 0.7);
+        --sn-shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -10px rgb(0 0 0 / 0.6);
+        --sn-shadow-accent: 0 10px 20px -12px rgb(255 138 91 / 0.4);
+
+        --sn-workspace-wash-warm: rgb(255 138 91 / 0.06);
+        --sn-workspace-wash-cool: rgb(255 255 255 / 0.03);
+    }
+}

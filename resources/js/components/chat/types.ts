@@ -15,6 +15,28 @@ export type ChatMessageModel = {
     sender?: ChatParticipant | null;
 };
 
+export type ChatProduct = {
+    id: number;
+    name: string;
+    image?: string | null;
+    price: number;
+    compare_at?: number | null;
+    rating?: number | null;
+    review_count?: number;
+    shop_name?: string | null;
+    url?: string;
+    badges?: string[];
+    stock?: 'in' | 'low' | 'out';
+};
+
+export type ChatbotHistoryTurn = {
+    id: number;
+    user_content: string;
+    assistant_content: string;
+    products?: ChatProduct[];
+    created_at?: string | null;
+};
+
 export type ChatConversationModel = {
     id: number;
     partnerId: number | null;

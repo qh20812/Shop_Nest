@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
-import { orderStatusLabel, orderStatusTone } from '@/lib/status';
+import { useTranslation } from '@/lib/i18n';
+import { orderStatusKey, orderStatusTone } from '@/lib/status';
 import type { OrderStatus } from '@/types/commerce';
 
 type OrderStatusBadgeProps = {
@@ -10,9 +11,10 @@ type OrderStatusBadgeProps = {
 };
 
 export function OrderStatusBadge({ status, label, dot = true, className }: OrderStatusBadgeProps) {
+    const { t } = useTranslation();
     return (
         <Badge tone={orderStatusTone[status]} dot={dot} className={className}>
-            {label ?? orderStatusLabel[status]}
+            {label ?? t(orderStatusKey[status])}
         </Badge>
     );
 }

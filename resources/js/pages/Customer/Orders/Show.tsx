@@ -16,9 +16,12 @@ import { FormField } from '@/components/ui/form-field';
 import Textarea from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Heading } from '@/components/ui/typography';
-import { formatVnd } from '@/lib/format';
-import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusLabel, paymentStatusTone } from '@/lib/status';
-import { cn } from '@/lib/utils';
+import { useMoney } from '@/hooks/useMoney';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+import { backendOrderStatusLabel, normalizeOrderStatus, paymentStatusKey, paymentStatusTone } from '@/lib/status';
+
+import styles from '../customer.module.css';
 
 interface OrderItem {
     id: number;
@@ -61,11 +64,11 @@ interface ShowProps extends Record<string, unknown> {
     order: OrderDetail;
 }
 
-const stepDefinitions: TimelineStep[] = [
-    { key: 'placed', label: 'Đặt hàng', description: 'ShopNest đã nhận đơn của bạn.' },
-    { key: 'confirmed', label: 'Shop xác nhận', description: 'Người bán đang chuẩn bị món hàng.' },
-    { key: 'shipping', label: 'Đang giao', description: 'Đơn đã được giao cho đơn vị vận chuyển.' },
-    { key: 'delivered', label: 'Đã giao', description: 'Đơn đã tới địa chỉ giao hàng.' },
+const stepDefinitionKeys = [
+    { key: 'placed', labelKey: 'Order placed', descriptionKey: 'ShopNest received your order.' },
+    { key: 'confirmed', labelKey: 'Shop confirmed', descriptionKey: 'The seller is preparing your items.' },
+    { key: 'shipping', labelKey: 'Delivering', descriptionKey: 'The order has been handed to the carrier.' },
+    { key: 'delivered', labelKey: 'Delivered', descriptionKey: 'The order arrived at the shipping address.' },
 ];
 
 function currentStep(status: string): number {
@@ -76,6 +79,13 @@ function currentStep(status: string): number {
 }
 
 export default function OrderShow({ order }: ShowProps) {
+    const { money } = useMoney();
+    const { t } = useTranslation();
+    const resolvedSteps: TimelineStep[] = stepDefinitionKeys.map((step) => ({
+        key: step.key,
+        label: t(step.labelKey),
+        description: t(step.descriptionKey),
+    }));
     const { success, error: showError } = useToast();
     const [cancelOpen, setCancelOpen] = React.useState(false);
     const [cancelReason, setCancelReason] = React.useState('');
@@ -96,8 +106,8 @@ export default function OrderShow({ order }: ShowProps) {
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => success('Đã thêm lại món vào giỏ'),
-                onError: () => showError('Không thể mua lại đơn này'),
+                onSuccess: () => success(t('Items added back to your cart')),
+                onError: () => showError(t('Could not reorder this order')),
             },
         );
     };
@@ -112,9 +122,9 @@ export default function OrderShow({ order }: ShowProps) {
                 onSuccess: () => {
                     setCancelOpen(false);
                     setCancelReason('');
-                    success('Đã huỷ đơn hàng');
+                    success(t('Order cancelled'));
                 },
-                onError: () => showError('Không thể huỷ đơn hàng'),
+                onError: () => showError(t('Could not cancel the order')),
                 onFinish: () => setCancelProcessing(false),
             },
         );
@@ -130,9 +140,9 @@ export default function OrderShow({ order }: ShowProps) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setComment('');
-                    success('Cảm ơn bạn đã đánh giá đơn hàng');
+                    success(t('Thanks for reviewing your order'));
                 },
-                onError: () => showError('Không thể gửi đánh giá'),
+                onError: () => showError(t('Could not submit the review')),
                 onFinish: () => setReviewProcessing(false),
             },
         );
@@ -141,67 +151,67 @@ export default function OrderShow({ order }: ShowProps) {
     return (
         <AccountLayout
             active="orders"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Đơn hàng', href: '/user/orders' }, { label: order.code }]}
-            eyebrow="Chi tiết đơn hàng"
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Orders'), href: '/user/orders' }, { label: order.code }]}
+            eyebrow={t('Order details')}
             title={order.code}
-            description={order.created_at ? `Đặt lúc ${order.created_at}` : undefined}
+            description={order.created_at ? t('Placed at :time', { time: order.created_at }) : undefined}
             actions={
-                <div className="flex flex-wrap items-center gap-2">
+                <div className={styles.badgeRow}>
                     <Button variant="secondary" size="sm" leftIcon={ArrowLeft} asChild>
-                        <Link href="/user/orders">Danh sách</Link>
+                        <Link href="/user/orders">{t('Order list')}</Link>
                     </Button>
                     <Button variant="outline" size="sm" leftIcon={RefreshCw} onClick={handleReorder}>
-                        Mua lại
+                        {t('Reorder')}
                     </Button>
-                    {order.can_cancel && (
+                    {order.can_cancel ? (
                         <Button variant="destructive" size="sm" leftIcon={XCircle} onClick={() => setCancelOpen(true)}>
-                            Huỷ đơn
+                            {t('Cancel order')}
                         </Button>
-                    )}
+                    ) : null}
                 </div>
             }
         >
-            <Head title={`Đơn hàng ${order.code}`} />
+            <Head title={t('Order :code', { code: order.code })} />
 
-            <div className="grid gap-6 lg:grid-cols-12">
-                <div className="flex flex-col gap-6 lg:col-span-8">
-                    {(isCancelled || isReturned) && (
+            <div className={styles.orderGrid}>
+                <div className={styles.orderMain}>
+                    {isCancelled || isReturned ? (
                         <Alert
                             tone={isCancelled ? 'danger' : 'warning'}
-                            title={isCancelled ? 'Đơn hàng đã huỷ' : 'Đơn hàng đang trả hàng'}
+                            title={isCancelled ? t('Order cancelled') : t('Order is being returned')}
                             description={
                                 isCancelled
-                                    ? 'Đơn này không thể tiếp tục giao. Nếu đã thanh toán, khoản hoàn tiền sẽ được xử lý theo chính sách.'
-                                    : 'Yêu cầu trả hàng đang được shop xử lý. Bạn sẽ nhận thông báo khi có cập nhật.'
+                                    ? t('This order cannot be delivered. If you already paid, the refund follows policy.')
+                                    : t('Your return request is being handled by the shop. We will notify you when it changes.')
                             }
                         />
-                    )}
+                    ) : null}
 
-                    <Card padding="lg" className="flex flex-col gap-5">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Card padding="lg" className={styles.cardStack}>
+                        <div className={styles.cardHead}>
                             <Heading level={2} size="headline-3">
-                                Tiến trình đơn hàng
+                                {t('Order progress')}
                             </Heading>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <OrderStatusBadge status={normalizedStatus} label={backendOrderStatusLabel(order.status)} />
+                            <div className={styles.badgeRow}>
+                                <OrderStatusBadge status={normalizedStatus} label={backendOrderStatusLabel(order.status, t)} />
                                 <Badge tone={paymentStatusTone[order.payment_status] ?? 'neutral'} dot>
-                                    {paymentStatusLabel[order.payment_status] ?? order.payment_status}
+                                    {t(paymentStatusKey[order.payment_status] ?? order.payment_status)}
                                 </Badge>
                             </div>
                         </div>
 
-                        <OrderTimeline steps={stepDefinitions} current={currentStep(order.status)} tone={timelineTone} />
+                        <OrderTimeline steps={resolvedSteps} current={currentStep(order.status)} tone={timelineTone} />
                     </Card>
 
-                    <Card padding="lg" className="flex flex-col gap-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Card padding="lg" className={styles.cardStackTight}>
+                        <div className={styles.cardHead}>
                             <Heading level={2} size="headline-3">
-                                Sản phẩm
+                                {t('Products')}
                             </Heading>
-                            <span className="font-mono text-label-code text-ink-muted">{order.items.length} món</span>
+                            <span className={styles.metaCode}>{t(':count products', { count: order.items.length })}</span>
                         </div>
 
-                        <div className="flex flex-col">
+                        <div>
                             {order.items.map((item) => (
                                 <OrderItemRow
                                     key={item.id}
@@ -218,19 +228,19 @@ export default function OrderShow({ order }: ShowProps) {
                         </div>
                     </Card>
 
-                    {canReview && (
-                        <Card padding="lg" className="flex flex-col gap-4">
-                            <div className="flex items-center gap-2">
-                                <Star aria-hidden="true" className="size-5 text-turmeric" />
+                    {canReview ? (
+                        <Card padding="lg" className={styles.cardStackTight}>
+                            <div className={styles.cardHeadPlain}>
+                                <Star aria-hidden="true" className={styles.iconWarning} />
                                 <Heading level={2} size="headline-3">
-                                    Đánh giá đơn hàng
+                                    {t('Review your order')}
                                 </Heading>
                             </div>
 
-                            <form onSubmit={handleReview} className="flex flex-col gap-4">
-                                <fieldset className="flex flex-col gap-2">
-                                    <legend className="text-body-sm font-medium text-ink">Chọn mức độ hài lòng</legend>
-                                    <div className="flex items-center gap-1">
+                            <form onSubmit={handleReview} className={styles.reviewForm}>
+                                <fieldset className={styles.reviewFieldset}>
+                                    <legend className={styles.reviewLegend}>{t('How satisfied are you?')}</legend>
+                                    <div className={styles.starRow}>
                                         {[1, 2, 3, 4, 5].map((value) => (
                                             <button
                                                 key={value}
@@ -238,145 +248,142 @@ export default function OrderShow({ order }: ShowProps) {
                                                 aria-label={`${value} sao`}
                                                 aria-pressed={rating === value}
                                                 onClick={() => setRating(value)}
-                                                className="focus-ring rounded-chip p-1 transition-colors hover:bg-raw-linen"
+                                                className={styles.starButton}
                                             >
-                                                <Star
-                                                    aria-hidden="true"
-                                                    className={cn('size-6', value <= rating ? 'fill-turmeric text-turmeric' : 'text-ink-faint')}
-                                                />
+                                                <Star aria-hidden="true" className={cx(styles.star, value <= rating && styles.starActive)} />
                                             </button>
                                         ))}
-                                        <span className="ml-2 font-mono text-label-code text-ink-muted">{rating}/5</span>
+                                        <span className={styles.ratingValue}>{rating}/5</span>
                                     </div>
                                 </fieldset>
 
-                                <FormField label="Bình luận" hint="Chia sẻ trải nghiệm về sản phẩm và shop.">
+                                <FormField label={t('Comment')} hint={t('Share your experience with the product and the shop.')}>
                                     <Textarea
                                         value={comment}
                                         onChange={(event) => setComment(event.target.value)}
                                         rows={4}
                                         maxLength={1000}
                                         counter
-                                        placeholder="Hàng đóng gói cẩn thận, giao đúng hẹn..."
+                                        placeholder={t('Packaged carefully and delivered on time...')}
                                     />
                                 </FormField>
 
-                                <div className="flex justify-end">
+                                <div className={styles.formActions}>
                                     <Button type="submit" loading={reviewProcessing}>
-                                        Gửi đánh giá
+                                        {t('Submit review')}
                                     </Button>
                                 </div>
                             </form>
                         </Card>
-                    )}
+                    ) : null}
 
-                    {order.reviews.length > 0 && (
-                        <Card padding="lg" className="flex flex-col gap-4">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 aria-hidden="true" className="size-5 text-jade" />
+                    {order.reviews.length > 0 ? (
+                        <Card padding="lg" className={styles.cardStackTight}>
+                            <div className={styles.cardHeadPlain}>
+                                <CheckCircle2 aria-hidden="true" className={styles.iconSuccess} />
                                 <Heading level={2} size="headline-3">
-                                    Đánh giá của bạn
+                                    {t('Your review')}
                                 </Heading>
                             </div>
 
                             {order.reviews.map((review) => (
-                                <div key={review.id} className="flex flex-col gap-2 border-t border-border pt-4 first:border-t-0 first:pt-0">
-                                    <div className="flex flex-wrap items-center gap-3">
+                                <div key={review.id} className={styles.reviewItem}>
+                                    <div className={styles.reviewMeta}>
                                         <Rating value={review.rating} compact showValue={false} />
-                                        <span className="font-mono text-label-micro text-ink-faint">{review.created_at}</span>
+                                        <span className={styles.reviewTime}>{review.created_at}</span>
                                     </div>
-                                    {review.comment && <p className="text-body-sm leading-relaxed text-ink-muted">{review.comment}</p>}
+                                    {review.comment ? <p className={styles.reviewComment}>{review.comment}</p> : null}
                                 </div>
                             ))}
                         </Card>
-                    )}
+                    ) : null}
                 </div>
 
-                <aside className="flex flex-col gap-6 lg:col-span-4">
-                    <Card padding="lg" className="flex flex-col gap-4 lg:sticky lg:top-24">
+                <aside className={styles.orderAside}>
+                    <Card padding="lg" className={cx(styles.cardStackTight, styles.stickyAside)}>
                         <Heading level={2} size="headline-3">
-                            Tóm tắt thanh toán
+                            {t('Payment summary')}
                         </Heading>
 
-                        <div className="flex flex-col gap-2 text-body-sm">
-                            <div className="flex items-center justify-between text-ink-muted">
-                                <span>Tạm tính</span>
-                                <span className="font-mono text-ink">{formatVnd(order.subtotal)}</span>
+                        <div className={styles.summaryRows}>
+                            <div className={styles.summaryLine}>
+                                <span>{t('Subtotal')}</span>
+                                <span className={styles.summaryValue}>{money(order.subtotal)}</span>
                             </div>
-                            <div className="flex items-center justify-between text-ink-muted">
-                                <span>Phí vận chuyển</span>
-                                <span className="font-mono text-ink">{order.shipping_fee > 0 ? formatVnd(order.shipping_fee) : 'Miễn phí'}</span>
+                            <div className={styles.summaryLine}>
+                                <span>{t('Shipping fee')}</span>
+                                <span className={styles.summaryValue}>{order.shipping_fee > 0 ? money(order.shipping_fee) : t('Free')}</span>
                             </div>
-                            {order.discount_total > 0 && (
-                                <div className="flex items-center justify-between text-ink-muted">
-                                    <span>Giảm giá</span>
-                                    <span className="font-mono text-lacquer-red">-{formatVnd(order.discount_total)}</span>
+                            {order.discount_total > 0 ? (
+                                <div className={styles.summaryLine}>
+                                    <span>{t('Discount')}</span>
+                                    <span className={cx(styles.summaryValue, styles.summaryValueDiscount)}>-{money(order.discount_total)}</span>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
 
-                        <div className="flex items-baseline justify-between border-t border-border pt-4">
-                            <span className="text-body-md font-semibold text-ink">Tổng cộng</span>
-                            <span className="font-mono text-headline-3 font-bold text-ink">{formatVnd(order.total)}</span>
+                        <div className={styles.summaryTotalRow}>
+                            <span className={styles.summaryTotalLabel}>{t('Total')}</span>
+                            <span className={styles.summaryTotalValue}>{money(order.total)}</span>
                         </div>
 
-                        <div className="flex flex-col gap-2 border-t border-border pt-4 text-body-sm text-ink-muted">
-                            <span className="inline-flex items-center gap-2">
-                                <CreditCard aria-hidden="true" className="size-4 text-ink-faint" />
-                                {paymentStatusLabel[order.payment_status] ?? order.payment_status}
+                        <div className={styles.summaryMeta}>
+                            <span className={styles.summaryMetaRow}>
+                                <CreditCard aria-hidden="true" className={styles.iconFaint} />
+                                {t(paymentStatusKey[order.payment_status] ?? order.payment_status)}
                             </span>
-                            {order.shipping_address && (
-                                <span className="inline-flex items-start gap-2">
-                                    <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-lacquer-red" />
+                            {order.shipping_address ? (
+                                <span className={styles.summaryAddress}>
+                                    <MapPin aria-hidden="true" className={styles.iconAccent} />
                                     <span>
-                                        <strong className="block font-medium text-ink">{order.shipping_address.name}</strong>
-                                        <span className="font-mono text-label-micro">{order.shipping_address.phone}</span>
-                                        <span className="mt-1 block">{order.shipping_address.full_address}</span>
+                                        <strong className={styles.summaryAddressName}>{order.shipping_address.name}</strong>
+                                        <span className={styles.summaryAddressPhone}>{order.shipping_address.phone}</span>
+                                        <span className={styles.summaryAddressText}>{order.shipping_address.full_address}</span>
                                     </span>
                                 </span>
-                            )}
+                            ) : null}
                         </div>
 
-                        <Button variant="secondary" size="sm" leftIcon={RefreshCw} onClick={handleReorder} className="mt-1">
-                            Mua lại đơn này
+                        <Button variant="secondary" size="sm" leftIcon={RefreshCw} onClick={handleReorder}>
+                            {t('Reorder this order')}
                         </Button>
                     </Card>
 
-                    {isCancelled && (
+                    {isCancelled ? (
                         <Alert
                             tone="danger"
                             icon={AlertTriangle}
-                            title="Cần hỗ trợ?"
-                            description="Liên hệ shop trong mục chat để được kiểm tra hoàn tiền hoặc tạo đơn mới."
+                            title={t('Need help?')}
+                            description={t('Message the shop in chat to check the refund or place a new order.')}
                         />
-                    )}
+                    ) : null}
                 </aside>
             </div>
 
             <Dialog
                 open={cancelOpen}
                 onOpenChange={setCancelOpen}
-                title="Huỷ đơn hàng?"
-                description="Đơn đã huỷ không thể khôi phục. Nếu đã thanh toán, khoản hoàn tiền sẽ được xử lý theo chính sách."
+                title={t('Cancel this order?')}
+                description={t('Cancelled orders cannot be restored. If you already paid, the refund follows policy.')}
                 size="md"
                 footer={
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <div className={styles.dialogFooter}>
                         <Button variant="secondary" onClick={() => setCancelOpen(false)} disabled={cancelProcessing}>
-                            Giữ đơn
+                            {t('Keep order')}
                         </Button>
                         <Button variant="destructive" loading={cancelProcessing} onClick={handleCancel}>
-                            Huỷ đơn
+                            {t('Cancel order')}
                         </Button>
                     </div>
                 }
             >
-                <FormField label="Lý do (tuỳ chọn)" className="mt-4">
+                <FormField label={t('Reason (optional)')} className={styles.dialogField}>
                     <Textarea
                         value={cancelReason}
                         onChange={(event) => setCancelReason(event.target.value)}
                         rows={3}
                         maxLength={500}
-                        placeholder="Ví dụ: Muốn đổi địa chỉ giao hàng."
+                        placeholder={t('e.g. I want to change the shipping address.')}
                     />
                 </FormField>
             </Dialog>

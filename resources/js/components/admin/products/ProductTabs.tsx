@@ -1,124 +1,128 @@
+import { Star } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from '../../../lib/i18n';
-import { decodeHtmlEntities } from '../../../utils/htmlUtils';
+
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Tabs } from '@/components/ui/tabs';
+import { cx } from '@/lib/cx';
+import { formatDate, formatDecimal } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+import { decodeHtmlEntities } from '@/utils/htmlUtils';
+
+import styles from './products.module.css';
+
+interface ReviewUser {
+    id?: number;
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar?: string | null;
+}
 
 interface Review {
     review_id: number;
-    rating: number;
-    comment: string;
-    created_at: string;
-    user: {
-        user_id: number;
-        username: string;
-        first_name: string;
-        last_name: string;
-    };
+    rating: number | string;
+    comment?: string | null;
+    is_approved?: boolean | number | string;
+    created_at?: string | null;
+    user?: ReviewUser | null;
 }
 
 interface ProductTabsProps {
-    description: { en: string; vi: string };
-    reviews: Review[];
+    description?: string | Record<string, string> | null;
+    reviews?: Review[];
 }
 
-export default function ProductTabs({ description, reviews }: ProductTabsProps) {
+const resolveDescription = (value: string | Record<string, string> | null | undefined, locale: string, fallback: string): string => {
+    if (!value) {
+        return fallback;
+    }
+
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    return value[locale] ?? value.en ?? Object.values(value)[0] ?? fallback;
+};
+
+export default function ProductTabs({ description, reviews = [] }: ProductTabsProps) {
     const { t, locale } = useTranslation();
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
-    // Helper function to get localized description with HTML entity decoding
-    const getDescription = (): string => {
-        if (!description) return t('No description available');
-        let desc = '';
-        if (typeof description === 'string') {
-            desc = description;
-        } else {
-            desc = description[locale as keyof typeof description] || description.en || t('No description available');
-        }
-        return decodeHtmlEntities(desc);
-    };
+    const descriptionText = decodeHtmlEntities(resolveDescription(description, locale, ''));
+    const averageRating = reviews.length > 0 ? reviews.reduce((total, review) => total + Number(review.rating ?? 0), 0) / reviews.length : 0;
 
-    // Helper function to format date
-    const formatDate = (dateString: string): string => {
-        try {
-            return new Date(dateString).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
-        } catch {
-            return dateString;
-        }
-    };
-
-    // Helper function to render star rating
-    const renderStars = (rating: number) => {
-        const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <i
-                    key={i}
-                    className={`bx ${i <= rating ? 'bxs-star' : 'bx-star'} product-tabs__star ${i <= rating ? 'product-tabs__star--filled' : ''}`}
-                ></i>,
-            );
-        }
-        return stars;
-    };
+    const renderStars = (rating: number) => (
+        <span className={styles.stars} aria-label={`${rating}/5`}>
+            {[1, 2, 3, 4, 5].map((position) => (
+                <Star key={position} aria-hidden="true" className={cx(styles.star, position <= rating && styles.starFilled)} />
+            ))}
+        </span>
+    );
 
     return (
-        <div className="product-tabs">
-            {/* Tab Navigation */}
-            <div className="product-tabs__nav">
-                <button
-                    type="button"
-                    className={`product-tabs__button ${activeTab === 'description' ? 'product-tabs__button--active' : ''}`}
-                    onClick={() => setActiveTab('description')}
-                >
-                    {t('Description')}
-                </button>
-                <button
-                    type="button"
-                    className={`product-tabs__button ${activeTab === 'reviews' ? 'product-tabs__button--active' : ''}`}
-                    onClick={() => setActiveTab('reviews')}
-                >
-                    {t('Reviews')} ({reviews.length})
-                </button>
-            </div>
+        <section className={styles.tabsPanel}>
+            <Tabs
+                items={[
+                    { value: 'description', label: t('Description') },
+                    { value: 'reviews', label: t('Reviews'), count: reviews.length },
+                ]}
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as 'description' | 'reviews')}
+                ariaLabel={t('Product Details')}
+                className={styles.tabs}
+            />
 
-            {/* Tab Content */}
-            <div className="product-tabs__content">
-                {activeTab === 'description' && (
-                    <div className="product-tabs__description">
-                        <div className="product-tabs__description-content">{getDescription()}</div>
-                    </div>
-                )}
-
-                {activeTab === 'reviews' && (
-                    <div className="product-tabs__reviews">
-                        {reviews.length === 0 ? (
-                            <div className="product-tabs__no-reviews">
-                                <i className="bx bx-comment"></i>
-                                <p>{t('No reviews yet')}</p>
-                                <p>{t('Be the first to review this product!')}</p>
+            <div className={styles.tabBody}>
+                {activeTab === 'description' ? (
+                    descriptionText ? (
+                        <p className={styles.description}>{descriptionText}</p>
+                    ) : (
+                        <p className={styles.emptyNote}>{t('No description available')}</p>
+                    )
+                ) : reviews.length === 0 ? (
+                    <p className={styles.emptyNote}>{t('No reviews yet')}</p>
+                ) : (
+                    <>
+                        <div className={styles.ratingSummary}>
+                            <span className={styles.averageValue}>{formatDecimal(averageRating)}</span>
+                            <div className={styles.averageBody}>
+                                {renderStars(Math.round(averageRating))}
+                                <span className={styles.averageMeta}>
+                                    {t('Average Rating')}: {reviews.length} {t('Reviews').toLowerCase()}
+                                </span>
                             </div>
-                        ) : (
-                            <div className="product-tabs__reviews-list">
-                                {reviews.map((review) => (
-                                    <div key={review.review_id} className="product-tabs__review">
-                                        <div className="product-tabs__review-header">
-                                            <div className="product-tabs__review-user">
-                                                <strong>
-                                                    {(() => {
-                                                        const fullName = `${review.user.first_name || ''} ${review.user.last_name || ''}`.trim();
-                                                        return fullName || review.user.username || 'Anonymous User';
-                                                    })()}
-                                                </strong>
+                        </div>
+
+                        <ul className={styles.reviewList}>
+                            {reviews.map((review) => {
+                                const reviewer = review.user;
+                                const reviewerName =
+                                    [reviewer?.first_name, reviewer?.last_name].filter(Boolean).join(' ').trim() ||
+                                    reviewer?.username ||
+                                    t('Anonymous User');
+                                const rating = Number(review.rating) || 0;
+                                const isPendingReview = review.is_approved === false || review.is_approved === 0 || review.is_approved === '0';
+
+                                return (
+                                    <li key={review.review_id} className={styles.review}>
+                                        <Avatar user={reviewer ?? undefined} size="sm" />
+                                        <div className={styles.reviewBody}>
+                                            <div className={styles.reviewHead}>
+                                                <span className={styles.reviewName}>{reviewerName}</span>
+                                                {renderStars(rating)}
+                                                {isPendingReview && <Badge tone="warning">{t('Pending review')}</Badge>}
+                                                {review.created_at && <span className={styles.reviewDate}>{formatDate(review.created_at)}</span>}
                                             </div>
-                                            <div className="product-tabs__review-rating">{renderStars(review.rating)}</div>
-                                            <div className="product-tabs__review-date">{formatDate(review.created_at)}</div>
+                                            {review.comment && <p className={styles.reviewComment}>{decodeHtmlEntities(review.comment)}</p>}
                                         </div>
-                                        <div className="product-tabs__review-comment">{decodeHtmlEntities(review.comment)}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </>
                 )}
             </div>
-        </div>
+        </section>
     );
 }

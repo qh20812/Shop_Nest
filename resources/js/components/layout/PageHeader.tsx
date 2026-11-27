@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Breadcrumbs, type BreadcrumbItem } from '@/components/ui/breadcrumbs';
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type PageHeaderProps = {
     breadcrumbs?: BreadcrumbItem[];
@@ -17,12 +17,12 @@ type PageHeaderProps = {
 
 export function PageHeader({ breadcrumbs, eyebrow, title, description, count, actions, className }: PageHeaderProps) {
     return (
-        <header className={cn('flex flex-col gap-4', className)}>
-            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
-            <div className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
-                <div className="flex flex-col gap-1.5">
+        <header className={cx('sn-page-header', className)}>
+            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} as="div" />}
+            <div className="sn-page-header__bar">
+                <div className="sn-page-header__heading">
                     {eyebrow && <Eyebrow tone="accent">{eyebrow}</Eyebrow>}
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="sn-page-header__title-row">
                         <Heading level={1} size="headline-1">
                             {title}
                         </Heading>
@@ -33,12 +33,12 @@ export function PageHeader({ breadcrumbs, eyebrow, title, description, count, ac
                         )}
                     </div>
                     {description && (
-                        <Text size="body-md" tone="muted" className="max-w-prose">
+                        <Text size="body-md" tone="muted" className="sn-page-header__desc">
                             {description}
                         </Text>
                     )}
                 </div>
-                {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+                {actions && <div className="sn-page-header__actions">{actions}</div>}
             </div>
         </header>
     );

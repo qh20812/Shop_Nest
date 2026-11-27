@@ -27,7 +27,7 @@ class NotificationService
             ? $user
             : ($user ? User::find($user) : null);
 
-        if (!$userModel) {
+        if (! $userModel) {
             Log::warning('Attempted to send notification to missing user', [
                 'title' => $title,
                 'type' => $type->name,
@@ -120,6 +120,7 @@ class NotificationService
         $count = 0;
         $count += self::sendToRole('admin', 'Security Alert', $message, NotificationType::SECURITY_ALERT);
         $count += self::sendToRole('customer', 'Security Alert', $message, NotificationType::SECURITY_ALERT);
+
         return $count;
     }
 
@@ -213,7 +214,7 @@ class NotificationService
             return false;
         });
 
-        if (!$roleModel) {
+        if (! $roleModel) {
             return collect();
         }
 

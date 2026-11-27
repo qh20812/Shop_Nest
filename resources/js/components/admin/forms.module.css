@@ -1,0 +1,178 @@
+/* Admin entity forms (brand, category, user). Phase 8. Tokens only. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-5);
+    padding: var(--sn-space-5);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.panelHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.panelTitle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-lg);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.panelIcon {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    color: var(--sn-color-text-muted);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+}
+
+.formGridSingle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+}
+
+.fileField {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+}
+
+.fileLabel {
+    color: var(--sn-color-text-faint);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-semibold);
+    letter-spacing: var(--sn-tracking-wider);
+    text-transform: uppercase;
+}
+
+.fileInput {
+    display: block;
+    width: 100%;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.fileError {
+    color: var(--sn-color-danger-text);
+    font-size: var(--sn-text-xs);
+}
+
+.preview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+}
+
+.previewLabel {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.previewImage {
+    display: block;
+    width: 12.5rem;
+    height: 9.375rem;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-md);
+    object-fit: contain;
+    background: var(--sn-color-surface-sunken);
+}
+
+.previewImageCover {
+    object-fit: cover;
+}
+
+.previewEmpty {
+    display: flex;
+    width: 12.5rem;
+    height: 9.375rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--sn-color-border-strong);
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-surface-sunken);
+    color: var(--sn-color-text-faint);
+    font-size: var(--sn-text-xs);
+    text-align: center;
+}
+
+.roleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-2);
+}
+
+.roleGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-3);
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-surface-sunken);
+}
+
+.roleOption {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-2);
+    border: 1px solid transparent;
+    border-radius: var(--sn-radius-sm);
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    cursor: pointer;
+}
+
+.roleOption:hover {
+    background: var(--sn-color-surface);
+}
+
+.roleOptionSelected {
+    border-color: var(--sn-color-accent);
+    background: var(--sn-color-accent-wash);
+    color: var(--sn-color-accent-text);
+    font-weight: var(--sn-weight-medium);
+}
+
+.roleOptionDisabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.roleRadio {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--sn-color-accent);
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--sn-space-3);
+    padding-top: var(--sn-space-4);
+    border-top: 1px solid var(--sn-color-border);
+}
+
+@media (min-width: 640px) {
+    .formGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

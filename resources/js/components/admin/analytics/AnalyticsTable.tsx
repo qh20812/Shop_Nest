@@ -1,6 +1,10 @@
-import '@/../css/Page.css';
+import { ArrowDown, ArrowUp, ArrowUpDown, Info, Table2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import { Table, type ColumnDef } from '@/components/ui/table';
 import { useTranslation } from '@/lib/i18n';
-import React from 'react';
+
+import styles from './analytics.module.css';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -17,7 +21,7 @@ export interface AnalyticsTableProps<T> {
     data: T[];
     columns: AnalyticsTableColumn<T>[];
     headerTitle?: string;
-    headerIcon?: string;
+    headerIcon?: React.ReactNode;
     emptyMessage?: string;
     loading?: boolean;
     sortKey?: string;
@@ -28,30 +32,19 @@ export interface AnalyticsTableProps<T> {
     className?: string;
 }
 
-function getAlignmentClass(align: 'left' | 'center' | 'right' | undefined): string {
-    switch (align) {
-        case 'center':
-            return 'analytics-table__cell--center';
-        case 'right':
-            return 'analytics-table__cell--right';
-        default:
-            return '';
-    }
-}
-
-function getSortIcon(direction: SortDirection | undefined): string {
-    if (!direction) {
-        return 'bx-sort';
+function compareValues(a: unknown, b: unknown): number {
+    if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
     }
 
-    return direction === 'asc' ? 'bx-sort-up' : 'bx-sort-down';
+    return String(a ?? '').localeCompare(String(b ?? ''), 'vi');
 }
 
 const AnalyticsTable = <T extends Record<string, unknown>>({
     data,
     columns,
     headerTitle,
-    headerIcon = 'bx-table',
+    headerIcon,
     emptyMessage,
     loading = false,
     sortKey,
@@ -62,97 +55,102 @@ const AnalyticsTable = <T extends Record<string, unknown>>({
     className = '',
 }: AnalyticsTableProps<T>) => {
     const { t } = useTranslation();
+    const [internalSort, setInternalSort] = useState<{ key: string; direction: SortDirection } | null>(null);
+
+    const activeSortKey = sortKey ?? internalSort?.key;
+    const activeDirection = sortDirection ?? internalSort?.direction;
+
+    const sortedData = useMemo(() => {
+        if (!activeSortKey || !activeDirection) {
+            return data;
+        }
+
+        return [...data].sort((first, second) => {
+            const result = compareValues(first[activeSortKey], second[activeSortKey]);
+            return activeDirection === 'asc' ? result : -result;
+        });
+    }, [activeDirection, activeSortKey, data]);
 
     const handleSort = (column: AnalyticsTableColumn<T>) => {
-        if (!onSortChange || !column.sortable) {
+        if (!column.sortable) {
             return;
         }
 
-        const columnKey = typeof column.key === 'string' ? column.key : String(column.key);
-        const nextDirection: SortDirection = sortKey === columnKey && sortDirection === 'asc' ? 'desc' : 'asc';
-        onSortChange(columnKey, nextDirection);
+        const columnKey = String(column.key);
+        const nextDirection: SortDirection = activeSortKey === columnKey && activeDirection === 'asc' ? 'desc' : 'asc';
+
+        setInternalSort({ key: columnKey, direction: nextDirection });
+        onSortChange?.(columnKey, nextDirection);
     };
 
-    const headerLabel = headerTitle ? t(headerTitle) : undefined;
+    const sortIcon = (column: AnalyticsTableColumn<T>, columnKey: string) => {
+        if (!column.sortable) {
+            return null;
+        }
+
+        if (activeSortKey !== columnKey) {
+            return <ArrowUpDown aria-hidden="true" className={styles.sortIcon} />;
+        }
+
+        return activeDirection === 'asc' ? (
+            <ArrowUp aria-hidden="true" className={styles.sortIcon} />
+        ) : (
+            <ArrowDown aria-hidden="true" className={styles.sortIcon} />
+        );
+    };
+
+    const tableColumns: ColumnDef<T>[] = columns.map((column, index) => {
+        const columnKey = String(column.key);
+
+        return {
+            key: columnKey || `column-${index}`,
+            align: column.align,
+            width: column.width,
+            header: column.sortable ? (
+                <button type="button" className={styles.sortButton} onClick={() => handleSort(column)}>
+                    <span>{t(column.label)}</span>
+                    {sortIcon(column, columnKey)}
+                </button>
+            ) : (
+                t(column.label)
+            ),
+            cell: (row: T) => {
+                const rawValue = row[columnKey];
+                return column.render ? column.render(rawValue, row, sortedData.indexOf(row)) : (rawValue as React.ReactNode);
+            },
+        };
+    });
 
     return (
-        <div className={`bottom-data analytics-table ${className}`.trim()}>
-            <div className="orders">
-                {headerLabel ? (
-                    <div className="header">
-                        <i className={`bx ${headerIcon}`}></i>
-                        <h3>{headerLabel}</h3>
-                    </div>
-                ) : null}
-
-                <div className="analytics-table__wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                {columns.map((column, columnIndex) => {
-                                    const columnKey = typeof column.key === 'string' ? column.key : String(column.key);
-                                    const isSorted = sortKey === columnKey;
-                                    const sortIcon = getSortIcon(isSorted ? sortDirection : undefined);
-
-                                    return (
-                                        <th
-                                            key={columnIndex}
-                                            style={{ width: column.width }}
-                                            className={column.sortable ? 'analytics-table__sortable' : ''}
-                                            onClick={() => handleSort(column)}
-                                        >
-                                            <span>{t(column.label)}</span>
-                                            {column.sortable ? <i className={`bx ${sortIcon}`}></i> : null}
-                                        </th>
-                                    );
-                                })}
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={columns.length} className="analytics-table__loading">
-                                        <i className="bx bx-loader-circle bx-spin"></i>
-                                        <span>{t('Loading data...')}</span>
-                                    </td>
-                                </tr>
-                            ) : data.length === 0 ? (
-                                <tr>
-                                    <td colSpan={columns.length} className="analytics-table__empty">
-                                        <i className="bx bx-info-circle"></i>
-                                        <span>{t(emptyMessage ?? 'No data found')}</span>
-                                    </td>
-                                </tr>
-                            ) : (
-                                data.map((row, rowIndex) => {
-                                    const key = rowKey ? rowKey(row, rowIndex) : rowIndex;
-
-                                    return (
-                                        <tr key={key}>
-                                            {columns.map((column, columnIndex) => {
-                                                const columnKey = typeof column.key === 'string' ? column.key : String(column.key);
-                                                const rawValue = (row as Record<string, unknown>)[columnKey];
-                                                const cellValue = column.render ? column.render(rawValue, row, rowIndex) : rawValue;
-                                                const alignmentClass = getAlignmentClass(column.align);
-
-                                                return (
-                                                    <td key={`${columnKey}-${columnIndex}`} className={alignmentClass}>
-                                                        {cellValue as React.ReactNode}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
+        <section className={`${styles.tableCard} ${className}`.trim()}>
+            {headerTitle ? (
+                <div className={styles.tableHead}>
+                    <h3 className={styles.tableTitle}>
+                        {headerIcon ? (
+                            <span className={styles.tableTitleIcon}>{headerIcon}</span>
+                        ) : (
+                            <Table2 aria-hidden="true" className={styles.tableTitleIcon} />
+                        )}
+                        {t(headerTitle)}
+                    </h3>
                 </div>
+            ) : null}
 
-                {footer ? <div className="analytics-table__footer">{footer}</div> : null}
-            </div>
-        </div>
+            <Table
+                columns={tableColumns}
+                data={sortedData}
+                rowKey={rowKey ? (row, index) => rowKey(row, index) : undefined}
+                loading={loading}
+                empty={
+                    <span className={styles.emptyCell}>
+                        <Info aria-hidden="true" className={styles.emptyIcon} />
+                        {t(emptyMessage ?? 'No data found')}
+                    </span>
+                }
+            />
+
+            {footer ? <div className={styles.tableFooter}>{footer}</div> : null}
+        </section>
     );
 };
 

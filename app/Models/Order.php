@@ -16,10 +16,8 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
-
-
     protected $primaryKey = 'order_id';
-    
+
     protected $fillable = [
         'customer_id',
         'order_number',
@@ -33,9 +31,11 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_status',
+        'inventory_reserved_at',
+        'inventory_committed_at',
         'shipping_address_id',
         'shipper_id',
-        'notes'
+        'notes',
     ];
 
     /**
@@ -53,15 +53,20 @@ class Order extends Model
         'total_amount_base' => 'decimal:2',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'inventory_reserved_at' => 'datetime',
+        'inventory_committed_at' => 'datetime',
     ];
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'order_id');
     }
+
     public function shippingAddress(): BelongsTo
     {
         return $this->belongsTo(UserAddress::class, 'shipping_address_id');
@@ -82,13 +87,11 @@ class Order extends Model
             'order_promotion',
             'order_id',
             'promotion_id'
-        )->withPivot('discount_applied');
+        )->withPivot('promotion_code_id', 'discount_applied', 'recorded_at', 'released_at');
     }
 
     /**
      * Get all transactions related to the order.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function transactions(): HasMany
     {

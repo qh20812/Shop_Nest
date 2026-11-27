@@ -1,4 +1,4 @@
-import { ArrowRight, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import * as React from 'react';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -6,8 +6,11 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TextLink } from '@/components/ui/text-link';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
+
+import styles from './storefront.module.css';
 
 type ProductShelfProps = {
     title: React.ReactNode;
@@ -31,28 +34,32 @@ export function ProductShelf({
     products,
     action,
     variant = 'grid',
-    emptyTitle = 'Chưa có sản phẩm',
-    emptyDescription = 'Các món được tuyển chọn sẽ xuất hiện ở đây.',
+    emptyTitle,
+    emptyDescription,
     onAddToCart,
     onToggleWishlist,
     className,
     id,
 }: ProductShelfProps) {
+    const { t } = useTranslation();
     const fallbackAction = (
         <TextLink href="/search" tone="muted" underline={false}>
-            Xem tất cả
-            <ArrowRight aria-hidden="true" className="size-4" />
+            {t('View all')}
         </TextLink>
     );
 
     return (
-        <section id={id} className={cn('py-10 md:py-14', className)}>
+        <section id={id} className={cx(styles.productShelf, className)}>
             <PageContainer>
                 <SectionHeader eyebrow={eyebrow} title={title} description={description} action={action ?? fallbackAction} />
                 {products.length === 0 ? (
-                    <EmptyState icon={Package} title={emptyTitle} description={emptyDescription} />
+                    <EmptyState
+                        icon={Package}
+                        title={emptyTitle ?? t('No products yet')}
+                        description={emptyDescription ?? t('Handpicked items will appear here.')}
+                    />
                 ) : variant === 'rail' ? (
-                    <div className="scrollbar-hide -mx-1 flex gap-5 overflow-x-auto px-1 pb-2">
+                    <div className={styles.shelfRail}>
                         {products.map((product, index) => (
                             <ProductCard
                                 key={product.id}
@@ -60,12 +67,12 @@ export function ProductShelf({
                                 priority={index < 2}
                                 onAddToCart={onAddToCart}
                                 onToggleWishlist={onToggleWishlist}
-                                className="w-64 shrink-0"
+                                className={styles.shelfRailCard}
                             />
                         ))}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className={styles.shelfGrid}>
                         {products.map((product, index) => (
                             <ProductCard
                                 key={product.id}

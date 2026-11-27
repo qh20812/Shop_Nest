@@ -6,6 +6,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { FormField } from '@/components/ui/form-field';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '../customer.module.css';
 
 export interface Division {
     id: number;
@@ -43,10 +46,12 @@ export function AddressForm({
     initialProvinceId,
     errors = {},
     processing = false,
-    submitLabel = 'Lưu địa chỉ',
+    submitLabel,
     onSubmit,
     onCancel,
 }: AddressFormProps) {
+    const { t } = useTranslation();
+    const resolvedSubmitLabel = submitLabel ?? t('Save address');
     const [wards, setWards] = React.useState<Division[]>(initialWards);
     const [loadingWards, setLoadingWards] = React.useState(false);
 
@@ -93,20 +98,20 @@ export function AddressForm({
     const isValid = Boolean(value.name.trim() && value.phone.trim() && value.address.trim() && value.province_id && value.ward_id);
 
     return (
-        <form onSubmit={onSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField label="Tên người nhận" required error={errors.name}>
+        <form onSubmit={onSubmit} className={styles.formStack}>
+            <div className={styles.addressFormGrid}>
+                <FormField label={t('Recipient name')} required error={errors.name}>
                     <Input
                         value={value.name}
                         onChange={(event) => update({ name: event.target.value })}
-                        placeholder="Nguyễn Thu Hà"
+                        placeholder={t('e.g. Nguyen Thu Ha')}
                         autoComplete="name"
                         invalid={Boolean(errors.name)}
                         required
                     />
                 </FormField>
 
-                <FormField label="Số điện thoại" required error={errors.phone}>
+                <FormField label={t('Phone number')} required error={errors.phone}>
                     <Input
                         type="tel"
                         value={value.phone}
@@ -119,34 +124,34 @@ export function AddressForm({
                 </FormField>
             </div>
 
-            <FormField label="Địa chỉ" required error={errors.address} hint="Số nhà, tên đường, toà nhà, ghi chú giao hàng.">
+            <FormField label={t('Address')} required error={errors.address} hint={t('House number, street, building, delivery notes.')}>
                 <Input
                     value={value.address}
                     onChange={(event) => update({ address: event.target.value })}
-                    placeholder="Số 12, đường Nguyễn Huệ"
+                    placeholder={t('e.g. 12 Nguyen Hue street')}
                     autoComplete="street-address"
                     invalid={Boolean(errors.address)}
                     required
                 />
             </FormField>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField label="Tỉnh/Thành phố" required error={errors.province_id}>
+            <div className={styles.addressFormGrid}>
+                <FormField label={t('Province/City')} required error={errors.province_id}>
                     <Select
                         value={value.province_id}
                         onChange={(event) => update({ province_id: event.target.value, ward_id: '' })}
-                        placeholder="Chọn tỉnh/thành phố"
+                        placeholder={t('Select province/city')}
                         options={provinces.map((province) => ({ value: String(province.id), label: province.name }))}
                         invalid={Boolean(errors.province_id)}
                         required
                     />
                 </FormField>
 
-                <FormField label="Xã/Phường" required error={errors.ward_id}>
+                <FormField label={t('Ward')} required error={errors.ward_id}>
                     <Select
                         value={value.ward_id}
                         onChange={(event) => update({ ward_id: event.target.value })}
-                        placeholder={loadingWards ? 'Đang tải...' : 'Chọn xã/phường'}
+                        placeholder={loadingWards ? t('Loading...') : t('Select ward')}
                         options={wards.map((ward) => ({ value: String(ward.id), label: ward.name }))}
                         disabled={!value.province_id || loadingWards}
                         invalid={Boolean(errors.ward_id)}
@@ -158,16 +163,16 @@ export function AddressForm({
             <Checkbox
                 checked={value.is_default}
                 onCheckedChange={(checked) => update({ is_default: checked === true })}
-                label="Đặt làm địa chỉ mặc định"
-                description="ShopNest sẽ dùng địa chỉ này cho lần thanh toán tiếp theo."
+                label={t('Set as default address')}
+                description={t('ShopNest will use this address for your next checkout.')}
             />
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
+            <div className={styles.formFooter}>
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={processing}>
-                    Huỷ
+                    {t('Cancel')}
                 </Button>
                 <Button type="submit" loading={processing} disabled={!isValid}>
-                    {submitLabel}
+                    {resolvedSubmitLabel}
                 </Button>
             </div>
         </form>

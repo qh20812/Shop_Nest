@@ -1,13 +1,26 @@
-import '@/../css/Page.css';
-import ActionDropdown from '@/components/ui/action-dropdown';
-import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
-import Pagination from '@/components/ui/pagination';
-import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { BarChart3, Check, CheckCircle2, Clock, Eye, PauseCircle, RotateCcw, Store, X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
+
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import ActionDropdown from '@/components/ui/action-dropdown';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+import DataTable from '@/components/ui/data-table';
+import { Dialog } from '@/components/ui/dialog';
+import FilterPanel from '@/components/ui/filter-panel';
+import { Input } from '@/components/ui/input';
+import Insights from '@/components/ui/insights';
+import Pagination from '@/components/ui/pagination';
+import { Textarea } from '@/components/ui/textarea';
+import { formatDate, formatNumber, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '@/components/admin/admin.module.css';
 import type { ShopFilters as FilterParams, Shop, ShopCollection, ShopMetrics } from './types';
+
+import type { BadgeTone } from '@/components/ui/badge';
 
 interface PageProps extends Record<string, unknown> {
     shops: ShopCollection & {
@@ -17,44 +30,18 @@ interface PageProps extends Record<string, unknown> {
     metrics?: ShopMetrics;
 }
 
-const numberFormatter = new Intl.NumberFormat();
-
 type ShopAction = 'approve' | 'reject' | 'suspend' | 'reactivate';
 
-const statusClassMap: Record<Shop['shop_status'], string> = {
-    pending: 'status pending',
-    active: 'status completed',
-    suspended: 'status process',
-    rejected: 'status danger',
+type ReasonMode = 'reject' | 'suspend' | 'bulkReject';
+
+const statusTones: Record<Shop['shop_status'], BadgeTone> = {
+    pending: 'warning',
+    active: 'success',
+    suspended: 'accent',
+    rejected: 'danger',
 };
 
-const formatCurrency = (value: number | null | undefined, label: string) => {
-    if (value === null || value === undefined) {
-        return `0 ${label}`;
-    }
-
-    const formatter = new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    });
-
-    return `${formatter.format(value)} ${label}`;
-};
-
-const formatDate = (input?: string | null) => {
-    if (!input) {
-        return '—';
-    }
-
-    const parsed = new Date(input);
-    if (Number.isNaN(parsed.getTime())) {
-        return input;
-    }
-
-    return parsed.toLocaleDateString();
-};
-
-const formatRelative = (input?: string | null, fallback = '—') => {
+const formatRelative = (input?: string | null, fallback = '-') => {
     if (!input) {
         return fallback;
     }
@@ -64,8 +51,7 @@ const formatRelative = (input?: string | null, fallback = '—') => {
         return fallback;
     }
 
-    const now = new Date();
-    const diffMs = now.getTime() - parsed.getTime();
+    const diffMs = Date.now() - parsed.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
     if (diffHours < 1) {
@@ -81,149 +67,37 @@ const formatRelative = (input?: string | null, fallback = '—') => {
         return `${diffDays}d`;
     }
 
-    return parsed.toLocaleDateString();
+    return formatDate(parsed);
 };
 
 export default function Index() {
     const { t } = useTranslation();
-    const { shops, filters } = usePage<PageProps>().props;
+    const { shops, filters = {}, metrics } = usePage<PageProps>().props;
 
-    const [isGridLoading, setIsGridLoading] = useState(false);
-    const [actingShopId, setActingShopId] = useState<number | null>(null);
     const [localFilters, setLocalFilters] = useState<FilterParams>(filters);
-
-    useEffect(() => {
-        setIsGridLoading(false);
-        setActingShopId(null);
-    }, [shops.data]);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [confirm, setConfirm] = useState<{ open: boolean; title: string; message: string; run: () => void }>({
+        open: false,
+        title: '',
+        message: '',
+        run: () => {},
+    });
+    const [reasonDialog, setReasonDialog] = useState<{ open: boolean; mode: ReasonMode; shopId: number | null; title: string }>({
+        open: false,
+        mode: 'reject',
+        shopId: null,
+        title: '',
+    });
+    const [reason, setReason] = useState('');
+    const [duration, setDuration] = useState('7');
+    const [reasonError, setReasonError] = useState('');
 
     useEffect(() => {
         setLocalFilters(filters);
+        setSelectedIds([]);
     }, [filters]);
 
-    const handleShopAction = useCallback(
-        async (shop: Shop, action: ShopAction) => {
-            if (actingShopId !== null) {
-                return;
-            }
-
-            const confirmationLabels: Record<ShopAction, string> = {
-                approve: t('Approve this shop?'),
-                reject: t('Reject this shop?'),
-                suspend: t('Suspend this shop?'),
-                reactivate: t('Reactivate this shop?'),
-            };
-
-            const confirmed = window.confirm(confirmationLabels[action]);
-            if (!confirmed) {
-                return;
-            }
-
-            const actionRoutes: Record<ShopAction, string> = {
-                approve: `/admin/shops/${shop.id}/approve`,
-                reject: `/admin/shops/${shop.id}/reject`,
-                suspend: `/admin/shops/${shop.id}/suspend`,
-                reactivate: `/admin/shops/${shop.id}/reactivate`,
-            };
-
-            const payload: Record<string, string | number> = {};
-
-            if (action === 'reject') {
-                const reason = window.prompt(t('Provide a rejection reason (min 10 characters).')) ?? '';
-                if (reason.trim().length < 10) {
-                    window.alert(t('Rejection reason must contain at least 10 characters.'));
-                    return;
-                }
-                payload.reason = reason.trim();
-            }
-
-            if (action === 'suspend') {
-                const reason = window.prompt(t('Provide a suspension reason (min 10 characters).')) ?? '';
-                if (reason.trim().length < 10) {
-                    window.alert(t('Suspension reason must contain at least 10 characters.'));
-                    return;
-                }
-                const durationInput = window.prompt(t('Number of suspension days (1-365).')) ?? '';
-                const duration = Number.parseInt(durationInput, 10);
-                if (!Number.isInteger(duration) || duration < 1 || duration > 365) {
-                    window.alert(t('Please enter a valid suspension duration between 1 and 365 days.'));
-                    return;
-                }
-                payload.reason = reason.trim();
-                payload.duration_days = duration;
-            }
-
-            setActingShopId(shop.id);
-
-            router.post(actionRoutes[action], payload, {
-                preserveScroll: true,
-                onFinish: () => setActingShopId(null),
-            });
-        },
-        [actingShopId, t],
-    );
-
-    const handleFilterChange = useCallback((key: keyof FilterParams, value: string | number | undefined) => {
-        setLocalFilters((prev) => ({ ...prev, [key]: value }));
-    }, []);
-
-    const handleApplyFilters = useCallback(() => {
-        const payload = Object.fromEntries(
-            Object.entries(localFilters || {}).filter(([, value]) => value !== undefined && value !== null && value !== ''),
-        ) as Record<string, string | number | boolean>;
-        router.get('/admin/shops', payload, {
-            preserveState: true,
-            onStart: () => setIsGridLoading(true),
-            onFinish: () => setIsGridLoading(false),
-        });
-    }, [localFilters]);
-
-    const paginationLinks = shops.links ?? [];
-    const paginationFilters = useMemo(() => {
-        const entries = Object.entries(filters ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== '');
-        return Object.fromEntries(entries) as Record<string, string | number | boolean | undefined>;
-    }, [filters]);
-
-    const statusOptions = useMemo(
-        () => [
-            { value: 'pending', label: t('Pending') },
-            { value: 'active', label: t('Active') },
-            { value: 'suspended', label: t('Suspended') },
-            { value: 'rejected', label: t('Rejected') },
-        ],
-        [t],
-    );
-
-    const searchConfig = useMemo(
-        () => ({
-            value: localFilters.search || '',
-            onChange: (value: string) => handleFilterChange('search', value),
-            placeholder: t('Search shops...'),
-        }),
-        [localFilters.search, handleFilterChange, t],
-    );
-
-    const filterConfigs = useMemo(
-        () => [
-            {
-                value: localFilters.status || '',
-                onChange: (value: string) => handleFilterChange('status', value),
-                label: t('All Statuses'),
-                options: statusOptions,
-            },
-        ],
-        [localFilters.status, handleFilterChange, t, statusOptions],
-    );
-
-    const breadcrumbs = useMemo(
-        () => [
-            { label: t('Dashboard'), href: '/admin/dashboard' },
-            { label: t('Shops'), href: '#', active: true },
-        ],
-        [t],
-    );
-
-    const statusLabelMap: Record<Shop['shop_status'], string> = useMemo(
+    const statusLabelMap = useMemo<Record<Shop['shop_status'], string>>(
         () => ({
             pending: t('Pending'),
             active: t('Active'),
@@ -233,154 +107,374 @@ export default function Index() {
         [t],
     );
 
-    const title = t('Shop Management');
+    const handleShopAction = useCallback(
+        (shop: Shop, action: ShopAction) => {
+            const routes: Record<ShopAction, string> = {
+                approve: `/admin/shops/${shop.id}/approve`,
+                reject: `/admin/shops/${shop.id}/reject`,
+                suspend: `/admin/shops/${shop.id}/suspend`,
+                reactivate: `/admin/shops/${shop.id}/reactivate`,
+            };
 
-    const columns = useMemo(() => {
-        const currencyLabel = t('VND');
+            if (action === 'reject') {
+                setReason('');
+                setReasonError('');
+                setReasonDialog({ open: true, mode: 'reject', shopId: shop.id, title: t('Reject this shop?') });
+                return;
+            }
 
-        return [
-            // {
-            //   header: 'Select',
-            //   cell: (shop: Shop) => (
-            //     <input
-            //       type="checkbox"
-            //       checked={selectedIds.includes(shop.id)}
-            //       onChange={(event) => toggleShopSelection(shop.id, event.target.checked)}
-            //       aria-label={`${t('Select shop')} ${shop.name ?? shop.username ?? shop.id}`}
-            //     />
-            //   ),
-            // },
-            {
-                header: 'Shop Name',
-                accessorKey: 'name' as keyof Shop,
-                cell: (shop: Shop) => <div style={{ fontWeight: 600, color: 'var(--dark)' }}>{shop.name?.trim() || '—'}</div>,
-            },
-            {
-                header: 'Owner',
-                cell: (shop: Shop) => {
-                    const fallbackName = `${shop.first_name ?? ''} ${shop.last_name ?? ''}`.trim();
-                    const ownerName =
-                        (fallbackName.length ? fallbackName : undefined) ||
-                        (shop.username?.trim() ? shop.username : undefined) ||
-                        `${t('Shop')} #${shop.id}`;
-                    return <div style={{ color: 'var(--dark)' }}>{ownerName}</div>;
-                },
-            },
-            {
-                header: 'Email',
-                accessorKey: 'email' as keyof Shop,
-                cell: (shop: Shop) => <div style={{ color: 'var(--dark-grey)' }}>{shop.email || '—'}</div>,
-            },
-            {
-                header: 'Joined',
-                accessorKey: 'created_at' as keyof Shop,
-                cell: (shop: Shop) => <div style={{ color: 'var(--grey-dark)' }}>{formatDate(shop.created_at)}</div>,
-            },
-            {
-                header: 'Status',
-                cell: (shop: Shop) => <span className={statusClassMap[shop.shop_status]}>{statusLabelMap[shop.shop_status]}</span>,
-            },
-            {
-                header: 'Products',
-                cell: (shop: Shop) => <div style={{ color: 'var(--dark)' }}>{numberFormatter.format(shop.products_count ?? 0)}</div>,
-            },
-            {
-                header: 'Orders',
-                cell: (shop: Shop) => <div style={{ color: 'var(--dark)' }}>{numberFormatter.format(shop.orders_count ?? 0)}</div>,
-            },
-            {
-                header: 'Revenue',
-                cell: (shop: Shop) => formatCurrency(shop.total_revenue, currencyLabel),
-            },
-            {
-                header: 'Open Violations',
-                cell: (shop: Shop) => shop.open_violations_count ?? 0,
-            },
-            {
-                header: 'Last Activity',
-                cell: (shop: Shop) => formatRelative(shop.last_activity, t('N/A')),
-            },
-            {
-                header: 'Actions',
-                cell: (shop: Shop) => {
-                    type DropdownAction = {
-                        label: string;
-                        icon: string;
-                        onClick: () => void;
-                        color?: 'primary' | 'success' | 'warning' | 'danger';
-                        disabled?: boolean;
-                    };
-                    const actions: DropdownAction[] = [
-                        {
-                            label: 'View',
-                            icon: 'bx-show',
-                            onClick: () => router.get(`/admin/shops/${shop.id}`),
-                            color: 'primary' as const,
-                        },
-                    ];
+            if (action === 'suspend') {
+                setReason('');
+                setReasonError('');
+                setDuration('7');
+                setReasonDialog({ open: true, mode: 'suspend', shopId: shop.id, title: t('Suspend this shop?') });
+                return;
+            }
 
-                    if (shop.shop_status === 'pending') {
-                        actions.push(
-                            {
-                                label: 'Approve',
-                                icon: 'bx-check',
-                                onClick: () => handleShopAction(shop, 'approve'),
-                                color: 'success' as const,
-                                disabled: actingShopId === shop.id,
-                            },
-                            {
-                                label: 'Reject',
-                                icon: 'bx-x',
-                                onClick: () => handleShopAction(shop, 'reject'),
-                                color: 'danger' as const,
-                                disabled: actingShopId === shop.id,
-                            },
-                        );
-                    }
+            const labels: Record<'approve' | 'reactivate', { title: string; message: string }> = {
+                approve: { title: t('Approve this shop?'), message: t('The shop will become active and visible to customers.') },
+                reactivate: { title: t('Reactivate this shop?'), message: t('The shop will be able to sell again.') },
+            };
 
-                    if (shop.shop_status === 'active') {
-                        actions.push({
-                            label: 'Suspend',
-                            icon: 'bx-pause-circle',
-                            onClick: () => handleShopAction(shop, 'suspend'),
-                            color: 'warning' as const,
-                            disabled: actingShopId === shop.id,
-                        });
-                    }
+            setConfirm({
+                open: true,
+                ...labels[action],
+                run: () => router.post(routes[action], {}, { preserveScroll: true }),
+            });
+        },
+        [t],
+    );
 
-                    if (shop.shop_status === 'suspended') {
-                        actions.push({
-                            label: 'Reactivate',
-                            icon: 'bx-reset',
-                            onClick: () => handleShopAction(shop, 'reactivate'),
-                            color: 'success' as const,
-                            disabled: actingShopId === shop.id,
-                        });
-                    }
+    const handleFilterChange = (key: keyof FilterParams, value: string | number | undefined) => {
+        setLocalFilters((previous) => ({ ...previous, [key]: value }));
+    };
 
-                    return <ActionDropdown actions={actions} />;
-                },
+    const handleApplyFilters = () => {
+        const payload = Object.fromEntries(
+            Object.entries(localFilters || {}).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+        ) as Record<string, string | number | boolean>;
+
+        router.get('/admin/shops', payload, { preserveState: true });
+    };
+
+    const pageIds = shops.data.map((shop) => shop.id);
+    const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
+    const toggleShop = (id: number, checked: boolean) => {
+        setSelectedIds((previous) => (checked ? [...new Set([...previous, id])] : previous.filter((value) => value !== id)));
+    };
+
+    const toggleAll = (checked: boolean) => {
+        setSelectedIds((previous) => {
+            if (checked) {
+                return [...new Set([...previous, ...pageIds])];
+            }
+
+            return previous.filter((id) => !pageIds.includes(id));
+        });
+    };
+
+    const openBulkApprove = () => {
+        setConfirm({
+            open: true,
+            title: t('Approve selected shops?'),
+            message: `${selectedIds.length} ${t('shops will become active.')}`,
+            run: () =>
+                router.post('/admin/shops/bulk-approve', { shop_ids: selectedIds }, { preserveScroll: true, onSuccess: () => setSelectedIds([]) }),
+        });
+    };
+
+    const openBulkReject = () => {
+        setReason('');
+        setReasonError('');
+        setReasonDialog({ open: true, mode: 'bulkReject', shopId: null, title: t('Reject selected shops?') });
+    };
+
+    const submitReason = () => {
+        if (reason.trim().length < 10) {
+            setReasonError(t('Rejection reason must contain at least 10 characters.'));
+            return;
+        }
+
+        if (reasonDialog.mode === 'bulkReject') {
+            router.post(
+                '/admin/shops/bulk-reject',
+                { shop_ids: selectedIds, reason: reason.trim() },
+                { preserveScroll: true, onSuccess: () => setSelectedIds([]) },
+            );
+        } else if (reasonDialog.mode === 'reject' && reasonDialog.shopId) {
+            router.post(`/admin/shops/${reasonDialog.shopId}/reject`, { reason: reason.trim() }, { preserveScroll: true });
+        } else if (reasonDialog.mode === 'suspend' && reasonDialog.shopId) {
+            const days = Number.parseInt(duration, 10);
+            if (!Number.isInteger(days) || days < 1 || days > 365) {
+                setReasonError(t('Please enter a valid suspension duration between 1 and 365 days.'));
+                return;
+            }
+            router.post(`/admin/shops/${reasonDialog.shopId}/suspend`, { reason: reason.trim(), duration_days: days }, { preserveScroll: true });
+        }
+
+        setReasonDialog({ open: false, mode: 'reject', shopId: null, title: '' });
+    };
+
+    const columns = [
+        {
+            key: 'select',
+            header: (
+                <input
+                    type="checkbox"
+                    className={styles.tableCheckbox}
+                    checked={allSelected}
+                    onChange={(event) => toggleAll(event.target.checked)}
+                    aria-label={t('Select all shops')}
+                />
+            ),
+            cell: (shop: Shop) => (
+                <input
+                    type="checkbox"
+                    className={styles.tableCheckbox}
+                    checked={selectedIds.includes(shop.id)}
+                    onChange={(event) => toggleShop(shop.id, event.target.checked)}
+                    aria-label={`${t('Select shop')} ${shop.name ?? shop.username ?? shop.id}`}
+                />
+            ),
+        },
+        {
+            key: 'name',
+            header: t('Shop Name'),
+            cell: (shop: Shop) => <span className={styles.cellTitle}>{shop.name?.trim() || '-'}</span>,
+        },
+        {
+            key: 'owner',
+            header: t('Owner'),
+            cell: (shop: Shop) => {
+                const fallbackName = `${shop.first_name ?? ''} ${shop.last_name ?? ''}`.trim();
+                const ownerName =
+                    (fallbackName.length ? fallbackName : undefined) ||
+                    (shop.username?.trim() ? shop.username : undefined) ||
+                    `${t('Shop')} #${shop.id}`;
+
+                return <span className={styles.muted}>{ownerName}</span>;
             },
-        ];
-    }, [t, statusLabelMap, handleShopAction, actingShopId]);
+        },
+        {
+            key: 'email',
+            header: 'Email',
+            cell: (shop: Shop) => <span className={styles.muted}>{shop.email || '-'}</span>,
+        },
+        {
+            key: 'created_at',
+            header: t('Joined'),
+            cell: (shop: Shop) => <span className={styles.numeric}>{formatDate(shop.created_at)}</span>,
+        },
+        {
+            key: 'status',
+            header: t('Status'),
+            cell: (shop: Shop) => <Badge tone={statusTones[shop.shop_status]}>{statusLabelMap[shop.shop_status]}</Badge>,
+        },
+        {
+            key: 'products',
+            header: t('Products'),
+            align: 'right' as const,
+            cell: (shop: Shop) => <span className={styles.numeric}>{formatNumber(shop.products_count ?? 0)}</span>,
+        },
+        {
+            key: 'orders',
+            header: t('Orders'),
+            align: 'right' as const,
+            cell: (shop: Shop) => <span className={styles.numeric}>{formatNumber(shop.orders_count ?? 0)}</span>,
+        },
+        {
+            key: 'revenue',
+            header: t('Revenue'),
+            align: 'right' as const,
+            cell: (shop: Shop) => <span className={styles.price}>{formatVnd(Number(shop.total_revenue ?? 0))}</span>,
+        },
+        {
+            key: 'violations',
+            header: t('Open Violations'),
+            align: 'right' as const,
+            cell: (shop: Shop) => <span className={styles.numeric}>{shop.open_violations_count ?? 0}</span>,
+        },
+        {
+            key: 'last_activity',
+            header: t('Last Activity'),
+            cell: (shop: Shop) => <span className={styles.faint}>{formatRelative(shop.last_activity, t('N/A'))}</span>,
+        },
+        {
+            key: 'actions',
+            header: t('Actions'),
+            cell: (shop: Shop) => {
+                const actions = [
+                    {
+                        label: t('View'),
+                        icon: Eye,
+                        onClick: () => router.get(`/admin/shops/${shop.id}`),
+                    },
+                ];
+
+                if (shop.shop_status === 'pending') {
+                    actions.push(
+                        { label: t('Approve'), icon: Check, onClick: () => handleShopAction(shop, 'approve') },
+                        { label: t('Reject'), icon: X, onClick: () => handleShopAction(shop, 'reject') },
+                    );
+                }
+
+                if (shop.shop_status === 'active') {
+                    actions.push({ label: t('Suspend'), icon: PauseCircle, onClick: () => handleShopAction(shop, 'suspend') });
+                }
+
+                if (shop.shop_status === 'suspended') {
+                    actions.push({ label: t('Reactivate'), icon: RotateCcw, onClick: () => handleShopAction(shop, 'reactivate') });
+                }
+
+                return <ActionDropdown actions={actions} />;
+            },
+        },
+    ];
+
+    const summaryItems = [
+        { icon: Store, value: formatNumber(metrics?.total ?? 0), label: t('Total Shops') },
+        { icon: CheckCircle2, value: formatNumber(metrics?.active ?? 0), label: t('Active') },
+        { icon: Clock, value: formatNumber(metrics?.pending ?? 0), label: t('Pending') },
+        { icon: PauseCircle, value: formatNumber(metrics?.suspended ?? 0), label: t('Suspended') },
+        { icon: XCircle, value: formatNumber(metrics?.rejected ?? 0), label: t('Rejected') },
+    ];
+
+    const paginationFilters = useMemo(() => {
+        const entries = Object.entries(filters ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== '');
+        return Object.fromEntries(entries) as Record<string, string | number | boolean | undefined>;
+    }, [filters]);
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Shop Management')} />
 
             <FilterPanel
-                title={title}
-                breadcrumbs={breadcrumbs}
+                title={t('Shop Management')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Shops'), href: '#', active: true },
+                ]}
                 onApplyFilters={handleApplyFilters}
-                searchConfig={searchConfig}
-                filterConfigs={filterConfigs}
+                searchConfig={{
+                    value: localFilters.search || '',
+                    onChange: (value) => handleFilterChange('search', value),
+                    placeholder: t('Search shops...'),
+                }}
+                filterConfigs={[
+                    {
+                        value: localFilters.status || '',
+                        onChange: (value) => handleFilterChange('status', value),
+                        label: t('All Statuses'),
+                        options: [
+                            { value: 'pending', label: t('Pending') },
+                            { value: 'active', label: t('Active') },
+                            { value: 'suspended', label: t('Suspended') },
+                            { value: 'rejected', label: t('Rejected') },
+                        ],
+                    },
+                ]}
             />
 
-            <div style={{ opacity: isGridLoading ? 0.6 : 1 }} aria-busy={isGridLoading}>
-                <DataTable columns={columns} data={shops.data} headerTitle="Shop List" headerIcon="bx-store" emptyMessage="No shops found" />
+            <Insights items={summaryItems} />
+
+            <div className={styles.quickActions}>
+                <Link href="/admin/shops/dashboard" className={styles.quickAction}>
+                    <BarChart3 aria-hidden="true" />
+                    {t('Shop Dashboard')}
+                </Link>
+                <Link href="/admin/shops/pending" className={styles.quickAction}>
+                    <Clock aria-hidden="true" />
+                    {t('Pending Shops')}
+                </Link>
             </div>
 
-            <Pagination links={paginationLinks} filters={paginationFilters} />
-        </AppLayout>
+            {selectedIds.length > 0 && (
+                <div className={styles.bulkBar}>
+                    <span className={styles.bulkCount}>
+                        {selectedIds.length} {t('selected')}
+                    </span>
+                    <Button type="button" variant="primary" size="sm" onClick={openBulkApprove}>
+                        <Check aria-hidden="true" />
+                        {t('Approve selected')}
+                    </Button>
+                    <Button type="button" variant="destructive" size="sm" onClick={openBulkReject}>
+                        <X aria-hidden="true" />
+                        {t('Reject selected')}
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+                        {t('Clear selection')}
+                    </Button>
+                </div>
+            )}
+
+            <DataTable columns={columns} data={shops.data} headerTitle={t('Shop List')} headerIcon={Store} emptyMessage={t('No shops found')} />
+
+            <Pagination links={shops.links ?? []} filters={paginationFilters} />
+
+            <ConfirmationModal
+                isOpen={confirm.open}
+                onClose={() => setConfirm({ open: false, title: '', message: '', run: () => {} })}
+                onConfirm={confirm.run}
+                title={confirm.title}
+                message={confirm.message}
+            />
+
+            <Dialog
+                open={reasonDialog.open}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setReasonDialog({ open: false, mode: 'reject', shopId: null, title: '' });
+                    }
+                }}
+                title={reasonDialog.title}
+                size="md"
+                footer={
+                    <>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setReasonDialog({ open: false, mode: 'reject', shopId: null, title: '' })}
+                        >
+                            {t('Cancel')}
+                        </Button>
+                        <Button type="button" variant="primary" onClick={submitReason}>
+                            {t('Confirm')}
+                        </Button>
+                    </>
+                }
+            >
+                <div className={styles.dialogField}>
+                    <label className={styles.filterLabel} htmlFor="shop-reason">
+                        {t('Reason')}
+                    </label>
+                    <Textarea
+                        id="shop-reason"
+                        className={styles.textArea}
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        placeholder={t('Provide a reason (min 10 characters).')}
+                    />
+                </div>
+
+                {reasonDialog.mode === 'suspend' && (
+                    <div className={styles.dialogField}>
+                        <label className={styles.filterLabel} htmlFor="shop-duration">
+                            {t('Suspension days (1-365)')}
+                        </label>
+                        <Input
+                            id="shop-duration"
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={duration}
+                            onChange={(event) => setDuration(event.target.value)}
+                        />
+                    </div>
+                )}
+
+                {reasonError && <p className={styles.fileError}>{reasonError}</p>}
+            </Dialog>
+        </WorkspaceLayout>
     );
 }

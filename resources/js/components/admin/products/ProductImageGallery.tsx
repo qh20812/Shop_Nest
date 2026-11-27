@@ -1,5 +1,10 @@
-import { useState } from 'react';
-import { useTranslation } from '../../../lib/i18n';
+import { ImageOff } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './products.module.css';
 
 interface ProductImage {
     image_id: number;
@@ -8,62 +13,68 @@ interface ProductImage {
 }
 
 interface ProductImageGalleryProps {
-    images: ProductImage[];
+    images?: ProductImage[];
+    productName: string;
 }
 
-export default function ProductImageGallery({ images }: ProductImageGalleryProps) {
+const resolveSrc = (url?: string) => {
+    if (!url) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
+        return url;
+    }
+
+    return `/storage/${url}`;
+};
+
+export default function ProductImageGallery({ images = [], productName }: ProductImageGalleryProps) {
     const { t } = useTranslation();
-    const resolveSrc = (url?: string) => {
-        if (!url) return '/image/ShopnestLogo.png';
-        if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
-            return url;
-        }
-        return `/storage/${url}`;
-    };
+    const primaryImage = useMemo(() => images.find((image) => image.is_primary) ?? images[0] ?? null, [images]);
+    const [selectedId, setSelectedId] = useState<number | null>(primaryImage?.image_id ?? null);
 
-    // Set the primary image as default, or the first image if no primary exists
-    const primaryImage = images.find((img) => img.is_primary) || images[0];
-    const [selectedImage, setSelectedImage] = useState<ProductImage | null>(primaryImage || null);
+    useEffect(() => {
+        setSelectedId(primaryImage?.image_id ?? null);
+    }, [primaryImage?.image_id]);
 
-    if (!images || images.length === 0) {
+    const selectedImage = images.find((image) => image.image_id === selectedId) ?? primaryImage;
+    const selectedSrc = resolveSrc(selectedImage?.image_url);
+
+    if (images.length === 0 || !selectedSrc) {
         return (
-            <div className="product-gallery">
-                <div className="product-gallery__main-image">
-                    <div className="product-gallery__no-image">
-                        <i className="bx bx-image"></i>
-                        <span>{t('No images available')}</span>
-                    </div>
-                </div>
+            <div className={styles.galleryEmpty}>
+                <ImageOff aria-hidden="true" className={styles.galleryEmptyIcon} />
+                <span>{t('No images available')}</span>
             </div>
         );
     }
 
     return (
-        <div className="product-gallery">
-            {/* Main Image Display */}
-            <div className="product-gallery__main-image">
-                {selectedImage && <img src={resolveSrc(selectedImage.image_url)} alt={t('Product Image')} className="product-gallery__main-img" />}
+        <div className={styles.gallery}>
+            <div className={styles.mainImage}>
+                <img src={selectedSrc} alt={productName} className={styles.mainImageTag} />
             </div>
 
-            {/* Thumbnail Images */}
             {images.length > 1 && (
-                <div className="product-gallery__thumbnails">
-                    {images.map((image) => (
-                        <button
-                            key={image.image_id}
-                            type="button"
-                            className={`product-gallery__thumbnail ${
-                                selectedImage?.image_id === image.image_id ? 'product-gallery__thumbnail--active' : ''
-                            }`}
-                            onClick={() => setSelectedImage(image)}
-                        >
-                            <img
-                                src={resolveSrc(image.image_url)}
-                                alt={`${t('Product Image')} ${image.image_id}`}
-                                className="product-gallery__thumbnail-img"
-                            />
-                        </button>
-                    ))}
+                <div className={styles.thumbnails}>
+                    {images.map((image, index) => {
+                        const active = image.image_id === selectedImage?.image_id;
+                        const src = resolveSrc(image.image_url);
+
+                        return (
+                            <button
+                                key={image.image_id}
+                                type="button"
+                                className={cx(styles.thumbnail, active && styles.thumbnailActive)}
+                                onClick={() => setSelectedId(image.image_id)}
+                                aria-pressed={active}
+                                aria-label={`${t('Product Image')} ${index + 1}`}
+                            >
+                                {src && <img src={src} alt="" className={styles.thumbnailImg} />}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

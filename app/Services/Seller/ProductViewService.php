@@ -3,8 +3,7 @@
 namespace App\Services\Seller;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProductViewService
 {
@@ -15,17 +14,10 @@ class ProductViewService
             'brand',
             'images' => fn ($query) => $query->orderBy('display_order')->orderBy('image_id'),
             'variants' => fn ($query) => $query->orderBy('created_at'),
-            'reviews' => function ($query) use ($product) {
-                $cacheKey = "product_reviews_{$product->id}";
-                return Cache::remember(
-                    $cacheKey,
-                    1800, // 30 minutes, assuming reviews change infrequently
-                    fn () => $query->latest()->limit((int) config('app.reviews.limit', 5))->get()
-                );
-            },
+            'reviews' => fn ($query) => $query->latest()->limit(
+                (int) config('app.reviews.limit', 5)
+            ),
         ]);
-
-        $primaryVariant = $product->variants->firstWhere('is_primary', true) ?? $product->variants->first();
 
         $productArray = $product->toArray();
 
@@ -33,8 +25,9 @@ class ProductViewService
         if (isset($productArray['images']) && is_array($productArray['images'])) {
             $productArray['images'] = array_map(function ($image) {
                 if (isset($image['image_url'])) {
-                    $image['image_url'] = \Illuminate\Support\Facades\Storage::url($image['image_url']);
+                    $image['image_url'] = Storage::url($image['image_url']);
                 }
+
                 return $image;
             }, $productArray['images']);
         }

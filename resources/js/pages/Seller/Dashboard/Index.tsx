@@ -1,14 +1,16 @@
-import '@/../css/Page.css';
-import Avatar from '@/components/ui/avatar';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import Header from '@/components/ui/header';
 import Insights from '@/components/ui/insights';
-import AppLayout from '@/layouts/app/AppLayout';
+import StatusBadge from '@/components/ui/status-badge';
+import { formatDate, formatDecimal, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { formatCurrency } from '@/lib/utils';
 import { Head, usePage } from '@inertiajs/react';
+import { AlertTriangle, CheckCircle2, CreditCard, Info, Package, Receipt, ShoppingBag, TrendingUp, Users } from 'lucide-react';
 import { useMemo } from 'react';
 
-// Định nghĩa TypeScript interfaces cho Seller Dashboard
+import styles from '../seller.module.css';
+
 interface ShopStats {
     total_revenue: number;
     total_orders: number;
@@ -54,29 +56,16 @@ interface TopSellingProduct {
     total_revenue: number;
 }
 
-type OrderStatusKey =
-    | 'pending_confirmation'
-    | 'processing'
-    | 'pending_assignment'
-    | 'assigned_to_shipper'
-    | 'delivering'
-    | 'delivered'
-    | 'completed'
-    | 'cancelled'
-    | 'returned';
-
 interface SellerDashboardProps extends Record<string, unknown> {
     shopStats?: ShopStats;
     recentOrders?: Order[];
     topSellingProducts?: TopSellingProduct[];
     stockAlerts?: number;
-    currencyCode?: string;
 }
 
 export default function Index() {
-    const { t, locale } = useTranslation();
-    const page = usePage<SellerDashboardProps>();
-    const props = page.props;
+    const { t } = useTranslation();
+    const props = usePage<SellerDashboardProps>().props;
 
     const shopStats = props.shopStats ?? {
         total_revenue: 0,
@@ -91,332 +80,231 @@ export default function Index() {
 
     const recentOrders = props.recentOrders ?? [];
     const topSellingProducts = props.topSellingProducts ?? [];
-    const stockAlerts = Array.isArray(props.stockAlerts) ? props.stockAlerts : [];
-
-    const currencyCode = props.currencyCode ?? 'VND';
+    const stockAlertCount = Array.isArray(props.stockAlerts) ? props.stockAlerts.length : Number(props.stockAlerts ?? 0);
 
     const breadcrumbs = [
         { label: t('Dashboard'), href: '/seller/dashboard' },
         { label: t('Overview'), href: '#', active: true },
     ];
 
-    // Tạo insightsData từ shopStats
     const insightsData = [
         {
-            icon: 'bx-dollar-circle',
-            value: formatCurrency(shopStats.total_revenue, {
-                from: currencyCode,
-                to: currencyCode,
-                rates: {},
-                locale,
-                abbreviate: true,
-            }),
+            icon: CreditCard,
+            value: formatVnd(shopStats.total_revenue),
             label: t('Total Revenue'),
-            tooltip: formatCurrency(shopStats.total_revenue, {
-                from: currencyCode,
-                to: currencyCode,
-                rates: {},
-                locale,
-            }),
         },
         {
-            icon: 'bx-shopping-bag',
-            value: shopStats.total_orders.toLocaleString(locale),
+            icon: ShoppingBag,
+            value: shopStats.total_orders.toLocaleString('vi-VN'),
             label: t('Total Orders'),
             tooltip: t('Total completed orders'),
         },
         {
-            icon: 'bx-trending-up',
-            value: `${shopStats.monthly_revenue_growth.toFixed(1)}%`,
+            icon: TrendingUp,
+            value: `${formatDecimal(shopStats.monthly_revenue_growth)}%`,
             label: t('Monthly Growth'),
             tooltip: t('Revenue growth compared to last month'),
         },
         {
-            icon: 'bx-user',
-            value: shopStats.unique_customers.toLocaleString(locale),
+            icon: Users,
+            value: shopStats.unique_customers.toLocaleString('vi-VN'),
             label: t('Unique Customers'),
             tooltip: t('Total unique customers served'),
         },
     ];
 
-    const orderStatusMap = useMemo<Record<OrderStatusKey, { className: string; label: string }>>(
-        () => ({
-            pending_confirmation: { className: 'pending', label: t('Pending Confirmation') },
-            processing: { className: 'process', label: t('Processing') },
-            pending_assignment: { className: 'process', label: t('Pending Assignment') },
-            assigned_to_shipper: { className: 'process', label: t('Assigned to Shipper') },
-            delivering: { className: 'process', label: t('Delivering') },
-            delivered: { className: 'completed', label: t('Delivered') },
-            completed: { className: 'completed', label: t('Completed') },
-            cancelled: { className: 'pending', label: t('Cancelled') },
-            returned: { className: 'pending', label: t('Returned') },
-        }),
+    const orderColumns = useMemo<DataTableColumn<Order>[]>(
+        () => [
+            {
+                key: 'customer',
+                header: t('Customer'),
+                cell: (order) => (
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>{order.customer?.username || t('Unknown')}</span>
+                        <span className={styles.cellMeta}>
+                            {[order.customer?.first_name, order.customer?.last_name].filter(Boolean).join(' ') || ' '}
+                        </span>
+                    </div>
+                ),
+            },
+            {
+                key: 'created_at',
+                header: t('Order Date'),
+                cell: (order) => <span className={styles.numeric}>{formatDate(order.created_at)}</span>,
+            },
+            {
+                key: 'status',
+                header: t('Status'),
+                cell: (order) => <StatusBadge status={order.status} type="order" />,
+            },
+            {
+                key: 'total',
+                header: t('Total Amount'),
+                align: 'right',
+                cell: (order) => {
+                    const totalForDisplay =
+                        typeof order.total_amount_converted === 'number'
+                            ? order.total_amount_converted
+                            : Number(order.total_amount ?? order.total_amount_base ?? 0);
+
+                    return <span className={styles.price}>{formatVnd(totalForDisplay)}</span>;
+                },
+            },
+            {
+                key: 'products',
+                header: t('Products'),
+                cell: (order) => {
+                    const items = order.items ?? [];
+
+                    if (items.length === 0) {
+                        return <span className={styles.faint}>-</span>;
+                    }
+
+                    return (
+                        <div className={styles.cellStack}>
+                            {items.slice(0, 2).map((item, index) => (
+                                <span key={index} className={styles.cellMeta}>
+                                    {item.product_name} ({item.quantity})
+                                </span>
+                            ))}
+                            {items.length > 2 && (
+                                <span className={styles.faint}>
+                                    +{items.length - 2} {t('more')}
+                                </span>
+                            )}
+                        </div>
+                    );
+                },
+            },
+        ],
         [t],
     );
 
-    const getOrderStatus = (status: string) => {
-        return orderStatusMap[status as OrderStatusKey] ?? { className: 'pending', label: t('Pending') };
-    };
-
-    // Helper function để format ngày
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('vi-VN');
-    };
-
-    const handleDownloadReport = () => {
-        console.log('Download report clicked');
-    };
-
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Seller Dashboard')} />
-            <Header
-                title={t('Seller Dashboard')}
-                breadcrumbs={breadcrumbs}
-                reportButton={{
-                    label: t('Download Report'),
-                    icon: 'bx-cloud-download',
-                    onClick: handleDownloadReport,
-                }}
-            />
+            <Header title={t('Seller Dashboard')} breadcrumbs={breadcrumbs} />
 
             <Insights items={insightsData} />
 
-            <section className="seller-widgets">
-                <div className="widget-card">
-                    <div className="widget-header">
-                        <h3>{t('Top Selling Products')}</h3>
-                        <span>{t('This month')}</span>
+            <section className={styles.widgetGrid} aria-label={t('Shop overview')}>
+                <div className={styles.widgetCard}>
+                    <div className={styles.widgetHead}>
+                        <h2 className={styles.widgetTitle}>{t('Top Selling Products')}</h2>
                     </div>
-                    <div className="widget-body">
-                        <div className="top-products-list">
+
+                    {topSellingProducts.length > 0 ? (
+                        <ul className={styles.topList}>
                             {topSellingProducts.map((product, index) => (
-                                <div key={product.product_id} className="product-item">
-                                    <div className="product-rank">#{index + 1}</div>
-                                    <div className="product-info">
-                                        <h4>{product.name}</h4>
-                                        <div className="product-stats">
-                                            <span className="quantity">
+                                <li key={product.product_id} className={styles.topItem}>
+                                    <span className={styles.rank}>{index + 1}</span>
+                                    <div className={styles.rankBody}>
+                                        <span className={styles.rankName}>{product.name}</span>
+                                        <span className={styles.rankStats}>
+                                            <span>
                                                 {product.total_quantity} {t('sold')}
                                             </span>
-                                            <span className="revenue">
-                                                {formatCurrency(product.total_revenue, {
-                                                    from: currencyCode,
-                                                    to: currencyCode,
-                                                    rates: {},
-                                                    locale,
-                                                    abbreviate: true,
-                                                })}
-                                            </span>
-                                        </div>
+                                            <span>{formatVnd(product.total_revenue)}</span>
+                                        </span>
                                     </div>
-                                </div>
+                                </li>
                             ))}
-                        </div>
-                    </div>
+                        </ul>
+                    ) : (
+                        <p className={styles.muted}>{t('No sales data yet')}</p>
+                    )}
                 </div>
 
-                <div className="widget-card">
-                    <div className="widget-header">
-                        <h3>{t('Stock Alerts')}</h3>
-                        <span>
-                            {Array.isArray(stockAlerts) ? stockAlerts.length : stockAlerts} {t('items')}
+                <div className={styles.widgetCard}>
+                    <div className={styles.widgetHead}>
+                        <h2 className={styles.widgetTitle}>{t('Stock Alerts')}</h2>
+                        <span className={styles.widgetMeta}>
+                            {stockAlertCount} {t('items')}
                         </span>
                     </div>
-                    <div className="widget-body">
-                        <div className="alerts-list">
-                            {(Array.isArray(stockAlerts) ? stockAlerts.length : stockAlerts) > 0 ? (
-                                <>
-                                    <div className="alert-item warning">
-                                        <i className="bx bx-error-circle"></i>
-                                        <div className="alert-content">
-                                            <h4>{t('Low Stock Alert')}</h4>
-                                            <p>
-                                                {t('You have')} {Array.isArray(stockAlerts) ? stockAlerts.length : stockAlerts}{' '}
-                                                {t('products with low stock')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="alert-item info">
-                                        <i className="bx bx-info-circle"></i>
-                                        <div className="alert-content">
-                                            <h4>{t('Stock Management')}</h4>
-                                            <p>{t('Monitor your inventory levels regularly')}</p>
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="alert-item success">
-                                    <i className="bx bx-check-circle"></i>
-                                    <div className="alert-content">
-                                        <h4>{t('All Stock Levels Good')}</h4>
-                                        <p>{t('No low stock alerts at this time')}</p>
+
+                    <div className={styles.alertList}>
+                        {stockAlertCount > 0 ? (
+                            <>
+                                <div className={`${styles.alertRow} ${styles.alertWarning}`}>
+                                    <AlertTriangle aria-hidden="true" className={styles.alertRowIcon} />
+                                    <div className={styles.alertRowBody}>
+                                        <span className={styles.alertRowTitle}>{t('Low Stock Alert')}</span>
+                                        <span className={styles.alertRowText}>
+                                            {t('You have')} {stockAlertCount} {t('products with low stock')}
+                                        </span>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                                <div className={`${styles.alertRow} ${styles.alertInfo}`}>
+                                    <Info aria-hidden="true" className={styles.alertRowIcon} />
+                                    <div className={styles.alertRowBody}>
+                                        <span className={styles.alertRowTitle}>{t('Stock Management')}</span>
+                                        <span className={styles.alertRowText}>{t('Monitor your inventory levels regularly')}</span>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className={`${styles.alertRow} ${styles.alertSuccess}`}>
+                                <CheckCircle2 aria-hidden="true" className={styles.alertRowIcon} />
+                                <div className={styles.alertRowBody}>
+                                    <span className={styles.alertRowTitle}>{t('All Stock Levels Good')}</span>
+                                    <span className={styles.alertRowText}>{t('No low stock alerts at this time')}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
 
-            <div className="bottom-data">
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-receipt"></i>
-                        <h3>{t('Recent Orders')}</h3>
+            <DataTable
+                columns={orderColumns}
+                data={recentOrders}
+                headerTitle={t('Recent Orders')}
+                headerIcon={Receipt}
+                emptyMessage={t('No recent orders')}
+            />
+
+            <div className={styles.metricGrid}>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
+                    <span className={styles.metricIcon}>
+                        <TrendingUp aria-hidden="true" />
+                    </span>
+                    <div className={styles.metricBody}>
+                        <span className={styles.metricLabel}>{t('Average Order Value')}</span>
+                        <span className={styles.metricValue}>{formatVnd(shopStats.average_order_value)}</span>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>{t('Customer')}</th>
-                                <th>{t('Order Date')}</th>
-                                <th>{t('Status')}</th>
-                                <th>{t('Total Amount')}</th>
-                                <th>{t('Products')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentOrders && recentOrders.length > 0 ? (
-                                recentOrders.map((order) => {
-                                    const { className, label } = getOrderStatus(order.status);
-                                    const rowKey = order.id ?? order.order_id ?? order.order_number ?? order.created_at;
-
-                                    // Create safe user object for Avatar component
-                                    const userForAvatar = order.customer
-                                        ? {
-                                              id: order.customer.id || 0,
-                                              username: order.customer.username || 'N/A',
-                                              first_name: order.customer.first_name || '',
-                                              last_name: order.customer.last_name || '',
-                                              avatar: order.customer.avatar,
-                                              avatar_url: order.customer.avatar_url,
-                                          }
-                                        : {
-                                              id: 0,
-                                              username: 'N/A',
-                                              first_name: '',
-                                              last_name: '',
-                                              avatar: undefined,
-                                              avatar_url: undefined,
-                                          };
-
-                                    // Normalize avatar path if it's relative
-                                    if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http')) {
-                                        userForAvatar.avatar = `/storage/${userForAvatar.avatar}`;
-                                    }
-
-                                    const orderCurrency = order.currency_code ?? currencyCode;
-                                    const totalForDisplay =
-                                        typeof order.total_amount_converted === 'number'
-                                            ? order.total_amount_converted
-                                            : Number(order.total_amount ?? order.total_amount_base ?? 0);
-
-                                    return (
-                                        <tr key={String(rowKey)}>
-                                            <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <Avatar user={userForAvatar} size={36} />
-                                                <p style={{ margin: 0 }}>{userForAvatar.username}</p>
-                                            </td>
-                                            <td>{formatDate(order.created_at)}</td>
-                                            <td>
-                                                <span className={`status ${className}`}>{label}</span>
-                                            </td>
-                                            <td>
-                                                {formatCurrency(totalForDisplay, {
-                                                    from: orderCurrency,
-                                                    to: orderCurrency,
-                                                    rates: {},
-                                                    locale,
-                                                })}
-                                            </td>
-                                            <td>
-                                                <div className="order-products">
-                                                    {order.items && order.items.length > 0 ? (
-                                                        order.items.slice(0, 2).map((item, idx) => (
-                                                            <div key={idx} className="product-summary">
-                                                                {item.product_name} ({item.quantity})
-                                                            </div>
-                                                        ))
-                                                    ) : (
-                                                        <span className="no-products">-</span>
-                                                    )}
-                                                    {order.items && order.items.length > 2 && (
-                                                        <span className="more-items">
-                                                            +{order.items.length - 2} {t('more')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
-                                        {t('No recent orders')}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
                 </div>
 
-                <div className="performance">
-                    <div className="header">
-                        <i className="bx bx-bar-chart"></i>
-                        <h3>{t('Performance Metrics')}</h3>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
+                    <span className={styles.metricIcon}>
+                        <Receipt aria-hidden="true" />
+                    </span>
+                    <div className={styles.metricBody}>
+                        <span className={styles.metricLabel}>{t('Pending Orders')}</span>
+                        <span className={styles.metricValue}>{shopStats.pending_orders_count}</span>
                     </div>
-                    <div className="metrics-grid">
-                        <div className="metric-card">
-                            <div className="metric-icon">
-                                <i className="bx bx-trending-up"></i>
-                            </div>
-                            <div className="metric-content">
-                                <h4>{t('Average Order Value')}</h4>
-                                <p className="metric-value">
-                                    {formatCurrency(shopStats.average_order_value, {
-                                        from: currencyCode,
-                                        to: currencyCode,
-                                        rates: {},
-                                        locale,
-                                        abbreviate: true,
-                                    })}
-                                </p>
-                            </div>
-                        </div>
+                </div>
 
-                        <div className="metric-card">
-                            <div className="metric-icon">
-                                <i className="bx bx-time-five"></i>
-                            </div>
-                            <div className="metric-content">
-                                <h4>{t('Pending Orders')}</h4>
-                                <p className="metric-value">{shopStats.pending_orders_count}</p>
-                            </div>
-                        </div>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
+                    <span className={styles.metricIcon}>
+                        <Package aria-hidden="true" />
+                    </span>
+                    <div className={styles.metricBody}>
+                        <span className={styles.metricLabel}>{t('Top Product')}</span>
+                        <span className={`${styles.metricValue} ${styles.metricValueText}`}>{shopStats.top_selling_product || t('No data')}</span>
+                    </div>
+                </div>
 
-                        <div className="metric-card">
-                            <div className="metric-icon">
-                                <i className="bx bx-package"></i>
-                            </div>
-                            <div className="metric-content">
-                                <h4>{t('Top Product')}</h4>
-                                <p className="metric-value top-product">{shopStats.top_selling_product || t('No data')}</p>
-                            </div>
-                        </div>
-
-                        <div className="metric-card">
-                            <div className="metric-icon">
-                                <i className="bx bx-bell"></i>
-                            </div>
-                            <div className="metric-content">
-                                <h4>{t('Stock Alerts')}</h4>
-                                <p className="metric-value alert-count">{Array.isArray(stockAlerts) ? stockAlerts.length : stockAlerts}</p>
-                            </div>
-                        </div>
+                <div className={`${styles.metricCard} ${styles.metricCardFrosted}`}>
+                    <span className={styles.metricIcon}>
+                        <AlertTriangle aria-hidden="true" />
+                    </span>
+                    <div className={styles.metricBody}>
+                        <span className={styles.metricLabel}>{t('Stock Alerts')}</span>
+                        <span className={styles.metricValue}>{stockAlertCount}</span>
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

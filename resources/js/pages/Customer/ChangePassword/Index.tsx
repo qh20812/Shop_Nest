@@ -9,6 +9,9 @@ import { FormField } from '@/components/ui/form-field';
 import Input from '@/components/ui/input';
 import { PasswordStrength } from '@/components/ui/password-strength';
 import { useToast } from '@/components/ui/toast';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from '../customer.module.css';
 
 interface PageProps extends Record<string, unknown> {
     errors?: Record<string, string>;
@@ -21,6 +24,8 @@ interface PasswordForm {
     [key: string]: string;
 }
 
+const INSET_VARIANT = 'inset' as const;
+
 const emptyForm: PasswordForm = {
     current_password: '',
     new_password: '',
@@ -28,6 +33,7 @@ const emptyForm: PasswordForm = {
 };
 
 export default function ChangePasswordIndex() {
+    const { t } = useTranslation();
     const { errors: pageErrors = {} } = usePage<PageProps>().props;
     const { success, error: showError } = useToast();
     const [form, setForm] = React.useState<PasswordForm>(emptyForm);
@@ -48,7 +54,7 @@ export default function ChangePasswordIndex() {
         setErrors({});
 
         if (form.new_password !== form.confirm_password) {
-            setErrors({ confirm_password: 'Mật khẩu xác nhận không khớp.' });
+            setErrors({ confirm_password: t('Password confirmation does not match.') });
             return;
         }
 
@@ -58,11 +64,11 @@ export default function ChangePasswordIndex() {
             preserveScroll: true,
             onSuccess: () => {
                 setForm(emptyForm);
-                success('Đã đổi mật khẩu');
+                success(t('Password changed'));
             },
             onError: (nextErrors) => {
                 setErrors(nextErrors as Record<string, string>);
-                showError('Không thể đổi mật khẩu', 'Vui lòng kiểm tra lại mật khẩu hiện tại.');
+                showError(t('Could not change the password'), t('Please check your current password.'));
             },
             onFinish: () => setProcessing(false),
         });
@@ -70,119 +76,95 @@ export default function ChangePasswordIndex() {
 
     const isValid = Boolean(form.current_password && form.new_password && form.confirm_password);
 
+    const revealButton = (key: keyof typeof show, label: string) => (
+        <button
+            type="button"
+            aria-label={show[key] ? t('Hide :label', { label }) : t('Show :label', { label })}
+            className={styles.reveal}
+            onClick={() => setShow((current) => ({ ...current, [key]: !current[key] }))}
+        >
+            {show[key] ? <EyeOff aria-hidden="true" className={styles.revealIcon} /> : <Eye aria-hidden="true" className={styles.revealIcon} />}
+        </button>
+    );
+
     return (
         <AccountLayout
             active="password"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Tài khoản' }, { label: 'Mật khẩu' }]}
-            eyebrow="Bảo mật"
-            title="Đổi mật khẩu"
-            description="Dùng mật khẩu dài, khó đoán và không chia sẻ với người khác."
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Account') }, { label: t('Password') }]}
+            eyebrow={t('Security')}
+            title={t('Change password')}
+            description={t('Use a long, hard-to-guess password and never share it.')}
             actions={
                 <Button variant="secondary" size="sm" leftIcon={ArrowLeft} asChild>
-                    <Link href="/user/profile">Về hồ sơ</Link>
+                    <Link href="/user/profile">{t('Back to profile')}</Link>
                 </Button>
             }
         >
-            <Head title="Đổi mật khẩu" />
+            <Head title={t('Change password')} />
 
-            <div className="grid gap-6 lg:grid-cols-12">
-                <Card padding="lg" className="lg:col-span-7">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                        <div className="flex items-center gap-2 border-b border-border pb-3">
-                            <KeyRound aria-hidden="true" className="size-4 text-lacquer-red" />
-                            <h2 className="text-headline-3 text-ink">Mật khẩu đăng nhập</h2>
+            <div className={styles.passwordGrid}>
+                <Card padding="lg" className={styles.passwordCard}>
+                    <form onSubmit={handleSubmit} className={styles.formStack}>
+                        <div className={styles.cardHead}>
+                            <KeyRound aria-hidden="true" className={styles.iconAccent} />
+                            <h2 className={styles.cardTitle}>{t('Sign-in password')}</h2>
                         </div>
 
-                        <FormField label="Mật khẩu hiện tại" required error={errors.current_password}>
+                        <FormField label={t('Current password')} required error={errors.current_password}>
                             <Input
                                 type={show.current ? 'text' : 'password'}
                                 value={form.current_password}
                                 onChange={update('current_password')}
                                 autoComplete="current-password"
                                 invalid={Boolean(errors.current_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.current ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, current: !current.current }))}
-                                    >
-                                        {show.current ? (
-                                            <EyeOff aria-hidden="true" className="size-4" />
-                                        ) : (
-                                            <Eye aria-hidden="true" className="size-4" />
-                                        )}
-                                    </button>
-                                }
+                                trailing={revealButton('current', t('current password'))}
                                 required
                             />
                         </FormField>
 
-                        <FormField label="Mật khẩu mới" required error={errors.new_password}>
+                        <FormField label={t('New password')} required error={errors.new_password}>
                             <Input
                                 type={show.next ? 'text' : 'password'}
                                 value={form.new_password}
                                 onChange={update('new_password')}
                                 autoComplete="new-password"
                                 invalid={Boolean(errors.new_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.next ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, next: !current.next }))}
-                                    >
-                                        {show.next ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
-                                    </button>
-                                }
+                                trailing={revealButton('next', t('new password'))}
                                 required
                             />
                         </FormField>
 
                         <PasswordStrength value={form.new_password} />
 
-                        <FormField label="Xác nhận mật khẩu mới" required error={errors.confirm_password}>
+                        <FormField label={t('Confirm new password')} required error={errors.confirm_password}>
                             <Input
                                 type={show.confirm ? 'text' : 'password'}
                                 value={form.confirm_password}
                                 onChange={update('confirm_password')}
                                 autoComplete="new-password"
                                 invalid={Boolean(errors.confirm_password)}
-                                trailing={
-                                    <button
-                                        type="button"
-                                        aria-label={show.confirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
-                                        className="focus-ring flex size-control-sm items-center justify-center rounded-chip text-ink-muted transition-colors hover:bg-raw-linen hover:text-ink"
-                                        onClick={() => setShow((current) => ({ ...current, confirm: !current.confirm }))}
-                                    >
-                                        {show.confirm ? (
-                                            <EyeOff aria-hidden="true" className="size-4" />
-                                        ) : (
-                                            <Eye aria-hidden="true" className="size-4" />
-                                        )}
-                                    </button>
-                                }
+                                trailing={revealButton('confirm', t('password confirmation'))}
                                 required
                             />
                         </FormField>
 
-                        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+                        <div className={styles.formFooter}>
                             <Button type="button" variant="secondary" asChild>
-                                <Link href="/user/profile">Huỷ</Link>
+                                <Link href="/user/profile">{t('Cancel')}</Link>
                             </Button>
                             <Button type="submit" loading={processing} disabled={!isValid}>
-                                Cập nhật mật khẩu
+                                {t('Update password')}
                             </Button>
                         </div>
                     </form>
                 </Card>
 
-                <Card padding="lg" variant="inset" className="flex flex-col gap-3 lg:col-span-5">
-                    <h3 className="text-headline-3 text-ink">Mẹo bảo mật</h3>
-                    <ul className="flex list-disc flex-col gap-2 pl-5 text-body-sm text-ink-muted">
-                        <li>Mật khẩu tối thiểu 8 ký tự, nên có chữ hoa, số và ký tự đặc biệt.</li>
-                        <li>Không dùng lại mật khẩu của email hoặc mạng xã hội.</li>
-                        <li>Đăng xuất khỏi thiết bị lạ sau khi đổi mật khẩu.</li>
+                <Card padding="lg" variant={INSET_VARIANT} className={styles.tipsCard}>
+                    <h3 className={styles.cardTitle}>{t('Security tips')}</h3>
+                    <ul className={styles.tipsList}>
+                        <li>{t('At least 8 characters, ideally with uppercase letters, numbers and symbols.')}</li>
+                        <li>{t('Do not reuse passwords from your email or social accounts.')}</li>
+                        <li>{t('Sign out of unfamiliar devices after changing your password.')}</li>
                     </ul>
                 </Card>
             </div>

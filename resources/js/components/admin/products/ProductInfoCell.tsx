@@ -1,4 +1,8 @@
+import { ImageOff } from 'lucide-react';
+
 import { useTranslation } from '../../../lib/i18n';
+
+import styles from './product-info-cell.module.css';
 
 interface Product {
     product_id: number;
@@ -31,7 +35,8 @@ export default function ProductInfoCell({ product }: ProductInfoCellProps) {
 
     const getCategoryName = (): string => {
         return product.category?.name ? getStringValue(product.category.name) : t('No Category');
-    }; // Get primary image or first image
+    };
+
     const primaryImage = product.images?.find((img) => img.is_primary) || product.images?.[0];
 
     const resolveSrc = (url?: string) => {
@@ -45,39 +50,17 @@ export default function ProductInfoCell({ product }: ProductInfoCellProps) {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className={styles.cell}>
             {primaryImage ? (
-                <img
-                    src={resolveSrc(primaryImage.image_url) || '/image/ShopnestLogo.png'}
-                    alt={getProductName()}
-                    style={{
-                        width: '50px',
-                        height: '50px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        border: '1px solid var(--grey)',
-                    }}
-                />
+                <img src={resolveSrc(primaryImage.image_url) || '/image/ShopnestLogo.png'} alt={getProductName()} className={styles.thumb} />
             ) : (
-                <div
-                    style={{
-                        width: '50px',
-                        height: '50px',
-                        backgroundColor: 'var(--grey)',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        color: 'var(--dark-grey)',
-                    }}
-                >
-                    {t('No Image')}
-                </div>
+                <span className={styles.placeholder} aria-hidden="true">
+                    <ImageOff className={styles.placeholderIcon} />
+                </span>
             )}
-            <div>
-                <div style={{ fontWeight: '500', color: 'var(--dark)', marginBottom: '4px' }}>{getProductName()}</div>
-                <div style={{ fontSize: '12px', color: 'var(--dark-grey)' }}>{getCategoryName()}</div>
+            <div className={styles.body}>
+                <span className={styles.name}>{getProductName()}</span>
+                <span className={styles.category}>{getCategoryName()}</span>
             </div>
         </div>
     );

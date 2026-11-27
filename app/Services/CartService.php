@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
-use App\Exceptions\CartException;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
 use App\Events\Cart\LowStockDetected;
+use App\Exceptions\CartException;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\ProductVariant;
@@ -24,12 +25,15 @@ use Throwable;
 class CartService
 {
     private const SESSION_APPLIED_PROMOTION_KEY = 'cart.applied_promotion';
+
     private const SESSION_GUEST_PROMOTION_KEY = 'cart.guest_promotion';
+
     private const SESSION_GUEST_ITEMS_KEY = 'cart.guest_items';
 
-    public function __construct(private CacheRepository $cache)
-    {
-    }
+    public function __construct(
+        private CacheRepository $cache,
+        private PromotionEligibilityService $promotionEligibility,
+    ) {}
 
     public function getCartItems(?User $user): Collection
     {
@@ -82,6 +86,7 @@ class CartService
     {
         if ($user) {
             $this->removeItemForUser($user, $cartItemId);
+
             return;
         }
 
@@ -92,13 +97,13 @@ class CartService
     {
         Log::info('cart_service.clear_cart_started', [
             'user_id' => $user?->id,
-            'is_guest' => !$user,
+            'is_guest' => ! $user,
         ]);
-        
+
         if ($user) {
             $itemCount = CartItem::where('user_id', $user->id)->count();
             $deleted = CartItem::where('user_id', $user->id)->delete();
-            
+
             Log::info('cart_service.cart_items_deleted', [
                 'user_id' => $user->id,
                 'item_count' => $itemCount,
@@ -110,7 +115,7 @@ class CartService
         }
 
         $this->removePromotion($user);
-        
+
         Log::info('cart_service.clear_cart_completed', [
             'user_id' => $user?->id,
         ]);
@@ -121,11 +126,11 @@ class CartService
         $promotionCode = $this->getPromotionCodeByCode($code);
         $promotion = $promotionCode->promotion()->withTrashed()->first();
 
-        if (!$promotion) {
+        if (! $promotion) {
             throw CartException::promotionNotFound($code);
         }
 
-        if (!$promotion->is_active || !$promotionCode->is_active) {
+        if (! $promotion->is_active || ! $promotionCode->is_active) {
             throw CartException::promotionInactive($code);
         }
 
@@ -149,13 +154,17 @@ class CartService
             throw CartException::promotionBudgetExceeded($code);
         }
 
-        if (!$promotion->canBeUsed()) {
+        if (! $promotion->canBeUsed()) {
             throw CartException::promotionInactive($code);
         }
 
         $subtotal = $this->calculateSubtotal($cartItems);
         if ($promotion->min_order_amount && $subtotal < (float) $promotion->min_order_amount) {
             throw CartException::promotionMinimumNotMet($code);
+        }
+
+        if ($this->promotionEligibility->eligibleSubtotal($promotion, $cartItems) <= 0) {
+            throw new CartException('This promotion does not apply to the products in your cart.');
         }
 
         if ($user && $promotion->per_customer_limit !== null) {
@@ -197,10 +206,18 @@ class CartService
 
     public function getActivePromotion(?User $user): ?Promotion
     {
+        return $this->getActivePromotionDetails($user)['promotion'];
+    }
+
+    /**
+     * @return array{promotion: Promotion|null, code: PromotionCode|null}
+     */
+    public function getActivePromotionDetails(?User $user): array
+    {
         $sessionKey = $user ? self::SESSION_APPLIED_PROMOTION_KEY : self::SESSION_GUEST_PROMOTION_KEY;
         $payload = session($sessionKey);
 
-        if (!$payload && session()->has('applied_promotion_id')) {
+        if (! $payload && session()->has('applied_promotion_id')) {
             $payload = [
                 'promotion_id' => session('applied_promotion_id'),
                 'promotion_code_id' => session('applied_promotion_code_id'),
@@ -208,29 +225,30 @@ class CartService
             ];
 
             session([$sessionKey => $payload]);
-            session()->forget('applied_promotion_id');
-            session()->forget('applied_promotion_code_id');
-            session()->forget('applied_promotion_code');
+            session()->forget(['applied_promotion_id', 'applied_promotion_code_id', 'applied_promotion_code']);
         }
 
-        if (!$payload) {
-            return null;
+        if (! $payload) {
+            return ['promotion' => null, 'code' => null];
         }
 
-        $promotion = Promotion::find($payload['promotion_id']);
+        $promotion = Promotion::find($payload['promotion_id'] ?? null);
 
-        if (!$promotion || !$promotion->canBeUsed()) {
+        if (! $promotion || ! $promotion->canBeUsed()) {
             session()->forget($sessionKey);
-            return null;
+
+            return ['promotion' => null, 'code' => null];
         }
 
         $promotionCode = $this->getPromotionCodeById((int) ($payload['promotion_code_id'] ?? 0));
-        if (!$promotionCode || !$promotionCode->is_active) {
+
+        if (! $promotionCode || ! $promotionCode->is_active) {
             session()->forget($sessionKey);
-            return null;
+
+            return ['promotion' => null, 'code' => null];
         }
 
-        return $promotion;
+        return ['promotion' => $promotion, 'code' => $promotionCode];
     }
 
     public function calculateTotals(Collection $cartItems, ?Promotion $promotion = null): array
@@ -239,7 +257,7 @@ class CartService
         $discount = 0.0;
 
         if ($promotion) {
-            $discount = $this->calculatePromotionDiscount($promotion, $subtotal);
+            $discount = $this->calculatePromotionDiscount($promotion, $subtotal, $cartItems);
         }
 
         $total = max(0, $subtotal - $discount);
@@ -336,6 +354,7 @@ class CartService
 
             $newQuantity = $quantity + ($existing?->quantity ?? 0);
 
+            $this->assertPurchasable($variant);
             $this->ensureStock($variant, $newQuantity);
 
             $cartItem = CartItem::updateOrCreate(
@@ -344,7 +363,7 @@ class CartService
             );
         });
 
-        if (!$cartItem) {
+        if (! $cartItem) {
             throw new CartException('Failed to add item to cart.');
         }
 
@@ -366,6 +385,7 @@ class CartService
         $currentQuantity = $index !== false ? (int) $items[$index]['quantity'] : 0;
         $newQuantity = $currentQuantity + $quantity;
 
+        $this->assertPurchasable($variant);
         $this->ensureStock($variant, $newQuantity);
 
         if ($index === false) {
@@ -390,6 +410,7 @@ class CartService
 
         if ($quantity === 0) {
             $this->removeItemForUser($user, $cartItemId);
+
             return [];
         }
 
@@ -420,6 +441,7 @@ class CartService
         if ($quantity === 0) {
             $items->forget($index);
             session([self::SESSION_GUEST_ITEMS_KEY => $items->values()->all()]);
+
             return [];
         }
 
@@ -452,7 +474,7 @@ class CartService
 
     private function verifyStockForCheckout(?User $user, Collection $cartItems): void
     {
-        if (!$user) {
+        if (! $user) {
             session()->forget('checkout_reserved');
 
             Log::debug('cart.verifyStock.guest_start', ['items' => $cartItems->map(fn ($item) => [
@@ -472,11 +494,12 @@ class CartService
             }, 3);
 
             Log::debug('cart.verifyStock.guest_completed');
+
             return;
         }
 
         $previousReserved = session('checkout_reserved', []);
-        if (!empty($previousReserved)) {
+        if (! empty($previousReserved)) {
             $this->releaseReservedQuantities($previousReserved);
         }
 
@@ -501,7 +524,7 @@ class CartService
                 $quantity = (int) $item['quantity'];
                 $this->ensureStock($variant, $quantity);
 
-                if ($variant->track_inventory && !$variant->reserveQuantity($quantity)) {
+                if ($variant->track_inventory && ! $variant->reserveQuantity($quantity)) {
                     Log::warning('Failed to reserve stock during checkout.', [
                         'variant_id' => $variant->variant_id,
                         'requested_quantity' => $quantity,
@@ -527,8 +550,8 @@ class CartService
         $product = $variant->relationLoaded('product') ? $variant->product : $variant->product()->first();
 
         // Use discount_price if available, otherwise use regular price
-        $effectivePrice = $variant->discount_price !== null && $variant->discount_price > 0 
-            ? (float) $variant->discount_price 
+        $effectivePrice = $variant->discount_price !== null && $variant->discount_price > 0
+            ? (float) $variant->discount_price
             : (float) $variant->price;
 
         return [
@@ -548,13 +571,23 @@ class CartService
                 'reserved_quantity' => (int) ($variant->reserved_quantity ?? 0),
                 'product' => $product ? [
                     'product_id' => $product->product_id,
+                    'category_id' => $product->category_id,
                     'name' => $product->name,
-                    'images' => $product->relationLoaded('images') 
-                        ? $product->images->map(fn($img) => ['image_url' => $img->image_url])->toArray()
+                    'images' => $product->relationLoaded('images')
+                        ? $product->images->map(fn ($img) => ['image_url' => $img->image_url])->toArray()
                         : [],
                 ] : null,
             ],
         ];
+    }
+
+    private function assertPurchasable(ProductVariant $variant): void
+    {
+        $product = $variant->product;
+
+        if (! $product || ! $product->is_active || $product->status !== ProductStatus::PUBLISHED) {
+            throw new CartException('This product is not available for purchase.');
+        }
     }
 
     private function ensureStock(ProductVariant $variant, int $desiredQuantity): void
@@ -601,25 +634,31 @@ class CartService
         return $cartItems->sum(fn (array $item) => (float) ($item['price'] ?? $item['variant']['price'] ?? 0) * (int) ($item['quantity'] ?? 0));
     }
 
-    private function calculatePromotionDiscount(Promotion $promotion, float $subtotal): float
+    private function calculatePromotionDiscount(Promotion $promotion, float $subtotal, iterable $items): float
     {
         if ($promotion->min_order_amount && $subtotal < (float) $promotion->min_order_amount) {
             return 0.0;
         }
 
+        $discountable = $this->promotionEligibility->eligibleSubtotal($promotion, $items);
+
+        if ($discountable <= 0) {
+            return 0.0;
+        }
+
         if ((int) $promotion->type === 1) {
-            $discount = $subtotal * ((float) $promotion->value / 100);
+            $discount = $discountable * ((float) $promotion->value / 100);
             $maxDiscount = $promotion->max_discount_amount ? (float) $promotion->max_discount_amount : null;
 
             if ($maxDiscount !== null && $discount > $maxDiscount) {
                 $discount = $maxDiscount;
             }
 
-            return $discount;
+            return min($discount, $discountable);
         }
 
         if ((int) $promotion->type === 2) {
-            return min((float) $promotion->value, $subtotal);
+            return min((float) $promotion->value, $discountable);
         }
 
         return 0.0;
@@ -642,7 +681,7 @@ class CartService
             return PromotionCode::where('code', $code)->first();
         });
 
-        if (!$promotionCode) {
+        if (! $promotionCode) {
             throw CartException::promotionNotFound($code);
         }
 
@@ -696,10 +735,11 @@ class CartService
 
                 $variant = ProductVariant::lockForUpdate()->find($variantId);
 
-                if (!$variant) {
+                if (! $variant) {
                     Log::warning('cart.releaseReserved.variant_missing', [
                         'variant_id' => $variantId,
                     ]);
+
                     continue;
                 }
 
@@ -725,9 +765,7 @@ class CartService
 
     /**
      * Create an order from current cart items.
-     * 
-     * @param User $user
-     * @return Order
+     *
      * @throws CartException
      */
     public function createOrderFromCart(User $user): Order
@@ -763,8 +801,8 @@ class CartService
                 foreach ($cartItems as $item) {
                     $variant = ProductVariant::lockForUpdate()->find($item['variant_id']);
 
-                    if (!$variant) {
-                        throw new CartException("Product variant not found");
+                    if (! $variant) {
+                        throw new CartException('Product variant not found');
                     }
 
                     if ($variant->track_inventory) {
@@ -789,7 +827,7 @@ class CartService
 
                     // Use the effective price from cart item (which already considers discount_price)
                     $effectivePrice = $item['price']; // This now contains the sale price if available
-                    
+
                     $order->items()->create([
                         'variant_id' => $variant->variant_id,
                         'quantity' => $item['quantity'],
@@ -832,7 +870,7 @@ class CartService
     private function generateOrderNumber(): string
     {
         do {
-            $number = 'SN' . now()->format('YmdHis') . Str::upper(Str::random(4));
+            $number = 'SN'.now()->format('YmdHis').Str::upper(Str::random(4));
         } while (Order::where('order_number', $number)->exists());
 
         return $number;

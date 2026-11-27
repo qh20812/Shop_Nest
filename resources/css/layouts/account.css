@@ -1,0 +1,105 @@
+/*
+ * Bảng Hiệu — customer account shell. 220px rail on desktop, scroll tabs on mobile.
+ */
+
+@layer sn-layouts {
+    .sn-account {
+        padding-block: var(--sn-space-8);
+    }
+
+    .sn-account__body {
+        display: grid;
+        gap: var(--sn-space-6);
+        margin-top: var(--sn-space-6);
+    }
+
+    .sn-account__nav {
+        display: flex;
+        gap: var(--sn-space-2);
+        padding-bottom: var(--sn-space-1);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .sn-account__nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sn-account__tab {
+        display: inline-flex;
+        min-height: var(--sn-control-sm);
+        flex-shrink: 0;
+        align-items: center;
+        gap: var(--sn-space-2);
+        padding: var(--sn-space-2) 0.875rem;
+        border: 1px solid var(--sn-color-border);
+        border-radius: var(--sn-radius-pill);
+        background: var(--sn-color-surface);
+        color: var(--sn-color-text-muted);
+        font-size: var(--sn-text-sm);
+        font-weight: var(--sn-weight-medium);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .sn-account__tab:hover {
+        border-color: var(--sn-color-border-strong);
+        color: var(--sn-color-text);
+    }
+
+    .sn-account__tab[aria-current='page'] {
+        border-color: var(--sn-color-accent);
+        background: var(--sn-color-accent-wash);
+        color: var(--sn-color-accent-text);
+    }
+
+    .sn-account__tab-icon {
+        width: var(--sn-icon-sm);
+        height: var(--sn-icon-sm);
+    }
+
+    .sn-account__content {
+        min-width: 0;
+    }
+
+    @media (min-width: 768px) {
+        .sn-account {
+            padding-block: var(--sn-space-10);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .sn-account__body {
+            grid-template-columns: var(--sn-account-rail) minmax(0, 1fr);
+            align-items: start;
+            gap: var(--sn-space-8);
+        }
+
+        .sn-account__nav {
+            position: sticky;
+            top: calc(var(--sn-header-stuck) + var(--sn-space-2));
+            flex-direction: column;
+            padding-bottom: 0;
+            overflow: visible;
+        }
+
+        .sn-account__tab {
+            min-height: 0;
+            padding: 0.5rem 0.75rem;
+            border-color: transparent;
+            border-radius: var(--sn-radius-md);
+            background: transparent;
+            white-space: normal;
+        }
+
+        .sn-account__tab:not([aria-current='page']):hover {
+            background: var(--sn-color-surface-sunken);
+        }
+
+        .sn-account__tab[aria-current='page'] {
+            border-color: transparent;
+            border-left: 2px solid var(--sn-color-accent);
+            border-radius: 0 var(--sn-radius-md) var(--sn-radius-md) 0;
+        }
+    }
+}

@@ -53,7 +53,7 @@ class StripeGateway implements PaymentGateway
         $session = $this->stripe->checkout->sessions->create([
             'mode' => 'payment',
             'success_url' => url('/payments/stripe/return?status=success&order_id='.$order->order_id.'&session_id={CHECKOUT_SESSION_ID}'),
-            'cancel_url' => url('/payments/stripe/return?status=cancel&order_id='.$order->order_id),
+            'cancel_url' => url('/payments/stripe/return?status=cancel&order_id='.$order->order_id.'&session_id={CHECKOUT_SESSION_ID}'),
             'line_items' => $lineItems,
             'metadata' => ['order_id' => (string) $order->order_id],
         ]);
@@ -72,10 +72,41 @@ class StripeGateway implements PaymentGateway
         $orderId = $payload['order_id'] ?? null;
 
         if (in_array($status, ['cancel', 'canceled'], true)) {
+            if (! $sessionId) {
+                return [
+                    'status' => 'canceled',
+                    'transaction_id' => null,
+                    'order_id' => null,
+                    'message' => 'User canceled',
+                ];
+            }
+
+            try {
+                $session = $this->retrieveSession($sessionId);
+            } catch (Throwable $exception) {
+                return [
+                    'status' => 'canceled',
+                    'transaction_id' => null,
+                    'order_id' => null,
+                    'message' => 'User canceled',
+                ];
+            }
+
+            $sessionOrderId = $session->metadata->order_id ?? null;
+
+            if ($orderId !== null && $sessionOrderId !== null && (string) $orderId !== (string) $sessionOrderId) {
+                return [
+                    'status' => 'canceled',
+                    'transaction_id' => null,
+                    'order_id' => null,
+                    'message' => 'Order mismatch',
+                ];
+            }
+
             return [
                 'status' => 'canceled',
                 'transaction_id' => null,
-                'order_id' => $orderId,
+                'order_id' => $sessionOrderId,
                 'message' => 'User canceled',
             ];
         }
@@ -84,7 +115,7 @@ class StripeGateway implements PaymentGateway
             return [
                 'status' => 'failed',
                 'transaction_id' => null,
-                'order_id' => $orderId,
+                'order_id' => null,
                 'message' => 'Unknown status',
             ];
         }
@@ -93,7 +124,7 @@ class StripeGateway implements PaymentGateway
             return [
                 'status' => 'pending',
                 'transaction_id' => null,
-                'order_id' => $orderId,
+                'order_id' => null,
                 'message' => 'Missing checkout session; awaiting webhook confirmation',
             ];
         }
@@ -104,7 +135,7 @@ class StripeGateway implements PaymentGateway
             return [
                 'status' => 'failed',
                 'transaction_id' => null,
-                'order_id' => $orderId,
+                'order_id' => null,
                 'message' => 'Unable to verify checkout session',
             ];
         }
@@ -115,13 +146,13 @@ class StripeGateway implements PaymentGateway
             return [
                 'status' => 'failed',
                 'transaction_id' => null,
-                'order_id' => $orderId,
+                'order_id' => null,
                 'message' => 'Order mismatch',
             ];
         }
 
         $paymentIntentId = $session->payment_intent ?? null;
-        $resolvedOrderId = $sessionOrderId ?? $orderId;
+        $resolvedOrderId = $sessionOrderId;
 
         if (($session->payment_status ?? null) !== 'paid') {
             return [

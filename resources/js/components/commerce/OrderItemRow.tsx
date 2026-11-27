@@ -1,7 +1,9 @@
 import { Link } from '@inertiajs/react';
 
-import { formatVnd } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { useMoney } from '@/hooks/useMoney';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type OrderItemModel = {
     id: number | string;
@@ -31,32 +33,30 @@ function normalizeImage(src?: string | null): string {
 }
 
 export function OrderItemRow({ item, className }: OrderItemRowProps) {
+    const { money } = useMoney();
     const total = item.price * item.quantity;
 
     return (
-        <article className={cn('flex items-start gap-3 border-t border-border py-4 first:border-t-0 first:pt-0', className)}>
-            <div className="h-24 w-20 shrink-0 overflow-hidden rounded-control border border-border bg-rice-paper">
-                <img src={normalizeImage(item.image)} alt={item.name} className="size-full object-cover" />
+        <article className={cx(styles.orderItem, className)}>
+            <div className={styles.orderItemMedia}>
+                <img src={normalizeImage(item.image)} alt={item.name} className={styles.orderItemImage} />
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-                {item.variant && <span className="font-mono text-label-micro tracking-[0.08em] text-ink-muted uppercase">{item.variant}</span>}
+            <div className={styles.orderItemBody}>
+                {item.variant ? <span className={styles.orderItemVariant}>{item.variant}</span> : null}
                 {item.href ? (
-                    <Link
-                        href={item.href}
-                        className="focus-ring line-clamp-2 text-body-md font-medium text-ink transition-colors hover:text-lacquer-red"
-                    >
+                    <Link href={item.href} className={styles.orderItemTitle}>
                         {item.name}
                     </Link>
                 ) : (
-                    <span className="line-clamp-2 text-body-md font-medium text-ink">{item.name}</span>
+                    <span className={styles.orderItemTitle}>{item.name}</span>
                 )}
-                <span className="text-body-sm text-ink-muted">
-                    {formatVnd(item.price)} × {item.quantity}
+                <span className={styles.orderItemMeta}>
+                    {money(item.price)} × {item.quantity}
                 </span>
             </div>
 
-            <span className="shrink-0 font-mono text-body-sm font-semibold text-ink">{formatVnd(total)}</span>
+            <span className={styles.orderItemTotal}>{money(total)}</span>
         </article>
     );
 }

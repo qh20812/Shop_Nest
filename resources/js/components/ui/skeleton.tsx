@@ -1,27 +1,21 @@
-import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
-const skeletonVariants = cva('animate-pulse bg-raw-linen', {
-    variants: {
-        variant: {
-            text: 'h-3 w-full rounded-chip',
-            title: 'h-5 w-2/3 rounded-chip',
-            rect: 'h-24 w-full rounded-control',
-            circle: 'size-10 rounded-pill',
-            button: 'h-control-md w-32 rounded-control',
-        },
-    },
-    defaultVariants: {
-        variant: 'text',
-    },
-});
+type SkeletonVariant = 'text' | 'title' | 'rect' | 'circle' | 'button';
 
-type SkeletonProps = React.ComponentProps<'div'> & VariantProps<typeof skeletonVariants>;
+/**
+ * Compatibility helper for code that imported `skeletonVariants`.
+ * Shape is driven by `data-variant`, not class names.
+ */
+const skeletonVariants: (props?: { variant?: SkeletonVariant }) => string = () => 'sn-skeleton';
 
-export function Skeleton({ className, variant, ...props }: SkeletonProps) {
-    return <div aria-hidden="true" className={cn(skeletonVariants({ variant }), className)} {...props} />;
+type SkeletonProps = React.ComponentProps<'div'> & {
+    variant?: SkeletonVariant;
+};
+
+export function Skeleton({ className, variant = 'text', ...props }: SkeletonProps) {
+    return <div aria-hidden="true" data-variant={variant} className={cx('sn-skeleton', className)} {...props} />;
 }
 
 type SkeletonTextProps = {
@@ -31,9 +25,9 @@ type SkeletonTextProps = {
 
 export function SkeletonText({ lines = 3, className }: SkeletonTextProps) {
     return (
-        <div className={cn('flex flex-col gap-2', className)}>
+        <div className={cx('sn-skeleton-text', className)}>
             {Array.from({ length: lines }).map((_, index) => (
-                <Skeleton key={index} variant="text" className={index === lines - 1 ? 'w-4/5' : undefined} />
+                <Skeleton key={index} variant="text" data-width={index === lines - 1 ? 'narrow' : undefined} />
             ))}
         </div>
     );

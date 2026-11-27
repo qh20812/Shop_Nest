@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Collection;
 
 class PermissionSeeder extends Seeder
 {
@@ -22,7 +21,7 @@ class PermissionSeeder extends Seeder
             // Quản lý danh mục & thương hiệu
             'manage_categories', 'manage_brands',
             // Quản lý hệ thống
-            'view_dashboard', 'manage_settings', 'manage_promotions', 'manage_disputes'
+            'view_dashboard', 'manage_settings', 'manage_promotions', 'manage_disputes',
         ];
 
         foreach ($permissions as $permission) {

@@ -94,7 +94,7 @@ class PaymentReturnTest extends TestCase
     }
 
     #[Test]
-    public function failed_payment_creates_refund_transaction(): void
+    public function failed_payment_does_not_create_a_refund_for_an_unpaid_order(): void
     {
         [$user, $order] = $this->makeOrder();
 
@@ -113,11 +113,11 @@ class PaymentReturnTest extends TestCase
 
         $order->refresh();
         $this->assertSame(PaymentStatus::FAILED, $order->payment_status);
+        $this->assertSame(OrderStatus::CANCELLED, $order->status);
 
-        $this->assertDatabaseHas('transactions', [
+        $this->assertDatabaseMissing('transactions', [
             'order_id' => $order->order_id,
             'type' => 'refund',
-            'status' => 'completed',
         ]);
     }
 
@@ -139,6 +139,7 @@ class PaymentReturnTest extends TestCase
         ]))->assertOk();
 
         $this->assertSame(PaymentStatus::FAILED, $order->fresh()->payment_status);
+        $this->assertSame(OrderStatus::CANCELLED, $order->fresh()->status);
     }
 
     #[Test]

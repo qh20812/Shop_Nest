@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Eyebrow, Heading, Text } from '@/components/ui/typography';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type SectionHeaderProps = {
     eyebrow?: React.ReactNode;
@@ -14,25 +14,19 @@ type SectionHeaderProps = {
 
 export function SectionHeader({ eyebrow, title, description, action, align = 'left', className }: SectionHeaderProps) {
     return (
-        <div
-            className={cn(
-                'mb-6 flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between',
-                align === 'center' && 'items-center text-center md:flex-col md:text-center',
-                className,
-            )}
-        >
-            <div className={cn('flex flex-col gap-1.5', align === 'center' && 'items-center')}>
+        <div className={cx('sn-section-header', className)} data-align={align}>
+            <div className="sn-section-header__text">
                 {eyebrow && <Eyebrow tone="accent">{eyebrow}</Eyebrow>}
                 <Heading level={2} size="headline-2">
                     {title}
                 </Heading>
                 {description && (
-                    <Text size="body-sm" tone="muted" className="max-w-prose">
+                    <Text size="body-sm" tone="muted" className="sn-section-header__desc">
                         {description}
                     </Text>
                 )}
             </div>
-            {action && <div className="shrink-0">{action}</div>}
+            {action && <div className="sn-section-header__action">{action}</div>}
         </div>
     );
 }

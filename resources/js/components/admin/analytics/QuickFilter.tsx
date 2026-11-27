@@ -1,6 +1,7 @@
-import '@/../css/Page.css';
-import { useTranslation } from '@/lib/i18n';
 import React from 'react';
+
+import { Tabs } from '@/components/ui/tabs';
+import { useTranslation } from '@/lib/i18n';
 
 export interface QuickFilterOption {
     label: string;
@@ -14,7 +15,7 @@ export interface QuickFilterProps {
     className?: string;
 }
 
-const QuickFilter: React.FC<QuickFilterProps> = ({ options, activeValue, onChange, className = '' }) => {
+const QuickFilter: React.FC<QuickFilterProps> = ({ options, activeValue, onChange, className }) => {
     const { t } = useTranslation();
 
     if (!options.length) {
@@ -22,23 +23,14 @@ const QuickFilter: React.FC<QuickFilterProps> = ({ options, activeValue, onChang
     }
 
     return (
-        <div className={`analytics-quick-filter ${className}`.trim()} role="group" aria-label={t('Quick filters')}>
-            {options.map((option) => {
-                const isActive = activeValue === option.value;
-
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        className={`analytics-quick-filter__button ${isActive ? 'active' : ''}`}
-                        onClick={() => onChange(option.value)}
-                        aria-pressed={isActive}
-                    >
-                        {t(option.label)}
-                    </button>
-                );
-            })}
-        </div>
+        <Tabs
+            variant="filter"
+            className={className}
+            items={options.map((option) => ({ value: option.value, label: t(option.label) }))}
+            value={activeValue ?? ''}
+            onValueChange={onChange}
+            ariaLabel={t('Quick filters')}
+        />
     );
 };
 

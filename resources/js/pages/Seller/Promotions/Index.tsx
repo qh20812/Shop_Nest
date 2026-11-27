@@ -1,15 +1,20 @@
-import '@/../css/Page.css';
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
-import DataTable from '@/components/ui/data-table';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import FilterPanel from '@/components/ui/filter-panel';
+import Insights from '@/components/ui/insights';
 import Pagination from '@/components/ui/pagination';
+import { Progress } from '@/components/ui/progress';
 import StatusBadge from '@/components/ui/status-badge';
+import { formatDate, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import { Head, router, usePage } from '@inertiajs/react';
+import { Eye, Gift, Pause, Pencil, Play, PlayCircle, Plus, Target, Trash2, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+
+import styles from '../seller.module.css';
 
 interface PromotionProduct {
     product_id: number;
@@ -21,6 +26,7 @@ interface Promotion {
     promotion_id: number;
     name: string;
     type: string;
+    status?: string;
     value: number;
     start_date: string;
     end_date: string;
@@ -86,27 +92,6 @@ interface ConfirmModalState {
     message: string;
 }
 
-const formatCurrency = (value: number | string | null | undefined, currency: string = 'VND') => {
-    const numericValue = Number(value ?? 0);
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: 0,
-    }).format(Number.isFinite(numericValue) ? numericValue : 0);
-};
-
-const formatDate = (value: string | null | undefined) => {
-    if (!value) {
-        return '';
-    }
-
-    return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }).format(new Date(value));
-};
-
 const formatDateRange = (start: string, end: string) => {
     const startLabel = formatDate(start);
     const endLabel = formatDate(end);
@@ -135,7 +120,7 @@ const getDiscountLabel = (promotion: Promotion, translate: (key: string) => stri
         case 'percentage':
             return `${translate('Percentage Discount')}: ${value}%`;
         case 'fixed_amount':
-            return `${translate('Fixed Discount')}: ${formatCurrency(value)}`;
+            return `${translate('Fixed Discount')}: ${formatVnd(value)}`;
         case 'free_shipping':
             return translate('Free Shipping Promotion');
         case 'buy_x_get_y':
@@ -149,14 +134,14 @@ const getRoiClass = (value: number | null | undefined) => {
     const roi = Number(value ?? 0);
 
     if (roi >= 100) {
-        return 'positive';
+        return styles.roiPositive;
     }
 
     if (roi >= 50) {
-        return 'neutral';
+        return styles.roiNeutral;
     }
 
-    return 'negative';
+    return styles.roiNegative;
 };
 
 const getPercentValue = (spent: number, allocated: number) => {
@@ -201,11 +186,6 @@ export default function Index() {
     const promotionMetrics = useMemo(() => {
         const now = new Date();
         let active = 0;
-        let paused = 0;
-        let expired = 0;
-        let upcoming = 0;
-        let allocated = 0;
-        let spent = 0;
 
         promotionRows.forEach((promotion) => {
             const start = promotion.start_date ? new Date(promotion.start_date) : null;
@@ -213,28 +193,12 @@ export default function Index() {
             const isExpired = end !== null && end < now;
             const isUpcoming = start !== null && start > now;
 
-            allocated += Number(promotion.allocated_budget ?? 0);
-            spent += Number(promotion.spent_budget ?? 0);
-
-            if (!promotion.is_active) {
-                paused += 1;
-            } else if (isExpired) {
-                expired += 1;
-            } else if (isUpcoming) {
-                upcoming += 1;
-            } else {
+            if (promotion.is_active && !isExpired && !isUpcoming) {
                 active += 1;
             }
         });
 
-        return {
-            active,
-            paused,
-            expired,
-            upcoming,
-            allocated,
-            spent,
-        };
+        return { active };
     }, [promotionRows]);
 
     useEffect(() => {
@@ -275,29 +239,30 @@ export default function Index() {
 
     const determineStatus = useCallback(
         (promotion: Promotion) => {
+            const apiStatus = promotion.status;
             const now = new Date();
             const startDate = promotion.start_date ? new Date(promotion.start_date) : null;
             const endDate = promotion.end_date ? new Date(promotion.end_date) : null;
 
-            if (!promotion.is_active) {
+            if (apiStatus === 'paused') {
                 return {
-                    badge: 'Paused',
+                    badge: 'paused',
                     label: t('Paused'),
                     helper: endDate ? joinLabelWithDate('Paused until', promotion.end_date) : t('Promotion is paused'),
                 };
             }
 
-            if (endDate && endDate < now) {
+            if (apiStatus === 'expired' || (endDate && endDate < now)) {
                 return {
-                    badge: 'Expired',
+                    badge: 'expired',
                     label: t('Expired'),
                     helper: joinLabelWithDate('Ended on', promotion.end_date),
                 };
             }
 
-            if (startDate && startDate > now) {
+            if (apiStatus === 'draft' || apiStatus === 'upcoming' || (startDate && startDate > now)) {
                 return {
-                    badge: 'Upcoming',
+                    badge: 'upcoming',
                     label: t('Upcoming'),
                     helper: joinLabelWithDate('Starts on', promotion.start_date),
                 };
@@ -402,37 +367,39 @@ export default function Index() {
     const buildActionButtons = useCallback(
         (promotion: Promotion): ActionConfig[] => {
             const statusSnapshot = determineStatus(promotion);
-            const actions: ActionConfig[] = [
+            const actions: ActionConfig[] = [];
+
+            actions.push(
                 {
                     type: 'link',
                     href: `/seller/promotions/${promotion.promotion_id}`,
                     variant: 'primary',
-                    icon: 'bx bx-show',
+                    icon: Eye,
                     label: t('View'),
                 },
                 {
                     type: 'link',
                     href: `/seller/promotions/${promotion.promotion_id}/edit`,
                     variant: 'primary',
-                    icon: 'bx bx-edit-alt',
+                    icon: Pencil,
                     label: t('Edit'),
                 },
-            ];
+            );
 
             if (statusSnapshot.badge === 'active') {
                 actions.push({
                     type: 'button',
                     onClick: () => openConfirmModal(promotion, 'pause'),
                     variant: 'danger',
-                    icon: 'bx bx-pause',
+                    icon: Pause,
                     label: t('Pause'),
                 });
-            } else if (statusSnapshot.badge === 'Paused' || statusSnapshot.badge === 'Expired') {
+            } else if (statusSnapshot.badge === 'paused') {
                 actions.push({
                     type: 'button',
                     onClick: () => openConfirmModal(promotion, 'resume'),
                     variant: 'primary',
-                    icon: 'bx bx-play',
+                    icon: Play,
                     label: t('Resume'),
                 });
             }
@@ -441,7 +408,7 @@ export default function Index() {
                 type: 'button',
                 onClick: () => openConfirmModal(promotion, 'delete'),
                 variant: 'danger',
-                icon: 'bx bx-trash',
+                icon: Trash2,
                 label: t('Delete'),
             });
 
@@ -450,87 +417,93 @@ export default function Index() {
         [determineStatus, openConfirmModal, t],
     );
 
-    const columns = useMemo(
+    const columns = useMemo<DataTableColumn<Promotion>[]>(
         () => [
             {
-                id: 'promotion_name',
+                key: 'promotion_name',
                 header: t('Promotion'),
-                cell: (promotion: Promotion) => (
-                    <div className="promotion-cell">
-                        <div className="promotion-name">{promotion.name}</div>
-                        <div className="promotion-discount">{getDiscountLabel(promotion, t)}</div>
-                        <div className="promotion-meta">
+                cell: (promotion) => (
+                    <div className={styles.promotionCell}>
+                        <span className={styles.promotionName}>{promotion.name}</span>
+                        <span className={styles.cellMeta}>{getDiscountLabel(promotion, t)}</span>
+                        <span className={styles.promotionMeta}>
                             {t('Products')}: {promotion.products?.length ?? 0} · {formatDateRange(promotion.start_date, promotion.end_date)}
-                        </div>
+                        </span>
                     </div>
                 ),
             },
             {
-                id: 'promotion_budget',
+                key: 'promotion_budget',
                 header: t('Budget'),
-                cell: (promotion: Promotion) => {
+                cell: (promotion) => {
                     const allocated = Number(promotion.allocated_budget ?? 0);
                     const spent = Number(promotion.spent_budget ?? 0);
                     const percent = getPercentValue(spent, allocated);
                     const isOverBudget = spent > allocated && allocated > 0;
 
                     return (
-                        <div className="promotion-budget">
-                            <div className={`promotion-budget-amount${isOverBudget ? 'over-budget' : ''}`}>
-                                {formatCurrency(spent)} / {formatCurrency(allocated)}
-                            </div>
-                            <progress className={`promotion-progress${isOverBudget ? 'over-budget' : ''}`} value={percent} max={100}>
-                                {percent}%
-                            </progress>
-                            <div className="promotion-budget-caption">
-                                {t('Remains')}: {formatCurrency(Math.max(allocated - spent, 0))}
-                            </div>
+                        <div className={styles.budgetCell}>
+                            <span className={styles.budgetAmount}>
+                                {formatVnd(spent)} / {formatVnd(allocated)}
+                            </span>
+                            <Progress value={percent} tone={isOverBudget ? 'danger' : 'accent'} />
+                            <span className={styles.budgetCaption}>
+                                {t('Remains')}: {formatVnd(Math.max(allocated - spent, 0))}
+                            </span>
                         </div>
                     );
                 },
             },
             {
-                id: 'promotion_status',
+                key: 'promotion_status',
                 header: t('Status'),
-                cell: (promotion: Promotion) => {
+                cell: (promotion) => {
                     const statusSnapshot = determineStatus(promotion);
 
                     return (
-                        <div className="promotion-status">
+                        <div className={styles.statusCell}>
                             <StatusBadge status={statusSnapshot.badge} />
-                            <div className="promotion-status-text">{statusSnapshot.helper}</div>
+                            <span className={styles.statusHelper}>{statusSnapshot.helper}</span>
                         </div>
                     );
                 },
             },
             {
-                id: 'promotion_performance',
+                key: 'promotion_performance',
                 header: t('Performance'),
-                cell: (promotion: Promotion) => (
-                    <div className="promotion-performance">
-                        <div className={`promotion-roi ${getRoiClass(promotion.roi_percentage ?? 0)}`}>
+                align: 'right',
+                cell: (promotion) => (
+                    <div className={styles.performanceCell}>
+                        <span className={getRoiClass(promotion.roi_percentage ?? 0)}>
                             {t('ROI')}: {Number(promotion.roi_percentage ?? 0).toFixed(1)}%
-                        </div>
-                        <div className="promotion-performance-metric">
-                            <strong>{t('Allocated')}:</strong> {formatCurrency(promotion.allocated_budget)}
-                        </div>
-                        <div className="promotion-performance-metric">
-                            <strong>{t('Spent')}:</strong> {formatCurrency(promotion.spent_budget)}
-                        </div>
+                        </span>
+                        <span>
+                            {t('Allocated')}: {formatVnd(Number(promotion.allocated_budget ?? 0))}
+                        </span>
+                        <span>
+                            {t('Spent')}: {formatVnd(Number(promotion.spent_budget ?? 0))}
+                        </span>
                     </div>
                 ),
             },
             {
-                id: 'promotion_actions',
+                key: 'promotion_actions',
                 header: t('Actions'),
-                cell: (promotion: Promotion) => <ActionButtons actions={buildActionButtons(promotion)} />,
+                align: 'right',
+                cell: (promotion) => <ActionButtons actions={buildActionButtons(promotion)} />,
             },
         ],
         [buildActionButtons, determineStatus, t],
     );
 
+    const insightsData = [
+        { icon: Target, value: totalPromotions.toLocaleString('vi-VN'), label: t('Total Promotions') },
+        { icon: PlayCircle, value: promotionMetrics.active.toLocaleString('vi-VN'), label: t('Active Campaigns') },
+        { icon: Wallet, value: formatVnd(Number(wallet?.balance ?? 0)), label: t('Wallet Balance') },
+    ];
+
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('My Promotions')} />
 
             {toast && <Toast type={toast.type} message={toast.message} onClose={closeToast} />}
@@ -583,42 +556,20 @@ export default function Index() {
                     {
                         href: '/seller/promotions/create',
                         label: t('Create Promotion'),
-                        icon: 'bx bx-plus',
+                        icon: Plus,
                         color: 'primary',
                     },
                 ]}
                 onApplyFilters={handleApplyFilters}
             />
 
-            <ul className="insights promotion-insights">
-                <li>
-                    <i className="bx bx-target-lock"></i>
-                    <span className="info">
-                        <h3>{totalPromotions}</h3>
-                        <p>{t('Total Promotions')}</p>
-                    </span>
-                </li>
-                <li>
-                    <i className="bx bx-play-circle"></i>
-                    <span className="info">
-                        <h3>{promotionMetrics.active}</h3>
-                        <p>{t('Active Campaigns')}</p>
-                    </span>
-                </li>
-                <li>
-                    <i className="bx bx-wallet"></i>
-                    <span className="info">
-                        <h3>{formatCurrency(wallet?.balance ?? 0, wallet?.currency ?? 'VND')}</h3>
-                        <p>{t('Wallet Balance')}</p>
-                    </span>
-                </li>
-            </ul>
+            <Insights items={insightsData} columns={3} />
 
             <DataTable
                 columns={columns}
                 data={promotionRows}
                 headerTitle={`${t('Promotions')} (${totalPromotions})`}
-                headerIcon="bx bx-gift"
+                headerIcon={Gift}
                 emptyMessage={t('No promotions found')}
             />
 
@@ -639,6 +590,6 @@ export default function Index() {
                 title={confirmModal.title}
                 message={confirmModal.message}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

@@ -32,7 +32,7 @@ class PromotionBulkImportService
             ]);
         }
 
-        if (!in_array($file->getClientOriginalExtension(), ['csv', 'txt'], true)) {
+        if (! in_array($file->getClientOriginalExtension(), ['csv', 'txt'], true)) {
             throw ValidationException::withMessages([
                 'file' => 'Only CSV files are supported for bulk import.',
             ]);
@@ -48,7 +48,7 @@ class PromotionBulkImportService
 
         $path = $file->storeAs(
             'promotion-imports',
-            Str::uuid()->toString() . '_' . $file->getClientOriginalName()
+            Str::uuid()->toString().'_'.$file->getClientOriginalName()
         );
 
         $import = PromotionImport::create([
@@ -74,19 +74,19 @@ class PromotionBulkImportService
     {
         $promotion = Promotion::find($import->promotion_id);
 
-        if (!$promotion) {
+        if (! $promotion) {
             throw new Exception('Promotion not found for import processing.');
         }
 
         $fullPath = Storage::path($path);
 
-        if (!is_file($fullPath)) {
+        if (! is_file($fullPath)) {
             throw new Exception('Import source file is missing.');
         }
 
         $handle = fopen($fullPath, 'rb');
 
-        if (!$handle) {
+        if (! $handle) {
             throw new Exception('Unable to open import file for reading.');
         }
 
@@ -103,10 +103,11 @@ class PromotionBulkImportService
 
                 if ($rowNumber === 1) {
                     $header = $this->normaliseHeader($row);
+
                     continue;
                 }
 
-                if (!$header) {
+                if (! $header) {
                     $failed++;
                     $errorLog[] = 'Missing CSV header row.';
                     break;
@@ -118,6 +119,7 @@ class PromotionBulkImportService
                 if ($productId === null) {
                     $failed++;
                     $errorLog[] = sprintf('Row %d: Unable to resolve product identifier.', $rowNumber);
+
                     continue;
                 }
 
@@ -135,7 +137,7 @@ class PromotionBulkImportService
                 }
             }
 
-            if (!empty($productIds)) {
+            if (! empty($productIds)) {
                 $this->syncProducts($promotion, $productIds);
             }
 
@@ -227,7 +229,7 @@ class PromotionBulkImportService
     {
         $import = PromotionImport::where('tracking_token', $trackingToken)->first();
 
-        if (!$import) {
+        if (! $import) {
             return null;
         }
 

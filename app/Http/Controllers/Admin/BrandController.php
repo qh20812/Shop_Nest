@@ -17,19 +17,34 @@ class BrandController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Brand::query();
-        $totalBrands = Brand::count();
+        $baseQuery = Brand::query();
 
-        // Filter by status
-        if ($request->status === 'inactive') {
-            $query->onlyTrashed();
-        } else {
-            $query->whereNull('deleted_at');
+        if ($request->search) {
+            $baseQuery->where('name', 'like', '%'.$request->search.'%');
         }
 
-        // Filter by search
-        if ($request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        $statusCounts = [
+            'total' => (clone $baseQuery)->whereNull('deleted_at')->count(),
+            'active' => (clone $baseQuery)->whereNull('deleted_at')->where('is_active', true)->count(),
+            'inactive' => (clone $baseQuery)->whereNull('deleted_at')->where('is_active', false)->count(),
+            'trashed' => (clone $baseQuery)->onlyTrashed()->count(),
+        ];
+
+        $query = clone $baseQuery;
+
+        switch ($request->status) {
+            case 'active':
+                $query->whereNull('deleted_at')->where('is_active', true);
+                break;
+            case 'inactive':
+                $query->whereNull('deleted_at')->where('is_active', false);
+                break;
+            case 'trashed':
+                $query->onlyTrashed();
+                break;
+            default:
+                $query->whereNull('deleted_at');
+                break;
         }
 
         $brands = $query->withCount('products')
@@ -44,7 +59,7 @@ class BrandController extends Controller
                 'name' => $brand->getTranslation('name', app()->getLocale()),
                 'description' => $brand->description,
                 'logo_url' => $brand->logo_url ? (preg_match('/^https?:\/\//i', $brand->logo_url) ? $brand->logo_url : Storage::url($brand->logo_url)) : null,
-                'is_active' => $brand->is_active,
+                'is_active' => (bool) $brand->is_active,
                 'deleted_at' => $brand->deleted_at,
                 'products_count' => $brand->products_count,
                 'created_at' => $brand->created_at,
@@ -54,7 +69,8 @@ class BrandController extends Controller
 
         return Inertia::render('Admin/Brands/Index', [
             'brands' => $brands,
-            'totalBrands' => $totalBrands,
+            'totalBrands' => $statusCounts['total'],
+            'statusCounts' => $statusCounts,
             'filters' => $request->only(['search', 'status']),
         ]);
     }
@@ -84,17 +100,27 @@ class BrandController extends Controller
             $brand,
             route('admin.brands.index')
         );
+
         return redirect()->route('admin.brands.index')->with('success', 'Brand created successfully.');
     }
 
     public function edit($id)
     {
-        $brand = Brand::findOrFail($id);
+        $brand = Brand::withCount('products')->findOrFail($id);
+
         return Inertia::render('Admin/Brands/Edit', [
-            'brand' => $brand
+            'brand' => [
+                'brand_id' => $brand->brand_id,
+                'name' => $brand->getTranslation('name', app()->getLocale()),
+                'description' => $brand->description,
+                'logo_url' => $brand->logo_url ? (preg_match('/^https?:\/\//i', $brand->logo_url) ? $brand->logo_url : Storage::url($brand->logo_url)) : null,
+                'is_active' => (bool) $brand->is_active,
+                'products_count' => $brand->products_count,
+                'created_at' => $brand->created_at,
+            ],
         ]);
     }
-    
+
     public function update(UpdateBrandRequest $request, $id)
     {
         $brand = Brand::findOrFail($id);
@@ -110,6 +136,7 @@ class BrandController extends Controller
         }
 
         $brand->update($data);
+
         return redirect()->route('admin.brands.index')->with('success', 'Brand updated successfully.');
     }
 
@@ -121,15 +148,16 @@ class BrandController extends Controller
 
         NotificationService::sendToRole(
             'admin',
-            'Brand Deactivated',
-            sprintf('Brand "%s" was deactivated by %s.', $brandName, $actor),
+            'Brand Hidden',
+            sprintf('Brand "%s" was hidden by %s.', $brandName, $actor),
             NotificationType::ADMIN_CATALOG_MANAGEMENT,
             $brand,
             route('admin.brands.index')
         );
 
         $brand->delete();
-        return redirect()->route('admin.brands.index')->with('success', 'Brand deactivated successfully.');
+
+        return redirect()->route('admin.brands.index')->with('success', 'Brand hidden successfully.');
     }
 
     public function restore($id)
@@ -146,6 +174,7 @@ class BrandController extends Controller
             $brand,
             route('admin.brands.index')
         );
+
         return redirect()->route('admin.brands.index')->with('success', 'Brand restored successfully.');
     }
 }

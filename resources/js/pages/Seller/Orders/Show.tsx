@@ -1,9 +1,18 @@
 import Toast from '@/components/admin/users/Toast';
-import AppLayout from '@/layouts/app/AppLayout';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import Header from '@/components/ui/header';
+import { Select } from '@/components/ui/select';
+import StatusBadge from '@/components/ui/status-badge';
+import { Table, type ColumnDef } from '@/components/ui/table';
+import { formatDateTime, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { CreditCard, MapPin, Package, Receipt, User } from 'lucide-react';
 import { useState } from 'react';
 
-// ==================== Type Definitions ====================
+import styles from '../seller.module.css';
 
 interface Product {
     id: number;
@@ -48,40 +57,19 @@ interface Order {
     history?: OrderHistory[];
 }
 
-// ✅ FIXED: define global PageProps for Inertia
+const STATUS_VALUES = [0, 1, 2, 3, 4];
 
-// ==================== Status Helper ====================
-
-const getStatusInfo = (status: number) => {
-    switch (Number(status)) {
-        case 0:
-            return { text: 'Pending', className: 'bg-yellow-100 text-yellow-800' };
-        case 1:
-            return { text: 'Processing', className: 'bg-blue-100 text-blue-800' };
-        case 2:
-            return { text: 'Shipped', className: 'bg-indigo-100 text-indigo-800' };
-        case 3:
-            return { text: 'Delivered', className: 'bg-green-100 text-green-800' };
-        case 4:
-            return { text: 'Cancelled', className: 'bg-red-100 text-red-800' };
-        default:
-            return { text: 'Unknown', className: 'bg-gray-100 text-gray-800' };
-    }
+const STATUS_LABELS: Record<number, string> = {
+    0: 'Pending',
+    1: 'Processing',
+    2: 'Shipped',
+    3: 'Delivered',
+    4: 'Cancelled',
 };
 
-const STATUS_OPTIONS = [
-    { value: 0, label: 'Pending' },
-    { value: 1, label: 'Processing' },
-    { value: 2, label: 'Shipped' },
-    { value: 3, label: 'Delivered' },
-    { value: 4, label: 'Cancelled' },
-];
-
-// ==================== Component ====================
-
 export default function Show() {
-    // ✅ No more TS error here
-    const page = usePage<{ order: Order; flash?: { success?: string; error?: string } }>();
+    const { t } = useTranslation();
+    const page = usePage<{ order: Order }>();
     const { order } = page.props;
 
     const [status, setStatus] = useState(order.status);
@@ -96,150 +84,205 @@ export default function Show() {
             {
                 preserveScroll: true,
                 onFinish: () => setLoading(false),
-                onSuccess: () => setToast({ type: 'success', message: 'Order status updated successfully!' }),
-                onError: () => setToast({ type: 'error', message: 'Failed to update order status.' }),
+                onSuccess: () => setToast({ type: 'success', message: t('Order status updated successfully!') }),
+                onError: () => setToast({ type: 'error', message: t('Failed to update order status.') }),
             },
         );
     };
 
-    const s = getStatusInfo(order.status);
+    const productColumns: ColumnDef<Product>[] = [
+        { key: 'product', header: t('Product'), cell: (product) => <span className={styles.cellTitle}>{product.name}</span> },
+        { key: 'variant', header: t('Variant'), cell: (product) => <span className={styles.cellMeta}>{product.variant || '-'}</span> },
+        {
+            key: 'quantity',
+            header: t('Qty'),
+            align: 'center',
+            cell: (product) => <span className={styles.numeric}>{product.quantity}</span>,
+        },
+        {
+            key: 'price',
+            header: t('Price'),
+            align: 'right',
+            cell: (product) => <span className={styles.price}>{formatVnd(product.price)}</span>,
+        },
+        {
+            key: 'subtotal',
+            header: t('Subtotal'),
+            align: 'right',
+            cell: (product) => <span className={styles.price}>{formatVnd(product.price * product.quantity)}</span>,
+        },
+    ];
 
     return (
-        <AppLayout>
-            <Head title={`Order #${order.order_number}`} />
+        <WorkspaceLayout>
+            <Head title={`${t('Order')} #${order.order_number}`} />
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <main className="content-main">
-                <div className="header mb-6 flex items-center justify-between">
-                    <div className="left">
-                        <h1>Order #{order.order_number}</h1>
-                        <ul className="breadcrumb">
-                            <li>
-                                <Link href="/seller/dashboard">Dashboard</Link>
-                            </li>
-                            <li>
-                                <Link href="/seller/orders">Orders</Link>
-                            </li>
-                            <li>Details</li>
-                        </ul>
-                    </div>
-                    <span className={`status-badge rounded-full px-3 py-1 text-sm font-medium ${s.className}`}>{s.text}</span>
+            <Header
+                title={`${t('Order')} #${order.order_number}`}
+                breadcrumbs={[
+                    { label: t('Seller Dashboard'), href: '/seller/dashboard' },
+                    { label: t('Orders'), href: '/seller/orders' },
+                    { label: t('Details'), href: `/seller/orders/${order.id}`, active: true },
+                ]}
+            />
+
+            <div className={styles.orderGrid}>
+                <div className={styles.stack}>
+                    <Card variant="flat" padding="md">
+                        <div className={styles.panelBody}>
+                            <div className={styles.sectionHead}>
+                                <h2 className={styles.sectionTitle}>
+                                    <User aria-hidden="true" className={styles.sectionIcon} />
+                                    {t('Customer Information')}
+                                </h2>
+                                <StatusBadge status={order.status} type="order" />
+                            </div>
+
+                            <dl className={styles.detailList}>
+                                <div className={styles.detailLine}>
+                                    <dt>{t('Name')}</dt>
+                                    <dd className={styles.detailValue}>
+                                        {order.customer.first_name} {order.customer.last_name}
+                                    </dd>
+                                </div>
+                                {order.customer.email && (
+                                    <div className={styles.detailLine}>
+                                        <dt>{t('Email')}</dt>
+                                        <dd className={styles.detailValue}>{order.customer.email}</dd>
+                                    </div>
+                                )}
+                                {order.customer.phone && (
+                                    <div className={styles.detailLine}>
+                                        <dt>{t('Phone number')}</dt>
+                                        <dd className={styles.detailValue}>{order.customer.phone}</dd>
+                                    </div>
+                                )}
+                            </dl>
+                        </div>
+                    </Card>
+
+                    <Card variant="flat" padding="md">
+                        <div className={styles.panelBody}>
+                            <div className={styles.sectionHead}>
+                                <h2 className={styles.sectionTitle}>
+                                    <MapPin aria-hidden="true" className={styles.sectionIcon} />
+                                    {t('Shipping Address')}
+                                </h2>
+                            </div>
+                            <dl className={styles.detailList}>
+                                <div className={styles.detailLine}>
+                                    <dt>{t('Address')}</dt>
+                                    <dd className={styles.detailValue}>{order.address?.address_line || '-'}</dd>
+                                </div>
+                                <div className={styles.detailLine}>
+                                    <dt>{t('City')}</dt>
+                                    <dd className={styles.detailValue}>
+                                        {order.address
+                                            ? [order.address.city, order.address.state, order.address.postal_code].filter(Boolean).join(', ')
+                                            : t('No address provided')}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </Card>
+
+                    <Card variant="flat" padding="md">
+                        <div className={styles.panelBody}>
+                            <div className={styles.sectionHead}>
+                                <h2 className={styles.sectionTitle}>
+                                    <Package aria-hidden="true" className={styles.sectionIcon} />
+                                    {t('Products')}
+                                </h2>
+                            </div>
+                            <Table columns={productColumns} data={order.products ?? []} rowKey="id" empty={t('No products found')} />
+                        </div>
+                    </Card>
+
+                    {order.history && order.history.length > 0 && (
+                        <Card variant="flat" padding="md">
+                            <div className={styles.panelBody}>
+                                <div className={styles.sectionHead}>
+                                    <h2 className={styles.sectionTitle}>
+                                        <Receipt aria-hidden="true" className={styles.sectionIcon} />
+                                        {t('Order History')}
+                                    </h2>
+                                </div>
+                                <ul className={styles.historyList}>
+                                    {order.history.map((entry, index) => (
+                                        <li key={index} className={styles.historyItem}>
+                                            <StatusBadge status={entry.status} type="order" />
+                                            <span className={styles.historyTime}>{formatDateTime(entry.created_at)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </Card>
+                    )}
                 </div>
 
-                <div className="bottom-data space-y-6">
-                    {/* Customer Info + Address */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <div className="card rounded-2xl bg-white p-6 shadow">
-                            <h3 className="mb-4 text-lg font-semibold">Customer Information</h3>
-                            <p>
-                                <strong>Name:</strong> {order.customer.first_name} {order.customer.last_name}
-                            </p>
-                            {order.customer.email && (
-                                <p>
-                                    <strong>Email:</strong> {order.customer.email}
-                                </p>
-                            )}
-                            {order.customer.phone && (
-                                <p>
-                                    <strong>Phone:</strong> {order.customer.phone}
-                                </p>
-                            )}
-                        </div>
+                <div className={styles.stack}>
+                    <Card variant="flat" padding="md">
+                        <div className={styles.panelBody}>
+                            <div className={styles.sectionHead}>
+                                <h2 className={styles.sectionTitle}>
+                                    <CreditCard aria-hidden="true" className={styles.sectionIcon} />
+                                    {t('Payment Summary')}
+                                </h2>
+                            </div>
 
-                        <div className="card rounded-2xl bg-white p-6 shadow">
-                            <h3 className="mb-4 text-lg font-semibold">Shipping Address</h3>
-                            <p>{order.address?.address_line || '—'}</p>
-                            <p>
-                                {order.address
-                                    ? `${order.address.city || ''}, ${order.address.state || ''} ${order.address.postal_code || ''}`
-                                    : 'No address provided'}
-                            </p>
-                        </div>
-                    </div>
+                            <dl className={styles.detailList}>
+                                <div className={styles.detailLine}>
+                                    <dt>{t('Payment Method')}</dt>
+                                    <dd className={styles.detailValue}>{order.payment_method}</dd>
+                                </div>
+                                <div className={styles.detailLine}>
+                                    <dt>{t('Shipping Fee')}</dt>
+                                    <dd className={styles.detailValue}>{formatVnd(order.shipping_fee)}</dd>
+                                </div>
+                            </dl>
 
-                    {/* Products */}
-                    <div className="card rounded-2xl bg-white p-6 shadow">
-                        <h3 className="mb-4 text-lg font-semibold">Products</h3>
-                        <div className="overflow-x-auto">
-                            <table className="w-full border-collapse text-sm">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-2 text-left">Product</th>
-                                        <th className="p-2 text-left">Variant</th>
-                                        <th className="p-2 text-center">Qty</th>
-                                        <th className="p-2 text-right">Price</th>
-                                        <th className="p-2 text-right">Subtotal</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {order.products?.map((p) => (
-                                        <tr key={p.id} className="border-t hover:bg-gray-50">
-                                            <td className="p-2">{p.name}</td>
-                                            <td className="p-2">{p.variant || '-'}</td>
-                                            <td className="p-2 text-center">{p.quantity}</td>
-                                            <td className="p-2 text-right">${p.price.toLocaleString('en-US')}</td>
-                                            <td className="p-2 text-right">${(p.price * p.quantity).toLocaleString('en-US')}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className={styles.totalRow}>
+                                <span className={styles.totalLabel}>{t('Total Amount')}</span>
+                                <span className={styles.totalValue}>{formatVnd(order.total_amount)}</span>
+                            </div>
                         </div>
-                    </div>
+                    </Card>
 
-                    {/* Payment Summary */}
-                    <div className="card max-w-md rounded-2xl bg-white p-6 shadow">
-                        <h3 className="mb-4 text-lg font-semibold">Payment Summary</h3>
-                        <p>
-                            <strong>Payment Method:</strong> {order.payment_method}
-                        </p>
-                        <p>
-                            <strong>Shipping Fee:</strong> ${order.shipping_fee.toLocaleString('en-US')}
-                        </p>
-                        <p className="mt-2 text-lg font-bold">Total: ${order.total_amount.toLocaleString('en-US')}</p>
-                    </div>
+                    <Card variant="flat" padding="md">
+                        <div className={styles.panelBody}>
+                            <div className={styles.sectionHead}>
+                                <h2 className={styles.sectionTitle}>{t('Update Order Status')}</h2>
+                            </div>
 
-                    {/* Update Status */}
-                    <div className="card rounded-2xl bg-white p-6 shadow">
-                        <h3 className="mb-4 text-lg font-semibold">Update Order Status</h3>
-                        <div className="flex flex-wrap gap-3">
-                            <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="form-input-field w-60">
-                                {STATUS_OPTIONS.map((s) => (
-                                    <option key={s.value} value={s.value}>
-                                        {s.label}
-                                    </option>
-                                ))}
-                            </select>
-                            <button onClick={handleUpdateStatus} disabled={loading} className="btn btn-primary">
-                                {loading ? 'Updating...' : 'Update'}
-                            </button>
+                            <div className={styles.statusForm}>
+                                <div className={styles.statusField}>
+                                    <Select
+                                        value={String(status)}
+                                        onChange={(event) => setStatus(Number(event.target.value))}
+                                        aria-label={t('Status')}
+                                    >
+                                        {STATUS_VALUES.map((value) => (
+                                            <option key={value} value={value}>
+                                                {t(STATUS_LABELS[value])}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                <Button type="button" variant="primary" onClick={handleUpdateStatus} loading={loading}>
+                                    {t('Update')}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* History */}
-                    {order.history && order.history.length > 0 && (
-                        <div className="card rounded-2xl bg-white p-6 shadow">
-                            <h3 className="mb-4 text-lg font-semibold">Order History</h3>
-                            <ul className="space-y-2">
-                                {order.history.map((h, index) => {
-                                    const info = getStatusInfo(h.status);
-                                    return (
-                                        <li key={index} className="flex justify-between border-b pb-1">
-                                            <span className={`rounded px-2 py-1 text-xs font-medium ${info.className}`}>{info.text}</span>
-                                            <span className="text-sm text-gray-500">{new Date(h.created_at).toLocaleString('en-US')}</span>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    )}
+                    </Card>
 
                     <div>
-                        <Link href="/seller/orders" className="btn btn-secondary">
-                            ← Back to Orders
-                        </Link>
+                        <Button asChild variant="secondary">
+                            <Link href="/seller/orders">{t('Back to Orders')}</Link>
+                        </Button>
                     </div>
                 </div>
-            </main>
-        </AppLayout>
+            </div>
+        </WorkspaceLayout>
     );
 }

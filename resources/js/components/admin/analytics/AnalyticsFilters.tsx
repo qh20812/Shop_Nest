@@ -1,6 +1,15 @@
-import '@/../css/Page.css';
-import { useTranslation } from '@/lib/i18n';
+import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Tabs } from '@/components/ui/tabs';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './analytics.module.css';
 
 export type AnalyticsFilterValue = string | number | null | undefined;
 
@@ -16,6 +25,7 @@ export interface AnalyticsFiltersProps {
     isCollapsible?: boolean;
     defaultCollapsed?: boolean;
     onReset?: () => void;
+    surface?: 'glass' | 'content';
     children?: React.ReactNode;
 }
 
@@ -34,6 +44,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     isCollapsible = true,
     defaultCollapsed = false,
     onReset,
+    surface = 'glass',
     children,
 }) => {
     const { t } = useTranslation();
@@ -47,15 +58,6 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
             ...filters,
             [key]: value,
         });
-    };
-
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = event.target;
-        handleUpdate(name, value);
-    };
-
-    const handleQuickRange = (value: string) => {
-        handleUpdate('period', value);
     };
 
     const resetHandler = () => {
@@ -72,116 +74,123 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
         onFilterChange(clearedFilters);
     };
 
+    const periodRaw = filters['period'];
+    const periodValue = typeof periodRaw === 'string' ? periodRaw : '';
+
     const renderFilterControl = (key: string, value: AnalyticsFilterValue) => {
         if (optionKeys.includes(key)) {
             const options = availableOptions[key] ?? [];
+
             return (
-                <label key={key} className="analytics-filters__field">
-                    <span className="analytics-filters__label">{t(key)}</span>
-                    <select name={key} value={value ?? ''} onChange={handleInputChange} className="analytics-filters__select">
+                <FormField key={key} label={t(key)} htmlFor={`analytics-filter-${key}`}>
+                    <Select
+                        id={`analytics-filter-${key}`}
+                        name={key}
+                        value={String(value ?? '')}
+                        onChange={(event) => handleUpdate(key, event.target.value)}
+                        surface="glass"
+                    >
                         <option value="">{t('All')}</option>
                         {options.map((option) => (
                             <option key={option.id} value={option.id}>
                                 {option.name}
                             </option>
                         ))}
-                    </select>
-                </label>
+                    </Select>
+                </FormField>
             );
         }
 
         if (isDateKey(key)) {
             return (
-                <label key={key} className="analytics-filters__field">
-                    <span className="analytics-filters__label">{t(key)}</span>
-                    <input type="date" name={key} value={value ?? ''} onChange={handleInputChange} className="analytics-filters__input" />
-                </label>
+                <FormField key={key} label={t(key)} htmlFor={`analytics-filter-${key}`}>
+                    <Input
+                        id={`analytics-filter-${key}`}
+                        type="date"
+                        name={key}
+                        value={String(value ?? '')}
+                        onChange={(event) => handleUpdate(key, event.target.value)}
+                        surface="glass"
+                    />
+                </FormField>
             );
         }
 
         if (typeof value === 'number') {
             return (
-                <label key={key} className="analytics-filters__field">
-                    <span className="analytics-filters__label">{t(key)}</span>
-                    <input
+                <FormField key={key} label={t(key)} htmlFor={`analytics-filter-${key}`}>
+                    <Input
+                        id={`analytics-filter-${key}`}
                         type="number"
                         name={key}
-                        value={value ?? ''}
-                        onChange={(event) => {
-                            const nextValue = event.target.value;
-                            handleUpdate(key, nextValue === '' ? '' : Number(nextValue));
-                        }}
-                        className="analytics-filters__input"
+                        value={value}
+                        onChange={(event) => handleUpdate(key, event.target.value === '' ? '' : Number(event.target.value))}
+                        surface="glass"
                     />
-                </label>
+                </FormField>
             );
         }
 
         return (
-            <label key={key} className="analytics-filters__field">
-                <span className="analytics-filters__label">{t(key)}</span>
-                <input
+            <FormField key={key} label={t(key)} htmlFor={`analytics-filter-${key}`}>
+                <Input
+                    id={`analytics-filter-${key}`}
                     type="text"
                     name={key}
-                    value={value ?? ''}
+                    value={String(value ?? '')}
                     onChange={(event) => handleUpdate(key, event.target.value)}
-                    className="analytics-filters__input"
+                    surface="glass"
                 />
-            </label>
+            </FormField>
         );
     };
 
-    const periodRaw = filters['period'];
-    const periodValue = typeof periodRaw === 'string' ? periodRaw : '';
-
     return (
-        <section className="analytics-filters">
-            <div className="analytics-filters__header">
-                <div className="analytics-filters__titles">
-                    <h3>{title ? t(title) : t('Filters')}</h3>
-                    {description ? <p>{description}</p> : null}
+        <section className={cx(styles.filters, surface === 'glass' && 'sn-glass-surface')} data-surface={surface}>
+            <div className={styles.filtersHead}>
+                <div className={styles.filtersTitles}>
+                    <h3 className={styles.filtersTitle}>{title ? t(title) : t('Filters')}</h3>
+                    {description ? <p className={styles.filtersDescription}>{description}</p> : null}
                 </div>
 
-                <div className="analytics-filters__actions">
+                <div className={styles.filtersActions}>
                     {quickRanges && quickRanges.length > 0 ? (
-                        <div className="analytics-filters__quick">
-                            {quickRanges.map((range) => (
-                                <button
-                                    key={range.value}
-                                    type="button"
-                                    className={`analytics-filters__quick-button ${periodValue === range.value ? 'active' : ''}`}
-                                    onClick={() => handleQuickRange(range.value)}
-                                >
-                                    {t(range.label)}
-                                </button>
-                            ))}
-                        </div>
+                        <Tabs
+                            variant="filter"
+                            surface="glass"
+                            items={quickRanges.map((range) => ({ value: range.value, label: t(range.label) }))}
+                            value={periodValue}
+                            onValueChange={(value) => handleUpdate('period', value)}
+                            ariaLabel={t('Quick filters')}
+                        />
                     ) : null}
 
-                    <button type="button" className="analytics-filters__reset" onClick={resetHandler}>
-                        <i className="bx bx-rotate-left"></i>
+                    <Button type="button" variant="ghost" size="sm" surface="glass" onClick={resetHandler}>
+                        <RotateCcw aria-hidden="true" />
                         {t('Reset')}
-                    </button>
+                    </Button>
 
                     {isCollapsible ? (
-                        <button
+                        <Button
                             type="button"
-                            className="analytics-filters__toggle"
+                            variant="ghost"
+                            size="sm"
+                            surface="glass"
                             onClick={() => setCollapsed((prev) => !prev)}
                             aria-expanded={!collapsed}
+                            aria-label={collapsed ? t('Show filters') : t('Hide filters')}
                         >
-                            <i className={`bx ${collapsed ? 'bx-chevron-down' : 'bx-chevron-up'}`}></i>
-                        </button>
+                            {collapsed ? <ChevronDown aria-hidden="true" /> : <ChevronUp aria-hidden="true" />}
+                        </Button>
                     ) : null}
                 </div>
             </div>
 
             {!collapsed ? (
-                <div className="analytics-filters__content">
-                    <div className="analytics-filters__grid">{filterEntries.map(([key, value]) => renderFilterControl(key, value))}</div>
-
-                    {children ? <div className="analytics-filters__custom">{children}</div> : null}
-                </div>
+                <>
+                    <div className={styles.filtersGrid}>{filterEntries.map(([key, value]) => renderFilterControl(key, value))}</div>
+                    {children ? <div className={styles.filtersCustom}>{children}</div> : null}
+                </>
             ) : null}
         </section>
     );

@@ -1,7 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 
 import { RadioCard } from '@/components/ui/radio-card';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type RefundOptionItem = {
     value: string;
@@ -21,7 +23,7 @@ type RefundOptionProps = {
 
 export function RefundOption({ options, value, onChange, name = 'refund_method', className }: RefundOptionProps) {
     return (
-        <div className={cn('flex flex-col gap-3', className)} role="radiogroup" aria-label="Hình thức hoàn tiền">
+        <div className={cx(styles.refundList, className)} role="radiogroup" aria-label="Hình thức hoàn tiền">
             {options.map((option) => {
                 const Icon = option.icon;
 
@@ -34,8 +36,8 @@ export function RefundOption({ options, value, onChange, name = 'refund_method',
                         disabled={option.disabled}
                         onChange={() => onChange(option.value)}
                         title={
-                            <span className="inline-flex items-center gap-2">
-                                {Icon && <Icon aria-hidden="true" className="size-4 text-ink-muted" />}
+                            <span className={styles.refundTitle}>
+                                {Icon ? <Icon aria-hidden="true" className={styles.refundIcon} /> : null}
                                 {option.title}
                             </span>
                         }

@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { AccountLayout } from '@/components/layout/AccountLayout';
 import { Card } from '@/components/ui/card';
+import { useTranslation } from '@/lib/i18n';
 
+import styles from '../customer.module.css';
 import { AddressForm, type AddressFormValue, type Division } from './AddressForm';
 
 interface AddressModel {
@@ -25,6 +27,7 @@ interface PageProps extends Record<string, unknown> {
 }
 
 export default function AddressEdit() {
+    const { t } = useTranslation();
     const { address, provinces = [], wards = [], errors = {} } = usePage<PageProps>().props;
     const [value, setValue] = React.useState<AddressFormValue>({
         name: address.name ?? '',
@@ -61,14 +64,14 @@ export default function AddressEdit() {
     return (
         <AccountLayout
             active="addresses"
-            breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Địa chỉ', href: '/user/addresses' }, { label: 'Chỉnh sửa' }]}
-            eyebrow="Sổ địa chỉ"
-            title="Sửa địa chỉ giao hàng"
-            description="Cập nhật thông tin người nhận hoặc địa chỉ để đơn hàng tới đúng nơi."
+            breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Addresses'), href: '/user/addresses' }, { label: t('Edit') }]}
+            eyebrow={t('Address book')}
+            title={t('Edit shipping address')}
+            description={t('Update the recipient or address so the order arrives correctly.')}
         >
-            <Head title="Sửa địa chỉ" />
+            <Head title={t('Edit address')} />
 
-            <Card padding="lg" className="max-w-3xl">
+            <Card padding="lg" className={styles.cardWide}>
                 <AddressForm
                     value={value}
                     onChange={setValue}
@@ -77,7 +80,7 @@ export default function AddressEdit() {
                     initialProvinceId={address.province_id ? String(address.province_id) : undefined}
                     errors={errors}
                     processing={processing}
-                    submitLabel="Lưu thay đổi"
+                    submitLabel={t('Save changes')}
                     onSubmit={handleSubmit}
                     onCancel={() => router.visit('/user/addresses')}
                 />

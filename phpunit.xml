@@ -18,6 +18,9 @@
         </include>
     </source>
     <php>
+        <!-- Inertia page tests load shared translations per request; give the
+             suite headroom over PHP's 128M default. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="APP_LOCALE" value="vi"/>

@@ -6,11 +6,13 @@ interface PageProps {
     [key: string]: unknown;
 }
 
+export type TranslationReplacements = Record<string, string | number>;
+
 export function useTranslation() {
     const { props } = usePage<PageProps>();
     const { translations = {}, locale = 'vi' } = props;
 
-    const t = (key: string): string => {
+    const lookup = (key: string): string => {
         if (!key) return '';
 
         // Direct flat-key lookup
@@ -28,6 +30,16 @@ export function useTranslation() {
             }
         }
         return typeof cur === 'string' ? cur : key;
+    };
+
+    const t = (key: string, replacements?: TranslationReplacements): string => {
+        const value = lookup(key);
+
+        if (!replacements) {
+            return value;
+        }
+
+        return Object.entries(replacements).reduce((result, [token, replacement]) => result.split(`:${token}`).join(String(replacement)), value);
     };
 
     return { t, locale, translations };

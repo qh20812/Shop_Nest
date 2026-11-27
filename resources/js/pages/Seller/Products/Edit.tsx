@@ -1,13 +1,17 @@
-import '@/../css/Page.css';
-import ActionButton from '@/components/ui/action-button';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
+import { Input } from '@/components/ui/input';
 import PrimaryInput from '@/components/ui/primary-input';
 import RichTextEditor from '@/components/ui/rich-text-editor';
 import { useToast } from '@/Contexts/ToastContext';
-import AppLayout from '@/layouts/app/AppLayout';
 import { useTranslation } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { GitBranch, Image as ImageIcon, Package, Plus, Save, Search, Tag, UploadCloud, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface CategoryOption {
     value: string;
@@ -108,6 +112,8 @@ const STATUS_OPTIONS = [
     { value: 'published', label: 'Published' },
     { value: 'hidden', label: 'Hidden' },
 ];
+
+const MEDIA_HINT = 'Existing images remain unchanged. Upload new files to append to the gallery.';
 
 const slugify = (value: string) =>
     value
@@ -272,7 +278,7 @@ function EditContent() {
 
             setMediaPreviews((prev) => [...prev, ...previews]);
             form.setData('images', [...form.data.images, ...files]);
-            showInfo(t('Sample previews added. Files are not uploaded yet.'));
+            showInfo(t('Images added to the upload queue.'));
         },
         [form, showInfo, t],
     );
@@ -536,451 +542,375 @@ function EditContent() {
                     { label: t('Products'), href: '/seller/products' },
                     { label: t('Edit'), href: `/seller/products/${product.product_id}/edit`, active: true },
                 ]}
-                reportButton={{
-                    label: t('Product Guidelines'),
-                    icon: 'bx-help-circle',
-                    onClick: () => {
-                        showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
-                    },
-                }}
             />
 
-            <form onSubmit={handleSubmit}>
-                <div className="bottom-data" style={{ display: 'grid', gap: '20px' }}>
-                    {/* Basic Information & Localization */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-package"></i>
-                            <h3>{t('Product Basics')}</h3>
+            <form onSubmit={handleSubmit} className={styles.stack}>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Package aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Product Basics')}
+                            </h2>
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Product Name (Vietnamese)')}
-                                    name="name_vi"
-                                    value={form.data.name}
-                                    onChange={(event) => form.setData('name', event.target.value)}
-                                    error={form.errors.name}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Product Name (English)')}
-                                    name="name_en"
-                                    value={form.data.name_en}
-                                    onChange={(event) => form.setData('name_en', event.target.value)}
-                                    error={form.errors.name_en}
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Product SKU')}
-                                    name="sku"
-                                    value={form.data.sku}
-                                    onChange={(event) => {
-                                        form.setData('sku', event.target.value);
-                                        const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
-                                        if (primaryIndex >= 0) {
-                                            handleVariantFieldChange(primaryIndex, 'sku', event.target.value);
-                                        }
-                                    }}
-                                    error={form.errors.sku}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Category')}
-                                    name="category_id"
-                                    type="select"
-                                    value={form.data.category_id}
-                                    onChange={(event) => form.setData('category_id', event.target.value)}
-                                    options={categoryOptions}
-                                    error={form.errors.category_id}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Brand')}
-                                    name="brand_id"
-                                    type="select"
-                                    value={form.data.brand_id}
-                                    onChange={(event) => form.setData('brand_id', event.target.value)}
-                                    options={brandOptions}
-                                    error={form.errors.brand_id}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Status')}
-                                    name="status"
-                                    type="select"
-                                    value={form.data.status}
-                                    onChange={(event) => form.setData('status', event.target.value)}
-                                    options={statusOptions}
-                                    error={form.errors.status}
-                                    required
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <RichTextEditor
-                                    label={t('Product Description (Vietnamese)')}
-                                    value={form.data.description}
-                                    onChange={(value) => form.setData('description', value)}
-                                    error={form.errors.description as string}
-                                    height="220px"
-                                />
-                                <RichTextEditor
-                                    label={t('Product Description (English)')}
-                                    value={form.data.description_en}
-                                    onChange={(value) => form.setData('description_en', value)}
-                                    error={form.errors.description_en as string}
-                                    height="220px"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Pricing & Inventory */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-dollar-circle"></i>
-                            <h3>{t('Pricing & Inventory')}</h3>
+                        <div className={styles.formGrid}>
+                            <PrimaryInput
+                                label={t('Product Name (Vietnamese)')}
+                                name="name_vi"
+                                value={form.data.name}
+                                onChange={(event) => form.setData('name', event.target.value)}
+                                error={form.errors.name}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Product Name (English)')}
+                                name="name_en"
+                                value={form.data.name_en}
+                                onChange={(event) => form.setData('name_en', event.target.value)}
+                                error={form.errors.name_en}
+                                required
+                            />
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Base Price (VND)')}
-                                    name="price"
-                                    value={form.data.price}
-                                    onChange={(event) => {
-                                        form.setData('price', event.target.value);
-                                        const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
-                                        if (primaryIndex >= 0) {
-                                            handleVariantFieldChange(primaryIndex, 'price', event.target.value);
-                                        }
-                                    }}
-                                    error={form.errors.price}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Total Stock')}
-                                    name="stock"
-                                    value={form.data.stock}
-                                    onChange={(event) => {
-                                        form.setData('stock', event.target.value);
-                                        const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
-                                        if (primaryIndex >= 0) {
-                                            handleVariantFieldChange(primaryIndex, 'stock_quantity', event.target.value);
-                                        }
-                                    }}
-                                    error={form.errors.stock}
-                                    required
-                                />
-                            </div>
+                        <div className={styles.formGrid4}>
+                            <PrimaryInput
+                                label={t('Product SKU')}
+                                name="sku"
+                                value={form.data.sku}
+                                onChange={(event) => {
+                                    form.setData('sku', event.target.value);
+                                    const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
+                                    if (primaryIndex >= 0) {
+                                        handleVariantFieldChange(primaryIndex, 'sku', event.target.value);
+                                    }
+                                }}
+                                error={form.errors.sku}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Category')}
+                                name="category_id"
+                                type="select"
+                                value={form.data.category_id}
+                                onChange={(event) => form.setData('category_id', event.target.value)}
+                                options={categoryOptions}
+                                error={form.errors.category_id}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Brand')}
+                                name="brand_id"
+                                type="select"
+                                value={form.data.brand_id}
+                                onChange={(event) => form.setData('brand_id', event.target.value)}
+                                options={brandOptions}
+                                error={form.errors.brand_id}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Status')}
+                                name="status"
+                                type="select"
+                                value={form.data.status}
+                                onChange={(event) => form.setData('status', event.target.value)}
+                                options={statusOptions}
+                                error={form.errors.status}
+                                required
+                            />
+                        </div>
+
+                        <div className={styles.formGrid}>
+                            <RichTextEditor
+                                label={t('Product Description (Vietnamese)')}
+                                value={form.data.description}
+                                onChange={(value) => form.setData('description', value)}
+                                error={form.errors.description as string}
+                                height="220px"
+                            />
+                            <RichTextEditor
+                                label={t('Product Description (English)')}
+                                value={form.data.description_en}
+                                onChange={(value) => form.setData('description_en', value)}
+                                error={form.errors.description_en as string}
+                                height="220px"
+                            />
                         </div>
                     </div>
+                </Card>
 
-                    {/* Variants */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-git-branch"></i>
-                            <h3>{t('Product Variants')}</h3>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Tag aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Pricing & Inventory')}
+                            </h2>
                         </div>
 
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            {form.data.variants.map((variant, index) => (
-                                <div
-                                    key={variant.variant_id ?? index}
-                                    style={{
-                                        border: '1px solid var(--grey)',
-                                        borderRadius: '12px',
-                                        padding: '16px',
-                                        display: 'grid',
-                                        gap: '16px',
-                                        position: 'relative',
-                                        background: '#fff',
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <h4 style={{ margin: 0 }}>
-                                            {t('Variant')} #{index + 1}
-                                        </h4>
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
-                                                <input
-                                                    type="radio"
-                                                    name="primary_variant"
-                                                    checked={variant.is_primary}
-                                                    onChange={() => handleSetPrimaryVariant(index)}
-                                                />
-                                                {t('Primary')}
-                                            </label>
-                                            <button type="button" onClick={() => handleRemoveVariant(index)} className="btn btn-secondary btn-small">
-                                                <i className="bx bx-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                        <div className={styles.formGrid}>
+                            <PrimaryInput
+                                label={t('Base Price (VND)')}
+                                name="price"
+                                value={form.data.price}
+                                onChange={(event) => {
+                                    form.setData('price', event.target.value);
+                                    const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
+                                    if (primaryIndex >= 0) {
+                                        handleVariantFieldChange(primaryIndex, 'price', event.target.value);
+                                    }
+                                }}
+                                error={form.errors.price}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Total Stock')}
+                                name="stock"
+                                value={form.data.stock}
+                                onChange={(event) => {
+                                    form.setData('stock', event.target.value);
+                                    const primaryIndex = form.data.variants.findIndex((variant) => variant.is_primary);
+                                    if (primaryIndex >= 0) {
+                                        handleVariantFieldChange(primaryIndex, 'stock_quantity', event.target.value);
+                                    }
+                                }}
+                                error={form.errors.stock}
+                                required
+                            />
+                        </div>
+                    </div>
+                </Card>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' }}>
-                                        <PrimaryInput
-                                            label={t('Variant Name')}
-                                            name={`variants.${index}.variant_name`}
-                                            value={variant.variant_name}
-                                            onChange={(event) => handleVariantFieldChange(index, 'variant_name', event.target.value)}
-                                            error={form.errors[`variants.${index}.variant_name` as keyof typeof form.errors] as string}
-                                        />
-                                        <PrimaryInput
-                                            label={t('Variant SKU')}
-                                            name={`variants.${index}.sku`}
-                                            value={variant.sku}
-                                            onChange={(event) => handleVariantFieldChange(index, 'sku', event.target.value)}
-                                            error={form.errors[`variants.${index}.sku` as keyof typeof form.errors] as string}
-                                        />
-                                        <PrimaryInput
-                                            label={t('Variant Price (VND)')}
-                                            name={`variants.${index}.price`}
-                                            value={variant.price}
-                                            onChange={(event) => handleVariantFieldChange(index, 'price', event.target.value)}
-                                            error={form.errors[`variants.${index}.price` as keyof typeof form.errors] as string}
-                                        />
-                                    </div>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <GitBranch aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Product Variants')}
+                            </h2>
+                        </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
-                                        <PrimaryInput
-                                            label={t('Variant Stock')}
-                                            name={`variants.${index}.stock_quantity`}
-                                            value={variant.stock_quantity}
-                                            onChange={(event) => handleVariantFieldChange(index, 'stock_quantity', event.target.value)}
-                                            error={form.errors[`variants.${index}.stock_quantity` as keyof typeof form.errors] as string}
-                                        />
-                                        <div>
-                                            <label className="form-label">{t('Options')}</label>
-                                            <div style={{ display: 'grid', gap: '12px' }}>
-                                                {variant.option_values.map((option, optionIndex) => (
-                                                    <div
-                                                        key={optionIndex}
-                                                        style={{
-                                                            display: 'grid',
-                                                            gridTemplateColumns: '1fr 1fr auto',
-                                                            gap: '12px',
-                                                            alignItems: 'center',
-                                                        }}
-                                                    >
-                                                        <input
-                                                            type="text"
-                                                            className="form-input-field"
-                                                            placeholder={t('Option name (e.g., Color)')}
-                                                            value={option.name}
-                                                            onChange={(event) =>
-                                                                handleVariantOptionChange(index, optionIndex, 'name', event.target.value)
-                                                            }
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            className="form-input-field"
-                                                            placeholder={t('Option value (e.g., Red)')}
-                                                            value={option.value}
-                                                            onChange={(event) =>
-                                                                handleVariantOptionChange(index, optionIndex, 'value', event.target.value)
-                                                            }
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-secondary btn-small"
-                                                            onClick={() => handleRemoveVariantOption(index, optionIndex)}
-                                                        >
-                                                            <i className="bx bx-x"></i>
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-secondary btn-small"
-                                                    onClick={() => handleAddVariantOption(index)}
-                                                >
-                                                    <i className="bx bx-plus"></i> {t('Add Option')}
-                                                </button>
-                                            </div>
-                                        </div>
+                        {form.data.variants.map((variant, index) => (
+                            <div key={variant.variant_id ?? index} className={styles.variantCard}>
+                                <div className={styles.variantHead}>
+                                    <h3 className={styles.variantTitle}>
+                                        {t('Variant')} #{index + 1}
+                                    </h3>
+                                    <div className={styles.variantTools}>
+                                        <label className={styles.primaryToggle}>
+                                            <input
+                                                type="radio"
+                                                name="primary_variant"
+                                                checked={variant.is_primary}
+                                                onChange={() => handleSetPrimaryVariant(index)}
+                                            />
+                                            {t('Primary')}
+                                        </label>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => handleRemoveVariant(index)}
+                                            aria-label={t('Remove variant')}
+                                        >
+                                            <X aria-hidden="true" />
+                                        </Button>
                                     </div>
+                                </div>
+
+                                <div className={styles.formGrid}>
+                                    <PrimaryInput
+                                        label={t('Variant Name')}
+                                        name={`variants.${index}.variant_name`}
+                                        value={variant.variant_name}
+                                        onChange={(event) => handleVariantFieldChange(index, 'variant_name', event.target.value)}
+                                        error={form.errors[`variants.${index}.variant_name` as keyof typeof form.errors] as string}
+                                    />
+                                    <PrimaryInput
+                                        label={t('Variant SKU')}
+                                        name={`variants.${index}.sku`}
+                                        value={variant.sku}
+                                        onChange={(event) => handleVariantFieldChange(index, 'sku', event.target.value)}
+                                        error={form.errors[`variants.${index}.sku` as keyof typeof form.errors] as string}
+                                    />
+                                </div>
+
+                                <div className={styles.formGrid}>
+                                    <PrimaryInput
+                                        label={t('Variant Price (VND)')}
+                                        name={`variants.${index}.price`}
+                                        value={variant.price}
+                                        onChange={(event) => handleVariantFieldChange(index, 'price', event.target.value)}
+                                        error={form.errors[`variants.${index}.price` as keyof typeof form.errors] as string}
+                                    />
+                                    <PrimaryInput
+                                        label={t('Variant Stock')}
+                                        name={`variants.${index}.stock_quantity`}
+                                        value={variant.stock_quantity}
+                                        onChange={(event) => handleVariantFieldChange(index, 'stock_quantity', event.target.value)}
+                                        error={form.errors[`variants.${index}.stock_quantity` as keyof typeof form.errors] as string}
+                                    />
+                                </div>
+
+                                <div className={styles.stackTight}>
+                                    <span className="sn-field__label">{t('Options')}</span>
+                                    {variant.option_values.map((option, optionIndex) => (
+                                        <div key={optionIndex} className={styles.optionRow}>
+                                            <Input
+                                                value={option.name}
+                                                placeholder={t('Option name (e.g., Color)')}
+                                                aria-label={t('Option name')}
+                                                onChange={(event) => handleVariantOptionChange(index, optionIndex, 'name', event.target.value)}
+                                            />
+                                            <Input
+                                                value={option.value}
+                                                placeholder={t('Option value (e.g., Red)')}
+                                                aria-label={t('Option value')}
+                                                onChange={(event) => handleVariantOptionChange(index, optionIndex, 'value', event.target.value)}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                aria-label={t('Remove option')}
+                                                onClick={() => handleRemoveVariantOption(index, optionIndex)}
+                                            >
+                                                <X aria-hidden="true" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    <div>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            leftIcon={Plus}
+                                            onClick={() => handleAddVariantOption(index)}
+                                        >
+                                            {t('Add Option')}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div>
+                            <Button type="button" variant="secondary" leftIcon={Plus} onClick={handleAddVariant}>
+                                {t('Add Variant')}
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <ImageIcon aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Media & Gallery')}
+                            </h2>
+                        </div>
+
+                        <p className={styles.muted}>{t(MEDIA_HINT)}</p>
+
+                        <div className={styles.mediaGrid}>
+                            {(product.images ?? []).map((image) => (
+                                <div key={image.image_id} className={styles.mediaItem}>
+                                    <img src={image.image_url} alt={image.alt_text ?? t('Product image')} className={styles.mediaImage} />
                                 </div>
                             ))}
 
-                            <button type="button" className="btn btn-primary" onClick={handleAddVariant}>
-                                <i className="bx bx-plus"></i> {t('Add Variant')}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Media Library */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-image"></i>
-                            <h3>{t('Media & Gallery')}</h3>
-                        </div>
-
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ fontSize: '13px', color: 'var(--dark-grey)' }}>
-                                {t('Existing images remain unchanged. Upload new files to append to the gallery.')}
-                            </div>
-
-                            <div
-                                style={{
-                                    display: 'grid',
-                                    gap: '16px',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                                }}
-                            >
-                                {(product.images ?? []).map((image) => (
-                                    <div
-                                        key={image.image_id}
-                                        style={{
-                                            position: 'relative',
-                                            borderRadius: '12px',
-                                            overflow: 'hidden',
-                                            boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
-                                        }}
+                            {mediaPreviews.map((media) => (
+                                <div key={media.id} className={styles.mediaItem}>
+                                    <img src={media.url} alt={t('Product image preview')} className={styles.mediaImage} />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveMedia(media.id)}
+                                        className={styles.mediaRemove}
+                                        aria-label={t('Remove image')}
                                     >
-                                        <img
-                                            src={image.image_url}
-                                            alt={image.alt_text ?? 'product image'}
-                                            style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                                        />
-                                    </div>
-                                ))}
-
-                                {mediaPreviews.map((media) => (
-                                    <div
-                                        key={media.id}
-                                        style={{
-                                            position: 'relative',
-                                            borderRadius: '12px',
-                                            overflow: 'hidden',
-                                            boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
-                                        }}
-                                    >
-                                        <img src={media.url} alt="product preview" style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveMedia(media.id)}
-                                            style={{
-                                                position: 'absolute',
-                                                top: '8px',
-                                                right: '8px',
-                                                background: 'rgba(255,255,255,0.9)',
-                                                border: 'none',
-                                                borderRadius: '50%',
-                                                width: '32px',
-                                                height: '32px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            <i className="bx bx-x" style={{ color: 'var(--danger)', fontSize: '18px' }}></i>
-                                        </button>
-                                    </div>
-                                ))}
-
-                                <label
-                                    htmlFor="product-media-uploader"
-                                    style={{
-                                        border: '2px dashed var(--grey)',
-                                        borderRadius: '12px',
-                                        minHeight: '160px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexDirection: 'column',
-                                        gap: '12px',
-                                        color: 'var(--dark-grey)',
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    <i className="bx bx-cloud-upload" style={{ fontSize: '28px' }}></i>
-                                    <span>{t('Click or drop files to add sample images')}</span>
-                                    <input
-                                        id="product-media-uploader"
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        style={{ display: 'none' }}
-                                        onChange={handleMediaUpload}
-                                    />
-                                </label>
-                                {form.errors.images && <div className="form-error">{form.errors.images}</div>}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* SEO Preview */}
-                    <div className="orders">
-                        <div className="header">
-                            <i className="bx bx-chart"></i>
-                            <h3>{t('SEO Preview')}</h3>
-                        </div>
-
-                        <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px' }}>
-                                <PrimaryInput
-                                    label={t('Meta Title')}
-                                    name="seo_title"
-                                    value={form.data.meta_title}
-                                    onChange={(event) => {
-                                        setIsMetaTitleTouched(true);
-                                        form.setData('meta_title', event.target.value);
-                                    }}
-                                    error={form.errors.meta_title}
-                                    required
-                                />
-                                <PrimaryInput
-                                    label={t('Meta Slug')}
-                                    name="seo_slug"
-                                    value={form.data.meta_slug}
-                                    onChange={(event) => {
-                                        setIsMetaSlugTouched(true);
-                                        form.setData('meta_slug', event.target.value);
-                                    }}
-                                    error={form.errors.meta_slug}
-                                />
-                                <PrimaryInput
-                                    label={t('Meta Description')}
-                                    name="seo_description"
-                                    value={form.data.meta_description}
-                                    onChange={(event) => {
-                                        setIsMetaDescriptionTouched(true);
-                                        form.setData('meta_description', event.target.value);
-                                    }}
-                                    error={form.errors.meta_description}
-                                />
-                            </div>
-
-                            <div
-                                style={{
-                                    border: '1px solid #dadce0',
-                                    borderRadius: '12px',
-                                    padding: '16px',
-                                    background: '#fff',
-                                }}
-                            >
-                                <span style={{ color: '#70757a', fontSize: '12px' }}>{t('Search preview')}</span>
-                                <div style={{ marginTop: '8px' }}>
-                                    <div style={{ color: '#1a0dab', fontSize: '18px', lineHeight: '1.3' }}>{seoPreview.title}</div>
-                                    <div style={{ color: '#006621', fontSize: '14px' }}>shopnest.vn/products/{seoPreview.slug}</div>
-                                    <div style={{ color: '#4d5156', fontSize: '13px', lineHeight: '1.6' }}>{seoPreview.description}</div>
+                                        <X aria-hidden="true" />
+                                    </button>
                                 </div>
-                            </div>
+                            ))}
+
+                            <label htmlFor="product-media-uploader" className={styles.dropzone}>
+                                <UploadCloud aria-hidden="true" className={styles.dropzoneIcon} />
+                                <span>{t('Click or drop files to add images')}</span>
+                                <input
+                                    id="product-media-uploader"
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className={styles.hiddenInput}
+                                    onChange={handleMediaUpload}
+                                />
+                            </label>
+                        </div>
+                        {form.errors.images && (
+                            <span className="sn-field__error" role="alert">
+                                {form.errors.images}
+                            </span>
+                        )}
+                    </div>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Search aria-hidden="true" className={styles.sectionIcon} />
+                                {t('SEO Preview')}
+                            </h2>
+                        </div>
+
+                        <div className={styles.formGrid4}>
+                            <PrimaryInput
+                                label={t('Meta Title')}
+                                name="seo_title"
+                                value={form.data.meta_title}
+                                onChange={(event) => {
+                                    setIsMetaTitleTouched(true);
+                                    form.setData('meta_title', event.target.value);
+                                }}
+                                error={form.errors.meta_title}
+                                required
+                            />
+                            <PrimaryInput
+                                label={t('Meta Slug')}
+                                name="seo_slug"
+                                value={form.data.meta_slug}
+                                onChange={(event) => {
+                                    setIsMetaSlugTouched(true);
+                                    form.setData('meta_slug', event.target.value);
+                                }}
+                                error={form.errors.meta_slug}
+                            />
+                            <PrimaryInput
+                                label={t('Meta Description')}
+                                name="seo_description"
+                                value={form.data.meta_description}
+                                onChange={(event) => {
+                                    setIsMetaDescriptionTouched(true);
+                                    form.setData('meta_description', event.target.value);
+                                }}
+                                error={form.errors.meta_description}
+                            />
+                        </div>
+
+                        <div className={styles.seoPreview}>
+                            <span className={styles.seoLabel}>{t('Search preview')}</span>
+                            <span className={styles.seoTitle}>{seoPreview.title}</span>
+                            <span className={styles.seoUrl}>shopnest.vn/products/{seoPreview.slug}</span>
+                            <span className={styles.seoDescription}>{seoPreview.description}</span>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', marginTop: '24px' }}>
-                    <ActionButton
-                        variant="secondary"
+                <div className={styles.formFooter}>
+                    <Button
                         type="button"
-                        icon="bx bx-arrow-back"
+                        variant="secondary"
                         onClick={() => {
                             if (!form.isDirty || window.confirm(t('You have unsaved changes. Leave the page?'))) {
                                 router.visit('/seller/products');
@@ -988,10 +918,10 @@ function EditContent() {
                         }}
                     >
                         {t('Back to Products')}
-                    </ActionButton>
-                    <ActionButton variant="primary" type="submit" icon="bx bx-save" loading={form.processing}>
+                    </Button>
+                    <Button type="submit" variant="primary" loading={form.processing} leftIcon={Save}>
                         {t('Save Changes')}
-                    </ActionButton>
+                    </Button>
                 </div>
             </form>
         </>
@@ -1000,8 +930,8 @@ function EditContent() {
 
 export default function Edit() {
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <EditContent />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

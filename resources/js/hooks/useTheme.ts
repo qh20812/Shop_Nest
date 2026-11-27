@@ -2,38 +2,43 @@ import { useEffect, useState } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
 
-export function useTheme() {
-    const [theme, setTheme] = useState<Theme>(() => {
-        // Get saved theme from localStorage or default to 'system'
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        return savedTheme || 'system';
-    });
+function readStoredTheme(): Theme {
+    if (typeof window === 'undefined') {
+        return 'system';
+    }
 
+    try {
+        const saved = window.localStorage.getItem('theme');
+
+        if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            return saved;
+        }
+    } catch {
+        // Storage may be unavailable in private mode or SSR.
+    }
+
+    return 'system';
+}
+
+export function useTheme() {
+    const [theme, setTheme] = useState<Theme>(readStoredTheme);
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
     useEffect(() => {
         const root = document.documentElement;
 
-        // Function to update the actual theme
-        const updateTheme = (isDark: boolean) => {
-            if (isDark) {
-                root.classList.add('dark');
-                setResolvedTheme('dark');
-            } else {
-                root.classList.remove('dark');
-                setResolvedTheme('light');
-            }
+        const applyTheme = (isDark: boolean) => {
+            root.dataset.theme = isDark ? 'dark' : 'light';
+            root.style.colorScheme = isDark ? 'dark' : 'light';
+            setResolvedTheme(isDark ? 'dark' : 'light');
         };
 
-        // Handle theme changes
         if (theme === 'system') {
-            // Use system preference
             const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            updateTheme(mediaQuery.matches);
+            applyTheme(mediaQuery.matches);
 
-            // Listen for system theme changes
-            const handleChange = (e: MediaQueryListEvent) => {
-                updateTheme(e.matches);
+            const handleChange = (event: MediaQueryListEvent) => {
+                applyTheme(event.matches);
             };
 
             mediaQuery.addEventListener('change', handleChange);
@@ -41,15 +46,23 @@ export function useTheme() {
             return () => {
                 mediaQuery.removeEventListener('change', handleChange);
             };
-        } else {
-            // Use explicit theme
-            updateTheme(theme === 'dark');
         }
+
+        applyTheme(theme === 'dark');
     }, [theme]);
 
     const changeTheme = (newTheme: Theme) => {
         setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
+
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        try {
+            window.localStorage.setItem('theme', newTheme);
+        } catch {
+            // Storage may be unavailable in private mode.
+        }
     };
 
     return {

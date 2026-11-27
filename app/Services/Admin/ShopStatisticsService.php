@@ -4,7 +4,6 @@ namespace App\Services\Admin;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -133,12 +132,13 @@ class ShopStatisticsService
     {
         return Order::query()
             ->select('orders.customer_id')
+            ->selectRaw('MAX(orders.created_at) as last_order_at')
             ->join('order_items', 'orders.order_id', '=', 'order_items.order_id')
             ->join('product_variants', 'order_items.variant_id', '=', 'product_variants.variant_id')
             ->join('products', 'product_variants.product_id', '=', 'products.product_id')
             ->where('products.seller_id', $shop->id)
-            ->latest('orders.created_at')
-            ->distinct()
+            ->groupBy('orders.customer_id')
+            ->orderByDesc('last_order_at')
             ->take($limit)
             ->with('customer:id,username,first_name,last_name,email')
             ->get()

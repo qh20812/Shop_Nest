@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Promotion extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $primaryKey = 'promotion_id';
+
     protected $fillable = [
         'name',
         'description',
@@ -51,6 +54,7 @@ class Promotion extends Model
         'spent_budget',
         'roi_percentage',
     ];
+
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
@@ -75,7 +79,7 @@ class Promotion extends Model
         'created_by_type' => 'string',
         'budget_source' => 'string',
     ];
-        
+
     /**
      * The orders that belong to the promotion.
      */
@@ -159,8 +163,8 @@ class Promotion extends Model
      */
     public function isActive(): bool
     {
-        return $this->is_active 
-            && $this->start_date <= now() 
+        return $this->is_active
+            && $this->start_date <= now()
             && $this->end_date >= now();
     }
 
@@ -185,21 +189,42 @@ class Promotion extends Model
      */
     public function canBeUsed(): bool
     {
-        return $this->isActive() 
-            && !$this->isBudgetExceeded() 
-            && !$this->isDailyLimitExceeded()
+        return $this->isActive()
+            && ! $this->isBudgetExceeded()
+            && ! $this->isDailyLimitExceeded()
             && ($this->usage_limit === null || $this->used_count < $this->usage_limit);
     }
 
     /**
-     * Apply the promotion (increment counters)
+     * Apply the promotion (increment counters on both budget columns).
      */
     public function apply(float $discountAmount): void
     {
         $this->increment('used_count');
         $this->increment('daily_usage_count');
         $this->increment('budget_used', $discountAmount);
+        $this->increment('spent_budget', $discountAmount);
         $this->update(['last_used_at' => now()]);
+    }
+
+    /**
+     * Scope by the computed lifecycle status.
+     */
+    public function scopeOfStatus(Builder $query, string $status): Builder
+    {
+        $now = now();
+
+        return match ($status) {
+            'draft', 'upcoming' => $query->where('start_date', '>', $now),
+            'active' => $query->where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->where('is_active', true),
+            'paused' => $query->where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->where('is_active', false),
+            'expired' => $query->where('end_date', '<', $now),
+            default => $query,
+        };
     }
 
     /**
@@ -208,8 +233,8 @@ class Promotion extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
-                    ->where('start_date', '<=', now())
-                    ->where('end_date', '>=', now());
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now());
     }
 
     /**

@@ -1,17 +1,20 @@
-import Avatar from '@/components/ui/avatar';
-import Header from '@/components/ui/header';
-import Insights from '@/components/ui/insights';
-import AppLayout from '@/layouts/app/AppLayout';
-import { formatCurrency, resolveCurrencyCode } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
+import { Receipt, UserPlus } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTranslation } from '../../../lib/i18n';
-// import '@/../css/app.css';
-import '@/../css/Page.css';
-import { Head } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-// Định nghĩa TypeScript interfaces
+import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
+import { PageHeader } from '@/components/layout/PageHeader';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import Avatar from '@/components/ui/avatar';
+import DataTable from '@/components/ui/data-table';
+import StatusBadge from '@/components/ui/status-badge';
+import { formatDate, formatNumber, formatTime } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+import { formatCurrency, formatMoney, resolveCurrencyCode } from '@/lib/utils';
+
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Dashboard.module.css';
+
 interface Stats {
     total_revenue: number;
     pending_orders: number;
@@ -46,17 +49,6 @@ interface User {
     username: string;
     created_at: string;
 }
-
-type OrderStatusKey =
-    | 'pending_confirmation'
-    | 'processing'
-    | 'pending_assignment'
-    | 'assigned_to_shipper'
-    | 'delivering'
-    | 'delivered'
-    | 'completed'
-    | 'cancelled'
-    | 'returned';
 
 interface RevenueChartPoint {
     date: string;
@@ -104,38 +96,28 @@ export default function Index() {
     const revenueChart = Array.isArray(props.revenueChart) ? props.revenueChart : [];
     const userGrowthChart = Array.isArray(props.userGrowthChart) ? props.userGrowthChart : [];
 
-    const currencyCode = props.currencyCode ?? props.meta?.currencyCode ?? resolveCurrencyCode(props.currency) ?? 'USD';
+    const currencyCode = props.currencyCode ?? props.meta?.currencyCode ?? resolveCurrencyCode(props.currency);
 
-    const revenueChartData = revenueChart;
-    const userGrowthChartData = userGrowthChart;
+    const money = useMemo(() => (value: number) => formatMoney(value, currencyCode, locale), [currencyCode, locale]);
+
+    const generatedAt = typeof props.meta?.generatedAt === 'string' ? props.meta.generatedAt : null;
+    const updatedLabel =
+        generatedAt && !Number.isNaN(new Date(generatedAt).getTime())
+            ? `${t('Last updated at')} ${formatDate(generatedAt)} ${formatTime(generatedAt)}`
+            : undefined;
 
     const breadcrumbs = [
         { label: t('Dashboard'), href: '/admin/dashboard' },
-        { label: t('Overview'), href: '#', active: true },
+        { label: t('Overview'), current: true },
     ];
 
-    // Tạo insightsData từ stats động
-    const insightsData = [
+    const growth = Number.isFinite(stats.user_growth_monthly) ? stats.user_growth_monthly.toFixed(2) : '0.00';
+    const health = Number.isFinite(stats.system_health) ? stats.system_health.toFixed(2) : '0.00';
+
+    const kpis = [
         {
-            icon: 'bx-time',
-            value: stats.pending_orders.toLocaleString(locale),
-            label: t('Pending Orders'),
-            tooltip: t('Pending orders awaiting action'),
-        },
-        {
-            icon: 'bx-trending-up',
-            value: `${Number.isFinite(stats.user_growth_monthly) ? stats.user_growth_monthly.toFixed(2) : '0.00'}%`,
-            label: t('User Growth (Monthly)'),
-            tooltip: t('User growth compared to last month'),
-        },
-        {
-            icon: 'bx-heart-circle',
-            value: `${Number.isFinite(stats.system_health) ? stats.system_health.toFixed(2) : '0.00'}%`,
-            label: t('System Health'),
-            tooltip: t('Percentage of orders completed successfully'),
-        },
-        {
-            icon: 'bx-dollar-circle',
+            key: 'revenue',
+            label: t('Total Revenue'),
             value: formatCurrency(stats.total_revenue, {
                 from: currencyCode,
                 to: currencyCode,
@@ -143,221 +125,172 @@ export default function Index() {
                 locale,
                 abbreviate: true,
             }),
-            label: t('Total Revenue'),
-            tooltip: formatCurrency(stats.total_revenue, {
-                from: currencyCode,
-                to: currencyCode,
-                rates: {},
-                locale,
-            }),
+            tooltip: money(stats.total_revenue),
+        },
+        {
+            key: 'pending',
+            label: t('Pending Orders'),
+            value: formatNumber(stats.pending_orders),
+            tooltip: t('Pending orders awaiting action'),
+        },
+        {
+            key: 'growth',
+            label: t('User Growth (Monthly)'),
+            value: `${growth}%`,
+            tooltip: t('User growth compared to last month'),
+        },
+        {
+            key: 'health',
+            label: t('System Health'),
+            value: `${health}%`,
+            tooltip: t('Percentage of orders completed successfully'),
         },
     ];
 
-    const orderStatusMap = useMemo<Record<OrderStatusKey, { className: string; label: string }>>(
-        () => ({
-            pending_confirmation: { className: 'pending', label: t('Pending Confirmation') },
-            processing: { className: 'process', label: t('Processing') },
-            pending_assignment: { className: 'process', label: t('Pending Assignment') },
-            assigned_to_shipper: { className: 'process', label: t('Assigned to Shipper') },
-            delivering: { className: 'process', label: t('Delivering') },
-            delivered: { className: 'completed', label: t('Delivered') },
-            completed: { className: 'completed', label: t('Completed') },
-            cancelled: { className: 'pending', label: t('Cancelled') },
-            returned: { className: 'pending', label: t('Returned') },
-        }),
-        [t],
+    const revenueChartData = revenueChart.map((point) => ({ label: point.label, value: point.revenue }));
+
+    const userGrowthChartData = userGrowthChart.map((point) => ({ label: point.label, value: point.users }));
+
+    const orderColumns = useMemo(
+        () => [
+            {
+                key: 'customer',
+                header: t('User'),
+                cell: (order: Order) => {
+                    const customer = order.customer;
+                    const userForAvatar = {
+                        id: customer?.id || 0,
+                        username: customer?.username || 'N/A',
+                        first_name: customer?.first_name || '',
+                        last_name: customer?.last_name || '',
+                        avatar: customer?.avatar,
+                        avatar_url: customer?.avatar_url,
+                    };
+
+                    if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http')) {
+                        userForAvatar.avatar = `/storage/${userForAvatar.avatar}`;
+                    }
+
+                    return (
+                        <div className={adminStyles.avatarCell}>
+                            <Avatar user={userForAvatar} size={36} />
+                            <span className={adminStyles.avatarName}>{userForAvatar.username}</span>
+                        </div>
+                    );
+                },
+            },
+            {
+                key: 'created_at',
+                header: t('Order Date'),
+                cell: (order: Order) => <span className={adminStyles.numeric}>{formatDate(order.created_at)}</span>,
+            },
+            {
+                key: 'status',
+                header: t('Status'),
+                cell: (order: Order) => <StatusBadge status={order.status} type="order" />,
+            },
+            {
+                key: 'total',
+                header: t('Total Amount'),
+                align: 'right' as const,
+                cell: (order: Order) => {
+                    const orderCurrency = order.currency_code ?? currencyCode;
+                    const totalForDisplay =
+                        typeof order.total_amount_converted === 'number'
+                            ? order.total_amount_converted
+                            : Number(order.total_amount ?? order.total_amount_base ?? 0);
+
+                    return (
+                        <span className={adminStyles.price}>
+                            {formatCurrency(totalForDisplay, {
+                                from: orderCurrency,
+                                to: orderCurrency,
+                                rates: {},
+                                locale,
+                            })}
+                        </span>
+                    );
+                },
+            },
+        ],
+        [currencyCode, locale, t],
     );
 
-    const getOrderStatus = (status: string) => {
-        return orderStatusMap[status as OrderStatusKey] ?? { className: 'pending', label: t('Pending') };
-    };
-
-    // Helper function để format ngày
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('vi-VN');
-    };
-
-    const handleDownloadCSV = () => {
-        console.log('Download CSV clicked');
-    };
-
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Dashboard')} />
-            <Header
-                title={t('Dashboard')}
-                breadcrumbs={breadcrumbs}
-                reportButton={{
-                    label: t('Download CSV'),
-                    icon: 'bx-cloud-download',
-                    onClick: handleDownloadCSV,
-                }}
-            />
 
-            <Insights items={insightsData} />
+            <div className={styles.page}>
+                <PageHeader breadcrumbs={breadcrumbs} title={t('Dashboard')} description={updatedLabel} />
 
-            <section className="charts">
-                <div className="chart-card">
-                    <div className="chart-header">
-                        <h3>{t('Revenue Trend')}</h3>
-                        <span>{t('Last 7 days')}</span>
+                <h2 className="sn-visually-hidden">{t('Overview')}</h2>
+
+                <dl className={styles.kpiRail}>
+                    {kpis.map((kpi) => (
+                        <div key={kpi.key} className={styles.kpi} title={kpi.tooltip}>
+                            <dt className={styles.kpiLabel}>{kpi.label}</dt>
+                            <dd className={styles.kpiValue}>{kpi.value}</dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <section className={styles.signalGrid} aria-label={t('Overview charts')}>
+                    <AnalyticsChart
+                        type="area"
+                        data={revenueChartData}
+                        title={t('Revenue Trend')}
+                        description={t('Last 7 days')}
+                        height={300}
+                        valueFormatter={money}
+                        valueLabel={t('Revenue')}
+                    />
+                    <AnalyticsChart
+                        type="bar"
+                        data={userGrowthChartData}
+                        title={t('User Growth')}
+                        description={t('Last 4 weeks')}
+                        height={300}
+                        colors={['var(--sn-color-accent)']}
+                        valueLabel={t('Users')}
+                    />
+                </section>
+
+                <div className={styles.ledgerGrid}>
+                    <div className={styles.orders}>
+                        <DataTable
+                            columns={orderColumns}
+                            data={recentOrders}
+                            headerTitle={t('Recent Orders')}
+                            headerIcon={Receipt}
+                            headerMeta={recentOrders.length}
+                            emptyMessage={t('No recent orders')}
+                        />
                     </div>
-                    <div className="chart-body">
-                        <ResponsiveContainer width="100%" height={260}>
-                            <LineChart data={revenueChartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                                <YAxis
-                                    tickFormatter={(value: number) =>
-                                        formatCurrency(value, { from: currencyCode, to: currencyCode, rates: {}, locale, abbreviate: true })
-                                    }
-                                    width={80}
-                                />
-                                <Tooltip
-                                    formatter={(value) => [
-                                        formatCurrency(Number(value), { from: currencyCode, to: currencyCode, rates: {}, locale }),
-                                        t('Revenue'),
-                                    ]}
-                                    labelFormatter={(label) => `${t('Date')}: ${String(label)}`}
-                                />
-                                <Line type="monotone" dataKey="revenue" stroke="#1976D2" strokeWidth={3} dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
 
-                <div className="chart-card">
-                    <div className="chart-header">
-                        <h3>{t('User Growth')}</h3>
-                        <span>{t('Last 4 weeks')}</span>
-                    </div>
-                    <div className="chart-body">
-                        <ResponsiveContainer width="100%" height={260}>
-                            <BarChart data={userGrowthChartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
-                                <Tooltip
-                                    formatter={(value) => [Number(value).toLocaleString(locale), t('New Users')]}
-                                    labelFormatter={(label) => `${t('Week')}: ${String(label)}`}
-                                />
-                                <Bar dataKey="users" fill="#388E3C" radius={[6, 6, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </section>
+                    <section className={styles.arrivals} aria-labelledby="dashboard-new-users">
+                        <div className={styles.ledgerHead}>
+                            <h2 id="dashboard-new-users" className={styles.ledgerTitle}>
+                                <UserPlus aria-hidden="true" className={styles.ledgerIcon} />
+                                {t('New Users')}
+                            </h2>
+                            <span className={styles.ledgerMeta}>{newUsers.length}</span>
+                        </div>
 
-            <div className="bottom-data">
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-receipt"></i>
-                        <h3>{t('Recent Orders')}</h3>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>{t('User')}</th>
-                                <th>{t('Order Date')}</th>
-                                <th>{t('Status')}</th>
-                                <th>{t('Total Amount')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentOrders && recentOrders.length > 0 ? (
-                                recentOrders.map((order) => {
-                                    const { className, label } = getOrderStatus(order.status);
-                                    const rowKey = order.id ?? order.order_id ?? order.order_number ?? order.created_at;
-
-                                    // Create safe user object for Avatar component
-                                    const userForAvatar = order.customer
-                                        ? {
-                                              id: order.customer.id || 0,
-                                              username: order.customer.username || 'N/A',
-                                              first_name: order.customer.first_name || '',
-                                              last_name: order.customer.last_name || '',
-                                              avatar: order.customer.avatar,
-                                              avatar_url: order.customer.avatar_url,
-                                          }
-                                        : {
-                                              id: 0,
-                                              username: 'N/A',
-                                              first_name: '',
-                                              last_name: '',
-                                              avatar: undefined,
-                                              avatar_url: undefined,
-                                          };
-
-                                    // Normalize avatar path if it's relative
-                                    if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http')) {
-                                        userForAvatar.avatar = `/storage/${userForAvatar.avatar}`;
-                                    }
-
-                                    const orderCurrency = order.currency_code ?? currencyCode;
-                                    const totalForDisplay =
-                                        typeof order.total_amount_converted === 'number'
-                                            ? order.total_amount_converted
-                                            : Number(order.total_amount ?? order.total_amount_base ?? 0);
-
-                                    return (
-                                        <tr key={String(rowKey)}>
-                                            <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <Avatar user={userForAvatar} size={36} />
-                                                <p style={{ margin: 0 }}>{userForAvatar.username}</p>
-                                            </td>
-                                            <td>{formatDate(order.created_at)}</td>
-                                            <td>
-                                                <span className={`status ${className}`}>{label}</span>
-                                            </td>
-                                            <td>
-                                                {formatCurrency(totalForDisplay, {
-                                                    from: orderCurrency,
-                                                    to: orderCurrency,
-                                                    rates: {},
-                                                    locale,
-                                                })}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>
-                                        {t('No recent orders')}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="reminders">
-                    <div className="header">
-                        <i className="bx bx-user-plus"></i>
-                        <h3>{t('New Users')}</h3>
-                    </div>
-                    <ul className="task-list">
-                        {newUsers && newUsers.length > 0 ? (
-                            newUsers.map((user) => (
-                                <li key={user.id} className="completed">
-                                    <div className="task-title">
-                                        <i className="bx bx-user"></i>
-                                        <p>{user.username}</p>
-                                    </div>
-                                    <small style={{ color: 'var(--dark-grey)', fontSize: '12px' }}>{formatDate(user.created_at)}</small>
-                                </li>
-                            ))
+                        {newUsers.length > 0 ? (
+                            <ul className={styles.ledgerList}>
+                                {newUsers.map((user) => (
+                                    <li key={user.id} className={styles.ledgerRow}>
+                                        <span className={styles.ledgerName}>{user.username}</span>
+                                        <span className={styles.ledgerDate}>{formatDate(user.created_at)}</span>
+                                    </li>
+                                ))}
+                            </ul>
                         ) : (
-                            <li className="not-completed">
-                                <div className="task-title">
-                                    <i className="bx bx-info-circle"></i>
-                                    <p>{t('No new users')}</p>
-                                </div>
-                            </li>
+                            <p className={styles.ledgerEmpty}>{t('No new users')}</p>
                         )}
-                    </ul>
+                    </section>
                 </div>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

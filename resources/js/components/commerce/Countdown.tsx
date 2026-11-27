@@ -1,7 +1,10 @@
+import { useTranslation } from '@/lib/i18n';
 import * as React from 'react';
 
 import { useCountdown } from '@/hooks/useCountdown';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type CountdownProps = {
     endsAt: Date | string | number | null | undefined;
@@ -14,30 +17,27 @@ function pad(value: number): string {
 }
 
 function CountdownBox({ children }: { children: React.ReactNode }) {
-    return (
-        <span className="min-w-8 rounded-chip border border-border bg-warm-porcelain px-2 py-1 text-center font-mono text-label-code font-semibold text-ink">
-            {children}
-        </span>
-    );
+    return <span className={styles.countdownBox}>{children}</span>;
 }
 
 export function Countdown({ endsAt, onEnd, className }: CountdownProps) {
+    const { t } = useTranslation();
     const countdown = useCountdown(endsAt, { onEnd });
 
     return (
-        <span className={cn('inline-flex items-center gap-1.5', className)} aria-label="Thời gian còn lại">
+        <span className={cx(styles.countdownRoot, className)} aria-label={t('Time remaining')}>
             {countdown.days > 0 && (
                 <>
                     <CountdownBox>{pad(countdown.days)}</CountdownBox>
-                    <span className="text-lacquer-red">:</span>
+                    <span className={styles.countdownSeparator}>:</span>
                 </>
             )}
             <CountdownBox>{pad(countdown.hours)}</CountdownBox>
-            <span aria-hidden="true" className="font-semibold text-lacquer-red">
+            <span aria-hidden="true" className={styles.countdownSeparator}>
                 :
             </span>
             <CountdownBox>{pad(countdown.minutes)}</CountdownBox>
-            <span aria-hidden="true" className="font-semibold text-lacquer-red">
+            <span aria-hidden="true" className={styles.countdownSeparator}>
                 :
             </span>
             <CountdownBox>{pad(countdown.seconds)}</CountdownBox>

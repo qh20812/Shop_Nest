@@ -2,23 +2,25 @@
 
 namespace App\Models;
 
+use App\Services\InventoryService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo; // <-- Thêm vào
+use Illuminate\Database\Eloquent\Model; // <-- Thêm vào
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\App;
-use App\Models\InventoryLog;
-use App\Services\InventoryService;
 
 class ProductVariant extends Model
 {
     public const LOW_STOCK_THRESHOLD = InventoryService::LOW_STOCK_THRESHOLD;
+
     public const IN_STOCK_THRESHOLD = InventoryService::IN_STOCK_THRESHOLD;
 
     use HasFactory, SoftDeletes;
+
     protected $primaryKey = 'variant_id';
+
     protected $fillable = [
         'product_id',
         'variant_name',
@@ -30,11 +32,13 @@ class ProductVariant extends Model
         'is_primary',
         'option_values',
         'option_signature',
+        'low_stock_notified_at',
     ];
 
     protected $casts = [
         'option_values' => 'array',
         'is_primary' => 'boolean',
+        'low_stock_notified_at' => 'datetime',
     ];
 
     /**
@@ -78,7 +82,7 @@ class ProductVariant extends Model
     public function reserveQuantity(int $quantity): bool
     {
         // If inventory tracking is disabled, always allow
-        if (!(bool) ($this->track_inventory ?? true)) {
+        if (! (bool) ($this->track_inventory ?? true)) {
             return true;
         }
 
@@ -88,6 +92,7 @@ class ProductVariant extends Model
         }
 
         $this->increment('reserved_quantity', $quantity);
+
         return true;
     }
 
@@ -185,14 +190,14 @@ class ProductVariant extends Model
 
     public function scopeSearch($query, ?string $term)
     {
-        if (!$term) {
+        if (! $term) {
             return $query;
         }
 
         return $query->where(function ($q) use ($term) {
             $q->where('product_variants.sku', 'like', "%{$term}%")
                 ->orWhereHas('product', function ($sub) use ($term) {
-                    $sub->where('name->' . App::getLocale(), 'like', "%{$term}%");
+                    $sub->where('name->'.App::getLocale(), 'like', "%{$term}%");
                 });
         });
     }

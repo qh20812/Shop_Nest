@@ -38,8 +38,8 @@ class PromotionRuleService
             'rules' => $rules,
         ], [
             'rules' => 'required|array|min:1',
-            'rules.*.type' => 'required|string|in:' . implode(',', self::SUPPORTED_RULE_TYPES),
-            'rules.*.operator' => 'nullable|string|in:' . implode(',', self::SUPPORTED_OPERATORS),
+            'rules.*.type' => 'required|string|in:'.implode(',', self::SUPPORTED_RULE_TYPES),
+            'rules.*.operator' => 'nullable|string|in:'.implode(',', self::SUPPORTED_OPERATORS),
             'rules.*.value' => 'required',
         ]);
 
@@ -51,17 +51,17 @@ class PromotionRuleService
 
                 if ($type === 'price_range') {
                     if ($operator === 'between') {
-                        if (!is_array($value) || !array_key_exists('min', $value) || !array_key_exists('max', $value)) {
+                        if (! is_array($value) || ! array_key_exists('min', $value) || ! array_key_exists('max', $value)) {
                             $validator->errors()->add("rules.$index.value", 'Price range between operator requires min and max values.');
                         }
-                    } elseif (!is_numeric($value)) {
+                    } elseif (! is_numeric($value)) {
                         $validator->errors()->add("rules.$index.value", 'Price rule requires a numeric value.');
                     }
                 }
 
                 if (in_array($type, ['brand', 'category', 'seller'], true)) {
-                    if ($operator === 'contains' && !is_array($value)) {
-                        $validator->errors()->add("rules.$index.value", ucfirst($type) . ' contains operator requires an array of values.');
+                    if ($operator === 'contains' && ! is_array($value)) {
+                        $validator->errors()->add("rules.$index.value", ucfirst($type).' contains operator requires an array of values.');
                     }
                 }
             }
@@ -154,7 +154,7 @@ class PromotionRuleService
         $operator = $rule['operator'] ?? 'equals';
         $value = $rule['value'] ?? null;
 
-        if (!$type || $value === null) {
+        if (! $type || $value === null) {
             return;
         }
 
@@ -187,16 +187,19 @@ class PromotionRuleService
         if (in_array($operator, ['contains', 'in'], true)) {
             $values = is_array($value) ? $value : [$value];
             $query->whereIn($column, $values);
+
             return;
         }
 
         if ($operator === 'equals') {
             $query->where($column, $value);
+
             return;
         }
 
         if ($operator === 'not_equals') {
             $query->where($column, '!=', $value);
+
             return;
         }
 

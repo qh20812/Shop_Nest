@@ -1,7 +1,7 @@
 import { FileText, UploadCloud, X } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type FileDropzoneProps = {
     accept?: string;
@@ -11,6 +11,7 @@ type FileDropzoneProps = {
     files?: File[];
     onFiles: (files: File[]) => void;
     onRemove?: (index: number) => void;
+    label?: string;
     className?: string;
 };
 
@@ -30,12 +31,14 @@ export function FileDropzone({
     files = [],
     onFiles,
     onRemove,
+    label,
     className,
 }: FileDropzoneProps) {
     const inputId = React.useId();
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const errorId = error ? `${inputId}-error` : undefined;
 
     const handleFiles = (incoming: FileList | null) => {
         if (!incoming || disabled) {
@@ -56,9 +59,11 @@ export function FileDropzone({
     };
 
     return (
-        <div className={cn('flex w-full flex-col gap-3', className)}>
+        <div className={cx('sn-dropzone', className)}>
             <label
                 htmlFor={inputId}
+                data-dragging={isDragging ? 'true' : undefined}
+                data-disabled={disabled ? 'true' : undefined}
                 onDragOver={(event) => {
                     event.preventDefault();
                     if (!disabled) setIsDragging(true);
@@ -69,11 +74,7 @@ export function FileDropzone({
                     setIsDragging(false);
                     handleFiles(event.dataTransfer.files);
                 }}
-                className={cn(
-                    'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-control border border-dashed border-border bg-rice-paper/60 p-6 text-center transition-colors duration-150 ease-nep hover:bg-rice-paper focus-within:ring-2 focus-within:ring-lacquer-red focus-within:ring-offset-2',
-                    isDragging && 'border-lacquer-red bg-lacquer-wash/40',
-                    disabled && 'cursor-not-allowed opacity-50',
-                )}
+                className="sn-dropzone__label"
             >
                 <input
                     ref={inputRef}
@@ -82,53 +83,44 @@ export function FileDropzone({
                     accept={accept}
                     multiple={multiple}
                     disabled={disabled}
-                    className="sr-only"
+                    aria-label={label}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={errorId}
+                    className="sn-dropzone__input"
                     onChange={(event) => {
                         handleFiles(event.target.files);
                         event.target.value = '';
                     }}
                 />
-                <span className="flex size-11 items-center justify-center rounded-pill bg-raw-linen text-ink-muted">
-                    <UploadCloud aria-hidden="true" className="size-6" />
+                <span className="sn-dropzone__icon-wrap">
+                    <UploadCloud aria-hidden="true" className="sn-dropzone__icon" />
                 </span>
-                <span className="text-body-sm text-ink">
-                    <span className="font-semibold text-lacquer-red">Bấm để tải tệp lên</span> hoặc kéo thả vào đây
+                <span className="sn-dropzone__text">
+                    <span className="sn-dropzone__action">Bấm để tải tệp lên</span> hoặc kéo thả vào đây
                 </span>
-                <span className="font-mono text-label-micro uppercase text-ink-faint">
-                    Tối đa {formatFileSize(maxSize)} mỗi tệp
-                </span>
+                <span className="sn-dropzone__hint">Tối đa {formatFileSize(maxSize)} mỗi tệp</span>
             </label>
 
             {error && (
-                <span role="alert" className="text-body-sm text-brick">
+                <span id={errorId} role="alert" className="sn-dropzone__error">
                     {error}
                 </span>
             )}
 
             {files.length > 0 && (
-                <ul className="flex flex-col gap-2">
+                <ul className="sn-file-list">
                     {files.map((file, index) => (
-                        <li
-                            key={`${file.name}-${file.lastModified}`}
-                            className="flex items-center gap-3 rounded-chip border border-border bg-warm-porcelain p-2.5"
-                        >
-                            <span className="flex size-9 items-center justify-center rounded-chip bg-raw-linen text-ink-muted">
-                                <FileText aria-hidden="true" className="size-4" />
+                        <li key={`${file.name}-${file.lastModified}`} className="sn-file-row">
+                            <span className="sn-file-row__icon-wrap">
+                                <FileText aria-hidden="true" className="sn-file-row__icon" />
                             </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block truncate text-body-sm font-medium text-ink">{file.name}</span>
-                                <span className="block font-mono text-label-micro text-ink-muted">
-                                    {formatFileSize(file.size)}
-                                </span>
+                            <span className="sn-file-row__body">
+                                <span className="sn-file-row__name">{file.name}</span>
+                                <span className="sn-file-row__size">{formatFileSize(file.size)}</span>
                             </span>
                             {onRemove && (
-                                <button
-                                    type="button"
-                                    aria-label={`Xoá ${file.name}`}
-                                    className="flex size-control-sm items-center justify-center rounded-chip text-ink-faint transition-colors hover:bg-brick-soft hover:text-brick focus-ring"
-                                    onClick={() => onRemove(index)}
-                                >
-                                    <X aria-hidden="true" className="size-4" />
+                                <button type="button" aria-label={`Xoá ${file.name}`} className="sn-file-row__remove" onClick={() => onRemove(index)}>
+                                    <X aria-hidden="true" />
                                 </button>
                             )}
                         </li>

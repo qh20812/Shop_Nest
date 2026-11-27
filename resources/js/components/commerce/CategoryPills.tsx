@@ -1,4 +1,6 @@
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type CategoryPillItem = {
     value: string | number;
@@ -15,7 +17,7 @@ type CategoryPillsProps = {
 
 export function CategoryPills({ items, value, onChange, className }: CategoryPillsProps) {
     return (
-        <div className={cn('scrollbar-hide flex items-center gap-2 overflow-x-auto', className)}>
+        <div className={cx(styles.categoryPills, className)}>
             {items.map((item) => {
                 const active = item.value === value;
 
@@ -25,18 +27,12 @@ export function CategoryPills({ items, value, onChange, className }: CategoryPil
                         type="button"
                         onClick={() => onChange(item.value)}
                         aria-pressed={active}
-                        className={cn(
-                            'focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body-sm font-medium transition-colors',
-                            active
-                                ? 'border-lacquer-red bg-lacquer-wash text-lacquer-red'
-                                : 'border-border bg-warm-porcelain text-ink hover:border-ink-muted',
-                        )}
+                        className={styles.categoryPill}
+                        data-active={active ? 'true' : undefined}
                     >
-                        {active && <span aria-hidden="true" className="size-1.5 rounded-pill bg-lacquer-red" />}
+                        {active && <span aria-hidden="true" className={styles.categoryDot} />}
                         <span>{item.label}</span>
-                        {typeof item.count === 'number' && (
-                            <span className={cn('font-mono text-label-micro', active ? 'text-lacquer-red' : 'text-ink-faint')}>{item.count}</span>
-                        )}
+                        {typeof item.count === 'number' && <span className={styles.categoryCount}>{item.count}</span>}
                     </button>
                 );
             })}

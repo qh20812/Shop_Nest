@@ -4,7 +4,6 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\NotificationType;
 use App\Models\Category;
-use App\Models\Notification;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\ImageValidationService;
@@ -20,6 +19,7 @@ class CategoryManagementTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     protected User $admin;
+
     protected User $customer;
 
     /**
@@ -67,7 +67,7 @@ class CategoryManagementTest extends TestCase
         // Khẳng định: Truy cập thành công và thấy được component Inertia tương ứng
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Index')
-                                                    ->has('categories.data', 3) // Kiểm tra có đúng 3 danh mục được trả về không
+            ->has('categories.data', 3) // Kiểm tra có đúng 3 danh mục được trả về không
         );
     }
 
@@ -79,11 +79,11 @@ class CategoryManagementTest extends TestCase
         $categoryData = [
             'name' => [
                 'en' => 'Phones & Accessories',
-                'vi' => 'Điện thoại & Phụ kiện'
+                'vi' => 'Điện thoại & Phụ kiện',
             ],
             'description' => [
                 'en' => 'Various types of phones and accessories.',
-                'vi' => 'Các loại điện thoại và phụ kiện đi kèm.'
+                'vi' => 'Các loại điện thoại và phụ kiện đi kèm.',
             ],
             'is_active' => true,
         ];
@@ -120,17 +120,17 @@ class CategoryManagementTest extends TestCase
     public function test_admin_co_the_cap_nhat_thong_tin_danh_muc(): void
     {
         $category = Category::factory()->create([
-            'name' => ['en' => 'Old Name', 'vi' => 'Tên Cũ']
+            'name' => ['en' => 'Old Name', 'vi' => 'Tên Cũ'],
         ]);
 
         $updateData = [
             'name' => [
                 'en' => 'Updated New Name',
-                'vi' => 'Tên Mới Cập Nhật'
+                'vi' => 'Tên Mới Cập Nhật',
             ],
             'description' => [
                 'en' => 'New description.',
-                'vi' => 'Mô tả mới.'
+                'vi' => 'Mô tả mới.',
             ],
             'is_active' => true,
         ];
@@ -156,7 +156,7 @@ class CategoryManagementTest extends TestCase
         $category = Category::factory()->create();
 
         $response = $this->actingAs($this->admin)->delete(route('admin.categories.destroy', $category));
-        
+
         // Khẳng định: Chuyển hướng thành công
         $response->assertRedirect(route('admin.categories.index'));
         $response->assertSessionHas('success', 'Ẩn danh mục thành công.');
@@ -172,7 +172,7 @@ class CategoryManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.categories.create'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('Admin/Categories/Create'));
+        $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Create'));
     }
 
     public function test_admin_can_access_edit_category_page(): void
@@ -182,7 +182,7 @@ class CategoryManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.categories.edit', $category));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('Admin/Categories/Edit'));
+        $response->assertInertia(fn ($page) => $page->component('Admin/Categories/Edit'));
     }
 
     /**
@@ -197,11 +197,11 @@ class CategoryManagementTest extends TestCase
         $categoryData = [
             'name' => [
                 'en' => 'Electronics',
-                'vi' => 'Điện tử'
+                'vi' => 'Điện tử',
             ],
             'description' => [
                 'en' => 'Electronic devices',
-                'vi' => 'Thiết bị điện tử'
+                'vi' => 'Thiết bị điện tử',
             ],
             'is_active' => true,
             'image' => $image,
@@ -214,22 +214,22 @@ class CategoryManagementTest extends TestCase
         $this->assertDatabaseHas('categories', [
             'name->en' => 'Electronics',
         ]);
-        Storage::disk('public')->assertExists('categories/' . $image->hashName());
+        Storage::disk('public')->assertExists('categories/'.$image->hashName());
     }
 
     public function test_admin_can_update_category(): void
     {
         $category = Category::factory()->create([
-            'name' => ['en' => 'Old Category', 'vi' => 'Danh mục cũ']
+            'name' => ['en' => 'Old Category', 'vi' => 'Danh mục cũ'],
         ]);
         $updateData = [
             'name' => [
                 'en' => 'Updated Category',
-                'vi' => 'Danh mục cập nhật'
+                'vi' => 'Danh mục cập nhật',
             ],
             'description' => [
                 'en' => 'Updated description',
-                'vi' => 'Mô tả cập nhật'
+                'vi' => 'Mô tả cập nhật',
             ],
             'is_active' => false,
         ];
@@ -282,7 +282,7 @@ class CategoryManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['search' => 'Phones']));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('categories.data', 1)
             ->where('categories.data.0.name.en', 'Phones')
         );
@@ -296,7 +296,54 @@ class CategoryManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'active']));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('categories.data', 1));
+    }
+
+    public function test_index_returns_status_counts(): void
+    {
+        Category::factory()->create(['is_active' => true]);
+        Category::factory()->create(['is_active' => false]);
+        $trashed = Category::factory()->create();
+        $trashed->delete();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.categories.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('statusCounts.total', 2)
+                ->where('statusCounts.active', 1)
+                ->where('statusCounts.inactive', 1)
+                ->where('statusCounts.trashed', 1)
+            );
+    }
+
+    public function test_admin_can_activate_inactive_category(): void
+    {
+        $category = Category::factory()->create(['is_active' => false]);
+
+        $response = $this->actingAs($this->admin)
+            ->patch(route('admin.categories.activate', $category));
+
+        $response->assertRedirect(route('admin.categories.index'));
+        $response->assertSessionHas('success', 'Kích hoạt danh mục thành công.');
+        $this->assertDatabaseHas('categories', [
+            'category_id' => $category->category_id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_edit_parent_options_exclude_self_and_descendants(): void
+    {
+        $root = Category::factory()->create(['name' => ['en' => 'Root', 'vi' => 'Gốc']]);
+        Category::factory()->create(['parent_category_id' => $root->category_id]);
+        $other = Category::factory()->create(['name' => ['en' => 'Other', 'vi' => 'Khác']]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.categories.edit', $root))
+            ->assertInertia(fn ($page) => $page
+                ->has('parentCategories', 1)
+                ->where('parentCategories.0.category_id', $other->category_id)
+                ->where('parentCategories.0.depth', 0)
+            );
     }
 
     public function test_customer_cannot_access_category_management(): void
@@ -330,7 +377,7 @@ class CategoryManagementTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index'));
 
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('categories.data', 1)
             ->where('categories.data.0.name.en', 'Test Category')
         );
@@ -348,7 +395,7 @@ class CategoryManagementTest extends TestCase
         $categoryData = [
             'name' => [
                 'en' => 'Electronics',
-                'vi' => 'Điện tử'
+                'vi' => 'Điện tử',
             ],
             'is_active' => true,
             'image' => $image,
@@ -372,7 +419,7 @@ class CategoryManagementTest extends TestCase
         $updateData = [
             'name' => [
                 'en' => 'Updated Electronics',
-                'vi' => 'Điện tử cập nhật'
+                'vi' => 'Điện tử cập nhật',
             ],
             'is_active' => true,
             'image' => $image,
@@ -382,7 +429,7 @@ class CategoryManagementTest extends TestCase
 
         $response->assertRedirect(route('admin.categories.index'));
         $response->assertSessionHas('success');
-        Storage::disk('public')->assertExists('categories/' . $image->hashName());
+        Storage::disk('public')->assertExists('categories/'.$image->hashName());
     }
 
     public function test_notification_is_sent_when_category_is_created(): void
@@ -390,7 +437,7 @@ class CategoryManagementTest extends TestCase
         $categoryData = [
             'name' => [
                 'en' => 'Test Category',
-                'vi' => 'Danh mục thử'
+                'vi' => 'Danh mục thử',
             ],
             'is_active' => true,
         ];
@@ -410,7 +457,7 @@ class CategoryManagementTest extends TestCase
         $updateData = [
             'name' => [
                 'en' => 'Updated Category',
-                'vi' => 'Danh mục cập nhật'
+                'vi' => 'Danh mục cập nhật',
             ],
             'is_active' => true,
         ];
@@ -471,18 +518,18 @@ class CategoryManagementTest extends TestCase
 
         // Test active filter
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'active']));
-        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('categories.data', 1));
 
         // Test inactive filter
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'inactive']));
-        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('categories.data', 1));
 
         // Test trashed filter
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['status' => 'trashed']));
-        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('categories.data', 1));
 
         // Test search filter - search for unique term
         $response = $this->actingAs($this->admin)->get(route('admin.categories.index', ['search' => 'Electronics']));
-        $response->assertInertia(fn($page) => $page->has('categories.data', 1));
+        $response->assertInertia(fn ($page) => $page->has('categories.data', 1));
     }
 }

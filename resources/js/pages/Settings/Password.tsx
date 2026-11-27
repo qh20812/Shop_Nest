@@ -11,12 +11,15 @@ import { PasswordStrength } from '@/components/ui/password-strength';
 import { useToast } from '@/components/ui/toast';
 
 import SettingsTabs from './SettingsTabs';
+import styles from './settings.module.css';
 
 interface PasswordForm {
     current_password: string;
     password: string;
     password_confirmation: string;
 }
+
+const INSET_VARIANT = 'inset' as const;
 
 export default function SettingsPassword() {
     const { success } = useToast();
@@ -49,15 +52,15 @@ export default function SettingsPassword() {
         >
             <Head title="Cài đặt mật khẩu" />
 
-            <div className="flex flex-col gap-5">
+            <div className={styles.stack}>
                 <SettingsTabs />
 
-                <div className="grid gap-6 lg:grid-cols-12">
-                    <Card padding="lg" className="lg:col-span-7">
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                            <div className="flex items-center gap-2 border-b border-border pb-3">
-                                <KeyRound aria-hidden="true" className="size-4 text-lacquer-red" />
-                                <h2 className="text-headline-3 text-ink">Cập nhật mật khẩu</h2>
+                <div className={styles.grid}>
+                    <Card padding="lg" className={styles.mainCard}>
+                        <form onSubmit={handleSubmit} className={styles.formStack}>
+                            <div className={styles.cardHead}>
+                                <KeyRound aria-hidden="true" className={styles.iconAccent} />
+                                <h2 className={styles.cardTitle}>Cập nhật mật khẩu</h2>
                             </div>
 
                             <FormField label="Mật khẩu hiện tại" required error={errors.current_password}>
@@ -95,8 +98,8 @@ export default function SettingsPassword() {
                                 />
                             </FormField>
 
-                            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end">
-                                {recentlySuccessful && <span className="text-body-sm text-jade sm:mr-auto">Đã cập nhật mật khẩu.</span>}
+                            <div className={styles.formFooter}>
+                                {recentlySuccessful ? <span className={styles.formStatus}>Đã cập nhật mật khẩu.</span> : null}
                                 <Button type="submit" loading={processing} disabled={!isValid}>
                                     Cập nhật mật khẩu
                                 </Button>
@@ -104,12 +107,12 @@ export default function SettingsPassword() {
                         </form>
                     </Card>
 
-                    <Card padding="lg" variant="inset" className="flex flex-col gap-4 lg:col-span-5">
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck aria-hidden="true" className="size-5 text-jade" />
-                            <h2 className="text-headline-3 text-ink">Tiêu chuẩn mật khẩu</h2>
+                    <Card padding="lg" variant={INSET_VARIANT} className={styles.sideCard}>
+                        <div className={styles.cardHeadPlain}>
+                            <ShieldCheck aria-hidden="true" className={styles.iconSuccess} />
+                            <h2 className={styles.cardTitle}>Tiêu chuẩn mật khẩu</h2>
                         </div>
-                        <ul className="flex list-disc flex-col gap-2 pl-5 text-body-sm text-ink-muted">
+                        <ul className={styles.tipsList}>
                             <li>Tối thiểu 8 ký tự.</li>
                             <li>Không trùng mật khẩu đang dùng.</li>
                             <li>Nên có chữ hoa, chữ số và ký tự đặc biệt.</li>

@@ -1,9 +1,19 @@
-// Seller/Promotions/Create.tsx
-import '@/../css/Page.css';
-import AppLayout from '@/layouts/app/AppLayout';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import EmptyState from '@/components/ui/empty-state';
+import { FormField } from '@/components/ui/form-field';
+import Header from '@/components/ui/header';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Package, Search } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import styles from '../seller.module.css';
 
 interface Product {
     product_id: number;
@@ -36,64 +46,67 @@ export default function Create() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-    // Filter products based on search term
-    const filteredProducts = products.filter((product) => {
-        const name = typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || '';
-        return name.toLowerCase().includes(searchTerm.toLowerCase());
-    });
+    const filteredProducts = useMemo(
+        () =>
+            products.filter((product) => {
+                const name = typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || '';
+                return name.toLowerCase().includes(searchTerm.toLowerCase());
+            }),
+        [products, searchTerm],
+    );
 
     const validateForm = (): Record<string, string> => {
-        const errors: Record<string, string> = {};
+        const validation: Record<string, string> = {};
 
         if (!formData.name.trim()) {
-            errors.name = t('Promotion name is required');
+            validation.name = t('Promotion name is required');
         }
 
         if (!formData.value || parseFloat(formData.value) <= 0) {
-            errors.value = t('Discount value must be greater than 0');
+            validation.value = t('Discount value must be greater than 0');
         }
 
         if (formData.type === 'percentage' && parseFloat(formData.value) > 90) {
-            errors.value = t('Percentage discount cannot exceed 90%');
+            validation.value = t('Percentage discount cannot exceed 90%');
         }
 
         if (!formData.budget || parseFloat(formData.budget) <= 0) {
-            errors.budget = t('Budget must be greater than 0');
+            validation.budget = t('Budget must be greater than 0');
         }
 
         if (parseFloat(formData.budget) > (wallet?.balance || 0)) {
-            errors.budget = t('Budget cannot exceed available balance');
+            validation.budget = t('Budget cannot exceed available balance');
         }
 
         if (!formData.start_date) {
-            errors.start_date = t('Start date is required');
+            validation.start_date = t('Start date is required');
         } else {
             const startDate = new Date(formData.start_date);
             const now = new Date();
             if (startDate <= now) {
-                errors.start_date = t('Start date must be in the future');
+                validation.start_date = t('Start date must be in the future');
             }
         }
 
         if (!formData.end_date) {
-            errors.end_date = t('End date is required');
+            validation.end_date = t('End date is required');
         } else if (formData.start_date && formData.end_date) {
             const startDate = new Date(formData.start_date);
             const endDate = new Date(formData.end_date);
             if (endDate <= startDate) {
-                errors.end_date = t('End date must be after start date');
+                validation.end_date = t('End date must be after start date');
             }
         }
 
         if (formData.selected_products.length === 0) {
-            errors.selected_products = t('At least one product must be selected');
+            validation.selected_products = t('At least one product must be selected');
         }
 
-        return errors;
+        return validation;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
 
         const validationErrors = validateForm();
         if (Object.keys(validationErrors).length > 0) {
@@ -127,8 +140,8 @@ export default function Create() {
                     data: { success: t('Promotion created successfully!') },
                 });
             },
-            onError: (errors) => {
-                setErrors(errors);
+            onError: (formErrors) => {
+                setErrors(formErrors);
                 setIsSubmitting(false);
             },
         });
@@ -146,7 +159,7 @@ export default function Create() {
     const handleSelectAll = () => {
         setFormData((prev) => ({
             ...prev,
-            selected_products: filteredProducts.map((p) => p.product_id),
+            selected_products: filteredProducts.map((product) => product.product_id),
         }));
     };
 
@@ -158,270 +171,241 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Create Promotion')} />
 
-            <div className="content">
-                <main>
-                    <div className="header">
-                        <div className="left">
-                            <h1>{t('Create New Promotion')}</h1>
-                            <div className="breadcrumb">
-                                <li>
-                                    <a href="/seller/dashboard">{t('Dashboard')}</a>
-                                </li>
-                                <li>
-                                    <a href="/seller/promotions">{t('Promotions')}</a>
-                                </li>
-                                <li>
-                                    <a className="active">{t('Create')}</a>
-                                </li>
-                            </div>
+            <Header
+                title={t('Create New Promotion')}
+                breadcrumbs={[
+                    { label: t('Seller Dashboard'), href: '/seller/dashboard' },
+                    { label: t('Promotions'), href: '/seller/promotions' },
+                    { label: t('Create'), href: '/seller/promotions/create', active: true },
+                ]}
+            />
+
+            <form onSubmit={handleSubmit} className={styles.stack}>
+                <Card variant="flat" padding="md">
+                    <div className={styles.formSection}>
+                        <h2 className={styles.sectionTitle}>{t('Basic Information')}</h2>
+
+                        <FormField label={t('Promotion Name')} required error={errors.name}>
+                            <Input
+                                value={formData.name}
+                                onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+                                placeholder={t('Enter promotion name')}
+                            />
+                        </FormField>
+
+                        <FormField label={t('Discount Type')} required error={errors.type}>
+                            <Select value={formData.type} onChange={(event) => setFormData({ ...formData, type: event.target.value })}>
+                                <option value="percentage">{t('Percentage')}</option>
+                                <option value="fixed">{t('Fixed Amount Discount')}</option>
+                            </Select>
+                        </FormField>
+
+                        <FormField
+                            label={formData.type === 'percentage' ? t('Discount Percentage') : t('Discount Amount')}
+                            required
+                            error={errors.value}
+                        >
+                            <Input
+                                type="number"
+                                value={formData.value}
+                                onChange={(event) => setFormData({ ...formData, value: event.target.value })}
+                                placeholder={formData.type === 'percentage' ? '10' : '50000'}
+                                min="0"
+                                max={formData.type === 'percentage' ? '90' : undefined}
+                            />
+                        </FormField>
+                    </div>
+                </Card>
+
+                <Card variant="flat" padding="md">
+                    <div className={styles.formSection}>
+                        <h2 className={styles.sectionTitle}>{t('Budget & Duration')}</h2>
+
+                        <FormField
+                            label={t('Budget (VND)')}
+                            required
+                            error={errors.budget}
+                            hint={`${t('Available balance')}: ${formatVnd(Number(wallet?.balance ?? 0))}`}
+                        >
+                            <Input
+                                type="number"
+                                value={formData.budget}
+                                onChange={(event) => setFormData({ ...formData, budget: event.target.value })}
+                                placeholder="100000"
+                                min="0"
+                                max={wallet?.balance || 0}
+                            />
+                        </FormField>
+
+                        <div className={styles.formGrid}>
+                            <FormField label={t('Start Date')} required error={errors.start_date}>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.start_date}
+                                    onChange={(event) => setFormData({ ...formData, start_date: event.target.value })}
+                                />
+                            </FormField>
+
+                            <FormField label={t('End Date')} required error={errors.end_date}>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.end_date}
+                                    onChange={(event) => setFormData({ ...formData, end_date: event.target.value })}
+                                />
+                            </FormField>
                         </div>
                     </div>
+                </Card>
 
-                    <form onSubmit={handleSubmit} className="promotion-form">
-                        <div className="form-section">
-                            <h3 className="form-section-title">{t('Basic Information')}</h3>
+                <Card variant="flat" padding="md">
+                    <div className={styles.formSection}>
+                        <h2 className={styles.sectionTitle}>{t('Select Products')}</h2>
 
-                            <div className="form-group">
-                                <label className="form-label">{t('Promotion Name')}</label>
-                                <input
-                                    type="text"
-                                    className={`form-input-field ${errors.name ? 'error' : ''}`}
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder={t('Enter promotion name')}
+                        <div className={styles.selectionBar}>
+                            <div className={styles.selectionSearch}>
+                                <Input
+                                    type="search"
+                                    value={searchTerm}
+                                    onChange={(event) => setSearchTerm(event.target.value)}
+                                    placeholder={t('Search products...')}
+                                    aria-label={t('Search products')}
+                                    leadingIcon={Search}
                                 />
-                                {errors.name && <div className="form-error">{errors.name}</div>}
                             </div>
-
-                            <div className="form-group">
-                                <label className="form-label">{t('Discount Type')}</label>
-                                <select
-                                    className={`form-input-field ${errors.type ? 'error' : ''}`}
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            <div className={styles.actions}>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleSelectAll}
+                                    disabled={filteredProducts.length === 0}
                                 >
-                                    <option value="percentage">{t('Percentage')}</option>
-                                    <option value="fixed">{t('Fixed Amount Discount')}</option>
-                                </select>
-                                {errors.type && <div className="form-error">{errors.type}</div>}
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    {formData.type === 'percentage' ? t('Discount Percentage') : t('Discount Amount')}
-                                </label>
-                                <input
-                                    type="number"
-                                    className={`form-input-field ${errors.value ? 'error' : ''}`}
-                                    value={formData.value}
-                                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                                    placeholder={formData.type === 'percentage' ? '10' : '50000'}
-                                    min="0"
-                                    max={formData.type === 'percentage' ? '90' : undefined}
-                                />
-                                {errors.value && <div className="form-error">{errors.value}</div>}
+                                    {t('Select All')}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleDeselectAll}
+                                    disabled={formData.selected_products.length === 0}
+                                >
+                                    {t('Deselect All')}
+                                </Button>
                             </div>
                         </div>
 
-                        <div className="form-section">
-                            <h3 className="form-section-title">{t('Budget & Duration')}</h3>
+                        <p className={styles.selectionSummary}>
+                            {t('Selected')}: {formData.selected_products.length} {t('products')}
+                        </p>
 
-                            <div className="form-group">
-                                <label className="form-label">{t('Budget (VND)')}</label>
-                                <input
-                                    type="number"
-                                    className={`form-input-field ${errors.budget ? 'error' : ''}`}
-                                    value={formData.budget}
-                                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                                    placeholder="100000"
-                                    min="0"
-                                    max={wallet?.balance || 0}
-                                />
-                                <div style={{ fontSize: '12px', color: 'var(--dark-grey)', marginTop: '4px' }}>
-                                    {t('Available balance')}: {wallet?.balance?.toLocaleString() || 0} VND
-                                </div>
-                                {errors.budget && <div className="form-error">{errors.budget}</div>}
-                            </div>
+                        {filteredProducts.length === 0 ? (
+                            <EmptyState
+                                icon={Package}
+                                title={searchTerm ? t('No products found') : t('No products available')}
+                                description={
+                                    searchTerm ? t('Try adjusting your search terms') : t('You need to add products before creating promotions')
+                                }
+                                actions={
+                                    !searchTerm ? (
+                                        <Button asChild variant="primary" size="sm">
+                                            <Link href="/seller/products/create">{t('Add Product')}</Link>
+                                        </Button>
+                                    ) : undefined
+                                }
+                            />
+                        ) : (
+                            <div className={styles.productSelectGrid}>
+                                {filteredProducts.map((product) => {
+                                    const selected = formData.selected_products.includes(product.product_id);
+                                    const name = typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || '';
+                                    const image = product.images?.find((item) => item.is_primary)?.image_url;
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                <div className="form-group">
-                                    <label className="form-label">{t('Start Date')}</label>
-                                    <input
-                                        type="datetime-local"
-                                        className={`form-input-field ${errors.start_date ? 'error' : ''}`}
-                                        value={formData.start_date}
-                                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                                    />
-                                    {errors.start_date && <div className="form-error">{errors.start_date}</div>}
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">{t('End Date')}</label>
-                                    <input
-                                        type="datetime-local"
-                                        className={`form-input-field ${errors.end_date ? 'error' : ''}`}
-                                        value={formData.end_date}
-                                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                                    />
-                                    {errors.end_date && <div className="form-error">{errors.end_date}</div>}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="form-section">
-                            <h3 className="form-section-title">{t('Select Products')}</h3>
-
-                            {/* Search and Bulk Actions */}
-                            <div className="product-selection-header">
-                                <div className="search-container">
-                                    <input
-                                        type="text"
-                                        placeholder={t('Search products...')}
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="form-input-field search-input"
-                                    />
-                                </div>
-                                <div className="bulk-actions">
-                                    <button
-                                        type="button"
-                                        onClick={handleSelectAll}
-                                        className="btn btn-secondary btn-small"
-                                        disabled={filteredProducts.length === 0}
-                                    >
-                                        {t('Select All')}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleDeselectAll}
-                                        className="btn btn-secondary btn-small"
-                                        disabled={formData.selected_products.length === 0}
-                                    >
-                                        {t('Deselect All')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Selection Summary */}
-                            <div className="selection-summary">
-                                {t('Selected')}: {formData.selected_products.length} {t('products')}
-                            </div>
-
-                            {/* Product Grid */}
-                            <div className="product-selection-grid">
-                                {filteredProducts.length === 0 ? (
-                                    <div className="empty-state">
-                                        <div className="empty-state-icon">📦</div>
-                                        <div className="empty-state-title">{searchTerm ? t('No products found') : t('No products available')}</div>
-                                        <div className="empty-state-description">
-                                            {searchTerm
-                                                ? t('Try adjusting your search terms')
-                                                : t('You need to add products before creating promotions')}
-                                        </div>
-                                        {!searchTerm && (
-                                            <a href="/seller/products/create" className="btn btn-primary">
-                                                {t('Add Product')}
-                                            </a>
-                                        )}
-                                    </div>
-                                ) : (
-                                    filteredProducts.map((product) => (
-                                        <div
+                                    return (
+                                        <button
                                             key={product.product_id}
-                                            className={`product-select-item ${formData.selected_products.includes(product.product_id) ? 'selected' : ''}`}
+                                            type="button"
+                                            aria-pressed={selected}
                                             onClick={() => handleProductToggle(product.product_id)}
+                                            className={`${styles.productSelectItem} ${selected ? styles.productSelectItemActive : ''}`}
                                         >
-                                            <div className="product-checkbox">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.selected_products.includes(product.product_id)}
-                                                    onChange={() => {}} // Handled by onClick
-                                                    readOnly
-                                                />
-                                            </div>
-                                            <img
-                                                src={product.images?.find((img) => img.is_primary)?.image_url || '/default-product.png'}
-                                                alt={typeof product.name === 'string' ? product.name : (product.name?.vi ?? '')}
-                                                className="product-image"
-                                            />
-                                            <div className="product-info">
-                                                <div className="product-name">
-                                                    {typeof product.name === 'string' ? product.name : product.name?.vi || product.name?.en || ''}
-                                                </div>
-
-                                                <div className="product-price">{product.variants?.[0]?.price?.toLocaleString()} VND</div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            {errors.selected_products && <div className="form-error">{errors.selected_products}</div>}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-                            <a href="/seller/promotions" className="btn btn-secondary">
-                                {t('Cancel')}
-                            </a>
-                            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                                {isSubmitting ? t('Creating...') : t('Create Promotion')}
-                            </button>
-                        </div>
-                    </form>
-
-                    {/* Confirmation Dialog */}
-                    {showConfirmDialog && (
-                        <div className="modal-overlay" onClick={() => setShowConfirmDialog(false)}>
-                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{t('Confirm Create Promotion')}</h3>
-                                </div>
-                                <div className="modal-body">
-                                    <div className="confirmation-details">
-                                        <div className="detail-row">
-                                            <span className="detail-label">{t('Promotion Name')}:</span>
-                                            <span className="detail-value">{formData.name}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">{t('Discount Type')}:</span>
-                                            <span className="detail-value">
-                                                {formData.type === 'percentage' ? t('Percentage') : t('Fixed Amount Discount')}
+                                            {image ? (
+                                                <img src={image} alt={name} className={styles.productThumb} />
+                                            ) : (
+                                                <span className={styles.productThumb} aria-hidden="true" />
+                                            )}
+                                            <span className={styles.productSelectBody}>
+                                                <span className={styles.productSelectName}>{name}</span>
+                                                <span className={styles.productSelectPrice}>
+                                                    {formatVnd(Number(product.variants?.[0]?.price ?? 0))}
+                                                </span>
                                             </span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">{t('Discount Value')}:</span>
-                                            <span className="detail-value">
-                                                {formData.value} {formData.type === 'percentage' ? '%' : 'VND'}
-                                            </span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">{t('Budget')}:</span>
-                                            <span className="detail-value">{parseFloat(formData.budget).toLocaleString()} VND</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">{t('Products Selected')}:</span>
-                                            <span className="detail-value">{formData.selected_products.length}</span>
-                                        </div>
-                                    </div>
-                                    <p className="confirmation-message">
-                                        {t('Are you sure you want to create this promotion? This will deduct from your wallet balance.')}
-                                    </p>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmDialog(false)}>
-                                        {t('Cancel')}
-                                    </button>
-                                    <button type="button" className="btn btn-primary" onClick={handleConfirmSubmit}>
-                                        {t('Confirm Create')}
-                                    </button>
-                                </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        </div>
-                    )}
-                </main>
-            </div>
-        </AppLayout>
+                        )}
+                        {errors.selected_products && (
+                            <span className="sn-field__error" role="alert">
+                                {errors.selected_products}
+                            </span>
+                        )}
+                    </div>
+                </Card>
+
+                <div className={styles.actionsEnd}>
+                    <Button asChild variant="secondary">
+                        <Link href="/seller/promotions">{t('Cancel')}</Link>
+                    </Button>
+                    <Button type="submit" variant="primary" loading={isSubmitting}>
+                        {t('Create Promotion')}
+                    </Button>
+                </div>
+            </form>
+
+            <ConfirmDialog
+                open={showConfirmDialog}
+                onOpenChange={setShowConfirmDialog}
+                title={t('Confirm Create Promotion')}
+                description={
+                    <span className={styles.confirmList}>
+                        <span className={styles.confirmRow}>
+                            <span>{t('Promotion Name')}</span>
+                            <span className={styles.confirmValue}>{formData.name}</span>
+                        </span>
+                        <span className={styles.confirmRow}>
+                            <span>{t('Discount Type')}</span>
+                            <span className={styles.confirmValue}>
+                                {formData.type === 'percentage' ? t('Percentage') : t('Fixed Amount Discount')}
+                            </span>
+                        </span>
+                        <span className={styles.confirmRow}>
+                            <span>{t('Discount Value')}</span>
+                            <span className={styles.confirmValue}>
+                                {formData.value} {formData.type === 'percentage' ? '%' : 'VND'}
+                            </span>
+                        </span>
+                        <span className={styles.confirmRow}>
+                            <span>{t('Budget')}</span>
+                            <span className={styles.confirmValue}>{formatVnd(parseFloat(formData.budget))}</span>
+                        </span>
+                        <span className={styles.confirmRow}>
+                            <span>{t('Products Selected')}</span>
+                            <span className={styles.confirmValue}>{formData.selected_products.length}</span>
+                        </span>
+                        <span className={styles.muted}>
+                            {t('Are you sure you want to create this promotion? This will deduct from your wallet balance.')}
+                        </span>
+                    </span>
+                }
+                confirmLabel={t('Confirm Create')}
+                cancelLabel={t('Cancel')}
+                tone="warning"
+                loading={isSubmitting}
+                onConfirm={handleConfirmSubmit}
+            />
+        </WorkspaceLayout>
     );
 }

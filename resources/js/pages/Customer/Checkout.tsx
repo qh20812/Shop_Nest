@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Banknote, CreditCard, MapPin, Plus, ShieldCheck, Truck } from 'lucide-react';
 import * as React from 'react';
 
-import CheckoutAddressForm from '@/components/commerce/CheckoutAddressForm';
+import CheckoutAddressForm, { type NewAddress } from '@/components/commerce/CheckoutAddressForm';
 import CheckoutExitConfirmation from '@/components/commerce/CheckoutExitConfirmation';
 import { CheckoutStepper } from '@/components/commerce/CheckoutStepper';
 import { OrderSummary } from '@/components/commerce/OrderSummary';
@@ -22,14 +22,17 @@ import { RadioCard } from '@/components/ui/radio-card';
 import Textarea from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Heading, Text } from '@/components/ui/typography';
-import { formatVnd } from '@/lib/format';
+import { useMoney } from '@/hooks/useMoney';
 import { useTranslation } from '@/lib/i18n';
 import { resolveLocalizedString, type LocalizedValue } from '@/utils/localization';
 import { toNumericPrice, type PriceLike } from '@/utils/price';
 
+import styles from './Checkout.module.css';
+
 interface ProductImage {
     id: number;
-    image_path: string;
+    image_path: string | null;
+    image_url?: string | null;
 }
 
 interface Product {
@@ -65,7 +68,7 @@ interface Address {
     phone: string;
     address: string;
     province: string;
-    district: string;
+    district?: string | null;
     ward: string;
     is_default: boolean;
 }
@@ -115,15 +118,30 @@ interface PageProps {
     [key: string]: unknown;
 }
 
-const PAYMENT_METHOD_FALLBACK: PaymentMethod[] = [
-    { id: 'stripe', name: 'Stripe — Thẻ quốc tế', description: 'Thanh toán bằng thẻ Visa/MasterCard/JCB' },
-    { id: 'cod', name: 'Thanh toán khi nhận hàng', description: 'Thanh toán bằng tiền mặt khi nhận hàng' },
+const PAYMENT_METHOD_FALLBACK_KEYS = [
+    {
+        id: 'stripe',
+        icon: 'stripe',
+        nameKey: 'Stripe (International card)',
+        descriptionKey: 'Pay with Visa, MasterCard or JCB',
+    },
+    {
+        id: 'cod',
+        icon: 'cod',
+        nameKey: 'Cash on delivery (COD)',
+        descriptionKey: 'Pay with cash when your order arrives',
+    },
 ];
+
+function formatAddress(address: Address): string {
+    return [address.address, address.ward, address.district, address.province].filter(Boolean).join(', ');
+}
 
 export default function Checkout() {
     const pageProps = usePage<PageProps>().props;
+    const { money, currency } = useMoney();
     const { success, error: showError } = useToast();
-    const { locale } = useTranslation();
+    const { t, locale } = useTranslation();
 
     const cartItems = pageProps.cartItems ?? [];
     const orderItems = pageProps.orderItems ?? [];
@@ -140,8 +158,16 @@ export default function Checkout() {
     const finalTotal = isBuyNowCheckout ? (totals?.total ?? 0) : (pageProps.total ?? 0);
 
     const availablePaymentMethods = React.useMemo<PaymentMethod[]>(
-        () => (Array.isArray(pageProps.paymentMethods) && pageProps.paymentMethods.length > 0 ? pageProps.paymentMethods : PAYMENT_METHOD_FALLBACK),
-        [pageProps.paymentMethods],
+        () =>
+            Array.isArray(pageProps.paymentMethods) && pageProps.paymentMethods.length > 0
+                ? pageProps.paymentMethods
+                : PAYMENT_METHOD_FALLBACK_KEYS.map((method) => ({
+                      id: method.id,
+                      icon: method.icon,
+                      name: t(method.nameKey),
+                      description: t(method.descriptionKey),
+                  })),
+        [pageProps.paymentMethods, t],
     );
 
     const [selectedAddress, setSelectedAddress] = React.useState(() => {
@@ -187,7 +213,20 @@ export default function Checkout() {
     const getProductImage = (item: CartItem | OrderItem): string => {
         if ('variant' in item && item.variant?.product?.images) {
             const image = item.variant.product.images[0];
-            return image ? `/storage/${image.image_path}` : '/image/default-product.png';
+
+            if (!image) {
+                return '/image/default-product.png';
+            }
+
+            if (image.image_url) {
+                return image.image_url;
+            }
+
+            if (image.image_path) {
+                return `/storage/${image.image_path.replace(/^\/+/, '')}`;
+            }
+
+            return '/image/default-product.png';
         }
 
         if ('image' in item) {
@@ -212,7 +251,7 @@ export default function Checkout() {
         return 'variant_name' in item ? resolveLocalizedString(item.variant_name, locale) : '';
     };
 
-    const getItemName = (item: CartItem | OrderItem): string => resolveLocalizedString(item.product_name, locale) || 'Sản phẩm';
+    const getItemName = (item: CartItem | OrderItem): string => resolveLocalizedString(item.product_name, locale) || t('Product');
 
     const getItemPrice = (item: CartItem | OrderItem): number => {
         if ('variant' in item && item.variant) {
@@ -241,19 +280,19 @@ export default function Checkout() {
         try {
             const response = await axios.post('/cart/apply-promotion', { code: promoCode.trim() });
             if (response.data?.success === false) {
-                setPromoError(response.data?.message || 'Mã khuyến mãi không hợp lệ.');
+                setPromoError(response.data?.message || t('Invalid promotion code.'));
                 return;
             }
 
             setAppliedPromo(response.data?.promotion ?? { code: promoCode.trim() });
             setPromoCode('');
-            success('Đã áp dụng mã khuyến mãi');
+            success(t('Promotion applied'));
             router.reload();
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                setPromoError(error.response?.data?.message || 'Mã khuyến mãi không hợp lệ.');
+                setPromoError(error.response?.data?.message || t('Invalid promotion code.'));
             } else {
-                setPromoError('Không thể áp dụng mã khuyến mãi.');
+                setPromoError(t('Could not apply promotion code.'));
             }
         } finally {
             setApplyingPromo(false);
@@ -264,48 +303,41 @@ export default function Checkout() {
         try {
             await axios.post('/cart/remove-promotion');
             setAppliedPromo(null);
-            success('Đã bỏ mã khuyến mãi');
+            success(t('Promotion removed'));
             router.reload();
         } catch {
-            showError('Không thể bỏ mã khuyến mãi');
+            showError(t('Could not remove promotion code'));
         }
     };
 
-    const handleAddAddress = async (newAddress: {
-        name: string;
-        phone: string;
-        address: string;
-        province_id: string;
-        district_id: string;
-        ward_id: string;
-        is_default: boolean;
-    }) => {
+    const handleAddAddress = async (newAddress: NewAddress) => {
         try {
-            const response = await axios.post('/addresses', newAddress);
-            if (response.data?.success) {
-                setShowAddressModal(false);
-                success('Đã thêm địa chỉ giao hàng');
-                router.reload();
-            }
+            // AddressController::store redirects to the address list, so axios follows the
+            // redirect and resolves on success. Inertia would navigate away from checkout.
+            await axios.post('/user/addresses', {
+                ...newAddress,
+                country: 'Việt Nam',
+            });
+
+            setShowAddressModal(false);
+            success(t('Shipping address added'));
+            router.reload({ only: ['addresses'] });
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                showError('Không thể thêm địa chỉ', error.response?.data?.message);
-            } else {
-                showError('Không thể thêm địa chỉ');
-            }
+            const message = axios.isAxiosError(error) ? (error.response?.data?.message as string | undefined) : undefined;
+            showError(t('Could not add address'), message);
         }
     };
 
     const handleCheckout = async () => {
-        if (!isBuyNowCheckout) {
-            if (addresses.length === 0 || !selectedAddress) {
-                showError('Vui lòng thêm và chọn địa chỉ giao hàng');
-                return;
-            }
+        if (addresses.length === 0 || !selectedAddress) {
+            showError(t('Please add and select a shipping address'));
+            document.getElementById('shipping-address')?.scrollIntoView({ block: 'start' });
+            return;
         }
 
         if (!selectedPayment) {
-            showError('Vui lòng chọn phương thức thanh toán');
+            showError(t('Please choose a payment method'));
+            document.getElementById('payment-method')?.scrollIntoView({ block: 'start' });
             return;
         }
 
@@ -316,7 +348,7 @@ export default function Checkout() {
             const endpoint = isBuyNowCheckout && order ? `/buy-now/checkout/${order.order_id}` : '/checkout';
             const payload: Record<string, unknown> = { provider: selectedPayment };
 
-            if (!isBuyNowCheckout && selectedAddress && selectedAddress !== 0) {
+            if (selectedAddress && selectedAddress !== 0) {
                 payload.address_id = selectedAddress;
             }
 
@@ -331,12 +363,12 @@ export default function Checkout() {
                 return;
             }
 
-            showError(response.data?.message || 'Không thể xử lý thanh toán.');
+            showError(response.data?.message || t('Could not process the payment.'));
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                showError('Không thể xử lý thanh toán', error.response?.data?.message);
+                showError(t('Could not process the payment'), error.response?.data?.message);
             } else {
-                showError('Đã xảy ra lỗi không xác định');
+                showError(t('Something went wrong'));
             }
         } finally {
             setProcessing(false);
@@ -345,16 +377,16 @@ export default function Checkout() {
 
     if (items.length === 0) {
         return (
-            <StorefrontLayout compactFooter>
-                <Head title="Thanh toán" />
-                <PageContainer className="py-section">
+            <StorefrontLayout compactFooter showChatDock={false}>
+                <Head title={t('Checkout')} />
+                <PageContainer className={styles.pageTight}>
                     <EmptyState
                         icon={MapPin}
-                        title="Chưa có món nào để thanh toán"
-                        description="Giỏ hàng của bạn đang trống. Chọn một món cho tổ ấm nhé."
+                        title={t('Nothing to check out yet')}
+                        description={t('Your cart is empty. Pick something for your home first.')}
                         actions={
                             <Button asChild>
-                                <Link href="/">Xem chợ hôm nay</Link>
+                                <Link href="/">{t("Browse today's market")}</Link>
                             </Button>
                         }
                     />
@@ -373,44 +405,43 @@ export default function Checkout() {
     }));
 
     return (
-        <StorefrontLayout compactFooter>
-            <Head title="Thanh toán" />
+        <StorefrontLayout compactFooter footerClassName={styles.footerWithBar} showChatDock={false}>
+            <Head title={t('Checkout')} />
 
-            <PageContainer className="py-8 md:py-10">
+            <PageContainer className={styles.page}>
                 <PageHeader
-                    breadcrumbs={[{ label: 'Chợ', href: '/' }, { label: 'Giỏ hàng', href: '/cart' }, { label: 'Thanh toán' }]}
-                    eyebrow="Bước cuối"
-                    title="Hoàn tất đơn hàng"
-                    description="Kiểm tra địa chỉ, phương thức thanh toán và tổng tiền trước khi đặt."
-                    count={`${items.length} món`}
+                    breadcrumbs={[{ label: t('Market'), href: '/' }, { label: t('Cart'), href: '/cart' }, { label: t('Checkout') }]}
+                    title={t('Complete your order')}
+                    description={t('Review the address, payment method and total before placing the order.')}
+                    count={t(':count items', { count: items.length })}
                 />
 
                 <CheckoutStepper
-                    className="mt-5"
+                    className={styles.stepperOffset}
                     current={1}
-                    steps={[{ label: 'Giỏ hàng', state: 'done' }, { label: 'Thông tin & thanh toán' }, { label: 'Hoàn tất' }]}
+                    steps={[{ label: t('Cart'), state: 'done' }, { label: t('Information and payment') }, { label: t('Complete') }]}
                 />
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-12">
-                    <div className="flex flex-col gap-8 lg:col-span-7">
-                        <section className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+                <div className={styles.checkoutGrid}>
+                    <div className={styles.checkoutMain}>
+                        <section id="shipping-address" className={styles.checkSection}>
+                            <div className={styles.sectionHead}>
                                 <Heading level={2} size="headline-3">
-                                    Địa chỉ giao hàng
+                                    {t('Shipping address')}
                                 </Heading>
                                 <Button variant="ghost" size="sm" leftIcon={Plus} onClick={() => setShowAddressModal(true)}>
-                                    Thêm địa chỉ
+                                    {t('Add address')}
                                 </Button>
                             </div>
 
                             {addresses.length === 0 ? (
                                 <Card variant="inset" padding="md">
                                     <Text size="body-sm" tone="muted">
-                                        Bạn chưa có địa chỉ giao hàng. Thêm địa chỉ để tiếp tục.
+                                        {t('You have no shipping address yet. Add one to continue.')}
                                     </Text>
                                 </Card>
                             ) : (
-                                <div className="flex flex-col gap-3">
+                                <div className={styles.addressList}>
                                     {addresses.map((address) => (
                                         <RadioCard
                                             key={address.id}
@@ -419,50 +450,46 @@ export default function Checkout() {
                                             checked={selectedAddress === address.id}
                                             onChange={() => setSelectedAddress(address.id)}
                                             title={
-                                                <span className="inline-flex flex-wrap items-center gap-2">
+                                                <span className={styles.addressTitle}>
                                                     {address.name}
-                                                    <span className="font-mono text-label-code text-ink-muted">{address.phone}</span>
-                                                    {address.is_default && (
+                                                    <span className={styles.addressPhone}>{address.phone}</span>
+                                                    {address.is_default ? (
                                                         <Badge tone="success" size="sm">
-                                                            Mặc định
+                                                            {t('Default')}
                                                         </Badge>
-                                                    )}
+                                                    ) : null}
                                                 </span>
                                             }
-                                            description={`${address.address}, ${address.ward}, ${address.district}, ${address.province}`}
+                                            description={formatAddress(address)}
                                         />
                                     ))}
                                 </div>
                             )}
                         </section>
 
-                        <section className="flex flex-col gap-4">
-                            <div className="border-b border-border pb-3">
+                        <section className={styles.checkSection}>
+                            <div className={styles.sectionHeadSimple}>
                                 <Heading level={2} size="headline-3">
-                                    Phương thức vận chuyển
+                                    {t('Shipping method')}
                                 </Heading>
                             </div>
-                            <Card variant="inset" padding="md">
-                                <div className="flex items-center gap-3">
-                                    <Truck aria-hidden="true" className="size-5 text-jade" />
-                                    <div className="flex-1">
-                                        <span className="block text-body-sm font-semibold text-ink">Giao tiêu chuẩn 2–4 ngày</span>
-                                        <span className="text-body-sm text-ink-muted">Đơn vị vận chuyển được chỉ định theo địa chỉ.</span>
-                                    </div>
-                                    <span className="font-mono text-label-code text-ink">
-                                        {finalShipping > 0 ? formatVnd(finalShipping) : 'Miễn phí'}
-                                    </span>
+                            <div className={styles.shipRow}>
+                                <Truck aria-hidden="true" className={styles.shipIcon} />
+                                <div className={styles.shipBody}>
+                                    <span className={styles.shipTitle}>{t('Standard delivery')}</span>
+                                    <span className={styles.shipText}>{t('The carrier is assigned based on your address.')}</span>
                                 </div>
-                            </Card>
+                                <span className={styles.shipPrice}>{finalShipping > 0 ? money(finalShipping) : t('Free')}</span>
+                            </div>
                         </section>
 
-                        <section className="flex flex-col gap-4">
-                            <div className="border-b border-border pb-3">
+                        <section id="payment-method" className={styles.checkSection}>
+                            <div className={styles.sectionHeadSimple}>
                                 <Heading level={2} size="headline-3">
-                                    Phương thức thanh toán
+                                    {t('Payment method')}
                                 </Heading>
                             </div>
-                            <div className="flex flex-col gap-3">
+                            <div className={styles.addressList}>
                                 {availablePaymentMethods.map((method) => (
                                     <PaymentOption
                                         key={method.id}
@@ -476,19 +503,22 @@ export default function Checkout() {
                                     />
                                 ))}
                             </div>
-                            <div className="flex items-center gap-2 text-body-sm text-ink-muted">
-                                <ShieldCheck aria-hidden="true" className="size-4 text-jade" />
-                                Thông tin thanh toán được mã hóa và xử lý an toàn.
+                            <div className={styles.secureNote}>
+                                <ShieldCheck aria-hidden="true" className={styles.secureIcon} />
+                                {t('Payment details are encrypted and processed securely.')}
                             </div>
                         </section>
 
                         <section>
-                            <FormField label="Ghi chú giao hàng (tuỳ chọn)" hint="Ví dụ: Gọi trước khi giao, gửi bảo vệ toà nhà.">
+                            <FormField
+                                label={t('Delivery note (optional)')}
+                                hint={t('e.g. Call before delivery, leave with the building concierge.')}
+                            >
                                 <Textarea
                                     rows={3}
                                     value={orderNotes}
                                     onChange={(event) => setOrderNotes(event.target.value)}
-                                    placeholder="Ghi chú cho shop hoặc bưu tá"
+                                    placeholder={t('Note for the shop or courier')}
                                     maxLength={300}
                                     counter
                                 />
@@ -496,13 +526,13 @@ export default function Checkout() {
                         </section>
                     </div>
 
-                    <div className="lg:col-span-5">
+                    <div className={styles.checkoutAside}>
                         <OrderSummary
                             items={summaryItems}
                             subtotal={finalSubtotal}
                             discount={finalDiscount}
                             shipping={finalShipping}
-                            shippingLabel={finalShipping > 0 ? formatVnd(finalShipping) : 'Miễn phí'}
+                            shippingLabel={finalShipping > 0 ? money(finalShipping) : t('Free')}
                             total={finalTotal}
                             promotion={
                                 <PromoField
@@ -511,17 +541,20 @@ export default function Checkout() {
                                     onApply={handleApplyPromo}
                                     onRemove={handleRemovePromo}
                                     appliedCode={appliedPromo?.code}
-                                    appliedLabel={appliedPromo ? `– Giảm ${formatVnd(finalDiscount)}` : undefined}
+                                    appliedLabel={appliedPromo ? `- ${t('Discount')} ${money(finalDiscount)}` : undefined}
                                     error={promoError}
                                     loading={applyingPromo}
                                 />
                             }
-                            ctaLabel="Đặt hàng"
+                            ctaLabel={t('Place order')}
                             onCheckout={handleCheckout}
                             loading={processing}
-                            disabled={(!isBuyNowCheckout && (!selectedAddress || addresses.length === 0)) || !selectedPayment}
-                            trust={['Shop Việt', 'Đổi trả 7 ngày', 'Thanh toán bảo mật']}
-                            footerNote="Bằng cách đặt hàng, bạn đồng ý với Điều khoản và Chính sách bảo mật."
+                            mobileActionBar
+                            trust={[t('Secure payment'), t('Returns per policy')]}
+                            footerNote={
+                                (currency === 'VND' ? '' : t('Converted prices are indicative. Payment is charged in VND. ')) +
+                                t('By placing the order you agree to the Terms and Privacy Policy.')
+                            }
                         />
                     </div>
                 </div>
@@ -530,8 +563,8 @@ export default function Checkout() {
             <Dialog
                 open={showAddressModal}
                 onOpenChange={setShowAddressModal}
-                title="Thêm địa chỉ giao hàng"
-                description="Địa chỉ rõ ràng giúp đơn hàng tới đúng nơi."
+                title={t('Add a shipping address')}
+                description={t('An accurate address helps your order arrive safely.')}
                 size="lg"
             >
                 <CheckoutAddressForm onSubmit={handleAddAddress} onCancel={() => setShowAddressModal(false)} />

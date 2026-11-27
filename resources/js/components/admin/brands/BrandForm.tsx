@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
-import { useTranslation } from '../../../lib/i18n';
-import ActionButton from '../../ui/action-button';
-import PrimaryInput from '../../ui/primary-input';
-import RichTextEditor from '../../ui/rich-text-editor';
+import { router } from '@inertiajs/react';
+import { Image, Settings, Store } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import RichTextEditor from '@/components/ui/rich-text-editor';
+import { Select } from '@/components/ui/select';
+import StatusBadge from '@/components/ui/status-badge';
+import { formatDate, formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './BrandForm.module.css';
 
 interface BrandFormData {
     _method?: string;
@@ -19,49 +28,71 @@ interface BrandFormProps {
     processing: boolean;
     onSubmit: (e: React.FormEvent) => void;
     submitLabel?: string;
+    currentLogoUrl?: string | null;
+    createdAt?: string | null;
+    productsCount?: number | null;
 }
 
-export default function BrandForm({ data, setData, errors, processing, onSubmit, submitLabel = 'Save Brand' }: BrandFormProps) {
+export default function BrandForm({
+    data,
+    setData,
+    errors,
+    processing,
+    onSubmit,
+    submitLabel = 'Save Brand',
+    currentLogoUrl,
+    createdAt,
+    productsCount,
+}: BrandFormProps) {
     const { t } = useTranslation();
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
-        setData('logo', file);
+    useEffect(() => {
+        return () => {
+            if (logoPreview) {
+                URL.revokeObjectURL(logoPreview);
+            }
+        };
+    }, [logoPreview]);
 
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => setLogoPreview(e.target?.result as string);
-            reader.readAsDataURL(file);
-        } else {
+    const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0] ?? null;
+
+        if (!file) {
+            setData('logo', null);
             setLogoPreview(null);
+            return;
         }
+
+        setData('logo', file);
+        setLogoPreview(URL.createObjectURL(file));
     };
 
-    const handleCancel = () => {
-        window.history.back();
-    };
+    const previewSource = logoPreview || currentLogoUrl || null;
 
     return (
-        <div className="bottom-data">
-            <div style={{ flexGrow: 1, minWidth: '600px' }}>
-                <div className="header">
-                    <i className="bx bx-store"></i>
-                    <h3>{t('Brand Information')}</h3>
-                </div>
+        <div className={styles.layout}>
+            <div className={styles.panel}>
+                <form className={styles.form} onSubmit={onSubmit}>
+                    <section className={styles.section} aria-labelledby="brand-information">
+                        <div className={styles.sectionHead}>
+                            <h2 id="brand-information" className={styles.sectionTitle}>
+                                <Store aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Brand Information')}
+                            </h2>
+                        </div>
 
-                <form onSubmit={onSubmit} style={{ marginTop: '20px' }}>
-                    {/* Basic Information */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '20px' }}>
-                        <PrimaryInput
-                            label={t('Brand Name')}
-                            name="name"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            error={errors.name}
-                            placeholder={t('Enter brand name')}
-                            required
-                        />
+                        <FormField label={t('Brand Name')} htmlFor="brand-name" required error={errors.name}>
+                            <Input
+                                id="brand-name"
+                                name="name"
+                                value={data.name}
+                                onChange={(event) => setData('name', event.target.value)}
+                                placeholder={t('Enter brand name')}
+                                invalid={Boolean(errors.name)}
+                                required
+                            />
+                        </FormField>
 
                         <RichTextEditor
                             label={t('Description')}
@@ -69,83 +100,100 @@ export default function BrandForm({ data, setData, errors, processing, onSubmit,
                             onChange={(value) => setData('description', value)}
                             error={errors.description}
                             placeholder={t('Enter brand description...')}
-                            height="300px"
+                            height="240px"
                         />
+                    </section>
 
-                        <PrimaryInput
-                            label={t('Status')}
-                            name="is_active"
-                            type="select"
-                            value={data.is_active ? '1' : '0'}
-                            onChange={(e) => setData('is_active', e.target.value === '1')}
-                            error={errors.is_active}
-                            required
-                            options={[
-                                { value: '1', label: t('Active') },
-                                { value: '0', label: t('Inactive') },
-                            ]}
-                        />
-                    </div>
-
-                    {/* Logo Upload Section */}
-                    <div style={{ marginBottom: '20px' }}>
-                        <div className="form-group">
-                            <label className="form-label">{t('Brand Logo')}</label>
-                            <input
-                                type="file"
-                                accept="image/png,image/jpg,image/jpeg,image/webp"
-                                onChange={handleLogoChange}
-                                className={`form-input-field ${errors.logo ? 'error' : ''}`}
-                            />
-                            {errors.logo && <div className="form-error">{errors.logo}</div>}
+                    <section className={styles.section} aria-labelledby="brand-settings">
+                        <div className={styles.sectionHead}>
+                            <h2 id="brand-settings" className={styles.sectionTitle}>
+                                <Settings aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Settings')}
+                            </h2>
                         </div>
 
-                        {/* Logo Preview */}
-                        <div style={{ marginTop: '12px' }}>
-                            {logoPreview ? (
-                                <img
-                                    src={logoPreview}
-                                    alt={t('Logo Preview')}
-                                    style={{
-                                        width: '200px',
-                                        height: '150px',
-                                        objectFit: 'contain',
-                                        border: '1px solid var(--grey)',
-                                        borderRadius: '8px',
-                                        padding: '8px',
-                                    }}
-                                />
-                            ) : (
-                                <div
-                                    style={{
-                                        width: '200px',
-                                        height: '150px',
-                                        backgroundColor: '#f5f5f5',
-                                        border: '2px dashed #ddd',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#999',
-                                    }}
-                                >
-                                    {t('No logo selected')}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                        <FormField label={t('Status')} htmlFor="brand-status" required error={errors.is_active}>
+                            <Select
+                                id="brand-status"
+                                name="is_active"
+                                value={data.is_active ? '1' : '0'}
+                                onChange={(event) => setData('is_active', event.target.value === '1')}
+                            >
+                                <option value="1">{t('Active')}</option>
+                                <option value="0">{t('Inactive')}</option>
+                            </Select>
+                        </FormField>
+                    </section>
 
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <ActionButton type="button" variant="secondary" onClick={handleCancel} disabled={processing}>
+                    <div className={styles.footer}>
+                        <Button type="button" variant="secondary" disabled={processing} onClick={() => router.get('/admin/brands')}>
                             {t('Cancel')}
-                        </ActionButton>
-                        <ActionButton type="submit" variant="primary" disabled={processing} loading={processing}>
-                            {t(submitLabel)}
-                        </ActionButton>
+                        </Button>
+                        <Button type="submit" variant="primary" loading={processing}>
+                            {processing ? t('Saving...') : t(submitLabel)}
+                        </Button>
                     </div>
                 </form>
             </div>
+
+            <aside className={styles.rail}>
+                <section className={styles.railSection}>
+                    <h2 className={styles.railTitle}>
+                        <Image aria-hidden="true" className={styles.sectionIcon} />
+                        {t('Brand Logo')}
+                    </h2>
+
+                    <FormField
+                        label={t('Brand Logo')}
+                        htmlFor="brand-logo"
+                        error={errors.logo}
+                        hint={t('PNG, JPG or WebP. Transparent backgrounds work best. Max 1 MB.')}
+                    >
+                        <input
+                            id="brand-logo"
+                            name="logo"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={handleLogoChange}
+                            className={styles.fileInput}
+                        />
+                    </FormField>
+
+                    <div className={styles.previewFrame}>
+                        {previewSource ? (
+                            <img src={previewSource} alt={t('Logo Preview')} className={styles.previewImage} />
+                        ) : (
+                            <span className={styles.previewEmpty}>{t('No logo selected')}</span>
+                        )}
+                    </div>
+
+                    {previewSource && <span className={styles.previewLabel}>{logoPreview ? t('New Logo Preview') : t('Current Logo')}</span>}
+                </section>
+
+                <section className={styles.railSection}>
+                    <h2 className={styles.railTitle}>{t('Summary')}</h2>
+                    <dl className={styles.facts}>
+                        <div className={styles.fact}>
+                            <dt className={styles.factLabel}>{t('Status')}</dt>
+                            <dd className={styles.factValue}>
+                                <StatusBadge status={data.is_active ? 'active' : 'inactive'} />
+                            </dd>
+                        </div>
+                        {typeof productsCount === 'number' && (
+                            <div className={styles.fact}>
+                                <dt className={styles.factLabel}>{t('Products')}</dt>
+                                <dd className={styles.factValue}>{formatNumber(productsCount)}</dd>
+                            </div>
+                        )}
+                        {createdAt && (
+                            <div className={styles.fact}>
+                                <dt className={styles.factLabel}>{t('Created Date')}</dt>
+                                <dd className={styles.factValue}>{formatDate(createdAt)}</dd>
+                            </div>
+                        )}
+                    </dl>
+                </section>
+            </aside>
         </div>
     );
 }

@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { ChatDock } from '@/components/chat/ChatDock';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import { StorefrontFooter } from './StorefrontFooter';
 import { StorefrontHeader } from './StorefrontHeader';
@@ -9,16 +10,24 @@ import { StorefrontHeader } from './StorefrontHeader';
 type StorefrontLayoutProps = {
     children: React.ReactNode;
     compactFooter?: boolean;
+    footerClassName?: string;
     showChatDock?: boolean;
     className?: string;
 };
 
-export function StorefrontLayout({ children, compactFooter = false, showChatDock = true, className }: StorefrontLayoutProps) {
+export function StorefrontLayout({ children, compactFooter = false, footerClassName, showChatDock = true, className }: StorefrontLayoutProps) {
+    const { t } = useTranslation();
+
     return (
-        <div className={cn('flex min-h-[100dvh] flex-col bg-rice-paper text-ink', className)}>
+        <div className={cx('sn-shell sn-storefront', className)}>
+            <a href="#main-content" className="sn-skip-link">
+                {t('Skip to main content')}
+            </a>
             <StorefrontHeader />
-            <main className="flex-1">{children}</main>
-            <StorefrontFooter compact={compactFooter} />
+            <main id="main-content" tabIndex={-1} className="sn-storefront__main">
+                {children}
+            </main>
+            <StorefrontFooter compact={compactFooter} className={footerClassName} />
             {showChatDock && <ChatDock />}
         </div>
     );

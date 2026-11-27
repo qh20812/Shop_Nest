@@ -1,12 +1,19 @@
-import '@/../css/Page.css';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import { Head, router, usePage } from '@inertiajs/react';
+import { FileText, RefreshCw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
+import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
 import ExportButton from '@/components/admin/analytics/ExportButton';
-import AppLayout from '@/layouts/app/AppLayout';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import Header from '@/components/ui/header';
+import { Select } from '@/components/ui/select';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+
+import styles from '@/components/admin/admin.module.css';
 
 type ReportDataRecord = Record<string, unknown>;
 
@@ -113,7 +120,6 @@ const Reports: React.FC = () => {
     const { props } = usePage<ReportsPageProps>();
     const report = useMemo<ReportPayload>(() => props.report ?? {}, [props.report]);
     const initialFilters = props.filters ?? {};
-    const locale = typeof props.locale === 'string' ? props.locale : 'en';
     const { t } = useTranslation();
 
     const [filters, setFilters] = useState<ReportFilterState>(() => ({
@@ -127,8 +133,6 @@ const Reports: React.FC = () => {
     }));
 
     const [exportFormat, setExportFormat] = useState<string>('');
-
-    const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
     const panelFilters = useMemo<AnalyticsFilterState>(() => {
         const { type, ...rest } = filters;
@@ -152,21 +156,18 @@ const Reports: React.FC = () => {
             sortable: false,
             render: (value: unknown) => {
                 if (typeof value === 'number') {
-                    return numberFormatter.format(value);
+                    return formatNumber(value);
                 }
                 return typeof value === 'undefined' || value === null ? t('N/A') : String(value);
             },
         }));
-    }, [numberFormatter, previewRows, t]);
+    }, [previewRows, t]);
 
     const availableTypes = useMemo(() => props.availableTypes ?? [], [props.availableTypes]);
     const exportFormats = useMemo(() => props.exportFormats ?? [], [props.exportFormats]);
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
-        setFilters((previous) => ({
-            ...previous,
-            ...updated,
-        }));
+        setFilters((previous) => ({ ...previous, ...updated }));
     };
 
     const handleGenerate = () => {
@@ -175,10 +176,7 @@ const Reports: React.FC = () => {
             type: String(filters.type ?? 'revenue'),
         };
 
-        router.get('/admin/analytics/reports', payload, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/reports', payload, { preserveState: true, preserveScroll: true });
     };
 
     const handleDownload = (format: string) => {
@@ -189,33 +187,13 @@ const Reports: React.FC = () => {
             download: true,
         };
 
-        router.get('/admin/analytics/reports', payload, {
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/reports', payload, { preserveScroll: true });
     };
 
     const handleReset = () => {
-        const resetState: ReportFilterState = {
-            type: 'revenue',
-            period: '',
-            date_from: '',
-            date_to: '',
-            category_id: '',
-            seller_id: '',
-            segment_id: '',
-        };
-
-        setFilters(resetState);
+        setFilters({ type: 'revenue', period: '', date_from: '', date_to: '', category_id: '', seller_id: '', segment_id: '' });
         setExportFormat('');
-
-        router.get(
-            '/admin/analytics/reports',
-            { type: 'revenue' },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        router.get('/admin/analytics/reports', { type: 'revenue' }, { preserveState: true, preserveScroll: true });
     };
 
     const reportMeta = useMemo(
@@ -228,58 +206,70 @@ const Reports: React.FC = () => {
     );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Analytics Reports')} />
-            <div className="inventory-page analytics-page analytics-page--reports">
-                <section className="inventory-section analytics-page__header">
-                    <div className="analytics-page__heading">
-                        <h1>{t('Analytics Reports')}</h1>
-                        <p className="analytics-page__subtitle">
-                            {t('Generate tailored analytics bundles, preview the dataset, and export the results for deeper analysis.')}
-                        </p>
-                    </div>
+            <Header
+                title={t('Analytics Reports')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Analytics'), href: '/admin/analytics' },
+                    { label: t('Analytics Reports'), href: '/admin/analytics/reports', active: true },
+                ]}
+            />
+
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <p className={styles.muted}>
+                        {t('Generate tailored analytics bundles, preview the dataset, and export the results for deeper analysis.')}
+                    </p>
                 </section>
 
-                <section className="inventory-section analytics-page__filters analytics-page__filters--reports">
-                    <div className="analytics-page__builder">
-                        <div className="analytics-page__builder-form">
-                            <h2>{t('Report Builder')}</h2>
-                            <AnalyticsFilters
-                                filters={panelFilters}
-                                onFilterChange={handleFilterChange}
-                                title={t('Configure Report Criteria')}
-                                description={t('Select the report type, timeframe, and any additional filters to shape the output.')}
-                                onReset={handleReset}
-                            >
-                                <div className="analytics-filters__field">
-                                    <span className="analytics-filters__label">{t('Report Type')}</span>
-                                    <select
-                                        name="type"
+                <div className={styles.gridTwo}>
+                    <section className={`${styles.filterSection} sn-glass-surface`}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <FileText aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Report Builder')}
+                            </h2>
+                        </div>
+
+                        <AnalyticsFilters
+                            filters={panelFilters}
+                            onFilterChange={handleFilterChange}
+                            surface="content"
+                            title={t('Configure Report Criteria')}
+                            description={t('Select the report type, timeframe, and any additional filters to shape the output.')}
+                            onReset={handleReset}
+                        >
+                            <div className={styles.filterGrid}>
+                                <div className={styles.filterField}>
+                                    <span className={styles.filterLabel}>{t('Report Type')}</span>
+                                    <Select
                                         value={String(filters.type ?? 'revenue')}
+                                        aria-label={t('Report Type')}
+                                        surface="glass"
                                         onChange={(event) =>
                                             setFilters((previous) => ({
                                                 ...previous,
                                                 type: event.target.value,
                                             }))
                                         }
-                                        className="analytics-filters__select"
                                     >
-                                        {availableTypes.length > 0
-                                            ? availableTypes.map((type) => (
-                                                  <option key={type} value={type}>
-                                                      {t(type)}
-                                                  </option>
-                                              ))
-                                            : null}
-                                    </select>
+                                        {availableTypes.map((type) => (
+                                            <option key={type} value={type}>
+                                                {t(type)}
+                                            </option>
+                                        ))}
+                                    </Select>
                                 </div>
 
-                                <div className="analytics-filters__field">
-                                    <span className="analytics-filters__label">{t('Export Format')}</span>
-                                    <select
+                                <div className={styles.filterField}>
+                                    <span className={styles.filterLabel}>{t('Export Format')}</span>
+                                    <Select
                                         value={exportFormat}
+                                        aria-label={t('Export Format')}
+                                        surface="glass"
                                         onChange={(event) => setExportFormat(event.target.value)}
-                                        className="analytics-filters__select"
                                     >
                                         <option value="">{t('Select format')}</option>
                                         {exportFormats.map((format) => (
@@ -287,71 +277,70 @@ const Reports: React.FC = () => {
                                                 {format.toUpperCase()}
                                             </option>
                                         ))}
-                                    </select>
-                                </div>
-
-                                <div className="analytics-filters__actions-column">
-                                    <button type="button" className="inventory-link-button" onClick={handleGenerate}>
-                                        <i className="bx bx-refresh"></i>
-                                        {t('Generate Report')}
-                                    </button>
-                                    <ExportButton
-                                        label={t('Download Report')}
-                                        onClick={() => {
-                                            if (exportFormat) {
-                                                handleDownload(exportFormat);
-                                            }
-                                        }}
-                                        disabled={!exportFormat}
-                                        variant="secondary"
-                                    />
-                                </div>
-                            </AnalyticsFilters>
-                        </div>
-
-                        <div className="analytics-page__builder-preview">
-                            <div className="analytics-page__preview-header">
-                                <h2>{t('Preview')}</h2>
-                                <div className="analytics-page__meta">
-                                    <span>
-                                        {t('Current type')}: <strong>{t(reportMeta.type)}</strong>
-                                    </span>
-                                    {reportMeta.exportPath ? (
-                                        <span>
-                                            {t('Last export')}: {reportMeta.exportFormat?.toUpperCase()} ({reportMeta.exportPath})
-                                        </span>
-                                    ) : null}
+                                    </Select>
                                 </div>
                             </div>
 
-                            <AnalyticsTable
-                                data={previewRows}
-                                columns={previewColumns}
-                                headerTitle={t('Report Dataset')}
-                                headerIcon="bx bx-table"
-                                emptyMessage={t('No preview data available. Adjust filters and regenerate the report.')}
-                                rowKey={(row, index) => {
-                                    const identifier = row.id;
-                                    if (typeof identifier === 'string' || typeof identifier === 'number') {
-                                        return identifier;
-                                    }
-                                    return `report-row-${index}`;
-                                }}
-                            />
-                        </div>
-                    </div>
-                </section>
+                            <div className={styles.filterActions}>
+                                <Button type="button" variant="primary" onClick={handleGenerate}>
+                                    <RefreshCw aria-hidden="true" />
+                                    {t('Generate Report')}
+                                </Button>
+                                <ExportButton
+                                    label={t('Download Report')}
+                                    onClick={() => {
+                                        if (exportFormat) {
+                                            handleDownload(exportFormat);
+                                        }
+                                    }}
+                                    disabled={!exportFormat}
+                                    variant="secondary"
+                                    surface="glass"
+                                />
+                            </div>
+                        </AnalyticsFilters>
+                    </section>
 
-                <section className="inventory-section analytics-page__table">
-                    <div className="analytics-page__saved-reports">
-                        <h2>{t('Saved Reports')}</h2>
-                        <p className="analytics-page__subtitle">
-                            {t('Saved report history is not yet available. Exports generated here can be downloaded immediately.')}
-                        </p>
+                    <section className={styles.section}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>{t('Preview')}</h2>
+                            <div className={styles.cellStack}>
+                                <span className={styles.cellMeta}>
+                                    {t('Current type')}: <strong>{t(reportMeta.type)}</strong>
+                                </span>
+                                {reportMeta.exportPath ? (
+                                    <span className={styles.cellMeta}>
+                                        {t('Last export')}: {reportMeta.exportFormat?.toUpperCase()} ({reportMeta.exportPath})
+                                    </span>
+                                ) : null}
+                            </div>
+                        </div>
+
+                        <AnalyticsTable
+                            data={previewRows}
+                            columns={previewColumns}
+                            emptyMessage={t('No preview data available. Adjust filters and regenerate the report.')}
+                            rowKey={(row, index) => {
+                                const identifier = row.id;
+                                if (typeof identifier === 'string' || typeof identifier === 'number') {
+                                    return identifier;
+                                }
+                                return `report-row-${index}`;
+                            }}
+                        />
+                    </section>
+                </div>
+
+                <section className={styles.section}>
+                    <div className={styles.sectionHead}>
+                        <h2 className={styles.sectionTitle}>{t('Saved Reports')}</h2>
                     </div>
+                    <p className={styles.muted}>
+                        {t('Saved report history is not yet available. Exports generated here can be downloaded immediately.')}
+                    </p>
                 </section>
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

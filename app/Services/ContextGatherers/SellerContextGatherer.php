@@ -2,6 +2,7 @@
 
 namespace App\Services\ContextGatherers;
 
+use App\Enums\OrderStatus;
 use App\Models\InventoryLog;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -14,7 +15,7 @@ class SellerContextGatherer implements ContextGathererInterface
 {
     public function gather(?User $user = null): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
@@ -28,8 +29,14 @@ class SellerContextGatherer implements ContextGathererInterface
         $ordersLast7DaysQuery = (clone $ordersQuery)
             ->where('created_at', '>=', $now->copy()->subDays(7));
 
+        $revenueLast7DaysQuery = (clone $ordersLast7DaysQuery)
+            ->whereNotIn('status', [OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value]);
+
         $topProducts = OrderItem::query()
             ->select('variant_id', DB::raw('SUM(quantity) as total_quantity'))
+            ->whereHas('order', function ($query) {
+                $query->whereNotIn('status', [OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value]);
+            })
             ->whereHas('variant.product', function ($query) use ($user) {
                 $query->where('seller_id', $user->getKey());
             })
@@ -49,9 +56,12 @@ class SellerContextGatherer implements ContextGathererInterface
 
         return [
             'summary' => [
-                'active_products' => $user->products()->count(),
+                'active_products' => $user->products()
+                    ->where('is_active', true)
+                    ->where('status', 'published')
+                    ->count(),
                 'orders_last_7_days' => (clone $ordersLast7DaysQuery)->count(),
-                'revenue_last_7_days' => (float) (clone $ordersLast7DaysQuery)->sum('total_amount'),
+                'revenue_last_7_days' => (float) (clone $revenueLast7DaysQuery)->sum('total_amount'),
                 'total_orders' => $ordersQuery->count(),
             ],
             'top_products' => $topProducts->map(function (OrderItem $item) use ($locale) {

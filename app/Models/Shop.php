@@ -130,12 +130,24 @@ class Shop extends Model
 
     public function getLogoUrlAttribute(): string
     {
-        return $this->logo ? asset('storage/' . $this->logo) : asset('images/default-shop-logo.png');
+        if (! $this->logo) {
+            return asset('images/default-shop-logo.png');
+        }
+
+        return Str::startsWith($this->logo, ['http://', 'https://', '/'])
+            ? $this->logo
+            : asset('storage/'.$this->logo);
     }
 
     public function getBannerUrlAttribute(): string
     {
-        return $this->banner ? asset('storage/' . $this->banner) : asset('images/default-shop-banner.jpg');
+        if (! $this->banner) {
+            return asset('images/default-shop-banner.jpg');
+        }
+
+        return Str::startsWith($this->banner, ['http://', 'https://', '/'])
+            ? $this->banner
+            : asset('storage/'.$this->banner);
     }
 
     // Methods

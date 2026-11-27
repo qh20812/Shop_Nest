@@ -10,18 +10,18 @@ class CategoryFactory extends Factory
     {
         $englishName = fake()->words(2, true);
         $vietnameseName = $this->generateVietnameseCategoryName();
-        
+
         $englishDescription = fake()->sentence();
         $vietnameseDescription = $this->generateVietnameseCategoryDescription();
-        
+
         return [
             'name' => json_encode([
                 'en' => $englishName,
-                'vi' => $vietnameseName
+                'vi' => $vietnameseName,
             ]),
             'description' => json_encode([
                 'en' => $englishDescription,
-                'vi' => $vietnameseDescription
+                'vi' => $vietnameseDescription,
             ]),
             'image_url' => 'https://dummyimage.com/300x300/666266/ffffff',
             'is_active' => true,
@@ -47,9 +47,9 @@ class CategoryFactory extends Factory
             'Xe cộ',
             'Thú cưng',
             'Công nghệ',
-            'Du lịch'
+            'Du lịch',
         ];
-        
+
         return fake()->randomElement($vietnameseCategories);
     }
 
@@ -63,9 +63,9 @@ class CategoryFactory extends Factory
             'Tuyển chọn những sản phẩm tốt nhất.',
             'Đa dạng mẫu mã và thiết kế.',
             'Phù hợp với mọi nhu cầu của khách hàng.',
-            'Sản phẩm được nhập khẩu từ các thương hiệu uy tín.'
+            'Sản phẩm được nhập khẩu từ các thương hiệu uy tín.',
         ];
-        
+
         return fake()->randomElement($descriptions);
     }
 }

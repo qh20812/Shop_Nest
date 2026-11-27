@@ -1,0 +1,82 @@
+/* Hallmark · component: admin products directory · genre: editorial · theme: project glass · states: n/a · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the module defines layout only · controls are Button, Input and Select primitives whose active and disabled states live in button.css and field.css */
+/* Hallmark · the filter bar is chrome; the directory table stays bare so rows read as a ledger */
+
+.filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+}
+
+.filters :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.filterActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.seller {
+    display: flex;
+    max-width: 18rem;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.sellerName {
+    overflow: hidden;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.brand {
+    overflow: hidden;
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.priceCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sn-space-1);
+}
+
+.table {
+    min-width: 0;
+}
+
+/* DataTable owns a top margin; the stack gap already provides rhythm */
+.table > section {
+    margin-top: 0;
+}
+
+@media (min-width: 640px) {
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filters > :first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 1280px) {
+    .filters {
+        grid-template-columns: minmax(14rem, 2fr) minmax(8rem, 1fr) minmax(8rem, 1fr) minmax(8rem, 1fr) auto;
+        align-items: end;
+    }
+
+    .filters > :first-child {
+        grid-column: auto;
+    }
+}

@@ -4,18 +4,18 @@ namespace Database\Factories;
 
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Message>
+ * @extends Factory<Message>
  */
 class MessageFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<Model>
      */
     protected $model = Message::class;
 
@@ -27,11 +27,11 @@ class MessageFactory extends Factory
     public function definition(): array
     {
         $conversation = Conversation::inRandomOrder()->first();
-        if (!$conversation) {
+        if (! $conversation) {
             $conversation = Conversation::factory()->create();
         }
 
-    $sender = $this->faker->randomElement([$conversation->user_id, $conversation->receiver_id]);
+        $sender = $this->faker->randomElement([$conversation->user_id, $conversation->receiver_id]);
 
         return [
             'conversation_id' => $conversation->id,

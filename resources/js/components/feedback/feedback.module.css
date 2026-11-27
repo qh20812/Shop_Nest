@@ -1,0 +1,30 @@
+.body {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sn-space-3);
+}
+
+.icon {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--sn-radius-pill);
+}
+
+.icon[data-tone='danger'] {
+    background: var(--sn-color-danger-wash);
+    color: var(--sn-color-danger-text);
+}
+
+.icon[data-tone='warning'] {
+    background: var(--sn-color-warning-wash);
+    color: var(--sn-color-warning-text);
+}
+
+.icon svg {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+}

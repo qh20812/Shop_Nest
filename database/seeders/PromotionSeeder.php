@@ -11,6 +11,12 @@ class PromotionSeeder extends Seeder
 {
     public function run(): void
     {
+        if (Promotion::query()->exists()) {
+            $this->command?->info('Promotions already seeded, skipping.');
+
+            return;
+        }
+
         // Tạo 10 khuyến mãi chung
         Promotion::factory(10)->create();
 

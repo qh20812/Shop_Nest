@@ -4,7 +4,10 @@ import * as React from 'react';
 import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { IconButton } from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './chat.module.css';
 
 type ChatHeaderProps = {
     variant?: 'assistant' | 'shop';
@@ -31,49 +34,54 @@ export function ChatHeader({
     actions,
     className,
 }: ChatHeaderProps) {
+    const { t } = useTranslation();
     return (
-        <header className={cn('flex min-h-header items-center gap-3 border-b border-border bg-warm-porcelain px-4 py-3', className)}>
-            {onBack && (
-                <IconButton label="Quay lại danh sách" variant="ghost" size="sm" onClick={onBack} className="lg:hidden">
+        <header className={cx(styles.header, className)}>
+            {onBack ? (
+                <IconButton label={t('Go back')} variant="ghost" size="sm" onClick={onBack} className={styles.headerBack}>
                     <ArrowLeft aria-hidden="true" />
                 </IconButton>
-            )}
+            ) : null}
 
             {variant === 'assistant' ? (
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-pill bg-lacquer-wash text-lacquer-deep">
-                    <Sparkles aria-hidden="true" className="size-5" />
+                <span className={styles.headerIcon}>
+                    <Sparkles aria-hidden="true" />
                 </span>
             ) : (
                 <Avatar name={title} src={avatar} size="md" />
             )}
 
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate text-body-md font-semibold text-ink">{title}</span>
-                    {variant === 'assistant' && (
+            <div className={styles.headerBody}>
+                <div className={styles.headerTitleRow}>
+                    <span className={styles.headerTitle}>{title}</span>
+                    {variant === 'assistant' ? (
                         <Badge tone="accent" size="sm">
                             AI
                         </Badge>
-                    )}
+                    ) : null}
                 </div>
-                <span className="flex items-center gap-1.5 text-label-micro text-ink-muted">
-                    {online ? <span aria-hidden="true" className="size-1.5 rounded-pill bg-jade" /> : <Store aria-hidden="true" className="size-3" />}
-                    {subtitle ?? (variant === 'assistant' ? 'Trực tuyến' : online ? 'Đang trực tuyến' : 'Ngoại tuyến')}
+                <span className={styles.headerSubtitle}>
+                    {online ? (
+                        <span aria-hidden="true" className={styles.headerStatusDot} />
+                    ) : (
+                        <Store aria-hidden="true" className={styles.headerStoreIcon} />
+                    )}
+                    {subtitle ?? (variant === 'assistant' ? t('Online') : online ? t('Online now') : t('Offline'))}
                 </span>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className={styles.headerActions}>
                 {actions}
-                {onMinimize && (
-                    <IconButton label="Thu nhỏ cửa sổ chat" variant="ghost" size="sm" onClick={onMinimize}>
+                {onMinimize ? (
+                    <IconButton label={t('Minimize chat')} variant="ghost" size="sm" onClick={onMinimize}>
                         <ChevronDown aria-hidden="true" />
                     </IconButton>
-                )}
-                {onClose && (
-                    <IconButton label="Đóng cửa sổ chat" variant="ghost" size="sm" onClick={onClose}>
+                ) : null}
+                {onClose ? (
+                    <IconButton label={t('Close chat')} variant="ghost" size="sm" onClick={onClose}>
                         <X aria-hidden="true" />
                     </IconButton>
-                )}
+                ) : null}
             </div>
         </header>
     );

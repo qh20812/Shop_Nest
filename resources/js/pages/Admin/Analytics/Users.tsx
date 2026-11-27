@@ -1,17 +1,22 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Filter, Users as UsersIcon } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+
 import AnalyticsCard from '@/components/admin/analytics/AnalyticsCard';
 import type { AnalyticsChartPoint as ChartDataPoint } from '@/components/admin/analytics/AnalyticsChart';
 import AnalyticsChart from '@/components/admin/analytics/AnalyticsChart';
-import AnalyticsFilters, { AnalyticsFilterState, AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
+import AnalyticsFilters, { type AnalyticsFilterState, type AnalyticsFilterValue } from '@/components/admin/analytics/AnalyticsFilters';
 import type { AnalyticsTableColumn } from '@/components/admin/analytics/AnalyticsTable';
 import AnalyticsTable from '@/components/admin/analytics/AnalyticsTable';
-import QuickFilter, { QuickFilterOption } from '@/components/admin/analytics/QuickFilter';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import Header from '@/components/ui/header';
 import StatusBadge from '@/components/ui/status-badge';
-import AppLayout from '@/layouts/app/AppLayout';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { resolveCurrencyCode } from '@/lib/utils';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useMemo, useState } from 'react';
+import { formatMoney, resolveCurrencyCode } from '@/lib/utils';
+
+import styles from '@/components/admin/admin.module.css';
 
 type UserSegmentPoint = {
     segmentId?: number;
@@ -85,7 +90,8 @@ interface UsersPageProps extends Record<string, unknown> {
     filters?: Record<string, unknown>;
     availableRanges?: string[];
     locale?: string;
-    currency?: string;
+    currency?: string | { code?: string };
+    currencyCode?: string;
 }
 
 type UserFilterState = AnalyticsFilterState & {
@@ -134,11 +140,10 @@ const Users: React.FC = () => {
     const { props } = usePage<UsersPageProps>();
     const analytics = useMemo<UsersAnalyticsPayload>(() => props.users ?? {}, [props.users]);
     const initialFilters = props.filters ?? {};
-    const locale = typeof props.locale === 'string' ? props.locale : 'en';
-    const currency = resolveCurrencyCode(props.currency);
+    const locale = typeof props.locale === 'string' ? props.locale : 'vi';
+    const currency = resolveCurrencyCode(props.currencyCode ?? props.currency);
     const { t } = useTranslation();
 
-    const [range, setRange] = useState<string>(String(normalizeFilterValue(initialFilters['range'], '4weeks')));
     const [filters, setFilters] = useState<UserFilterState>(() => ({
         date_from: normalizeFilterValue(initialFilters['date_from'], ''),
         date_to: normalizeFilterValue(initialFilters['date_to'], ''),
@@ -147,25 +152,14 @@ const Users: React.FC = () => {
     }));
 
     const growthSeries = useMemo<ChartDataPoint[]>(() => (Array.isArray(analytics.growthSeries) ? analytics.growthSeries : []), [analytics]);
-
     const segments = useMemo<UserSegmentPoint[]>(() => (Array.isArray(analytics.segments) ? analytics.segments : []), [analytics]);
-
     const retention = useMemo<UserRetentionMetrics>(() => analytics.retention ?? {}, [analytics]);
     const activeUsers = useMemo<UserActiveMetrics>(() => analytics.activeUsers ?? {}, [analytics]);
 
-    const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
-    const currencyFormatter = useMemo(
-        () =>
-            new Intl.NumberFormat(locale, {
-                style: 'currency',
-                currency,
-                maximumFractionDigits: 0,
-            }),
-        [currency, locale],
-    );
+    const money = useMemo(() => (value: number) => formatMoney(value, currency, locale), [currency, locale]);
     const dateFormatter = useMemo(
         () =>
-            new Intl.DateTimeFormat(locale, {
+            new Intl.DateTimeFormat(locale.startsWith('vi') ? 'vi-VN' : locale, {
                 dateStyle: 'medium',
                 timeStyle: 'short',
             }),
@@ -177,7 +171,6 @@ const Users: React.FC = () => {
     const activeLast7d = activeUsers.last7d ?? 0;
     const retention30 = retention.thirtyDay ?? 0;
     const retention90 = retention.ninetyDay ?? 0;
-
     const retentionChange = retention30 - retention90;
 
     const activeUsersSeries: ChartDataPoint[] = useMemo(
@@ -190,25 +183,9 @@ const Users: React.FC = () => {
     );
 
     const segmentChartData: ChartDataPoint[] = useMemo(
-        () =>
-            segments.map((segment) => ({
-                label: segment.label,
-                value: segment.value ?? 0,
-                segmentId: segment.segmentId,
-            })),
+        () => segments.map((segment) => ({ label: segment.label, value: segment.value ?? 0, segmentId: segment.segmentId })),
         [segments],
     );
-
-    const quickRangeOptions: QuickFilterOption[] = useMemo(() => {
-        const available = Array.isArray(props.availableRanges) ? props.availableRanges : [];
-        const labels: Record<string, string> = {
-            '4weeks': t('Last 4 Weeks'),
-            '6months': t('Last 6 Months'),
-            '12months': t('Last 12 Months'),
-        };
-
-        return available.map((value) => ({ label: labels[value] ?? value, value }));
-    }, [props.availableRanges, t]);
 
     const detailRows: UserDetailRow[] = useMemo(() => {
         const candidateKeys = ['details', 'table', 'userTable', 'records', 'rows'];
@@ -225,17 +202,15 @@ const Users: React.FC = () => {
         return source.map((entry, index) => {
             const item = entry as UserDetailInput;
             const idValue = item.id ?? item.user_id ?? index + 1;
-            const joinedAt = item.joined_at ?? item.joinDate ?? item.created_at ?? null;
-            const lastActivity = item.last_activity ?? item.lastActivity ?? null;
 
             return {
                 id: String(idValue),
                 name: item.name ?? item.full_name ?? t('Unknown User'),
                 email: item.email ?? '',
-                joinedAt: joinedAt,
+                joinedAt: item.joined_at ?? item.joinDate ?? item.created_at ?? null,
                 ordersCount: Number(item.orders_count ?? item.ordersCount ?? 0),
                 totalSpent: Number(item.total_spent ?? item.totalSpent ?? 0),
-                lastActivity: lastActivity,
+                lastActivity: item.last_activity ?? item.lastActivity ?? null,
                 status: item.status ?? null,
                 role: item.role ?? null,
                 segment: item.segment ?? null,
@@ -250,9 +225,9 @@ const Users: React.FC = () => {
                 label: t('User'),
                 sortable: false,
                 render: (value, row) => (
-                    <div className="analytics-user__name">
-                        <strong>{String(value ?? '')}</strong>
-                        {row.email ? <span className="analytics-user__email">{row.email}</span> : null}
+                    <div className={styles.cellStack}>
+                        <span className={styles.cellTitle}>{String(value ?? '')}</span>
+                        {row.email ? <span className={styles.cellMeta}>{row.email}</span> : null}
                     </div>
                 ),
             },
@@ -278,11 +253,7 @@ const Users: React.FC = () => {
                     }
 
                     const parsed = new Date(value);
-                    if (Number.isNaN(parsed.valueOf())) {
-                        return value;
-                    }
-
-                    return dateFormatter.format(parsed);
+                    return Number.isNaN(parsed.valueOf()) ? value : dateFormatter.format(parsed);
                 },
             },
             {
@@ -290,14 +261,14 @@ const Users: React.FC = () => {
                 label: t('Orders'),
                 sortable: false,
                 align: 'right',
-                render: (value) => numberFormatter.format(Number(value ?? 0)),
+                render: (value) => formatNumber(Number(value ?? 0)),
             },
             {
                 key: 'totalSpent',
                 label: t('Total Spent'),
                 sortable: false,
                 align: 'right',
-                render: (value) => currencyFormatter.format(Number(value ?? 0)),
+                render: (value) => money(Number(value ?? 0)),
             },
             {
                 key: 'lastActivity',
@@ -309,11 +280,7 @@ const Users: React.FC = () => {
                     }
 
                     const parsed = new Date(value);
-                    if (Number.isNaN(parsed.valueOf())) {
-                        return value;
-                    }
-
-                    return dateFormatter.format(parsed);
+                    return Number.isNaN(parsed.valueOf()) ? value : dateFormatter.format(parsed);
                 },
             },
             {
@@ -323,7 +290,7 @@ const Users: React.FC = () => {
                 render: (value) => (value ? <StatusBadge status={String(value)} type="general" /> : t('Unknown')),
             },
         ],
-        [currencyFormatter, dateFormatter, numberFormatter, t],
+        [dateFormatter, money, t],
     );
 
     const handleFilterChange = (updated: AnalyticsFilterState) => {
@@ -331,146 +298,108 @@ const Users: React.FC = () => {
     };
 
     const handleApplyFilters = () => {
-        const payload: FilterPayload = {
-            ...cleanupFilters(filters),
-        };
-
-        if (range && range !== '') {
-            payload['range'] = range;
-        }
-
-        router.get('/admin/analytics/users', payload, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get('/admin/analytics/users', cleanupFilters(filters), { preserveState: true, preserveScroll: true });
     };
 
     const handleResetFilters = () => {
-        const resetState: UserFilterState = {
-            date_from: '',
-            date_to: '',
-            segment_id: '',
-            role: '',
-        };
-        setFilters(resetState);
-        setRange('4weeks');
-
-        router.get(
-            '/admin/analytics/users',
-            { range: '4weeks' },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+        setFilters({ date_from: '', date_to: '', segment_id: '', role: '' });
+        router.get('/admin/analytics/users', {}, { preserveState: true, preserveScroll: true });
     };
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('User Analytics')} />
-            <div className="inventory-page analytics-page analytics-page--users">
-                <section className="inventory-section analytics-page__header">
-                    <div className="analytics-page__heading">
-                        <h1>{t('User Analytics')}</h1>
-                        <p className="analytics-page__subtitle">
-                            {t('Understand how users engage with the platform, monitor retention trends, and identify key segments.')}
-                        </p>
+            <Header
+                title={t('User Analytics')}
+                breadcrumbs={[
+                    { label: t('Dashboard'), href: '/admin/dashboard' },
+                    { label: t('Analytics'), href: '/admin/analytics' },
+                    { label: t('User Analytics'), href: '/admin/analytics/users', active: true },
+                ]}
+            />
+
+            <div className={styles.stack}>
+                <section className={styles.section}>
+                    <p className={styles.muted}>
+                        {t('Understand how users engage with the platform, monitor retention trends, and identify key segments.')}
+                    </p>
+                </section>
+
+                <AnalyticsFilters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    title={t('Filter User Data')}
+                    description={t('Adjust timeframe or narrow down segments to analyze specific user cohorts.')}
+                    onReset={handleResetFilters}
+                >
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="primary" onClick={handleApplyFilters}>
+                            <Filter aria-hidden="true" />
+                            {t('Apply Filters')}
+                        </Button>
                     </div>
-                    {quickRangeOptions.length > 0 ? <QuickFilter options={quickRangeOptions} activeValue={range} onChange={setRange} /> : null}
-                </section>
+                </AnalyticsFilters>
 
-                <section className="inventory-section analytics-page__filters">
-                    <AnalyticsFilters
-                        filters={filters}
-                        onFilterChange={handleFilterChange}
-                        title={t('Filter User Data')}
-                        description={t('Adjust timeframe or narrow down segments to analyze specific user cohorts.')}
-                        onReset={handleResetFilters}
-                    >
-                        <div className="analytics-filters__actions-row">
-                            <button type="button" className="inventory-link-button" onClick={handleApplyFilters}>
-                                <i className="bx bx-filter"></i>
-                                {t('Apply Filters')}
-                            </button>
-                        </div>
-                    </AnalyticsFilters>
-                </section>
+                <ul className={styles.kpiList}>
+                    <AnalyticsCard
+                        title={t('Total Users')}
+                        value={formatNumber(totalUsers)}
+                        tooltip={t('Number of registered users across the platform.')}
+                    />
+                    <AnalyticsCard
+                        title={t('New Users (Current Period)')}
+                        value={formatNumber(latestNewUsers)}
+                        tooltip={t('Users acquired within the selected reporting range.')}
+                    />
+                    <AnalyticsCard
+                        title={t('Active Users (7d)')}
+                        value={formatNumber(activeLast7d)}
+                        tooltip={t('Unique users active over the past 7 days.')}
+                    />
+                    <AnalyticsCard
+                        title={t('30-Day Retention')}
+                        value={`${retention30.toFixed(1)}%`}
+                        change={retentionChange}
+                        changeLabel={t('vs 90-day retention')}
+                        tooltip={t('Percentage of users returning within 30 days compared to the 90-day baseline.')}
+                    />
+                </ul>
 
-                <section className="inventory-section analytics-page__kpis">
-                    <ul className="insights analytics-page__insights-grid">
-                        <AnalyticsCard
-                            title={t('Total Users')}
-                            value={numberFormatter.format(totalUsers)}
-                            icon="bx bx-group"
-                            color="blue"
-                            tooltip={t('Number of registered users across the platform.')}
-                        />
-                        <AnalyticsCard
-                            title={t('New Users (Current Period)')}
-                            value={numberFormatter.format(latestNewUsers)}
-                            icon="bx bx-user-plus"
-                            color="green"
-                            tooltip={t('Users acquired within the selected reporting range.')}
-                        />
-                        <AnalyticsCard
-                            title={t('Active Users (7d)')}
-                            value={numberFormatter.format(activeLast7d)}
-                            icon="bx bx-bolt-circle"
-                            color="yellow"
-                            tooltip={t('Unique users active over the past 7 days.')}
-                        />
-                        <AnalyticsCard
-                            title={t('30-Day Retention')}
-                            value={`${retention30.toFixed(1)}%`}
-                            change={retentionChange}
-                            changeLabel={t('vs 90-day retention')}
-                            icon="bx bx-repeat"
-                            color={retentionChange >= 0 ? 'green' : 'red'}
-                            tooltip={t('Percentage of users returning within 30 days compared to the 90-day baseline.')}
-                        />
-                    </ul>
-                </section>
-
-                <section className="inventory-section analytics-page__charts">
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--two">
-                        <AnalyticsChart
-                            type="line"
-                            data={growthSeries}
-                            title={t('User Growth Trend')}
-                            description={t('New users acquired over the selected time range.')}
-                        />
-                        <AnalyticsChart
-                            type="pie"
-                            data={segmentChartData}
-                            title={t('Segment Distribution')}
-                            description={t('Relative size of user segments contributing to activity.')}
-                            legend
-                        />
-                    </div>
-
-                    <div className="analytics-page__charts-grid analytics-page__charts-grid--single">
-                        <AnalyticsChart
-                            type="area"
-                            data={activeUsersSeries}
-                            title={t('Active User Engagement')}
-                            description={t('Comparison of users active within recent engagement windows.')}
-                            legend={false}
-                        />
-                    </div>
-                </section>
-
-                <section className="inventory-section analytics-page__table">
-                    <AnalyticsTable
-                        data={detailRows}
-                        columns={tableColumns}
-                        headerTitle={t('User Cohort Details')}
-                        headerIcon="bx bx-id-card"
-                        emptyMessage={t('No user details available for the selected filters.')}
-                        rowKey={(row) => row.id}
+                <section className={styles.chartGrid}>
+                    <AnalyticsChart
+                        type="line"
+                        data={growthSeries}
+                        title={t('User Growth Trend')}
+                        description={t('New users acquired over the selected time range.')}
+                        valueLabel={t('New Users')}
+                    />
+                    <AnalyticsChart
+                        type="pie"
+                        data={segmentChartData}
+                        title={t('Segment Distribution')}
+                        description={t('Relative size of user segments contributing to activity.')}
+                        legend
                     />
                 </section>
+
+                <AnalyticsChart
+                    type="bar"
+                    data={activeUsersSeries}
+                    title={t('Active User Engagement')}
+                    description={t('Comparison of users active within recent engagement windows.')}
+                    valueLabel={t('Users')}
+                />
+
+                <AnalyticsTable
+                    data={detailRows}
+                    columns={tableColumns}
+                    headerTitle={t('User Cohort Details')}
+                    headerIcon={<UsersIcon aria-hidden="true" />}
+                    emptyMessage={t('No user details available for the selected filters.')}
+                    rowKey={(row) => row.id}
+                />
             </div>
-        </AppLayout>
+        </WorkspaceLayout>
     );
 };
 

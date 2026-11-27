@@ -4,8 +4,8 @@ namespace App\Services\Seller;
 
 use App\Models\Product;
 use App\Services\ImageValidationService;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class StoreImagesService
 {
@@ -22,20 +22,34 @@ class StoreImagesService
             return;
         }
 
+        // Validate the whole batch first so a bad file cannot leave earlier
+        // uploads behind when the transaction is rolled back.
+        foreach ($images as $image) {
+            $this->imageValidationService->validateImage($image, ImageValidationService::TYPE_PRODUCT);
+        }
+
         $existingCount = $product->images()->count();
         $hasExistingPrimary = $product->images()->where('is_primary', true)->exists();
+        $storedPaths = [];
 
-        foreach ($images as $index => $image) {
-            // Validate image before storing to guarantee uniform constraints
-            $this->imageValidationService->validateImage($image, ImageValidationService::TYPE_PRODUCT);
+        try {
+            foreach ($images as $index => $image) {
+                $path = $image->store('products', 'public');
+                $storedPaths[] = $path;
 
-            $path = $image->store('products', 'public');
-            $product->images()->create([
-                'image_url' => $path,
-                'alt_text' => null,
-                'is_primary' => $hasExistingPrimary ? false : ($existingCount + $index === 0),
-                'display_order' => $existingCount + $index,
-            ]);
+                $product->images()->create([
+                    'image_url' => $path,
+                    'alt_text' => null,
+                    'is_primary' => $hasExistingPrimary ? false : $index === 0,
+                    'display_order' => $existingCount + $index,
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            foreach ($storedPaths as $storedPath) {
+                Storage::disk('public')->delete($storedPath);
+            }
+
+            throw $exception;
         }
 
         Log::info('Images stored for product', [
@@ -48,7 +62,7 @@ class StoreImagesService
     public function deleteProductImages(Product $product): void
     {
         foreach ($product->images as $image) {
-            if (!empty($image->image_url)) {
+            if (! empty($image->image_url)) {
                 Storage::disk('public')->delete($image->image_url);
             }
 

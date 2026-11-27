@@ -1,400 +1,409 @@
-# Design System: ShopNest — Nếp
+# ShopNest — Design System: Bảng Hiệu
 
-Version 1.0 · Light-first · Google Stitch ready
+> Hướng thiết kế: **Bảng Hiệu** — signage / industrial catalog Việt Nam.
+> Phiên bản: **Bảng Hiệu 2.0**, bổ sung lớp chrome kính (glass) sau pass navbar.
+> Nền tảng: CSS thuần, token `--sn-*`, CSS Modules, React 19 + Inertia 3.
+> Nguồn chuẩn kỹ thuật: `resources/css/`, `resources/js/components/ui/`, `COMPONENTS.md`, `AGENTS.md`.
+> QA gần nhất: `docs/ui/PHASE-12-QA.md`.
 
-## 0. How Stitch should use this file
+## 1. Định vị
 
-This file is the single source of truth for every ShopNest screen generated in Google Stitch.
+Bảng Hiệu lấy cảm hứng từ biển hiệu cửa hàng, catalogue in và tem nhãn công nghiệp: chữ đậm, đường kẻ rõ, màu cam đất làm tín hiệu, nền giấy lạnh ở light mode và nền than ở dark mode. Giao diện phải đọc nhanh, không trang trí thừa, không giả lập dashboard SaaS.
 
-- Use the palette, type, spacing, radii, and component rules below exactly. Do not invent a second accent, a new shadow style, or a new icon family.
-- There are two visual modes: **Storefront** (public, customer-facing) and **Workspace** (seller, admin, shipper). Storefront may use the editorial serif; Workspace is sans-serif only.
-- Generate **desktop 1440×1024** and **mobile 390×844** for every customer/storefront screen. Generate desktop and tablet for Workspace screens; mobile is required for the customer account, seller orders, and shipper screens.
-- Put real Vietnamese copy in the screens. Never translate the provided copy to English.
-- Stitch generates static screens. Motion notes below describe the intended implementation, not what Stitch should animate.
-- When in doubt, choose the quieter option: more whitespace, fewer decorative elements, one clear action.
+Ba nguyên tắc:
 
-## 1. Visual Theme & Atmosphere
+1. **Tín hiệu, không trang trí.** Accent chỉ dùng cho hành động chính, trạng thái đang chọn và liên kết quan trọng.
+2. **Cấu trúc bằng đường kẻ, khoảng trắng và một lớp kính.** Glass là vật liệu của chrome nổi (dock, menu, sheet, panel), không phải hiệu ứng cho card nội dung; mỗi vùng chỉ một lớp blur và mọi bề mặt kính phải có fallback đặc.
+3. **Dữ liệu thật.** Không bịa số liệu, badge, tab, cột hay filter. Thiếu dữ liệu thì bỏ UI, không tạo placeholder giả.
 
-**Concept: Nếp** — a curated Vietnamese marketplace for the home and everyday life, reinterpreted as an editorial storefront and a precise back-office ledger. The word “nếp” means order, fold, habit: the calm system behind a warm, lived-in home.
+## 2. Typography
 
-ShopNest is **broad by category but selective by seller**. It is not a single-category craft boutique and not an unbounded “sell everything” mall. The launch catalog is organized around six anchor categories, with a “Shop Việt” trust layer and verified sellers. Editorial storytelling supports discovery; search, category tiles, price, ratings, shipping facts, and trust badges carry the utility.
+- **Font duy nhất:** Be Vietnam Pro, self-host qua `resources/css/fonts.css`. Không link Google Fonts ở production (`@font-face` woff2).
+- **Numeric:** `--sn-font-numeric` = cùng font; số dùng `font-variant-numeric: tabular-nums` khi cần căn cột.
+- **Weight:** 400 regular, 500 medium, 600 semibold, 700 bold.
+- **Scale:** `2xs` 11px · `xs` 12px · `sm` 13px · `base` 15px · `md` 16px · `lg` 18px · `xl` 22px · `2xl` 28px · `3xl` 36px · `4xl` clamp(44–56px) · `display` clamp(48–76px).
+- **Line height:** tight 1.08 cho display; snug 1.22 cho heading; normal 1.5 cho body; relaxed 1.65 cho prose.
+- **Tracking:** tight -0.02em cho display; wide 0.06em cho eyebrow; wider 0.1em cho nhãn nhỏ.
+- **Measure:** prose 65ch, lead 46ch.
+- **Quy tắc:** mỗi viewport có 1 H1; heading dùng `Heading`; body dùng `Text`; eyebrow chỉ cho metadata thật, không rải trên mọi section.
 
-The atmosphere is warm, tactile, and trustworthy. Rice-paper surfaces, ink typography, and a single lacquer-red accent recall Vietnamese lacquerware, market stamps, and hand-written price tags. The storefront is gallery-airy and asymmetric; the workspace is denser and number-led, like a well-kept ledger. Nothing glows, nothing floats without purpose, and no element overlaps another.
+## 3. Color
 
-### Design dials
+### 3.1 Hai tầng token
 
-| Mode | Creativity | Density | Variance | Motion |
-|---|---:|---:|---:|---:|
-| Storefront / Auth | 8 | 4 | 8 | 6 |
-| Customer account | 5 | 5 | 4 | 4 |
-| Seller workspace | 5 | 7 | 3 | 4 |
-| Admin workspace | 4 | 8 | 2 | 3 |
-| Shipper workspace | 4 | 6 | 2 | 3 |
+- `resources/css/tokens/primitive.css` — palette gốc, **file duy nhất được chứa hex**.
+- `resources/css/tokens/semantic.css` — role token; component **chỉ dùng tầng này**.
 
-Density 4 means generous breathing room, not empty. Density 7–8 means compact tables and strong information hierarchy, not cramped cards.
+Không dùng `var(--sn-neutral-*)`, `var(--sn-graphite-*)`, `var(--sn-accent-*)` trong component. `check:css` chặn hex/rgb/hsl ngoài `tokens/`.
 
-### Anchor categories
+### 3.2 Role token
 
-1. **Điện tử & công nghệ** — laptop, PC, điện thoại, tai nghe, phụ kiện.
-2. **Gia dụng & nhà bếp** — nồi chiên, nồi cơm, dụng cụ bếp, vệ sinh.
-3. **Nhà cửa & trang trí** — nội thất nhỏ, đèn, chăn ga, đồ decor.
-4. **Mẹ & bé** — xe đẩy, bỉm, đồ chơi, quần áo trẻ em.
-5. **Thời trang & phụ kiện** — quần áo, túi, giày, phụ kiện.
-6. **Làm đẹp & chăm sóc** — skincare, chăm sóc cá nhân.
+| Nhóm | Token |
+|---|---|
+| Surface | `--sn-color-canvas`, `--sn-color-canvas-alt`, `--sn-color-surface`, `--sn-color-surface-sunken`, `--sn-color-surface-strong`, `--sn-color-surface-inverse` |
+| Text | `--sn-color-text`, `--sn-color-text-muted`, `--sn-color-text-faint`, `--sn-color-text-inverse`, `--sn-color-text-on-strong` |
+| Line | `--sn-color-border`, `--sn-color-border-strong`, `--sn-color-border-inverse` |
+| Accent | `--sn-color-accent`, `--sn-color-accent-hover`, `--sn-color-accent-text`, `--sn-color-accent-wash`, `--sn-color-on-accent`, `--sn-color-focus` |
+| Success | `--sn-color-success`, `--sn-color-success-text`, `--sn-color-success-wash`, `--sn-color-on-success` |
+| Warning | `--sn-color-warning`, `--sn-color-warning-text`, `--sn-color-warning-wash`, `--sn-color-on-warning` |
+| Danger | `--sn-color-danger`, `--sn-color-danger-text`, `--sn-color-danger-wash`, `--sn-color-on-danger` |
+| Neutral badge | `--sn-color-neutral`, `--sn-color-neutral-text`, `--sn-color-neutral-wash` |
+| Utility | `--sn-color-overlay`, `--sn-color-selection`, `--sn-color-scrim` |
+| Glass chrome | `--sn-color-canvas-deep`, `--sn-glass-tint`, `--sn-glass-control`, `--sn-glass-control-hover`, `--sn-glass-field`, `--sn-glass-menu`, `--sn-glass-hover`, `--sn-glass-press`, `--sn-glass-hairline`, `--sn-glass-highlight`, `--sn-glass-ring`, `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` |
 
-Curation rules:
-- Launch with these six categories. Do not add fresh groceries, vehicles, real estate, industrial B2B, or other operationally heavy categories.
-- “Shop Việt” is a badge and filter, not a separate catalog. It signals local sellers and provenance without limiting the category range.
-- Every category shares the same shell, card anatomy, and search/filter grammar. Category-specific metadata changes, not the visual system.
-- The home page must show at least four categories in the first viewport. It must not read as a pottery or handicraft store.
+### 3.3 Light / dark
 
-## 2. Color Palette & Roles
+- Light: giấy lạnh (`neutral-100/50/0`), chữ than (`neutral-950`), accent cam đất `accent-600`.
+- Dark: than (`graphite-950/900/850`), chữ sáng (`graphite-50/200/300`), accent sáng hơn (`--sn-signal-accent`).
+- Selector duy nhất: `[data-theme='dark']`. Không còn `.dark`.
+- `color-scheme` được set bằng JS (`useTheme`) và trong token.
+- Fallback không JS: `@media (prefers-color-scheme: dark)` chỉ áp cho `:root:not([data-theme])`.
+- Wash/border dark được chỉnh riêng, không đảo màu máy móc.
 
-### Core palette
+### 3.4 Quy tắc dùng màu
 
-| Name | Hex | Role |
+- Accent: CTA chính, tab active, focus ring, link quan trọng. Không dùng accent cho toàn bộ heading.
+- Success/warning/danger chỉ cho trạng thái thật, không dùng trang trí.
+- Nền tối đa 2 tầng trong một vùng (canvas → surface). Không card lồng card.
+- Chart: dùng token (`var(--sn-color-accent)`…), grid 1px, không gradient, không glow.
+
+### 3.5 Brand lockup
+
+- Mark dùng `BrandMark` (`components/layout/BrandMark.tsx`): PNG `ShopnestLogo.png` làm alpha mask, tô `--sn-color-accent`, nên mark tự sáng đúng ở dark mode.
+- Wordmark `.sn-brand__name`: `--sn-color-accent`, weight 600, tracking snug. Mark và wordmark dùng cùng một màu brand.
+- Wordmark là brand, không phải control: accent ở đây là brand color, không phá quy tắc accent dành cho hành động.
+- Hover/focus của link brand chuyển wordmark sang `--sn-color-accent-hover`.
+- Mark là decorative (`aria-hidden`); accessible name lấy từ wordmark, không lặp `alt`.
+- Workspace sidebar dùng lại đúng lockup của navbar: `BrandMark` + `.sn-brand__name` accent, weight 600; role label nằm dưới wordmark với màu muted. Không dùng `<img>` logo gốc hay wordmark đen riêng.
+
+## 4. Space & layout
+
+- Cơ số 4px: `--sn-space-1..32`.
+- Container: `--sn-container` 90rem, narrow 65rem, form 26.25rem / wide 37.5rem.
+- Section rhythm: `--sn-section` clamp(40–72px), tight clamp(24–40px).
+- Shell: header 56px (workspace), topbar 56px, sidebar 232px, account rail 220px, filter rail 264px. Workspace chrome inset 12px (`--sn-shell-inset`) và cách nhau 12px (`--sn-shell-gap`).
+- Storefront dock: slab kính 60px + inset 10px, tổng `--sn-header-stuck` 80px. Mọi sticky offset trong storefront dùng `calc(var(--sn-header-stuck) + var(--sn-space-2))`, không dùng `--sn-header`.
+- Glass: ranh giới sử dụng, token, tầng và lộ trình rollout ở mục 6.
+- Breakpoint dùng trong CSS: 640 / 768 / 1024 / 1280. QA chạy 375/390/480/768/1024/1280/1440.
+- Workspace: sidebar và topbar là hai slab kính nổi, inset 12px, bo `--sn-radius-2xl`, nền trang `--sn-color-canvas-deep`; `.sn-workspace__content` offset `calc(var(--sn-sidebar) + var(--sn-shell-inset))`; `.sn-workspace__main` padding 20/24; <768 sidebar off-canvas + overlay + toggle.
+- Storefront: header + `main` + footer; ChatDock mount một lần trong `StorefrontLayout`.
+- Account: `StorefrontLayout` + rail; không mount chat lần hai.
+- Auth: split/centered, brand panel riêng.
+
+## 5. Shape & elevation
+
+- Radius: none 0 · xs 2px · sm 4px · md 6px · lg 8px · xl 12px · 2xl 20px · 3xl 28px · pill. Control thêm `--sn-radius-control` 12; media card thêm `--sn-radius-card` 16 và `--sn-radius-media` 10; overlay thêm `--sn-radius-menu` 16 (panel) và `--sn-radius-item` 10 (item).
+- Card nội dung dùng `md/lg`; hero/panel lớn tối đa `xl` 12px. Media card dùng `--sn-radius-card` 16, ảnh bên trong `--sn-radius-media` 10. Chỉ chrome nổi được dùng `2xl` 20px (slab kính) và `3xl` 28px (sheet).
+- Quy tắc shape của hệ glass: **slab 20px, menu 16px, media card 16px (ảnh 10px), stat card frosted 16px, control 12px trên nội dung và pill trên chrome, media 12px**. Không trộn radius khác trong cùng một cụm.
+- Menu dùng `--sn-radius-menu` 16 cho panel và `--sn-radius-item` 10 cho từng item. Menu kính chỉ dành cho chrome nổi (`sn-dropdown--glass`), menu trong workspace giữ nền đặc.
+- Overlay dùng shape riêng: dialog `--sn-radius-menu` 16, sheet `--sn-radius-3xl` 28 và nổi cách viewport 12px, tooltip `--sn-radius-item` 10. Filter rail là content panel bo `--sn-radius-xl` 12 và cuộn trong, không dùng glass.
+- Shadow chỉ cho lớp nổi: `--sn-shadow-popover`, `--sn-shadow-overlay` (popover/overlay), `--sn-shadow-glass` (dock kính), `--sn-shadow-float` (control nổi trong kính), `--sn-shadow-accent` (CTA accent). Không shadow cho card tĩnh.
+- Bề mặt kính: đúng một lớp blur trên slab, không blur control con; chi tiết vật liệu, fallback và tầng ở mục 6.
+- Border 1px `--sn-color-border`; border mạnh cho hover/selected.
+- Chip dữ liệu (giảm giá, rating compact) dùng pill 20–24px cao, padding ngang 8, hairline + `--sn-glass-control` (rating) hoặc accent-wash (giảm giá). Tối đa hai chip metadata trên một product card; tag trạng thái vẫn tối đa hai.
+
+## 6. Glass system
+
+Glass là vật liệu của **lớp chrome nổi**, không phải hiệu ứng trang trí cho nội dung. Mục tiêu: dock, menu, sheet và panel đọc như cùng một vật liệu; card, bảng và form vẫn đặc để đọc lâu.
+
+### 6.1 Ranh giới dùng
+
+| Dùng glass | Giữ bề mặt đặc |
+|---|---|
+| Storefront dock, sticky toolbar | Table, data grid, form, multi-step dialog |
+| Dropdown/context menu ngắn | Page section, hero band, footer band |
+| Sheet mobile, chat panel, command palette | Field, input, select, textarea |
+| Floating filter bar, floating action, toast | Content card không phải media |
+| Workspace sidebar, topbar, filter bar | Chart card, data table, form dài |
+
+**Frosted media card**: product card và category card dùng `--sn-glass-control` + `--sn-glass-hairline` + inset highlight + `--sn-shadow-card`, **không blur**. Control nằm trên ảnh (wishlist, quick action) dùng `surface="overlay"` với `--sn-glass-menu` để giữ tương phản trên mọi ảnh.
+
+**Frosted stat card**: Insights, AnalyticsCard và metric card của workspace dùng cùng recipe frosted (glass-control, hairline, inset highlight, `--sn-shadow-card`, radius 16), **không blur**; chỉ filter bar và shell mới dùng slab blur.
+
+**Overlay**: dialog giữ surface đặc (form/modal dài), bo 16. Sheet là slab kính nổi inset 12px, bo 28, nền `--sn-glass-menu` + blur; shell khoá header/footer, chỉ `sn-sheet__body` cuộn. Tooltip là overlay alpha `--sn-glass-menu` + hairline + highlight, bo 10, **không blur**. Filter rail là content panel đặc, bo 12, header/footer đứng yên và body cuộn trong.
+
+**Hero stage (trang chủ)**: hero có thể dùng ảnh shop full-bleed đã blur + wash `--sn-color-canvas` làm nền, nhưng chỉ một lớp blur trên ảnh nền. Panel chữ dùng `--sn-glass-menu` + hairline + inset highlight + `--sn-shadow-glass`, **không thêm `backdrop-filter`** vì nền đã blur; tắt wash và dùng surface đặc khi `prefers-reduced-transparency`, ẩn wash trong `forced-colors`. Ngoại lệ này chỉ áp cho hero trang chủ, không dùng cho card nội dung hay section khác.
+
+Ba luật cứng:
+
+- Một vùng chỉ một lớp blur. Control nằm trong slab dùng `--sn-glass-field` (alpha, không blur).
+- Không lồng slab trong slab. Tối đa ba tầng: `canvas-deep → glass slab → field`.
+- Bề mặt chứa form dài hoặc nội dung cuộn dài dùng `--sn-color-surface`, không dùng glass.
+
+### 6.2 Token
+
+| Token | Vai trò | Light / dark |
 |---|---|---|
-| Rice Paper | `#F6F1E6` | Primary canvas, page background |
-| Warm Porcelain | `#FFFCF4` | Cards, sheets, elevated surfaces |
-| Raw Linen | `#EDE4D3` | Sidebar, filter rails, muted bands |
-| Ink | `#1D1B17` | Primary text, headings, icons |
-| Ink Muted | `#6B6458` | Body copy, secondary labels |
-| Ink Faint | `#9A8F7F` | Metadata, timestamps, disabled text |
-| Border | `#DCD1BE` | 1px structural lines, dividers |
-| Lacquer Red | `#B23A2F` | The only UI accent: primary CTA, active state, focus ring |
-| Lacquer Deep | `#8C2A22` | Accent hover and pressed state |
-| Lacquer Wash | `#F2DCD5` | Soft accent background, selected navigation |
-| Jade | `#2F6B57` | Success, completed, in-stock |
-| Turmeric | `#8A5A1A` | Warning, pending, low-stock |
-| Brick | `#8B2A24` | Danger, destructive action, rejected |
-| Logo Blue | `#4991D8` | Brand illustration only. Never use as a UI accent |
-
-### Color rules
-
-- One accent only: Lacquer Red. Do not introduce blue, purple, pink, or gold UI accents.
-- Logo Blue belongs to the existing ShopNest mark. Keep the mark in its original colors and do not build buttons or links from it.
-- Status colors are functional, not decorative. Use them only for badges, inline validation, chart series, and small state dots.
-- Page background is Rice Paper or Warm Porcelain. Never use pure `#FFFFFF` as the full-page background.
-- No gradients on surfaces or text. No neon glows. No glassmorphism.
-- Text on Lacquer Red is Warm Porcelain. Body text is Ink or Ink Muted.
-- Focus ring: 2px Lacquer Red, 2px offset. Never remove the visible focus state.
-- Charts use Lacquer Red as the primary series, Jade and Turmeric as secondary series, and `#E8DFD0` for grid lines.
-
-### Dark mode appendix
-
-Dark mode is phase 2 and is not generated in the first Stitch pass. When implemented, use the same hue family: canvas `#171512`, surface `#211D19`, raised surface `#2A251F`, ink `#F5EFE3`, muted `#B8AE9E`, border `#3A342C`, accent `#D46A5A`, accent wash `#3B2521`, jade `#7FB8A2`, turmeric `#D6A653`, brick `#D07A72`.
-
-## 3. Typography Rules
-
-### Families
-
-- **Display: Fraunces** — variable serif, optical sizing on, weights 500–700. Use only on Storefront hero/campaign modules, Auth, and Legal pages. Search, category, product detail, cart, checkout, and account pages use Be Vietnam Pro headings so the catalog stays scannable. Fraunces supports Vietnamese; keep diacritics intact.
-- **Body and UI: Be Vietnam Pro** — weights 400, 500, 600, 700. Use for all body copy, labels, navigation, forms, and Workspace headings.
-- **Numbers and metadata: JetBrains Mono** — weights 500, 600. Use for prices, SKUs, order codes, IDs, timestamps, table numbers, and KPI values. Currency symbols may fall back to Be Vietnam Pro.
-
-### Scale
-
-| Token | Size | Line height | Tracking | Use |
-|---|---|---|---|---|
-| Display XL | `clamp(3.5rem, 7vw, 6.5rem)` | 0.92 | -0.035em | Storefront hero only |
-| Display LG | `clamp(2.5rem, 4.5vw, 4.25rem)` | 0.98 | -0.03em | Section hero, auth headline |
-| H1 | `clamp(2rem, 3vw, 2.75rem)` | 1.05 | -0.025em | Page title, storefront |
-| H2 | `clamp(1.5rem, 2vw, 2rem)` | 1.15 | -0.02em | Section title |
-| H3 | `1.125rem` | 1.3 | -0.01em | Card title, panel title |
-| Body | `1rem` | 1.65 | 0 | Default copy |
-| Body large | `1.125rem` | 1.6 | 0 | Intro paragraphs |
-| Small | `0.875rem` | 1.5 | 0 | Helper text, metadata |
-| Micro | `0.75rem` | 1.4 | 0.12em uppercase | Eyebrows, table headers |
-
-### Typography rules
-
-- Body copy max width: `65ch`. Never stretch a paragraph across a full 1440px canvas.
-- Storefront hero and campaign headings use Fraunces with tight tracking and weight-driven hierarchy. Search, category, product, cart, checkout, and account headings use Be Vietnam Pro 600/700. Do not use oversized type just to fill space.
-- Workspace headings use Be Vietnam Pro 600/700. **Serif is banned in all dashboards and software UIs.**
-- Prices and numeric columns use JetBrains Mono with tabular figures. Align numbers to the right in tables.
-- Uppercase micro labels always use Be Vietnam Pro 600 with `0.12em` tracking. Do not use uppercase for long sentences.
-- Vietnamese diacritics must render correctly. Never use a font that drops or flattens diacritics.
-- No gradient text, no outlined display text, no letter-spacing on body copy.
-
-## 4. Component Stylings
-
-### Buttons
-
-- Primary: Lacquer Red fill, Warm Porcelain text, 12px radius, height 44px (mobile) / 48px (desktop), horizontal padding 20px/24px. Hover darkens to Lacquer Deep; active state translateY(1px) or scale(0.98). No outer glow.
-- Secondary: transparent fill, 1px Border, Ink text. Hover fills Lacquer Wash.
-- Tertiary: text-only with a 1px Lacquer Red underline offset 4px. Use for low-priority actions.
-- Destructive: Brick fill or Brick outline; never pair with Lacquer Red in the same action group.
-- One primary CTA per viewport. Secondary actions must be visually quieter.
-
-### Product cards
-
-- Image 4:5, 20px radius, Warm Porcelain frame, no heavy shadow.
-- Content: product name (2 lines max), shop name (micro), price (JetBrains Mono), rating (small), optional badge.
-- Category-specific metadata: tech shows chip/SKU/warranty; home appliances show capacity/wattage; kids shows age/safety; fashion shows size/color; beauty shows skin type/volume. Keep metadata to one line plus one badge.
-- No card drop shadow at rest. Use a 1px Border and a border-top metadata row. Hover: image scale 1.02, name underline in Lacquer Red, 180ms ease-out.
-- Product grids may be 4-up on desktop; this is commerce inventory, not a three-equal-card feature row.
-
-### Surfaces and cards
-
-- Storefront surfaces: 24–28px radius, Warm Porcelain fill, 1px Border, warm diffused shadow only when elevation communicates hierarchy.
-- Shadow: `0 20px 50px -30px rgba(60, 42, 24, 0.35)`.
-- Workspace surfaces: 12–14px radius, Warm Porcelain fill, 1px Border. Prefer border-top dividers and negative space over a card around every block.
-- Never nest cards inside cards. Never use card soup to separate every table row.
-
-### Inputs and forms
-
-- Label above input, 12px gap; helper text below; error text below in Brick.
-- Height 48px desktop / 44px mobile; 12px radius; 1px Border; Warm Porcelain fill.
-- Focus: 2px Lacquer Red ring with 2px offset. Error: Brick border plus inline message.
-- No floating labels. No placeholder-only fields. No hidden required markers.
-- Selects and comboboxes use the same height, radius, and focus ring.
-- File uploads show a dashed Border drop zone, file name, size, and a clear remove action.
-
-### Tables
-
-- Workspace tables are ledger-like: micro uppercase header, 56px rows, 1px Border dividers, hover Raw Linen.
-- Numbers right-aligned and monospaced. Status chips sit in their own column. Actions are icon buttons with accessible labels.
-- Sticky header on long tables. Pagination is a simple row count plus previous/next, not a wall of page numbers.
-- Mobile tables collapse into stacked records with the primary value first and secondary metadata below.
-
-### Navigation
-
-- Storefront: sticky top bar, Warm Porcelain or Rice Paper, 1px Border bottom, logo left, search centered, account/cart right. No hamburger on desktop.
-- Workspace: 240px Raw Linen sidebar, 64px top bar. Active item: 3px Lacquer Red left bar plus Lacquer Wash fill. Role badge visible but neutral.
-- Icons: Lucide only, 1.75px stroke, 20px/24px. Do not mix Boxicons, FontAwesome, or Material Symbols in the UI.
-- Mobile navigation: full-width drawer or sheet, 44px targets, clear close action.
-
-### Badges and status
-
-- Pill shape, 12px text, 8px/12px padding. Tinted background plus dark text. Never use a saturated fill for a badge.
-- Examples: Pending = Turmeric wash, Completed = Jade wash, Rejected = Brick wash, Draft = Ink Faint wash.
-
-### Modals, sheets, toasts
-
-- Modal: 24px radius, Warm Porcelain, overlay `rgba(29, 27, 23, 0.48)`, width 480px/640px, focus trapped, one primary action.
-- Bottom sheet on mobile: 24px top radius, drag handle, 44px actions.
-- Toast: bottom-right desktop, bottom-center mobile, 16px radius, 3px left border in status color, no glow.
-- Confirmation dialogs state the consequence in one sentence and name the destructive action.
-
-### Loading, empty, error
-
-- Skeleton shimmer matching exact layout dimensions and radii. No circular spinners.
-- Empty states are composed: a simple line illustration or product still-life, one sentence, one action. Never just “No data”.
-- Error states are inline and specific: what failed, what to do next, and a retry action.
-
-### Charts
-
-- Minimal axes, 1px grid `#E8DFD0`, no drop shadows, no gradients.
-- Primary series Lacquer Red; secondary Jade/Turmeric; labels in Be Vietnam Pro; values in JetBrains Mono.
-- Tooltips use Warm Porcelain, 12px radius, 1px Border. No dark tooltip panels.
-
-### Chat and chatbot
-
-- Conversation list in Raw Linen; active conversation in Warm Porcelain with a Lacquer Red left bar.
-- Message bubbles: Ink text on Warm Porcelain for received, Lacquer Red fill for sent. No tails, no glow.
-- Chatbot panel uses the same language as the rest of the product: helpful, short, no anthropomorphic mascot.
-
-## 5. Hero Section
-
-The hero exists only on the Storefront home. It must feel editorial, warm, and specific to Vietnamese homes.
-
-- Asymmetric split: text 7 columns, visual 5 columns on desktop. Left-aligned; never centered.
-- Headline uses Fraunces with **inline image typography**: small, contextual images sit between words at type height, rounded 16px, with clean spacing. Images never overlap text.
-- Example headline: “Chọn [ảnh laptop] đồ thật kỹ, [ảnh bàn ăn] sống thật êm.”
-- Eyebrow: “Mọi thứ cho tổ ấm Việt” in micro uppercase.
-- Subcopy: one or two lines, max 46ch, Ink Muted. Example: “Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt.”
-- One primary CTA only: “Xem chợ hôm nay”.
-- Visual side: a 2-row asymmetric bento of category-spanning product still-life images — laptop, nồi chiên, xe đẩy, áo thun — each in its own grid cell. No absolute-positioned cards on top of images.
-- No “Scroll to explore”, no scroll arrows, no bouncing chevrons, no secondary “Learn more”.
-- Mobile: inline images stack below the headline; text remains left-aligned; one full-width CTA.
-
-## 6. Layout Principles
-
-### Storefront grid
-
-- Max width `1440px`, centered, horizontal padding 16px mobile / 32px tablet / 48px desktop.
-- 12-column CSS Grid. Hero `7/5`, product detail `7/5`, checkout `7/5`. Use asymmetric whitespace, not decorative offsets.
-- Section rhythm: `clamp(3rem, 8vw, 6rem)` vertical gap. Do not stack every section with the same padding.
-- Search-first: the top-bar search is the primary discovery surface; category tiles are the second. Do not replace search with a decorative hero.
-- Category tiles: Điện tử & công nghệ, Gia dụng & nhà bếp, Nhà cửa & trang trí, Mẹ & bé, Thời trang & phụ kiện, Làm đẹp & chăm sóc. Six tiles on desktop, horizontal scroll on mobile.
-- Voucher and free-shipping strip: a compact utility band below the hero, not a carousel and not a card per voucher.
-- Flash sale: 2-column zig-zag or a single horizontal shelf; never a 3-equal-card feature row.
-- Trust strip: 4 inline facts separated by 1px dividers, not four floating cards. Include “Shop Việt”, “Shop đã kiểm duyệt”, “Đổi trả 7 ngày”, “Giao toàn quốc”.
-- Footer: 4-column information architecture with a Rice Paper ground and a single accent rule.
-
-### Workspace grid
-
-- Sidebar 240px fixed; content 12-column grid; top bar 64px; content padding 24px mobile / 32px desktop; max content width 1440px.
-- KPI strip may use 4 equal data cards because it is data, not a marketing feature row. Below the KPI strip, prefer tables and dividers.
-- Use border-top dividers to separate sections. Avoid wrapping each table or filter group in a card.
-- Filter rails: 280px on desktop, bottom sheet on mobile.
-
-### Responsive rules
-
-- Breakpoints: 375, 390, 768, 1024, 1440.
-- Below 768px: single column, full-width controls, 1rem page padding, 1.5rem gaps. No horizontal overflow.
-- Body text never smaller than 14px. Headlines scale with `clamp()`.
-- All interactive targets at least 44×44px. Full-width primary buttons on mobile.
-- Use `min-h-[100dvh]` for full-height sections, never `h-screen`.
-- No element may overlap another. No absolute-positioned content stacking.
-
-## 7. Motion & Interaction
-
-- Spring physics: `stiffness: 100`, `damping: 20`. No linear easing for interactive elements.
-- Hover: 150–180ms; press: 90ms; page/section reveal: 240–320ms.
-- Lists and grids mount with a 40ms stagger: `animation-delay: calc(var(--index) * 40ms)`.
-- Perpetual micro-loops: status dot pulse, skeleton shimmer, live-order indicator. Keep them subtle and isolated.
-- Animate only `transform` and `opacity`. Never animate `top`, `left`, `width`, or `height`.
-- Respect `prefers-reduced-motion: reduce`; disable loops and long reveals.
-- No custom cursors, no parallax, no scroll-jacking.
-
-## 8. Content & Tone
-
-### Language and tone
-
-- Vietnamese-first. Use “Bạn” for customers. Workspace copy is neutral and concise.
-- Short sentences. Concrete nouns. No exclamation marks in transactional UI.
-- Avoid AI clichés: “Elevate”, “Seamless”, “Unleash”, “Next-Gen”, “Revolutionize”, “Discover more below”.
-- No emojis anywhere in UI copy, alt text, or filenames.
-
-### Formatting
-
-- Prices: `1.290.000 ₫`, `349.000 ₫`, `89.000 ₫`. Use dot separators for thousands and the đồng symbol.
-- Dates: `12/11/2026`. Times: 24-hour, `14:30`.
-- Order codes: `#SN-24817`, `#SN-24831`, `#SN-24904`.
-- Percentages and metrics: organic values such as `47,2%`, `+128`, `3,8/5`. Avoid `99.99%`, `50%`, `1234567`.
-- Phone numbers: `+84 28 3847 1926` or `0393 769 711`.
-
-### Sample content
-
-Products across the six anchor categories:
-
-- “Laptop ASUS Vivobook 14” — `14.990.000 ₫`
-- “Tai nghe Sony WH-CH720N” — `2.490.000 ₫`
-- “Nồi chiên không dầu 5L” — `1.890.000 ₫`
-- “Xe đẩy em bé gấp gọn” — `3.290.000 ₫`
-- “Bỉm quần size L” — `289.000 ₫`
-- “Áo thun cotton compact” — `199.000 ₫`
-- “Serum vitamin C 15%” — `349.000 ₫`
-
-Shops:
-
-- “TechNest” — Điện tử & công nghệ
-- “Bếp Nhà Mình” — Gia dụng & nhà bếp
-- “Nhà Cửa Xinh” — Nhà cửa & trang trí
-- “Mẹ & Bé An Nhiên” — Mẹ & bé
-- “The Local Wardrobe” — Thời trang & phụ kiện
-- “Lá Beauty” — Làm đẹp & chăm sóc
-
-People:
-
-- “Nguyễn Thu Hà”
-- “Trần Minh Quân”
-- “Lê Ngọc Anh”
-- “Phạm Đức Huy”
-
-Category-specific card metadata:
-
-- **Điện tử:** `i5 · 16GB · 512GB`, “Bảo hành 24 tháng”, trade-in or installment note.
-- **Gia dụng:** `5L · 1200W`, “Bảo hành 12 tháng”, energy or capacity note.
-- **Nhà cửa:** dimensions, material, “Lắp đặt tại nhà” where relevant.
-- **Mẹ & bé:** age range, safety standard, “Chính hãng” badge.
-- **Thời trang:** size range, color swatches, “Đổi size 7 ngày”.
-- **Làm đẹp:** skin type, volume, “Chính hãng” badge, ingredient note.
-
-Trust copy:
-
-- “Shop Việt” — local seller badge
-- “Shop đã kiểm duyệt”
-- “Đổi trả 7 ngày”
-- “Giao toàn quốc”
-- “Thanh toán khi nhận hàng”
-
-Empty-state examples:
-
-- Cart: “Giỏ đang trống. Chọn một món cho tổ ấm nhé.”
-- Orders: “Chưa có đơn nào. Món đầu tiên đang chờ bạn.”
-- Search: “Không tìm thấy món phù hợp. Thử một từ khoá khác.”
-- Error: “Không tải được dữ liệu. Thử lại sau ít phút.”
-
-CTA examples:
-
-- “Xem chợ hôm nay”
-- “Thêm vào giỏ”
-- “Mua ngay”
-- “Thanh toán”
-- “Lưu thay đổi”
-- “Gửi yêu cầu”
-
-## 9. Role Modes
-
-| Mode | Typography | Density | Navigation | Notes |
-|---|---|---|---|---|
-| Storefront | Fraunces (hero/campaign) + Be Vietnam Pro | Airy | Top bar | Multi-category marketplace; editorial hero, search-first shelves |
-| Auth | Fraunces + Be Vietnam Pro | Airy | Minimal top bar | Split screen, no centered card |
-| Customer account | Be Vietnam Pro only | Balanced | Top bar + account tabs | Sans-only; no serif in account panels |
-| Seller workspace | Be Vietnam Pro + JetBrains Mono | Dense | 240px sidebar | Orders, products, promotions, wallet |
-| Admin workspace | Be Vietnam Pro + JetBrains Mono | Denser | 240px sidebar | Tables, filters, moderation |
-| Shipper workspace | Be Vietnam Pro + JetBrains Mono | Balanced | 240px sidebar | Deliveries, status, route facts |
-
-Role identity comes from labels, navigation, and content, not from different accent colors. Do not give each role its own primary color.
-
-## 10. Anti-Patterns (Banned)
-
-- No emojis anywhere.
-- No `Inter`, `Poppins`, `Montserrat`, generic system serif, Times New Roman, Georgia, Garamond, or Palatino.
-- No pure black `#000000`; use Ink `#1D1B17`.
-- No purple, violet, neon blue, or magenta UI accents.
-- No gradient text, gradient buttons, neon outer glows, or glassmorphism.
-- No centered hero layouts. No hero text overlapping images.
-- No three equal feature cards in a row.
-- No card soup dashboards; use tables, border-top dividers, and negative space.
-- No single-category boutique framing. The home must read as a multi-category marketplace, not a pottery or handicraft shop.
-- No rainbow category colors or one accent per category. Categories share the same warm neutral system; differentiate with typography, imagery, and labels.
-- No unbounded marketplace clutter: no fake urgency marquees, no wall of vouchers, no every-category-at-once mega menu above the fold.
-- No mixed icon families. Lucide only for UI.
-- No generic names such as “John Doe”, “Acme”, “Nexus”, “SmartFlow”.
-- No fake round metrics such as `99.99%`, `50%`, `1234567`.
-- No AI copy clichés: “Elevate”, “Seamless”, “Unleash”, “Next-Gen”.
-- No filler UI text: “Scroll to explore”, “Swipe down”, scroll arrows, bouncing chevrons.
-- No broken Unsplash links; use the image seeds in section 11.
-- No custom mouse cursors, parallax, scroll-jacking, or excessive z-index.
-- No `h-screen`; use `min-h-[100dvh]`.
-- No circular loading spinners; use skeletal shimmer.
-- No full-page pure white; use Rice Paper or Warm Porcelain.
-
-## 11. Stitch Notes and References
-
-### Files and assets
-
-- Existing logo: `public/image/ShopnestLogoSVG.svg`. Use it as a small full-color mark on a Rice Paper or Warm Porcelain chip. Do not redraw or recolor it.
-- UI icons: Lucide, 1.75px stroke, 20px/24px.
-- Fonts via Google Fonts:
-  - Fraunces: `opsz,wght@9..144,500..700`
-  - Be Vietnam Pro: `wght@400;500;600;700`
-  - JetBrains Mono: `wght@500;600`
-- Image seeds for placeholders:
-  - `https://picsum.photos/seed/shopnest-laptop/800/1000`
-  - `https://picsum.photos/seed/shopnest-audio/800/1000`
-  - `https://picsum.photos/seed/shopnest-airfryer/800/1000`
-  - `https://picsum.photos/seed/shopnest-stroller/800/1000`
-  - `https://picsum.photos/seed/shopnest-fashion/800/1000`
-  - `https://picsum.photos/seed/shopnest-beauty/800/1000`
-  - `https://picsum.photos/seed/shopnest-home/1200/800`
-  - `https://picsum.photos/seed/shopnest-market/1200/800`
-
-### Stitch generation rules
-
-- Generate one screen at a time. Use the screen briefs in `PROMPT.md`.
-- Always request desktop and mobile variants for Storefront, Auth, Customer account, and Shipper screens.
-- For Workspace screens, request desktop first, then tablet `1024×768`; add mobile for Seller orders and Admin orders.
-- Use real Vietnamese copy from `PROMPT.md`. Do not replace it with English placeholder text.
-- Keep the visual hierarchy: one primary action, one accent, one icon family.
-- The home page must show at least four anchor categories in the first viewport. Do not turn it into a single-category boutique.
-- Show “Shop Việt” or “Shop đã kiểm duyệt” where the brief includes it; do not invent trust badges.
-- Do not add features, tabs, metrics, or navigation that are not in the screen brief.
-- If Stitch cannot use a font, keep the same proportions and weight hierarchy; do not substitute a generic system font.
-
-### Handoff
-
-After Stitch generates a screen, name it `SN-<screen-id>-<viewport>` and export it. The implementation phase will map each screen to its route and existing Inertia page. Missing pages found during the audit, such as `Admin/Inventory/Report`, `Admin/Returns/Show`, `Seller/Wallet/*`, and `auth/confirm-password`, are expected to be created during implementation, not inside Stitch.
+| `--sn-color-canvas-deep` | Nền trang storefront và workspace, lùi một bậc để slab nổi | neutral-150 / graphite-950 |
+| `--sn-glass-tint` | Nền slab chrome | trắng 0.78 / graphite 0.62 |
+| `--sn-glass-control` | Nền button content (secondary/outline) | trắng 0.62 / trắng 0.06 |
+| `--sn-glass-control-hover` | Hover của button content | trắng 0.9 / trắng 0.1 |
+| `--sn-glass-field` | Nền control nằm trong slab | surface / trắng 0.07 |
+| `--sn-glass-menu` | Nền menu, đục hơn slab | trắng 0.92 / graphite 0.88 |
+| `--sn-glass-hover` / `--sn-glass-press` | Wash hover/press trên slab | ink 0.06 / 0.10 · trắng 0.07 / 0.11 |
+| `--sn-glass-hairline` | Viền 1px | ink 0.10 / trắng 0.12 |
+| `--sn-glass-highlight` | Inset highlight cạnh trên | trắng 0.90 / trắng 0.08 |
+| `--sn-glass-ring` | Ring quanh badge/avatar nổi trên slab | trắng 0.92 / graphite 0.95 |
+| `--sn-blur-glass` | Blur và saturate của slab (`scale.css`) | blur(22px) saturate(170%) |
+| `--sn-shadow-glass`, `--sn-shadow-float`, `--sn-shadow-accent` | Shadow slab, control nổi, CTA accent (`semantic.css`) | theo theme |
+| `--sn-shadow-card` | Shadow rest của media card (`semantic.css`) | rất mềm, nhuộm nền |
+| `--sn-workspace-wash-warm` / `--sn-workspace-wash-cool` | Quầng material phía sau chrome workspace (`semantic.css`) | accent 0.07 + ink 0.035 / accent 0.06 + trắng 0.03 |
+| `--sn-workspace-wash` | Tổ hợp hai radial-gradient của workspace | dùng `background` trên pseudo fixed |
+
+Dark: kính phải sáng hơn canvas, không bao giờ tối hơn. Light: kính trắng trên giấy lạnh, không dùng trắng 100%.
+
+**Workspace ambient wash**: chrome workspace không có ảnh cuộn phía sau như storefront dock, nên `.sn-workspace::before` giữ một lớp `position: fixed`, `z-index: -1`, nền `--sn-workspace-wash`, `pointer-events: none`. Đây là lớp material duy nhất cho glass workspace: alpha thấp, không blur filter, không animate, tắt trong `forced-colors`. Không dùng lớp này cho nội dung, card hay storefront.
+
+### 6.3 Recipe
+
+Recipe chuẩn của slab nằm ở `components/glass.css` dưới class `.sn-glass-surface` (workspace sidebar/topbar, filter bar). Menu kính vẫn giữ recipe cục bộ `.sn-dropdown--glass`; sheet giữ recipe cục bộ `.sn-sheet` trong `overlay.css`; dock vẫn dùng `.sn-storefront__card` cho tới Phase 9.
+
+```css
+.sn-glass-surface {
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-2xl);
+    background: var(--sn-glass-tint);
+    box-shadow: var(--sn-shadow-glass);
+    backdrop-filter: var(--sn-blur-glass);
+    -webkit-backdrop-filter: var(--sn-blur-glass);
+}
+
+.sn-glass-surface--menu {
+    border-radius: var(--sn-radius-menu);
+    background: var(--sn-glass-menu);
+    box-shadow: inset 0 1px 0 var(--sn-glass-highlight), var(--sn-shadow-overlay);
+}
+```
+
+Mọi bề mặt kính phải kèm ba fallback, tất cả đặt nền đặc và tắt blur:
+
+```css
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sn-glass-surface { background: var(--sn-color-surface); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sn-glass-surface {
+        background: var(--sn-color-surface);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .sn-glass-surface {
+        border-color: CanvasText;
+        background: Canvas;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+```
+
+### 6.4 Tầng và tương phản
+
+- `canvas-deep → slab → field` là tối đa; không thêm tầng kính thứ tư.
+- Nav, label và menu item trên slab dùng `--sn-color-text`; không dùng `text-faint` cho nội dung cần đọc.
+- Khi slab nằm trên ảnh tối, tăng tint lên 0.86 hoặc dùng `--sn-glass-menu` để giữ AA.
+- Accent trên kính chỉ cho CTA, selected và focus ring.
+
+### 6.5 Trạng thái
+
+- Hover: `--sn-glass-hover`, không đổi blur hay shadow lớn.
+- Press: `--sn-glass-press` + `scale(.96)` hoặc dịch 1px.
+- Open/selected: `--sn-glass-press` + hairline, hoặc accent-wash + accent-text.
+- Focus: ring 2px `--sn-color-focus` offset 2; item trong menu dùng inset -2.
+- Chỉ animate màu, opacity, transform; không animate `backdrop-filter`.
+
+### 6.6 Hiệu năng và fallback
+
+- Một `backdrop-filter` cho mỗi vùng; không đặt trên container cuộn dài.
+- Không `will-change` cho slab; không filter trên control con.
+- Luôn có fallback đặc; máy yếu thì giữ tint và bỏ blur, không hy sinh tương phản.
+- Kiểm tra 375px và một máy Android tầm trung trước khi nhân rộng.
+
+### 6.7 Rollout
+
+| Phase | Phạm vi | Trạng thái |
+|---|---|---|
+| 1 | Storefront dock, BrandMark, dropdown locale/account | Xong |
+| 2 | Button, input, field toàn cục | Xong |
+| 3 | Product card: frosted media card + quick-action pill | Xong |
+| 4 | Category card, Price/Rating chip | Xong |
+| 5 | Sheet, dialog, tooltip, filter rail | Xong |
+| 6 | Chat dock, panel, composer | Xong |
+| 7 | Footer, newsletter, legal | Xong |
+| 8 | Workspace sidebar, topbar, ambient wash, filter bar, stat card frosted | Xong |
+| 9 | Data table, QA sweep toàn UI | Tiếp theo |
+| 10 | Ví trả trước: sổ cái + phiếu nạp, admin duyệt nạp | Xong |
+
+- Phase 2 đã hấp thụ override navbar (search pill, icon bubble, login pill) vào `button.css` và `field.css`; layout chỉ còn kích thước và trạng thái mở menu.
+- Phase 6: chat dùng một slab kính cho dock (header/footer chrome), message list giữ nền đặc để đọc; composer và quick reply là field alpha, không blur.
+- Phase 4: category tile dùng cùng recipe frosted với media card, ảnh 1:1 inset 8px bo `--sn-radius-media`, hover nhấc 3px + zoom 1.03, focus chỉ đổi border để ring không fade. Rating chip chỉ dùng ở ProductCard và BuyBox; Price discount chip là pill accent-wash.
+- Phase 5: sheet kính nổi inset 12px bo 28, body cuộn riêng; dialog surface đặc bo 16, close 32px hit 44; tooltip overlay 10 không blur; filter rail đặc bo 12, header/footer cố định, body cuộn và clear all luôn tới được.
+- Trang chủ customer đã redesign full composition: hero “storefront window”, flash sale thành band, suggestions thành rail, brand/editorial/trust bỏ card; mobile shelf 2 cột. Chi tiết ở 6.8.
+- Phase 7: footer là content band đặc, masthead brand 5/7 + newsletter, directory 3 cột, bottom bar; bỏ social placeholder; newsletter có label Email.
+- Layout chỉ được override kích thước, vị trí và radius cục bộ; không override tint, blur hay hairline của primitive.
+
+Checklist cho mỗi component:
+
+1. Phân loại chrome nổi hay nội dung.
+2. Chọn radius theo mục 5.
+3. Chỉ dùng token `--sn-glass-*`; không thêm alpha mới.
+4. Đủ state: default, hover, focus-visible, active, disabled, loading, error, success (nếu có).
+5. Đủ ba fallback.
+6. Ảnh 375/768/1440, light/dark, zoom 200%, reduced motion.
+7. Cập nhật bảng Rollout.
+
+Definition of done cho toàn UI:
+
+- Mọi chrome nổi dùng đúng năm dấu hiệu: tint, blur, hairline, inset highlight, shadow nhuộm màu nền.
+- Không card nội dung nào có blur.
+- `check:css` pass, không hex/alpha ngoài `tokens/`.
+- Không còn menu hay panel nổi nào giữ radius 6 cũ.
+
+### 6.8 Trang chủ
+
+- Hero **storefront wash**: ảnh shop full-bleed `/images/shops/fashionhub.jpg` blur + wash canvas; panel chữ kính 5/12, media 7/12 giữ ảnh dẫn 4:5 + hai ảnh 4:3. Panel dùng `--sn-glass-menu`, radius 20, hairline, inset highlight, shadow-glass, không `backdrop-filter`. Animation: nền scale 1.16 → 1.08 trong 20s, panel/ảnh rise 320ms với stagger 80/160/220/280ms; reduced motion tắt hoàn toàn.
+- Category shelf giữ 6 frosted tile, bỏ eyebrow; flash sale là band có rule accent 2px trên và hairline dưới, không card; best sellers grid 4/2; suggestions rail ngang card 16rem/13rem; brand split ảnh trái 7 cột, copy 5 cột, không card; editorial 5/3/4; trust ledger 4/2/1 cột với hairline dọc.
+- Mobile: best sellers và flash sale 2 cột; rail card 13rem; trust 1 cột dưới 640.
+- Home renders ngay từ Inertia props, không skeleton chặn first paint; `Home.module.css` đã xóa.
+
+### 6.9 Footer
+
+- Footer là content band đặc, nền `--sn-color-canvas-alt`, rule accent 2px trên cùng; **không dùng glass**.
+- Masthead 5/7 ở desktop: brand lockup lớn + câu giới thiệu + contact bên trái; newsletter bên phải với hairline dọc. Mobile stack; compact footer ẩn newsletter và masthead còn 1 cột.
+- Directory 3 cột từ 640px, 1 cột mobile; mỗi cột có top hairline, link 13px muted, hover accent + underline, focus-visible ring.
+- Newsletter dùng label “Email” nhìn thấy, input + button cùng hàng từ 640px; mobile stack. Submit giữ toast hiện tại.
+- Bottom bar: copyright, legal links và PaymentMarks; mobile stack. Social placeholder `href="#"` đã bỏ.
+
+### 6.10 Trang chi tiết sản phẩm
+
+- PDP là **product record**, không dùng tab: top stage rồi `Details`, `Reviews`, `Related products` xếp dọc, mỗi section có top hairline và `scroll-margin-top: calc(var(--sn-header-stuck) + 16px)`.
+- Top stage desktop 6/6, một hairline dọc ở giữa `topGrid` (pseudo-element, không border trên cột) chạy hết chiều cao stage. Mobile thứ tự `intro` (seller, H1, rating, sold), `gallery`, `purchase`.
+- Gallery là frosted media card: `--sn-glass-control` + hairline + inset highlight + `--sn-shadow-card`, bo `--sn-radius-card` 16, ảnh inset 8 bo `--sn-radius-media` 10, tỷ lệ 4:5. Thumb strip cuộn ngang hiển thị toàn bộ ảnh; counter overlay góc dưới trái; prev/next overlay từ 768px; ArrowLeft/ArrowRight trên khung ảnh; wishlist dùng `surface="overlay"`.
+- Cột mua borderless: seller line compact (`ShopIdentity`), H1 28/36px, rating chip link tới `#reviews`, sold count; price line có stock text (success, danger khi hết), variants, quantity, hai CTA 2 cột từ 640px, delivery và assurance ledger 3 dòng. Không lồng panel giá hay panel giao hàng, không lặp shop card ở aside.
+- Sticky cột mua chỉ từ 1024px và viewport cao ≥820px, offset `calc(var(--sn-header-stuck) + var(--sn-space-2))`; dưới ngưỡng đó cột chảy bình thường để CTA không bị cắt.
+- `Details`: mô tả 7 cột + thông số 5 cột ở desktop, 1 cột mobile. Thông số lấy category, brand, SKU và thuộc tính của biến thể đang chọn, không liệt kê toàn bộ giá trị biến thể.
+- `Reviews`: summary 4 cột (score, stars, breakdown tĩnh) + danh sách 8 cột; ngày dùng `created_at_human`; pager chỉ hiện khi `last_page > 1`, gọi `router.get` với `only: ['reviews']`, giữ scroll và cuộn về `#reviews`. Không render button filter khi không có `onFilter`.
+- `Related products`: render `relatedProducts` thật từ controller, `ProductCard` 4 cột desktop / 2 cột mobile, action `Xem tất cả` trỏ category search; ẩn section khi rỗng. Không bịa badge, rating hay giá.
+- Variant không khả dụng bị disable theo variant thật; biến thể hết hàng vẫn chọn được để stock và giá hiển thị đúng. Sản phẩm không có biến thể hoặc hết hàng khoá CTA.
+- Không dùng glass cho section nội dung; chỉ gallery media card dùng recipe frosted, không blur. Ảnh 375/768/1440, light/dark, zoom 200%, reduced motion phải qua.
+
+### 6.11 Trang thanh toán
+
+- Checkout là **app screen**, không hero, không section rhythm marketing; nền tảng là form + order slip. Toàn bộ nội dung, route, field, handler và dữ liệu đơn giữ nguyên.
+- Header: breadcrumb, H1, count badge, mô tả ngắn; **không eyebrow**, không label in hoa. Count badge giữ một pill duy nhất.
+- Stepper là rail 3 cột đều, marker tròn + label, active đậm và accent, không dấu `/`, không thanh accent rời; mobile thu label về `--sn-text-xs`, vẫn một hàng.
+- Desktop 7/5: form bên trái, order slip bên phải. Form dùng hairline section, address và payment là radio card, shipping là ledger row phẳng không card, note là field. Payment marks nằm dưới description, không chen vào head để title không bị ép.
+- Order slip là content card đặc: item ảnh 1:1 48px, promo, totals, total `--sn-text-2xl`, CTA primary. Desktop sticky theo `calc(var(--sn-header-stuck) + var(--sn-space-2))`. Mobile là disclosure, CTA trong card ẩn dưới 1024.
+- Mobile có fixed bottom bar gồm `Tổng cộng`, total và `Đặt hàng`; bar dùng `--sn-z-sticky`, surface đặc, hairline trên, safe-area padding. ChatDock ẩn trên checkout để không đè CTA; footer checkout có bottom padding bằng chiều cao bar.
+- CTA không disabled ở trạng thái nghỉ; click validate, toast và cuộn tới `#shipping-address` hoặc `#payment-method`. Chỉ loading khi request chạy.
+- Ảnh order item lấy `image_url` trước, fallback `/storage/{image_path}`, cuối cùng default; `width`/`height`/`alt=""`/`onError` để không CLS và không lặp tên.
+- Legal note dưới CTA dùng `--sn-text-xs` muted, căn trái, không middle dot; note tiền tệ là hai câu. Trust dùng check icon, không dùng lock cho "Đổi trả".
+- Không card lồng card; không glass cho content; không thêm claim, delivery date hay badge mới. Ảnh 375/768/1024/1440, light/dark, zoom 200%, reduced motion, empty/processing/promo error phải qua.
+
+## 7. Motion
+
+- Duration: instant 90ms · fast 150ms · base 180ms · slow 240ms · reveal 320ms.
+- Easing: `--sn-ease-standard`, `--sn-ease-out`, `--sn-ease-in-out`; stagger 40ms.
+- Chỉ animate `background-color`, `border-color`, `color`, `opacity`, `transform` ngắn. Không loop vô hạn trừ spinner/skeleton có mục đích.
+- Hero trang chủ: wash scale 1.16 → 1.08 trong 20s một lần; panel và ảnh rise 320ms, stagger 80/160/220/280ms; tắt hoàn toàn khi `prefers-reduced-motion`.
+- `base/a11y.css` tắt animation/transition khi `prefers-reduced-motion: reduce` (file duy nhất được dùng `!important`).
+
+## 8. Icon & hình ảnh
+
+- **Lucide** là bộ icon duy nhất; không trộn Boxicons/FontAwesome, không tự vẽ SVG icon.
+- Size: xs 14 · sm 16 · md 20 · lg 24; stroke mặc định 1.75–2.
+- Icon-only button phải có `aria-label`; icon trang trí `aria-hidden="true"`.
+- Ảnh sản phẩm: card 1:1 (khớp asset 900×900), gallery 4:5; mỗi component giữ một tỷ lệ nhất quán, `object-fit: cover`, có `aspect-ratio` để tránh layout shift.
+- Không fake screenshot bằng `<div>`, không overlay pill/tag lên ảnh.
+
+## 9. Nội dung & giọng điệu
+
+- Tiếng Việt là mặc định; mọi key phải có trong cả `lang/vi.json` và `lang/en.json`.
+- Câu ngắn, cụ thể, hướng hành động. Không dùng “Nâng tầm”, “Liền mạch”, “Bứt phá”, “Không chỉ là… mà còn…”.
+- Không em-dash/en-dash trong chuỗi hiển thị; dùng hyphen.
+- Không emoji, không “01 / 02 / 03”, không số liệu bịa.
+- CTA ≤ 3 từ ở desktop; một CTA chính mỗi viewport.
+
+## 10. Trạng thái
+
+Mỗi page có dữ liệu phải xử lý:
+
+| Trạng thái | Cách dùng |
+|---|---|
+| Loading | `Skeleton`/`SkeletonText`; `Table` có skeleton rows; không spinner toàn trang. |
+| Empty | `EmptyState` hoặc `empty` prop của `Table`/`DataTable`; nêu lý do + hành động nếu có. |
+| Error | `ErrorState` hoặc `Alert tone="danger"`; giữ dữ liệu cũ nếu có thể. |
+| Success | `ResultState` (success/pending/failure/cod) hoặc `Toast`; không thay toàn trang bằng màu xanh. |
+
+Không hiển thị `[object Object]`, `NaN`, `undefined`; QA Dusk kiểm tra các chuỗi này.
+
+## 11. Accessibility
+
+- `:focus-visible` toàn cục: outline 2px `--sn-color-focus`, offset 2px.
+- Skip link `.sn-skip-link` ở Storefront/Auth/Workspace → `#main-content`; `main` có `tabIndex={-1}`.
+- Nav dùng `aria-current="page"`; pagination `role="navigation"`; dialog dùng Radix (focus trap + Escape).
+- Icon-only button có `aria-label`; form label luôn hiển thị, error dưới field.
+- Contrast spot-check AA: body 4.5:1, chữ lớn 3:1; không dùng `text-faint` cho nội dung quan trọng.
+- Bàn phím: tab qua mọi control, không bẫy focus ngoài dialog.
+- QA: 375–1440, light/dark, zoom 200%, reduced motion.
+
+## 12. Anti-slop checklist
+
+- [ ] Không gradient trang trí (trừ layered tint của glass và skeleton shimmer có mục đích).
+- [ ] Không indigo/violet, không palette Tailwind mặc định.
+- [ ] Không serif, không italic nhấn mạnh, không highlight vàng.
+- [ ] Glass chỉ trên chrome nổi, không glass cho card nội dung, không glow, không blur lồng nhiều lớp.
+- [ ] Mỗi vùng tối đa một lớp blur; control trong kính dùng `--sn-glass-field`, không blur.
+- [ ] Bề mặt kính có đủ ba fallback đặc và đạt AA khi đặt trên ảnh tối.
+- [ ] Không dùng glass để che hierarchy yếu; bỏ blur mà bố cục vẫn rõ thì mới đúng.
+- [ ] Không card nội dung thường bo ≥16px; media card 16 và slab kính 20 là ngoại lệ, shadow lớn chỉ cho lớp nổi.
+- [ ] Không badge/pill spam; không chip cho mọi nhãn.
+- [ ] Không icon tự vẽ/emoji/số thứ tự trang trí.
+- [ ] Không card lồng card; không card cho từng dòng bảng.
+- [ ] Không kicker in hoa trên mọi heading.
+- [ ] Không status dot nhấp nháy vô hạn, không spinner wobble.
+- [ ] Không callout viền trái màu mè, không icon tile pastel.
+- [ ] Không số liệu bịa, không copy AI.
+- [ ] Không em-dash/en-dash trong chuỗi hiển thị.
+- [ ] Không heading trung tâm + 3 card bằng nhau + “Tìm hiểu thêm”.
+
+## 13. File map
+
+```
+resources/css/
+├── app.css                  # layer order + import
+├── fonts.css                # Be Vietnam Pro self-host
+├── tokens/
+│   ├── primitive.css        # palette gốc (hex duy nhất)
+│   ├── semantic.css         # role token + light/dark
+│   └── scale.css            # type, space, size, radius, shadow, motion, z
+├── base/
+│   ├── reset.css            # reset parity (thay Tailwind preflight)
+│   ├── typography.css
+│   ├── forms.css
+│   └── a11y.css             # focus-visible, skip link, reduced motion
+├── components/              # 10 file primitive toàn cục
+│   ├── button.css  field.css  file-dropzone.css  glass.css  overlay.css
+│   ├── feedback.css  navigation.css  data.css  status.css  typography.css
+├── layouts/
+│   ├── storefront.css  auth.css  account.css  workspace.css
+└── utilities.css            # utility cuối cùng; không lạm dụng
+```
+
+CSS Modules nằm cạnh page/component (`*.module.css`), chỉ chứa layout/visual đặc thù; primitive dùng class `sn-*` toàn cục.
+
+Bề mặt kính của chrome workspace nằm ở `components/glass.css` (`.sn-glass-surface`, có đủ ba fallback). Dock vẫn ở `layouts/storefront.css` và menu ở `components/overlay.css`; Phase 9 sẽ chuyển nốt hai consumer này sang primitive chung.
+
+## 14. Quy tắc kỹ thuật
+
+- Không Tailwind, không `@apply`, không `!important` ngoài `utilities.css`/`base/a11y.css`.
+- Không hex/rgb/hsl ngoài `tokens/primitive.css`; không token primitive trong component.
+- Bề mặt kính mới chỉ dùng token `--sn-glass-*`, kèm đủ ba fallback (`@supports`, `prefers-reduced-transparency`, `forced-colors`); không thêm alpha ngoài `tokens/`.
+- Không đặt `backdrop-filter` trên container cuộn dài hoặc lồng trong slab khác.
+- `html[data-js]` được set trong `app.blade.php` cho progressive enhancement; chỉ dùng để ẩn control hover-only (quick action), không ẩn nội dung chính.
+- Class CSS Module đặt camelCase; compose bằng `cx` từ `@/lib/cx`.
+- `npm run check:css` strict; `types`, `format:check`, `lint`, `build`, `build:ssr`, `php artisan test` trước khi commit.
+- Dusk QA: `php artisan dusk --filter=Phase12QaTest` với `.env.dusk.local` + DB QA local.

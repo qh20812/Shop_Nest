@@ -2,27 +2,26 @@
 
 namespace App\Services;
 
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Promotion;
-use App\Models\PromotionAuditLog;
 use App\Traits\AuditLoggable;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class PromotionService
 {
     use AuditLoggable;
-    
-    public function __construct(private PromotionRuleService $ruleService)
-    {
-    }
+
+    public function __construct(private PromotionRuleService $ruleService) {}
+
     private const TYPE_MAP = [
         'percentage' => 1,
         'fixed_amount' => 2,
@@ -65,10 +64,9 @@ class PromotionService
                 ]);
 
                 $this->syncRelationships($promotion, $productIds, $categoryIds);
-                $this->applyAutomaticStatusUpdates($promotion, $data['is_active'] ?? true);
             });
 
-            if (!$promotion) {
+            if (! $promotion) {
                 throw new Exception('Failed to create promotion');
             }
 
@@ -109,26 +107,44 @@ class PromotionService
 
         try {
             DB::transaction(function () use ($promotion, $data, $productIds, $categoryIds) {
-                $promotion->update([
-                    'name' => $data['name'],
-                    'description' => $data['description'] ?? null,
-                    'type' => $this->mapTypeForStorage($data['type']),
-                    'value' => $data['value'],
-                    'min_order_amount' => $data['minimum_order_value'] ?? null,
-                    'max_discount_amount' => $data['max_discount_amount'] ?? null,
-                    'start_date' => $data['starts_at'],
-                    'end_date' => $data['expires_at'],
-                    'usage_limit' => $data['usage_limit_per_user'] ?? null,
-                    'is_active' => $promotion->is_active,
-                    'selection_rules' => array_key_exists('selection_rules', $data) ? $data['selection_rules'] : $promotion->selection_rules,
-                    'auto_apply_new_products' => array_key_exists('auto_apply_new_products', $data)
-                        ? (bool) $data['auto_apply_new_products']
-                        : $promotion->auto_apply_new_products,
-                ]);
+                $payload = [
+                    'name' => $data['name'] ?? $promotion->name,
+                    'type' => $this->mapTypeForStorage($data['type'] ?? $this->resolveTypeForResponse($promotion->type)),
+                    'value' => $data['value'] ?? $promotion->value,
+                    'start_date' => $data['starts_at'] ?? $promotion->start_date,
+                    'end_date' => $data['expires_at'] ?? $promotion->end_date,
+                ];
+
+                foreach (['description', 'min_order_amount', 'max_discount_amount'] as $field) {
+                    if (array_key_exists($field, $data)) {
+                        $payload[$field] = $data[$field];
+                    }
+                }
+
+                if (array_key_exists('minimum_order_value', $data)) {
+                    $payload['min_order_amount'] = $data['minimum_order_value'];
+                }
+
+                if (array_key_exists('usage_limit_per_user', $data)) {
+                    $payload['usage_limit'] = $data['usage_limit_per_user'];
+                }
+
+                if (array_key_exists('is_active', $data)) {
+                    $payload['is_active'] = (bool) $data['is_active'];
+                }
+
+                if (array_key_exists('selection_rules', $data)) {
+                    $payload['selection_rules'] = $data['selection_rules'];
+                }
+
+                if (array_key_exists('auto_apply_new_products', $data)) {
+                    $payload['auto_apply_new_products'] = (bool) $data['auto_apply_new_products'];
+                }
+
+                $promotion->update($payload);
 
                 $this->syncRelationships($promotion, $productIds, $categoryIds);
                 $promotion->refresh();
-                $this->applyAutomaticStatusUpdates($promotion, $data['is_active'] ?? true);
             });
 
             // Log audit trail
@@ -193,6 +209,7 @@ class PromotionService
             $this->logAudit('deleted', $promotion, $promotion->toArray(), []);
 
             $promotion->delete();
+
             return true;
         } catch (Exception $exception) {
             Log::error('Failed to delete promotion', [
@@ -223,22 +240,22 @@ class PromotionService
     {
         $locale = app()->getLocale();
 
-        return \App\Models\Product::select('product_id', 'name', 'sku')
+        return Product::select('product_id', 'name', 'sku')
             ->orderBy('product_id')
             ->get()
-            ->map(function (\App\Models\Product $product) use ($locale) {
+            ->map(function (Product $product) use ($locale) {
                 $name = $product->name;
-                
+
                 // If name is an array/object, extract the locale value
                 if (is_array($name)) {
                     $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
                 }
-                
+
                 // Ensure it's a string
-                if (!is_string($name)) {
+                if (! is_string($name)) {
                     $name = 'Unnamed';
                 }
-                
+
                 return [
                     'product_id' => $product->product_id,
                     'name' => $name,
@@ -255,23 +272,23 @@ class PromotionService
     {
         $locale = app()->getLocale();
 
-        return \App\Models\Category::select('category_id', 'name')
+        return Category::select('category_id', 'name')
             ->whereNull('parent_category_id')
             ->orderBy('category_id')
             ->get()
-            ->map(function (\App\Models\Category $category) use ($locale) {
+            ->map(function (Category $category) use ($locale) {
                 $name = $category->name;
-                
+
                 // If name is an array/object, extract the locale value
                 if (is_array($name)) {
                     $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
                 }
-                
+
                 // Ensure it's a string
-                if (!is_string($name)) {
+                if (! is_string($name)) {
                     $name = 'Unnamed';
                 }
-                
+
                 return [
                     'category_id' => $category->category_id,
                     'name' => $name,
@@ -287,19 +304,19 @@ class PromotionService
     {
         $locale = app()->getLocale();
 
-        return $products->map(function (\App\Models\Product $product) use ($locale) {
+        return $products->map(function (Product $product) use ($locale) {
             $name = $product->name;
-            
+
             // If name is an array/object, extract the locale value
             if (is_array($name)) {
                 $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
             }
-            
+
             // Ensure it's a string
-            if (!is_string($name)) {
+            if (! is_string($name)) {
                 $name = 'Unnamed';
             }
-            
+
             return [
                 'product_id' => $product->product_id,
                 'name' => $name,
@@ -315,19 +332,19 @@ class PromotionService
     {
         $locale = app()->getLocale();
 
-        return $categories->map(function (\App\Models\Category $category) use ($locale) {
+        return $categories->map(function (Category $category) use ($locale) {
             $name = $category->name;
-            
+
             // If name is an array/object, extract the locale value
             if (is_array($name)) {
                 $name = $name[$locale] ?? $name['en'] ?? reset($name) ?? 'Unnamed';
             }
-            
+
             // Ensure it's a string
-            if (!is_string($name)) {
+            if (! is_string($name)) {
                 $name = 'Unnamed';
             }
-            
+
             return [
                 'category_id' => $category->category_id,
                 'name' => $name,
@@ -342,8 +359,10 @@ class PromotionService
     {
         if (is_numeric($type)) {
             $reversed = array_flip(self::TYPE_MAP);
+
             return $reversed[(int) $type] ?? 'percentage';
         }
+
         return $type ? (string) $type : 'percentage';
     }
 
@@ -384,10 +403,10 @@ class PromotionService
      */
     private function validateBusinessRules(array $data, ?Promotion $promotion = null): void
     {
-        $validator = \Illuminate\Support\Facades\Validator::make($data, []);
+        $validator = Validator::make($data, []);
 
         $validator->after(function ($validator) use ($data, $promotion) {
-            if (($data['type'] ?? null) && !array_key_exists($data['type'], self::TYPE_MAP)) {
+            if (($data['type'] ?? null) && ! array_key_exists($data['type'], self::TYPE_MAP)) {
                 $validator->errors()->add('type', __('The selected promotion type is not supported.'));
             }
 
@@ -438,47 +457,6 @@ class PromotionService
     }
 
     /**
-     * Apply automatic status updates
-     */
-    private function applyAutomaticStatusUpdates(?Promotion $promotion = null, bool $requestedActive = true): void
-    {
-        $now = Carbon::now();
-
-        if ($promotion) {
-            $shouldBeActive = $this->shouldRemainActive($promotion, $requestedActive, $now);
-
-            if ($promotion->is_active !== $shouldBeActive) {
-                $promotion->is_active = $shouldBeActive;
-                $promotion->save();
-            }
-
-            return;
-        }
-
-        Promotion::where('end_date', '<', $now)->update(['is_active' => false]);
-        Promotion::where('start_date', '>', $now)->update(['is_active' => false]);
-    }
-
-    /**
-     * Check if promotion should remain active
-     */
-    private function shouldRemainActive(Promotion $promotion, bool $requestedActive, Carbon $moment): bool
-    {
-        $start = Carbon::parse($promotion->start_date);
-        $end = Carbon::parse($promotion->end_date);
-
-        if ($end->lt($moment)) {
-            return false;
-        }
-
-        if ($start->gt($moment)) {
-            return false;
-        }
-
-        return $requestedActive;
-    }
-
-    /**
      * Resolve localized "name" attribute for translatable models
      */
     private function resolveLocalizedName(Model $model, string $locale): string
@@ -517,7 +495,7 @@ class PromotionService
                 if (is_string($translated) && $translated !== '') {
                     return $translated;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Silently fail and continue
             }
         }
@@ -535,7 +513,7 @@ class PromotionService
      */
     private function mapTypeForStorage(string $type): int
     {
-        if (!array_key_exists($type, self::TYPE_MAP)) {
+        if (! array_key_exists($type, self::TYPE_MAP)) {
             throw ValidationException::withMessages([
                 'type' => __('The selected promotion type is not supported.'),
             ]);

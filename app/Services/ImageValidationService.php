@@ -3,16 +3,19 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ImageValidationService
 {
     // Image type constants
     public const TYPE_BANNER = 'banner';
+
     public const TYPE_PRODUCT = 'product';
+
     public const TYPE_CATEGORY = 'category';
+
     public const TYPE_AVATAR = 'avatar';
+
     public const TYPE_LOGO = 'logo';
 
     // Validation rules for each image type
@@ -21,9 +24,9 @@ class ImageValidationService
             'max_size' => 2048, // KB (2MB)
             'mime_types' => ['image/jpeg', 'image/png', 'image/webp'],
             'aspect_ratios' => [
-                ['ratio' => 16/9, 'tolerance' => 0.1], // Landscape banner
-                ['ratio' => 4/1, 'tolerance' => 0.1],  // Wide banner
-                ['ratio' => 3/1, 'tolerance' => 0.1],  // Ultra wide banner
+                ['ratio' => 16 / 9, 'tolerance' => 0.1], // Landscape banner
+                ['ratio' => 4 / 1, 'tolerance' => 0.1],  // Wide banner
+                ['ratio' => 3 / 1, 'tolerance' => 0.1],  // Ultra wide banner
             ],
             'min_width' => 800,
             'min_height' => 200,
@@ -33,9 +36,9 @@ class ImageValidationService
             'max_size' => 1024, // KB (1MB)
             'mime_types' => ['image/jpeg', 'image/png', 'image/webp'],
             'aspect_ratios' => [
-                ['ratio' => 1/1, 'tolerance' => 0.1], // Square
-                ['ratio' => 4/3, 'tolerance' => 0.1], // Standard photo
-                ['ratio' => 3/4, 'tolerance' => 0.1], // Portrait
+                ['ratio' => 1 / 1, 'tolerance' => 0.1], // Square
+                ['ratio' => 4 / 3, 'tolerance' => 0.1], // Standard photo
+                ['ratio' => 3 / 4, 'tolerance' => 0.1], // Portrait
             ],
             'min_width' => 300,
             'min_height' => 300,
@@ -45,8 +48,8 @@ class ImageValidationService
             'max_size' => 1024, // KB (1MB)
             'mime_types' => ['image/jpeg', 'image/png', 'image/webp'],
             'aspect_ratios' => [
-                ['ratio' => 1/1, 'tolerance' => 0.1], // Square
-                ['ratio' => 4/3, 'tolerance' => 0.1], // Standard
+                ['ratio' => 1 / 1, 'tolerance' => 0.1], // Square
+                ['ratio' => 4 / 3, 'tolerance' => 0.1], // Standard
             ],
             'min_width' => 200,
             'min_height' => 200,
@@ -56,7 +59,7 @@ class ImageValidationService
             'max_size' => 512, // KB (512KB)
             'mime_types' => ['image/jpeg', 'image/png', 'image/webp'],
             'aspect_ratios' => [
-                ['ratio' => 1/1, 'tolerance' => 0.05], // Square only
+                ['ratio' => 1 / 1, 'tolerance' => 0.05], // Square only
             ],
             'min_width' => 100,
             'min_height' => 100,
@@ -68,9 +71,9 @@ class ImageValidationService
             'max_size' => 1024, // KB (1MB)
             'mime_types' => ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
             'aspect_ratios' => [
-                ['ratio' => 1/1, 'tolerance' => 0.2], // Square-ish
-                ['ratio' => 4/3, 'tolerance' => 0.2], // Rectangle
-                ['ratio' => 3/1, 'tolerance' => 0.2], // Wide
+                ['ratio' => 1 / 1, 'tolerance' => 0.2], // Square-ish
+                ['ratio' => 4 / 3, 'tolerance' => 0.2], // Rectangle
+                ['ratio' => 3 / 1, 'tolerance' => 0.2], // Wide
             ],
             'min_width' => 100,
             'min_height' => 50,
@@ -81,13 +84,11 @@ class ImageValidationService
     /**
      * Validate an uploaded image file for a specific type
      *
-     * @param UploadedFile $file
-     * @param string $imageType
      * @throws ValidationException
      */
     public function validateImage(UploadedFile $file, string $imageType): void
     {
-        if (!isset(self::VALIDATION_RULES[$imageType])) {
+        if (! isset(self::VALIDATION_RULES[$imageType])) {
             throw ValidationException::withMessages([
                 'image' => "Invalid image type: {$imageType}",
             ]);
@@ -102,8 +103,8 @@ class ImageValidationService
         }
 
         // Validate MIME type
-        if (!in_array($file->getMimeType(), $rules['mime_types'])) {
-            $allowedTypes = implode(', ', array_map(function($type) {
+        if (! in_array($file->getMimeType(), $rules['mime_types'])) {
+            $allowedTypes = implode(', ', array_map(function ($type) {
                 return str_replace('image/', '', $type);
             }, $rules['mime_types']));
             $errors['image'][] = "Image must be one of: {$allowedTypes} for {$rules['description']}.";
@@ -112,7 +113,7 @@ class ImageValidationService
         // Get image dimensions
         try {
             $imageInfo = getimagesize($file->getRealPath());
-            if (!$imageInfo) {
+            if (! $imageInfo) {
                 $errors['image'][] = 'Invalid image file.';
                 throw ValidationException::withMessages($errors);
             }
@@ -139,7 +140,7 @@ class ImageValidationService
             }
 
             // Validate aspect ratio
-            if (!empty($rules['aspect_ratios'])) {
+            if (! empty($rules['aspect_ratios'])) {
                 $actualRatio = $width / $height;
                 $validRatio = false;
 
@@ -153,15 +154,20 @@ class ImageValidationService
                     }
                 }
 
-                if (!$validRatio) {
-                    $ratioDescriptions = array_map(function($ratioConfig) {
+                if (! $validRatio) {
+                    $ratioDescriptions = array_map(function ($ratioConfig) {
                         $ratio = $ratioConfig['ratio'];
-                        if ($ratio == 1) return '1:1 (square)';
-                        if ($ratio > 1) return number_format($ratio, 1) . ':1 (landscape)';
-                        return '1:' . number_format(1/$ratio, 1) . ' (portrait)';
+                        if ($ratio == 1) {
+                            return '1:1 (square)';
+                        }
+                        if ($ratio > 1) {
+                            return number_format($ratio, 1).':1 (landscape)';
+                        }
+
+                        return '1:'.number_format(1 / $ratio, 1).' (portrait)';
                     }, $rules['aspect_ratios']);
 
-                    $errors['image'][] = "Image aspect ratio should be " . implode(' or ', $ratioDescriptions) . " for {$rules['description']}. Current: " . number_format($actualRatio, 2) . ':1';
+                    $errors['image'][] = 'Image aspect ratio should be '.implode(' or ', $ratioDescriptions)." for {$rules['description']}. Current: ".number_format($actualRatio, 2).':1';
                 }
             }
 
@@ -169,16 +175,13 @@ class ImageValidationService
             $errors['image'][] = 'Unable to process image file.';
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw ValidationException::withMessages($errors);
         }
     }
 
     /**
      * Get validation rules for a specific image type
-     *
-     * @param string $imageType
-     * @return array|null
      */
     public function getValidationRules(string $imageType): ?array
     {
@@ -187,8 +190,6 @@ class ImageValidationService
 
     /**
      * Get all available image types
-     *
-     * @return array
      */
     public function getAvailableTypes(): array
     {
@@ -197,27 +198,21 @@ class ImageValidationService
 
     /**
      * Get human-readable description for an image type
-     *
-     * @param string $imageType
-     * @return string|null
      */
     public function getTypeDescription(string $imageType): ?string
     {
         $rules = self::getValidationRules($imageType);
+
         return $rules ? $rules['description'] : null;
     }
 
     /**
      * Generate Laravel validation rules array for form requests
-     *
-     * @param string $imageType
-     * @param bool $required
-     * @return array
      */
     public function generateValidationRules(string $imageType, bool $required = true): array
     {
         $rules = self::getValidationRules($imageType);
-        if (!$rules) {
+        if (! $rules) {
             return $required ? ['required'] : ['nullable'];
         }
 
@@ -230,27 +225,35 @@ class ImageValidationService
         }
 
         $laravelRules[] = 'image';
-        $laravelRules[] = 'max:' . $rules['max_size'];
+        $laravelRules[] = 'max:'.$rules['max_size'];
 
         // Convert MIME types to Laravel format
-        $mimeTypes = array_map(function($mime) {
+        $mimeTypes = array_map(function ($mime) {
             return str_replace('image/', '', $mime);
         }, $rules['mime_types']);
 
-        $laravelRules[] = 'mimes:' . implode(',', $mimeTypes);
+        $laravelRules[] = 'mimes:'.implode(',', $mimeTypes);
 
         // Add dimensions rule if we have specific requirements
         if (isset($rules['min_width']) || isset($rules['max_width']) ||
             isset($rules['min_height']) || isset($rules['max_height'])) {
 
             $dimensions = [];
-            if (isset($rules['min_width'])) $dimensions[] = "min_width={$rules['min_width']}";
-            if (isset($rules['max_width'])) $dimensions[] = "max_width={$rules['max_width']}";
-            if (isset($rules['min_height'])) $dimensions[] = "min_height={$rules['min_height']}";
-            if (isset($rules['max_height'])) $dimensions[] = "max_height={$rules['max_height']}";
+            if (isset($rules['min_width'])) {
+                $dimensions[] = "min_width={$rules['min_width']}";
+            }
+            if (isset($rules['max_width'])) {
+                $dimensions[] = "max_width={$rules['max_width']}";
+            }
+            if (isset($rules['min_height'])) {
+                $dimensions[] = "min_height={$rules['min_height']}";
+            }
+            if (isset($rules['max_height'])) {
+                $dimensions[] = "max_height={$rules['max_height']}";
+            }
 
-            if (!empty($dimensions)) {
-                $laravelRules[] = 'dimensions:' . implode(',', $dimensions);
+            if (! empty($dimensions)) {
+                $laravelRules[] = 'dimensions:'.implode(',', $dimensions);
             }
         }
 

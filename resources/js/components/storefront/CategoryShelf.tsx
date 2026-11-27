@@ -1,11 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Baby, CookingPot, Laptop, Shirt, Sofa, Sparkles, type LucideIcon } from 'lucide-react';
+import { Baby, CookingPot, Laptop, Shirt, Sofa, Sparkles, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { TextLink } from '@/components/ui/text-link';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './storefront.module.css';
 
 type CategoryItem = {
     id?: number | string | null;
@@ -21,13 +24,13 @@ type CategoryShelfProps = {
     className?: string;
 };
 
-const fallbackCategories: CategoryItem[] = [
-    { name: 'Điện tử & công nghệ' },
-    { name: 'Gia dụng & nhà bếp' },
-    { name: 'Nhà cửa & trang trí' },
-    { name: 'Mẹ & bé' },
-    { name: 'Thời trang & phụ kiện' },
-    { name: 'Làm đẹp & chăm sóc' },
+const fallbackCategoryKeys = [
+    'Electronics & technology',
+    'Home & kitchen',
+    'Home & living',
+    'Mother & baby',
+    'Fashion & accessories',
+    'Beauty & care',
 ];
 
 function getCategoryIcon(name: string): LucideIcon {
@@ -46,25 +49,25 @@ function getCategoryHref(category: CategoryItem): string {
     return category.id ? `/search?category_ids[]=${category.id}` : `/search?search=${encodeURIComponent(category.name)}`;
 }
 
-export function CategoryShelf({ categories = [], title = 'Danh mục chủ lực', action, className }: CategoryShelfProps) {
+export function CategoryShelf({ categories = [], title, action, className }: CategoryShelfProps) {
+    const { t } = useTranslation();
+    const fallbackCategories: CategoryItem[] = fallbackCategoryKeys.map((key) => ({ name: t(key) }));
     const items = (categories.length > 0 ? categories : fallbackCategories).slice(0, 6);
 
     return (
-        <section id="danh-muc" className={cn('py-10 md:py-14', className)}>
+        <section id="danh-muc" className={cx(styles.categoryShelf, className)}>
             <PageContainer>
                 <SectionHeader
-                    eyebrow="Hệ thống sản phẩm"
-                    title={title}
+                    title={title ?? t('Featured categories')}
                     action={
                         action ?? (
                             <TextLink href="/search" tone="muted" underline={false}>
-                                Tất cả danh mục
-                                <ArrowRight aria-hidden="true" className="size-4" />
+                                {t('All categories')}
                             </TextLink>
                         )
                     }
                 />
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <div className={styles.categoryGrid}>
                     {items.map((category) => {
                         const Icon = getCategoryIcon(category.name);
 
@@ -72,26 +75,18 @@ export function CategoryShelf({ categories = [], title = 'Danh mục chủ lực
                             <Link
                                 key={`${category.id ?? category.name}`}
                                 href={getCategoryHref(category)}
-                                className="group focus-ring flex flex-col rounded-card border border-border bg-warm-porcelain p-3 transition-colors duration-150 ease-nep hover:border-lacquer-red"
+                                data-slot="category-tile"
+                                className={styles.categoryTile}
                             >
-                                <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-card bg-raw-linen">
+                                <div className={styles.categoryMedia}>
                                     {category.imageUrl ? (
-                                        <img
-                                            src={category.imageUrl}
-                                            alt={category.name}
-                                            loading="lazy"
-                                            className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                                        />
+                                        <img src={category.imageUrl} alt="" loading="lazy" decoding="async" className={styles.categoryImage} />
                                     ) : (
-                                        <span className="flex size-full items-center justify-center text-ink-muted">
-                                            <Icon aria-hidden="true" className="size-8" />
-                                        </span>
+                                        <Icon aria-hidden="true" className={styles.categoryIcon} />
                                     )}
                                 </div>
-                                <h3 className="line-clamp-2 text-body-md font-semibold text-ink transition-colors group-hover:text-lacquer-red">
-                                    {category.name}
-                                </h3>
-                                <span className="mt-1 font-mono text-label-code text-ink-faint">Xem món</span>
+                                <h3 className={styles.categoryName}>{category.name}</h3>
+                                <span className={styles.categoryMeta}>{t('Browse products')}</span>
                             </Link>
                         );
                     })}

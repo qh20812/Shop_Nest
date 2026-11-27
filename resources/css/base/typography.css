@@ -1,0 +1,29 @@
+/*
+ * Bảng Hiệu — element typography.
+ * Only body, links and labels are scoped to `.sn-shell` until Phase 11; heading
+ * and metadata styles belong to the typography primitives. This keeps the 41
+ * Element typography is scoped to `.sn-shell`; the legacy workspace CSS
+ * (Page.css) was removed in Phase 11.
+ */
+
+@layer sn-base {
+    .sn-shell {
+        min-height: 100dvh;
+        background: var(--sn-color-canvas);
+        color: var(--sn-color-text);
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-base);
+        line-height: var(--sn-leading-normal);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .sn-shell a {
+        color: var(--sn-color-accent-text);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+    }
+
+    .sn-shell a:hover {
+        color: var(--sn-color-accent-hover);
+    }
+}

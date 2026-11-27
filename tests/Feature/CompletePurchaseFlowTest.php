@@ -35,7 +35,7 @@ class CompletePurchaseFlowTest extends TestCase
             'is_default' => true,
         ]);
 
-        $product = Product::factory()->create(['status' => 1]);
+        $product = Product::factory()->create(['status' => 'published']);
 
         $this->variant = ProductVariant::factory()->create([
             'product_id' => $product->product_id,

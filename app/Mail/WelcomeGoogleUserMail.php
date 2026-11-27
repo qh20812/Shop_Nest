@@ -3,66 +3,41 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
-class WelcomeGoogleUserMail extends Mailable
+/**
+ * Email chào mừng cho tài khoản tạo bằng Google.
+ *
+ * Không gửi mật khẩu: tài khoản Google đăng nhập bằng Google. Nếu người dùng
+ * muốn mật khẩu riêng, email hướng dẫn dùng "Quên mật khẩu" — luồng này không
+ * yêu cầu mật khẩu hiện tại (khác với trang Cài đặt → Mật khẩu).
+ */
+class WelcomeGoogleUserMail extends BaseMail
 {
-    use Queueable, SerializesModels;
-
-    /**
-     * The user instance.
-     */
-    public User $user;
-
-    /**
-     * The generated password.
-     */
-    public string $password;
-
-    /**
-     * Create a new message instance.
-     */
-    public function __construct(User $user, string $password)
-    {
-        $this->user = $user;
-        $this->password = $password;
+    public function __construct(
+        public User $user,
+        ?string $locale = null,
+    ) {
+        parent::__construct($locale ?? $user->preferredLocale());
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Shop Nest - Your Account Details',
+            subject: __('mail.google_welcome.subject'),
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.welcome_google_user',
+            markdown: 'emails.welcome_google_user',
             with: [
-                'user' => $this->user,
-                'password' => $this->password,
+                'name' => $this->user->mailName(),
+                'email' => $this->user->email,
+                'url' => route('login'),
             ],
         );
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    public function attachments(): array
-    {
-        return [];
     }
 }

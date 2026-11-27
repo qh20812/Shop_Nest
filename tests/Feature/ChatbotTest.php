@@ -6,8 +6,8 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 
 class ChatbotTest extends TestCase
 {
@@ -16,7 +16,7 @@ class ChatbotTest extends TestCase
     #[Test]
     public function unauthenticated_user_cannot_access_chatbot(): void
     {
-    $response = $this->postJson('/chatbot/message', [
+        $response = $this->postJson('/chatbot/message', [
             'message' => 'Hello chatbot',
         ]);
 
@@ -31,7 +31,7 @@ class ChatbotTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-    $response = $this->actingAs($user)->postJson('/chatbot/message', [
+        $response = $this->actingAs($user)->postJson('/chatbot/message', [
             'message' => 'Hello chatbot',
         ]);
 
@@ -59,7 +59,7 @@ class ChatbotTest extends TestCase
         ]);
         $this->attachRole($user, 'Admin', 'Quản trị');
 
-    $response = $this->actingAs($user)->postJson('/chatbot/message', [
+        $response = $this->actingAs($user)->postJson('/chatbot/message', [
             'message' => 'Cho tôi biết doanh thu tháng này.',
         ]);
 
@@ -91,7 +91,7 @@ class ChatbotTest extends TestCase
         ]);
         $this->attachRole($user, 'Admin', 'Quản trị');
 
-    $response = $this->actingAs($user)->postJson('/chatbot/message', []);
+        $response = $this->actingAs($user)->postJson('/chatbot/message', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['message']);
@@ -120,6 +120,33 @@ class ChatbotTest extends TestCase
             ->assertJsonPath('data.provider', 'fallback')
             ->assertJsonPath('data.role', 'admin')
             ->assertJsonPath('data.reply', fn ($value) => is_string($value) && $value !== '');
+
+        $this->assertArrayNotHasKey('failures', $response->json('data.usage') ?? []);
+        $this->assertStringNotContainsString('Internal Server Error', $response->getContent());
+    }
+
+    #[Test]
+    public function provider_failure_details_are_not_exposed_when_fallback_is_disabled(): void
+    {
+        $this->configureProviders();
+        config(['services.chatbot.fallback_enabled' => false]);
+
+        Http::fake([
+            '*' => Http::response('Internal Server Error', 500),
+        ]);
+
+        /** @var User $user */
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $this->attachRole($user, 'Admin', 'Quản trị');
+
+        $response = $this->actingAs($user)->postJson('/chatbot/message', [
+            'message' => 'Test failure.',
+        ]);
+
+        $response->assertStatus(503)->assertJsonMissingPath('context');
+        $this->assertStringNotContainsString('Internal Server Error', $response->getContent());
     }
 
     private function configureProviders(): void
@@ -131,7 +158,7 @@ class ChatbotTest extends TestCase
             'services.openai.timeout' => 5,
             'services.groq.api_key' => 'test-groq-key',
             'services.groq.base_url' => 'https://api.groq.com/openai/v1',
-            'services.groq.default_model' => 'llama3-70b-8192',
+            'services.groq.default_model' => 'qwen/qwen3.8-27b',
             'services.groq.timeout' => 5,
         ]);
     }

@@ -1,0 +1,15 @@
+/*
+ * Bảng Hiệu — form element defaults.
+ * Only the label baseline is global inside `.sn-shell`; input/button/select
+ * visuals belong to the primitives in components/.
+ */
+
+@layer sn-base {
+    .sn-shell label {
+        display: inline-block;
+        font-size: var(--sn-text-xs);
+        font-weight: var(--sn-weight-medium);
+        line-height: var(--sn-leading-snug);
+        color: var(--sn-color-text);
+    }
+}

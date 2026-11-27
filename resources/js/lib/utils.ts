@@ -1,10 +1,3 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
-
 export function resolveCurrencyCode(value: unknown, fallback: string = 'VND'): string {
     if (typeof value === 'string' && value.trim() !== '') {
         return value.toUpperCase();
@@ -26,7 +19,10 @@ interface FormatCurrencyOptions {
     rates: Record<string, number>;
     locale: string;
     abbreviate?: boolean;
+    fractionDigits?: number;
 }
+
+const ZERO_DECIMAL_CURRENCIES = new Set(['VND', 'JPY', 'KRW']);
 
 export function formatCurrency(value: number, options: FormatCurrencyOptions): string {
     // Handle null or undefined inputs
@@ -104,10 +100,29 @@ export function formatCurrency(value: number, options: FormatCurrencyOptions): s
     }
 
     // Format without abbreviation
+    const fractionDigits = options.fractionDigits ?? 2;
+
     return new Intl.NumberFormat(options.locale, {
         style: 'currency',
         currency: options.to,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
     }).format(convertedValue);
+}
+
+/**
+ * Format an amount that is already in `currencyCode` (no conversion), with
+ * currency-appropriate decimals, e.g. 1499000 + VND -> "1.499.000 ₫".
+ */
+export function formatMoney(value: number | null | undefined, currencyCode: string, locale = 'vi'): string {
+    const code = resolveCurrencyCode(currencyCode);
+    const amount = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+    return formatCurrency(amount, {
+        from: code,
+        to: code,
+        rates: {},
+        locale: locale.startsWith('vi') ? 'vi-VN' : locale,
+        fractionDigits: ZERO_DECIMAL_CURRENCIES.has(code) ? 0 : 2,
+    });
 }

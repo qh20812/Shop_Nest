@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 class InventoryReportService
 {
     private const CACHE_PREFIX = 'inventory_report_';
+
     private const CACHE_TTL_SECONDS = 3600; // 1 hour
 
     /**
@@ -174,7 +175,7 @@ class InventoryReportService
      */
     private function cacheKey(string $segment): string
     {
-        return self::CACHE_PREFIX . $segment;
+        return self::CACHE_PREFIX.$segment;
     }
 
     /**

@@ -5,16 +5,17 @@ namespace Database\Factories;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Conversation>
+ * @extends Factory<Conversation>
  */
 class ConversationFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     * @var class-string<Model>
      */
     protected $model = Conversation::class;
 
@@ -26,7 +27,7 @@ class ConversationFactory extends Factory
     public function definition(): array
     {
         $user = User::where('role', 'user')->inRandomOrder()->first();
-    $receiver = User::where('role', 'seller')->inRandomOrder()->first();
+        $receiver = User::where('role', 'seller')->inRandomOrder()->first();
 
         return [
             'user_id' => $user->id ?? User::factory()->create(['role' => 'user'])->id,

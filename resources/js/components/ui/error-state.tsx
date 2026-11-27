@@ -1,6 +1,6 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 import { Button } from './button';
 
@@ -20,21 +20,18 @@ export function ErrorState({
     className,
 }: ErrorStateProps) {
     return (
-        <div
-            className={cn(
-                'flex w-full flex-col items-center justify-center rounded-card border border-border bg-warm-porcelain px-6 py-12 text-center',
-                className,
-            )}
-        >
-            <span className="mb-4 flex size-14 items-center justify-center rounded-pill bg-brick-soft text-brick">
-                <AlertTriangle aria-hidden="true" className="size-7" />
+        <div data-slot="error-state" data-tone="danger" className={cx('sn-empty', className)}>
+            <span className="sn-empty__icon-wrap">
+                <AlertTriangle aria-hidden="true" className="sn-empty__icon" />
             </span>
-            <h3 className="text-headline-3 text-ink">{title}</h3>
-            <p className="mt-2 max-w-md text-body-md text-ink-muted">{description}</p>
+            <h3 className="sn-empty__title">{title}</h3>
+            <p className="sn-empty__description">{description}</p>
             {onRetry && (
-                <Button variant="outline" size="sm" className="mt-6" leftIcon={RefreshCw} onClick={onRetry}>
-                    {retryLabel}
-                </Button>
+                <div className="sn-empty__actions">
+                    <Button variant="outline" size="sm" leftIcon={RefreshCw} onClick={onRetry}>
+                        {retryLabel}
+                    </Button>
+                </div>
             )}
         </div>
     );

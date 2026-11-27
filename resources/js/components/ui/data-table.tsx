@@ -1,80 +1,91 @@
-import React from "react";
-import { useTranslation } from "@/lib/i18n";
+import { Info } from 'lucide-react';
+import * as React from 'react';
 
-// T is a generic type for the data in each row, e.g., User or Category
-interface ColumnDef<T> {
-  header: string; // The text for the <th>
-  accessorKey?: keyof T; // The key to access data from the row object
-  cell?: (row: T) => React.ReactNode; // Custom render function for the cell
+import { renderIcon, type IconProp } from '@/lib/icon';
+import { useTranslation } from '@/lib/i18n';
+
+import { Table, type ColumnDef as TableColumnDef } from './table';
+
+import styles from './data-table.module.css';
+
+export interface DataTableColumn<T> {
+    header: React.ReactNode;
+    accessorKey?: keyof T;
+    cell?: (row: T) => React.ReactNode;
+    align?: 'left' | 'center' | 'right';
+    /** Stable React key; falls back to the column index. */
+    key?: string;
+    width?: string;
+    className?: string;
 }
 
 interface DataTableProps<T> {
-  columns: ColumnDef<T>[];
-  data: T[];
-  headerTitle: string;
-  headerIcon: string;
-  emptyMessage?: string;
+    columns: DataTableColumn<T>[];
+    data: T[];
+    headerTitle: string;
+    headerIcon?: IconProp;
+    headerMeta?: React.ReactNode;
+    emptyMessage?: string;
+    className?: string;
+    rowClassName?: (row: T) => string | undefined;
+}
+
+function renderAccessor<T>(row: T, accessorKey: keyof T): React.ReactNode {
+    const value = row[accessorKey];
+
+    if (typeof value === 'object' && value !== null) {
+        return '[Object]';
+    }
+
+    return String(value ?? '');
+}
+
+function headerIconNode(icon: IconProp) {
+    return renderIcon(icon);
 }
 
 export default function DataTable<T>({
-  columns,
-  data,
-  headerTitle,
-  headerIcon,
-  emptyMessage = "No data found"
+    columns,
+    data,
+    headerTitle,
+    headerIcon,
+    headerMeta,
+    emptyMessage = 'No data found',
+    className,
+    rowClassName,
 }: DataTableProps<T>) {
-  const { t } = useTranslation();
+    const { t } = useTranslation();
 
-  return (
-    <div className="bottom-data">
-      <div className="orders">
-        <div className="header">
-          <i className={`bx ${headerIcon}`}></i>
-          <h3>{t(headerTitle)}</h3>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              {columns.map((column, index) => (
-                <th key={index}>{t(column.header)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.length > 0 ? (
-              data.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {columns.map((column, colIndex) => (
-                    <td key={colIndex}>
-                      {column.cell 
-                        ? column.cell(row) 
-                        : column.accessorKey 
-                        ? (() => {
-                            const value = row[column.accessorKey];
-                            // Handle objects by checking if it's a translatable object
-                            if (typeof value === 'object' && value !== null) {
-                              return '[Object]'; // Safe fallback for objects
-                            }
-                            // Use nullish coalescing to preserve explicit 0 values
-                            return String(value ?? '');
-                          })()
-                        : ''
-                      }
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length} style={{ textAlign: "center", padding: "24px", color: "var(--dark-grey)" }}>
-                  <i className="bx bx-info-circle" style={{ fontSize: "48px", display: "block", marginBottom: "8px" }}></i>
-                  {t(emptyMessage)}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    const tableColumns: TableColumnDef<T>[] = columns.map((column, index) => ({
+        key: column.key ?? `column-${index}`,
+        header: column.header,
+        align: column.align,
+        width: column.width,
+        className: column.className,
+        cell: column.cell ?? (column.accessorKey ? (row: T) => renderAccessor(row, column.accessorKey as keyof T) : undefined),
+    }));
+
+    return (
+        <section className={className ? `${styles.panel} ${className}` : styles.panel}>
+            <div className={styles.head}>
+                {headerIcon && <span className={styles.headIcon}>{headerIconNode(headerIcon)}</span>}
+                <h2 className={styles.title}>{t(headerTitle)}</h2>
+                {headerMeta !== undefined && headerMeta !== null && <span className={styles.headMeta}>{headerMeta}</span>}
+            </div>
+
+            <Table
+                columns={tableColumns}
+                data={data}
+                rowClassName={rowClassName}
+                empty={
+                    <span className={styles.empty}>
+                        <Info aria-hidden="true" className={styles.emptyIcon} />
+                        {t(emptyMessage)}
+                    </span>
+                }
+            />
+        </section>
+    );
 }
+
+export { DataTable };

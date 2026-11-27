@@ -1,0 +1,40 @@
+/* Hallmark · component: glass surface · genre: editorial · theme: project glass · states: 8 · contrast: pass · v2.0.0 */
+/* Hallmark · the slab is the only element that blurs; every control inside it stays alpha-only. */
+/*
+ * Bảng Hiệu — glass surfaces for floating chrome: workspace sidebar, topbar
+ * and filter bars. Content cards use their own frosted recipe (alpha, no blur).
+ */
+
+@layer sn-components {
+    .sn-glass-surface {
+        border: 1px solid var(--sn-glass-hairline);
+        border-radius: var(--sn-radius-2xl);
+        background: var(--sn-glass-tint);
+        box-shadow: var(--sn-shadow-glass);
+        backdrop-filter: var(--sn-blur-glass);
+        -webkit-backdrop-filter: var(--sn-blur-glass);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .sn-glass-surface {
+            background: var(--sn-color-surface);
+        }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+        .sn-glass-surface {
+            background: var(--sn-color-surface);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+    }
+
+    @media (forced-colors: active) {
+        .sn-glass-surface {
+            border-color: CanvasText;
+            background: Canvas;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+    }
+}

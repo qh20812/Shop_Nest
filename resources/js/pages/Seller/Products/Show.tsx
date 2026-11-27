@@ -1,11 +1,15 @@
-import '@/../css/Page.css';
-import ActionButton from '@/components/ui/action-button';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Badge, type BadgeTone } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import Header from '@/components/ui/header';
-import { useToast } from '@/Contexts/ToastContext';
-import AppLayout from '@/layouts/app/AppLayout';
+import { formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { ChartColumn, CreditCard, Image as ImageIcon, Package, Pencil } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
+
+import styles from '../seller.module.css';
 
 interface Category {
     category_id: number;
@@ -78,9 +82,15 @@ const STATUS_LABELS = {
     hidden: 'Hidden',
 };
 
+const STATUS_TONES: Record<string, BadgeTone> = {
+    draft: 'warning',
+    pending_approval: 'warning',
+    published: 'success',
+    hidden: 'accent',
+};
+
 function ShowContent() {
     const { t } = useTranslation();
-    const { info: showInfo } = useToast();
 
     const { product } = usePage<SellerProductShowPageProps>().props;
 
@@ -122,237 +132,164 @@ function ShowContent() {
                     { label: t('Products'), href: '/seller/products' },
                     { label: t('View'), href: `/seller/products/${product.product_id}`, active: true },
                 ]}
-                reportButton={{
-                    label: t('Product Guidelines'),
-                    icon: 'bx-help-circle',
-                    onClick: () => {
-                        showInfo(t('Guidelines are coming soon. This is a placeholder action.'));
-                    },
-                }}
             />
 
-            <div className="bottom-data" style={{ display: 'grid', gap: '20px' }}>
-                {/* Basic Information & Localization */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-package"></i>
-                        <h3>{t('Product Basics')}</h3>
-                    </div>
+            <div className={styles.stack}>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <Package aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Product Basics')}
+                            </h2>
+                            <Badge tone={STATUS_TONES[product.status] ?? 'warning'}>
+                                {t(STATUS_LABELS[product.status as keyof typeof STATUS_LABELS] || product.status)}
+                            </Badge>
+                        </div>
 
-                    <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div className={styles.formGrid}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Product Name (Vietnamese)')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {getLocalizedValue(product.name)}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Product Name (Vietnamese)')}</span>
+                                <div className={styles.readonlyBox}>{getLocalizedValue(product.name)}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Product Name (English)')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {getLocalizedValue(product.name_en)}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Product Name (English)')}</span>
+                                <div className={styles.readonlyBox}>{getLocalizedValue(product.name_en)}</div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
+                        <div className={styles.formGrid4}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Product SKU')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.sku}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Product SKU')}</span>
+                                <div className={styles.readonlyBox}>{product.sku}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Category')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.category ? getLocalizedValue(product.category.name) : t('N/A')}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Category')}</span>
+                                <div className={styles.readonlyBox}>{product.category ? getLocalizedValue(product.category.name) : t('N/A')}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Brand')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.brand ? getLocalizedValue(product.brand.name) : t('N/A')}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Brand')}</span>
+                                <div className={styles.readonlyBox}>{product.brand ? getLocalizedValue(product.brand.name) : t('N/A')}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Status')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
+                                <span className={styles.readonlyLabel}>{t('Status')}</span>
+                                <div className={styles.readonlyBox}>
                                     {t(STATUS_LABELS[product.status as keyof typeof STATUS_LABELS] || product.status)}
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div className={styles.formGrid}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>
-                                    {t('Product Description (Vietnamese)')}
-                                </label>
+                                <span className={styles.readonlyLabel}>{t('Product Description (Vietnamese)')}</span>
                                 <div
-                                    style={{
-                                        padding: '12px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        background: '#f9f9f9',
-                                        minHeight: '220px',
-                                        overflow: 'auto',
-                                    }}
+                                    className={`${styles.readonlyBox} ${styles.readonlyProse}`}
                                     dangerouslySetInnerHTML={{ __html: getLocalizedValue(product.description) }}
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>
-                                    {t('Product Description (English)')}
-                                </label>
+                                <span className={styles.readonlyLabel}>{t('Product Description (English)')}</span>
                                 <div
-                                    style={{
-                                        padding: '12px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        background: '#f9f9f9',
-                                        minHeight: '220px',
-                                        overflow: 'auto',
-                                    }}
+                                    className={`${styles.readonlyBox} ${styles.readonlyProse}`}
                                     dangerouslySetInnerHTML={{ __html: getLocalizedValue(product.description_en) }}
                                 />
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Pricing & Inventory */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-dollar-circle"></i>
-                        <h3>{t('Pricing & Inventory')}</h3>
-                    </div>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <CreditCard aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Pricing & Inventory')}
+                            </h2>
+                        </div>
 
-                    <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px' }}>
+                        <div className={styles.formGrid}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Base Price (VND)')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {primaryVariant ? primaryVariant.price.toLocaleString('vi-VN') : 'N/A'}
+                                <span className={styles.readonlyLabel}>{t('Base Price (VND)')}</span>
+                                <div className={styles.readonlyBox}>
+                                    <span className={styles.price}>{primaryVariant ? formatVnd(primaryVariant.price) : 'N/A'}</span>
                                 </div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Total Stock')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
+                                <span className={styles.readonlyLabel}>{t('Total Stock')}</span>
+                                <div className={`${styles.readonlyBox} ${styles.numeric}`}>
                                     {primaryVariant ? primaryVariant.stock_quantity : 'N/A'}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Media Library */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-image"></i>
-                        <h3>{t('Media & Gallery')}</h3>
-                    </div>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <ImageIcon aria-hidden="true" className={styles.sectionIcon} />
+                                {t('Media & Gallery')}
+                            </h2>
+                        </div>
 
-                    <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                        <div
-                            style={{
-                                display: 'grid',
-                                gap: '16px',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                            }}
-                        >
+                        <div className={styles.mediaGrid}>
                             {product.images.map((image) => (
-                                <div
-                                    key={image.image_id}
-                                    style={{
-                                        position: 'relative',
-                                        borderRadius: '12px',
-                                        overflow: 'hidden',
-                                        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
-                                    }}
-                                >
-                                    <img
-                                        src={image.image_url}
-                                        alt={image.alt_text || 'product image'}
-                                        style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                                    />
+                                <div key={image.image_id} className={styles.mediaItem}>
+                                    <img src={image.image_url} alt={image.alt_text || t('Product image')} className={styles.mediaImage} />
                                 </div>
                             ))}
                             {product.images.length === 0 && (
-                                <div
-                                    style={{
-                                        border: '2px dashed var(--grey)',
-                                        borderRadius: '12px',
-                                        minHeight: '160px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexDirection: 'column',
-                                        gap: '12px',
-                                        color: 'var(--dark-grey)',
-                                    }}
-                                >
-                                    <i className="bx bx-image" style={{ fontSize: '28px' }}></i>
+                                <div className={styles.mediaEmpty}>
+                                    <ImageIcon aria-hidden="true" className={styles.mediaEmptyIcon} />
                                     <span>{t('No images available')}</span>
                                 </div>
                             )}
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* SEO Preview */}
-                <div className="orders">
-                    <div className="header">
-                        <i className="bx bx-chart"></i>
-                        <h3>{t('SEO Preview')}</h3>
-                    </div>
+                <Card variant="flat" padding="md">
+                    <div className={styles.panelBody}>
+                        <div className={styles.sectionHead}>
+                            <h2 className={styles.sectionTitle}>
+                                <ChartColumn aria-hidden="true" className={styles.sectionIcon} />
+                                {t('SEO Preview')}
+                            </h2>
+                        </div>
 
-                    <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px' }}>
+                        <div className={styles.formGrid4}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Meta Title')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.meta_title}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Meta Title')}</span>
+                                <div className={styles.readonlyBox}>{product.meta_title}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Meta Slug')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.meta_slug}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Meta Slug')}</span>
+                                <div className={styles.readonlyBox}>{product.meta_slug}</div>
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>{t('Meta Description')}</label>
-                                <div style={{ padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
-                                    {product.meta_description}
-                                </div>
+                                <span className={styles.readonlyLabel}>{t('Meta Description')}</span>
+                                <div className={styles.readonlyBox}>{product.meta_description}</div>
                             </div>
                         </div>
 
-                        <div
-                            style={{
-                                border: '1px solid #dadce0',
-                                borderRadius: '12px',
-                                padding: '16px',
-                                background: '#fff',
-                            }}
-                        >
-                            <span style={{ color: '#70757a', fontSize: '12px' }}>{t('Search preview')}</span>
-                            <div style={{ marginTop: '8px' }}>
-                                <div style={{ color: '#1a0dab', fontSize: '18px', lineHeight: '1.3' }}>{seoPreview.title}</div>
-                                <div style={{ color: '#006621', fontSize: '14px' }}>shopnest.vn/products/{seoPreview.slug}</div>
-                                <div style={{ color: '#4d5156', fontSize: '13px', lineHeight: '1.6' }}>{seoPreview.description}</div>
-                            </div>
+                        <div className={styles.seoPreview}>
+                            <span className={styles.seoLabel}>{t('Search preview')}</span>
+                            <span className={styles.seoTitle}>{seoPreview.title}</span>
+                            <span className={styles.seoUrl}>shopnest.vn/products/{seoPreview.slug}</span>
+                            <span className={styles.seoDescription}>{seoPreview.description}</span>
                         </div>
                     </div>
-                </div>
-            </div>
+                </Card>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', marginTop: '24px' }}>
-                <ActionButton variant="secondary" type="button" icon="bx bx-arrow-back" onClick={() => router.visit('/seller/products')}>
-                    {t('Back to Products')}
-                </ActionButton>
-                <ActionButton variant="primary" type="button" icon="bx bx-edit" onClick={handleEdit}>
-                    {t('Edit Product')}
-                </ActionButton>
+                <div className={styles.actions}>
+                    <Button asChild variant="secondary">
+                        <Link href="/seller/products">{t('Back to Products')}</Link>
+                    </Button>
+                    <Button type="button" variant="primary" leftIcon={Pencil} onClick={handleEdit}>
+                        {t('Edit Product')}
+                    </Button>
+                </div>
             </div>
         </>
     );
@@ -360,8 +297,8 @@ function ShowContent() {
 
 export default function Show() {
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <ShowContent />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

@@ -30,6 +30,10 @@ class AdminContextGatherer implements ContextGathererInterface
         $ordersLast30Query = Order::query()
             ->where('created_at', '>=', $now->copy()->subDays(30));
 
+        // Doanh thu chỉ tính đơn còn hiệu lực, loại đơn đã huỷ/trả hàng.
+        $revenueLast30Query = (clone $ordersLast30Query)
+            ->whereNotIn('status', [OrderStatus::CANCELLED->value, OrderStatus::RETURNED->value]);
+
         $lowStockVariants = ProductVariant::query()
             ->lowStock()
             ->with(['product.category'])
@@ -55,7 +59,7 @@ class AdminContextGatherer implements ContextGathererInterface
             'summary' => [
                 'total_orders' => Order::count(),
                 'orders_last_30_days' => (clone $ordersLast30Query)->count(),
-                'revenue_last_30_days' => (float) (clone $ordersLast30Query)->sum('total_amount'),
+                'revenue_last_30_days' => (float) (clone $revenueLast30Query)->sum('total_amount'),
                 'pending_orders' => Order::whereIn('status', array_map(fn ($status) => $status->value, $pendingStatuses))->count(),
             ],
             'low_stock_alerts' => $lowStockVariants->map(function (ProductVariant $variant) use ($locale) {

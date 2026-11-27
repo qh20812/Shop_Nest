@@ -10,8 +10,10 @@ import { FormField } from '@/components/ui/form-field';
 import { IconButton } from '@/components/ui/icon-button';
 import Input from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
+import { cx } from '@/lib/cx';
 
 import SettingsTabs from './SettingsTabs';
+import styles from './settings.module.css';
 
 interface UserModel {
     id: number;
@@ -98,35 +100,35 @@ export default function SettingsProfile() {
         >
             <Head title="Cài đặt hồ sơ" />
 
-            <div className="flex flex-col gap-5">
+            <div className={styles.stack}>
                 <SettingsTabs />
 
-                <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-12">
-                    <Card padding="lg" className="flex flex-col items-center gap-3 lg:col-span-4">
+                <form onSubmit={handleSubmit} className={styles.grid}>
+                    <Card padding="lg" className={cx(styles.avatarCard, styles.avatarCol)}>
                         <Avatar
                             src={avatarPreview ?? user.avatar_url}
                             name={`${data.last_name} ${data.first_name}`.trim() || data.username}
                             size={112}
                         />
-                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                        <input ref={fileInputRef} type="file" accept="image/*" className={styles.hiddenInput} onChange={handleAvatarChange} />
                         <IconButton label="Chọn ảnh đại diện" variant="secondary" size="md" onClick={() => fileInputRef.current?.click()}>
                             <Camera aria-hidden="true" />
                         </IconButton>
-                        <span className="text-label-micro text-ink-faint">JPG, PNG hoặc GIF. Tối đa 2MB.</span>
-                        {errors.avatar && (
-                            <span role="alert" className="text-body-sm text-brick">
+                        <span className={styles.avatarHint}>JPG, PNG hoặc GIF. Tối đa 2MB.</span>
+                        {errors.avatar ? (
+                            <span role="alert" className={styles.avatarError}>
                                 {errors.avatar}
                             </span>
-                        )}
-                        {data.username && (
-                            <div className="w-full border-t border-border pt-3 text-center">
-                                <span className="font-mono text-label-code text-ink-muted">@{data.username}</span>
+                        ) : null}
+                        {data.username ? (
+                            <div className={styles.avatarDivider}>
+                                <span className={styles.avatarUsername}>@{data.username}</span>
                             </div>
-                        )}
+                        ) : null}
                     </Card>
 
-                    <Card padding="lg" className="flex flex-col gap-5 lg:col-span-8">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Card padding="lg" className={cx(styles.cardStack, styles.formCol)}>
+                        <div className={styles.formGrid}>
                             <FormField label="Tên đăng nhập" error={errors.username} hint="Không thể thay đổi sau khi tạo tài khoản.">
                                 <Input value={data.username} disabled autoComplete="username" />
                             </FormField>
@@ -174,8 +176,8 @@ export default function SettingsProfile() {
                             </FormField>
                         </div>
 
-                        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-end">
-                            {recentlySuccessful && <span className="text-body-sm text-jade sm:mr-auto">Đã lưu thay đổi.</span>}
+                        <div className={styles.formFooter}>
+                            {recentlySuccessful ? <span className={styles.formStatus}>Đã lưu thay đổi.</span> : null}
                             <Button type="submit" leftIcon={Save} loading={processing}>
                                 Lưu thay đổi
                             </Button>

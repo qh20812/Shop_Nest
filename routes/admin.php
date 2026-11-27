@@ -12,25 +12,27 @@ use App\Http\Controllers\Admin\ReturnController;
 use App\Http\Controllers\Admin\ShipperController;
 use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WalletTopupController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class)->except(['show']);
+    Route::patch('/categories/{category}/activate', [CategoryController::class, 'activate'])->name('categories.activate');
     Route::patch('/categories/{id}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
     Route::delete('/categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('categories.forceDelete');
     Route::resource('brands', BrandController::class)->except(['show']);
     Route::patch('/brands/{brand}/restore', [BrandController::class, 'restore'])->name('brands.restore');
     Route::resource('products', ProductController::class)->except(['create', 'store', 'edit', 'update']);
     Route::patch('/products/{product}/status', [ProductController::class, 'updateStatus'])->name('products.updateStatus');
-    Route::resource('users',UserController::class)->except(['create','store','show']);
-    Route::resource('returns',ReturnController::class)->only(['index','show','update']);
-    
+    Route::resource('users', UserController::class)->except(['create', 'store', 'show']);
+    Route::resource('returns', ReturnController::class)->only(['index', 'show', 'update']);
+
     // Order management routes
     Route::resource('orders', OrderController::class)->only(['index', 'show']);
     Route::post('/orders/{order}/assign-shipper', [OrderController::class, 'assignShipper'])->name('orders.assignShipper');
     Route::post('/orders/{order}/refund', [OrderController::class, 'createRefund'])->name('orders.createRefund');
-    
+
     // Promotion management routes
     Route::post('promotions/create-with-rules', [PromotionController::class, 'createWithRules'])->name('promotions.createWithRules');
     Route::post('promotions/preview-matching', [PromotionController::class, 'previewMatchingProducts'])->name('promotions.previewMatching');
@@ -38,7 +40,13 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::get('promotions/imports/{trackingToken}', [PromotionController::class, 'getImportStatus'])->name('promotions.importStatus');
     Route::patch('promotions/{promotion}/auto-apply', [PromotionController::class, 'toggleAutoApply'])->name('promotions.toggleAutoApply');
     Route::resource('promotions', PromotionController::class);
-    
+
+    // Wallet top-up review
+    Route::get('/wallet-topups', [WalletTopupController::class, 'index'])->name('wallet-topups.index');
+    Route::get('/wallet-topups/{topup}', [WalletTopupController::class, 'show'])->name('wallet-topups.show');
+    Route::post('/wallet-topups/{topup}/approve', [WalletTopupController::class, 'approve'])->name('wallet-topups.approve');
+    Route::post('/wallet-topups/{topup}/reject', [WalletTopupController::class, 'reject'])->name('wallet-topups.reject');
+
     // Shipper management routes
     Route::get('/shippers', [ShipperController::class, 'index'])->name('shippers.index');
     Route::get('/shippers/{shipper}', [ShipperController::class, 'show'])->name('shippers.show');

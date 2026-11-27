@@ -1,19 +1,16 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CreditCard, Lock, RotateCcw, ShieldCheck, Store, Truck, Zap } from 'lucide-react';
+import { Lock, RotateCcw, ShieldCheck, Truck } from 'lucide-react';
 
-import { PageContainer } from '@/components/layout/PageContainer';
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { BrandSpotlight } from '@/components/storefront/BrandSpotlight';
 import { CategoryShelf, type CategoryItem } from '@/components/storefront/CategoryShelf';
 import { EditorialPillars } from '@/components/storefront/EditorialPillars';
 import { FlashSaleModule } from '@/components/storefront/FlashSaleModule';
-import { HeroEditorial, HeroInlineImage } from '@/components/storefront/HeroEditorial';
+import { HeroEditorial } from '@/components/storefront/HeroEditorial';
 import { ProductShelf } from '@/components/storefront/ProductShelf';
 import { TrustStrip } from '@/components/storefront/TrustStrip';
-import { UtilityStrip } from '@/components/storefront/UtilityStrip';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
-import { usePageLoading } from '@/hooks/usePageLoading';
+import { useTranslation } from '@/lib/i18n';
 import type { ProductCardModel } from '@/types/commerce';
 
 interface Category {
@@ -64,83 +61,69 @@ interface PageProps extends Record<string, unknown> {
         placement?: string | null;
     }>;
     canRegister?: boolean;
+    auth?: {
+        user: { id: number } | null;
+    } | null;
 }
 
 const fallbackHeroImages = [
     {
-        src: 'https://picsum.photos/seed/shopnest-laptop/1000/800',
-        alt: 'Laptop trên bàn làm việc ấm',
-        label: 'Điện tử',
+        src: '/images/products/macbook-air-m3.jpg',
+        altKey: 'Laptop on a desk',
+        labelKey: 'Electronics',
     },
     {
-        src: 'https://picsum.photos/seed/shopnest-airfryer/800/700',
-        alt: 'Nồi chiên trong bếp ấm',
-        label: 'Gia dụng',
+        src: '/images/products/noi-chien-khong-dau-philips-hd9200.jpg',
+        altKey: 'Air fryer in the kitchen',
+        labelKey: 'Home appliances',
     },
     {
-        src: 'https://picsum.photos/seed/shopnest-stroller/800/700',
-        alt: 'Xe đẩy em bé gọn nhẹ',
-        label: 'Mẹ & bé',
+        src: '/images/products/vay-hoa-nhi-nu.jpg',
+        altKey: 'Women fashion',
+        labelKey: 'Fashion',
     },
 ];
 
-const anchorCategoryNames = [
-    'Điện tử & công nghệ',
-    'Gia dụng & nhà bếp',
-    'Nhà cửa & trang trí',
-    'Mẹ & bé',
-    'Thời trang & phụ kiện',
-    'Làm đẹp & chăm sóc',
-];
-
-const utilityItems = [
-    { icon: Truck, label: 'Freeship từ 299.000 ₫', description: 'Trợ phí vận chuyển toàn quốc' },
-    { icon: CreditCard, label: 'Trả góp 0%', description: 'Duyệt online trong 3 phút' },
-    { icon: Store, label: 'Shop Việt', description: 'Nhà bán đã kiểm duyệt' },
-    { icon: Zap, label: 'Giao nhanh 2h', description: 'Nội thành Hà Nội & TP.HCM' },
-];
+const anchorCategoryKeys = ['Electronics & technology', 'Home & kitchen', 'Home & living', 'Mother & baby', 'Fashion & accessories', 'Beauty & care'];
 
 const trustItems = [
     {
         icon: ShieldCheck,
-        title: 'Shop đã kiểm duyệt',
-        description: 'Hồ sơ và nguồn gốc được kiểm tra trước khi mở bán.',
+        titleKey: 'Verified shops',
+        descriptionKey: 'Seller profiles and product origin are checked before opening.',
     },
     {
         icon: RotateCcw,
-        title: 'Đổi trả 7 ngày',
-        description: 'An tâm đổi hoặc hoàn khi sản phẩm sai cam kết.',
+        titleKey: '7-day returns',
+        descriptionKey: 'Exchange or refund when the item is not as promised.',
     },
     {
         icon: Truck,
-        title: 'Giao toàn quốc',
-        description: 'Đóng gói chống sốc và theo dõi đơn trên mọi chặng.',
+        titleKey: 'Nationwide delivery',
+        descriptionKey: 'Shockproof packaging with order tracking.',
     },
     {
         icon: Lock,
-        title: 'Thanh toán bảo mật',
-        description: 'Hỗ trợ Stripe và thanh toán khi nhận hàng.',
+        titleKey: 'Secure payment',
+        descriptionKey: 'Stripe and cash on delivery supported.',
     },
 ];
 
 const pillars = [
     {
-        eyebrow: 'Tuyển chọn',
-        title: 'Mỗi món đều có lý do',
-        description: 'Sáu nhóm ngành thiết yếu, chọn lọc theo nhu cầu thật của tổ ấm Việt.',
-        image: 'https://picsum.photos/seed/shopnest-curation/900/700',
+        titleKey: 'Every item has a reason',
+        descriptionKey: 'Six essential categories, chosen for Vietnamese homes.',
+        image: '/images/shops/shopnest-official.jpg',
     },
     {
-        eyebrow: 'Minh bạch',
-        title: 'Thông tin rõ ràng',
-        description: 'Nguồn gốc, bảo hành và chính sách đổi trả hiển thị trước khi mua.',
-        image: 'https://picsum.photos/seed/shopnest-trust/700/700',
+        titleKey: 'Clear information',
+        descriptionKey: 'Origin, warranty and return policy shown before you buy.',
+        image: '/images/products/samsung-galaxy-s24-ultra.jpg',
     },
     {
-        eyebrow: 'Đồng hành',
-        title: 'Hỗ trợ đến khi nhận',
-        description: 'Từ lúc chọn món đến khi kiện hàng tới tay, luôn có người trả lời.',
-        image: 'https://picsum.photos/seed/shopnest-support/900/700',
+        titleKey: 'Support until delivery',
+        descriptionKey: 'From choosing to receiving, our support team answers in chat.',
+        image: '/images/shops/techzone.jpg',
     },
 ];
 
@@ -163,8 +146,7 @@ function toProductCard(product: Product): ProductCardModel {
         name: product.name,
         image: normalizeImage(product.image),
         imageAlt: product.name,
-        shopName: product.brand ?? 'Shop Việt',
-        shopBadge: 'shop-viet',
+        shopName: '',
         price: product.price,
         compareAt: product.oldPrice,
         rating: product.rating ?? undefined,
@@ -176,9 +158,15 @@ function toProductCard(product: Product): ProductCardModel {
 }
 
 export default function Index() {
-    const isLoading = usePageLoading({ delay: 300, minLoadingTime: 1500 });
+    const { t } = useTranslation();
     const { success, error: showError, info } = useToast();
-    const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [] } = usePage<PageProps>().props;
+    const { categories = [], flashSale = null, suggestedProducts = [], bestSellers = [], banners = [], auth } = usePage<PageProps>().props;
+
+    const heroFallbacks = fallbackHeroImages.map((image) => ({
+        src: image.src,
+        alt: t(image.altKey),
+        label: t(image.labelKey),
+    }));
 
     const heroImages =
         banners.length > 0
@@ -188,9 +176,9 @@ export default function Index() {
                       alt: banner.alt ?? banner.title ?? 'ShopNest',
                       label: banner.subtitle ?? undefined,
                   })),
-                  ...fallbackHeroImages,
+                  ...heroFallbacks,
               ].slice(0, 3)
-            : fallbackHeroImages;
+            : heroFallbacks;
 
     const categoryItems: CategoryItem[] = categories.slice(0, 6).map((category) => ({
         id: category.id,
@@ -201,7 +189,10 @@ export default function Index() {
     const existingNames = new Set(categoryItems.map((category) => category.name.toLowerCase()));
     const filledCategories = [
         ...categoryItems,
-        ...anchorCategoryNames.filter((name) => !existingNames.has(name.toLowerCase())).map((name) => ({ name })),
+        ...anchorCategoryKeys
+            .map((key) => t(key))
+            .filter((name) => !existingNames.has(name.toLowerCase()))
+            .map((name) => ({ name })),
     ].slice(0, 6);
 
     const flashProducts = (flashSale?.products ?? []).map(toProductCard);
@@ -209,51 +200,45 @@ export default function Index() {
     const suggestedCards = suggestedProducts.map(toProductCard);
 
     const handleAddToCart = (product: ProductCardModel) => {
-        info('Chọn phân loại sản phẩm', product.name);
+        info(t('Choose a product variant'), product.name);
         router.visit(`/product/${product.id}`);
     };
 
     const handleWishlist = (product: ProductCardModel) => {
+        if (!auth?.user) {
+            router.visit('/login');
+
+            return;
+        }
+
         router.post(
             `/user/wishlist/items/${product.id}`,
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => success('Đã lưu sản phẩm', product.name),
-                onError: () => showError('Chưa thể lưu sản phẩm', 'Vui lòng đăng nhập để dùng danh sách yêu thích.'),
+                onSuccess: () => success(t('Saved to your wishlist'), product.name),
+                onError: () => showError(t('Could not save this item'), t('Sign in to use your wishlist.')),
             },
         );
     };
 
-    if (isLoading) {
-        return (
-            <StorefrontLayout>
-                <HomeSkeleton />
-            </StorefrontLayout>
-        );
-    }
-
     return (
         <StorefrontLayout>
-            <Head title="ShopNest — Mọi thứ cho tổ ấm Việt" />
+            <Head title={t('ShopNest. Everything for Vietnamese homes')} />
 
             <HeroEditorial
-                eyebrow="Mọi thứ cho tổ ấm Việt"
+                backdropImage="/images/shops/fashionhub.jpg"
                 title={
                     <>
-                        Chọn <HeroInlineImage src={heroImages[0]?.src ?? fallbackHeroImages[0].src} alt={heroImages[0]?.alt ?? 'Laptop'} /> đồ thật
-                        kỹ,
+                        {t('Choose carefully,')}
                         <br />
-                        sống <HeroInlineImage src={heroImages[1]?.src ?? fallbackHeroImages[1].src} alt={heroImages[1]?.alt ?? 'Bàn ăn'} /> thật êm.
+                        {t('live softly.')}
                     </>
                 }
-                subcopy="Đồ điện tử, gia dụng, nhà cửa, mẹ & bé, thời trang và làm đẹp từ các shop Việt đã kiểm duyệt."
-                cta={{ label: 'Xem chợ hôm nay', href: '/search' }}
+                subcopy={t('Electronics, home appliances, furniture, mother & baby, fashion and beauty from verified Vietnamese shops.')}
+                cta={{ label: t('Browse the market'), href: '/search' }}
                 images={heroImages}
-                trust={['1.200+ Shop Việt', '100% kiểm định nguồn gốc']}
             />
-
-            <UtilityStrip items={utilityItems} />
 
             <CategoryShelf categories={filledCategories} />
 
@@ -269,64 +254,44 @@ export default function Index() {
 
             <ProductShelf
                 id="ban-chay"
-                eyebrow="Được chọn nhiều"
-                title="Sản phẩm bán chạy"
-                description="Những món được khách hàng ShopNest tin dùng trong tuần này."
+                title={t('Best sellers')}
+                description={t('Ranked by units sold on non-cancelled orders.')}
                 products={bestSellerCards}
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
-                emptyTitle="Chưa có sản phẩm bán chạy"
-                emptyDescription="Khi có sản phẩm nổi bật, chúng sẽ xuất hiện ở đây."
+                emptyTitle={t('No best sellers yet')}
+                emptyDescription={t('No orders yet to compute the ranking.')}
             />
 
             <ProductShelf
                 id="goi-y"
-                eyebrow="Dành cho bạn"
-                title="Gợi ý cho tổ ấm"
-                description="Chọn theo nhu cầu hôm nay: làm việc, nấu ăn, chăm bé hay chăm mình."
+                title={t('Suggestions for your home')}
+                description={t('Picked for today: work, cooking, childcare or self-care.')}
                 products={suggestedCards}
+                variant="rail"
                 onAddToCart={handleAddToCart}
                 onToggleWishlist={handleWishlist}
-                emptyTitle="Chưa có gợi ý"
-                emptyDescription="Hãy quay lại sau để xem các món được tuyển chọn."
+                emptyTitle={t('No suggestions yet')}
+                emptyDescription={t('Add your favourite categories and brands in your account for better suggestions.')}
             />
 
             <BrandSpotlight />
 
-            <EditorialPillars pillars={pillars} />
+            <EditorialPillars
+                pillars={pillars.map((pillar) => ({
+                    title: t(pillar.titleKey),
+                    description: t(pillar.descriptionKey),
+                    image: pillar.image,
+                }))}
+            />
 
-            <TrustStrip items={trustItems} />
+            <TrustStrip
+                items={trustItems.map((item) => ({
+                    icon: item.icon,
+                    title: t(item.titleKey),
+                    description: t(item.descriptionKey),
+                }))}
+            />
         </StorefrontLayout>
-    );
-}
-
-function HomeSkeleton() {
-    return (
-        <PageContainer className="py-8 md:py-12">
-            <div className="grid gap-8 lg:grid-cols-12">
-                <div className="flex flex-col gap-4 lg:col-span-7">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-16 w-4/5" />
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-12 w-48" />
-                </div>
-                <div className="grid grid-cols-2 gap-3 lg:col-span-5">
-                    <Skeleton className="col-span-2 aspect-[16/9] h-auto" />
-                    <Skeleton className="aspect-[4/3] h-auto" />
-                    <Skeleton className="aspect-[4/3] h-auto" />
-                </div>
-            </div>
-            <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-                {Array.from({ length: 6 }).map((_, index) => (
-                    <Skeleton key={index} className="aspect-square h-auto" />
-                ))}
-            </div>
-            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className="aspect-[4/5] h-auto" />
-                ))}
-            </div>
-        </PageContainer>
     );
 }

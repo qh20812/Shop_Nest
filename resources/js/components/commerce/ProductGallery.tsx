@@ -1,8 +1,11 @@
-import { Heart } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import * as React from 'react';
 
 import { IconButton } from '@/components/ui/icon-button';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+
+import styles from './commerce.module.css';
 
 type GalleryImage = {
     id?: number | string;
@@ -21,57 +24,107 @@ type ProductGalleryProps = {
 };
 
 export function ProductGallery({ images, activeIndex, onChange, productName, wishlisted = false, onToggleWishlist, className }: ProductGalleryProps) {
+    const { t } = useTranslation();
     const [imageError, setImageError] = React.useState(false);
-    const activeImage = images[activeIndex] ?? images[0];
+    const safeIndex = Math.min(Math.max(activeIndex, 0), Math.max(images.length - 1, 0));
+    const activeImage = images[safeIndex] ?? images[0];
     const imageUrl = imageError ? '/image/default-product.png' : activeImage?.url;
+    const hasMultiple = images.length > 1;
 
     React.useEffect(() => {
         setImageError(false);
     }, [activeImage?.url]);
 
+    const showImage = (index: number) => {
+        if (!hasMultiple) {
+            return;
+        }
+
+        onChange((index + images.length) % images.length);
+    };
+
     return (
-        <div className={cn('flex flex-col gap-3', className)}>
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-surface border border-border bg-warm-porcelain p-2">
+        <div className={cx(styles.gallery, className)}>
+            <div
+                className={styles.galleryMain}
+                tabIndex={0}
+                role="group"
+                aria-label={productName}
+                onKeyDown={(event) => {
+                    if (event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        showImage(safeIndex - 1);
+                    }
+
+                    if (event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        showImage(safeIndex + 1);
+                    }
+                }}
+            >
                 {imageUrl ? (
-                    <img
-                        src={imageUrl}
-                        alt={activeImage?.alt ?? productName}
-                        onError={() => setImageError(true)}
-                        className="size-full rounded-card object-cover"
-                    />
+                    <img src={imageUrl} alt={activeImage?.alt ?? productName} onError={() => setImageError(true)} className={styles.galleryImage} />
                 ) : (
-                    <div className="flex size-full items-center justify-center rounded-card bg-raw-linen text-body-sm text-ink-muted">
-                        Chưa có ảnh sản phẩm
-                    </div>
+                    <div className={styles.galleryEmpty}>{t('No product images yet')}</div>
                 )}
+
                 {onToggleWishlist && (
                     <IconButton
-                        label={wishlisted ? 'Bỏ lưu sản phẩm' : 'Lưu sản phẩm'}
+                        label={wishlisted ? t('Remove from wishlist') : t('Save to wishlist')}
                         variant="secondary"
+                        surface="overlay"
                         size="md"
-                        className="absolute top-4 right-4"
+                        className={styles.galleryWishlist}
                         onClick={onToggleWishlist}
                     >
-                        <Heart aria-hidden="true" className={wishlisted ? 'fill-lacquer-red text-lacquer-red' : undefined} />
+                        <Heart aria-hidden="true" className={cx(styles.icon, wishlisted && styles.wishlisted)} />
                     </IconButton>
+                )}
+
+                {hasMultiple && (
+                    <>
+                        <span className={cx(styles.galleryNav, styles.galleryPrev)}>
+                            <IconButton
+                                label={t('Previous image')}
+                                variant="secondary"
+                                surface="overlay"
+                                size="md"
+                                onClick={() => showImage(safeIndex - 1)}
+                            >
+                                <ChevronLeft aria-hidden="true" className={styles.icon} />
+                            </IconButton>
+                        </span>
+                        <span className={cx(styles.galleryNav, styles.galleryNext)}>
+                            <IconButton
+                                label={t('Next image')}
+                                variant="secondary"
+                                surface="overlay"
+                                size="md"
+                                onClick={() => showImage(safeIndex + 1)}
+                            >
+                                <ChevronRight aria-hidden="true" className={styles.icon} />
+                            </IconButton>
+                        </span>
+                        <span className={styles.galleryCounter}>
+                            {safeIndex + 1} / {images.length}
+                        </span>
+                    </>
                 )}
             </div>
 
-            {images.length > 1 && (
-                <div className="grid grid-cols-5 gap-2">
-                    {images.slice(0, 5).map((image, index) => (
+            {hasMultiple && (
+                <div className={styles.galleryThumbs}>
+                    {images.map((image, index) => (
                         <button
-                            key={image.id ?? image.url}
+                            key={`${image.id ?? image.url}-${index}`}
                             type="button"
-                            aria-label={`Xem ảnh ${index + 1}`}
-                            aria-pressed={index === activeIndex}
+                            aria-label={t('View image :index', { index: index + 1 })}
+                            aria-pressed={index === safeIndex}
                             onClick={() => onChange(index)}
-                            className={cn(
-                                'focus-ring aspect-square overflow-hidden rounded-control border bg-warm-porcelain p-0.5 transition-colors',
-                                index === activeIndex ? 'border-lacquer-red' : 'border-border hover:border-ink-muted',
-                            )}
+                            className={styles.galleryThumb}
+                            data-active={index === safeIndex ? 'true' : undefined}
                         >
-                            <img src={image.url} alt={image.alt ?? `${productName} ${index + 1}`} className="size-full rounded-chip object-cover" />
+                            <img src={image.url} alt={image.alt ?? `${productName} ${index + 1}`} className={styles.galleryThumbImage} />
                         </button>
                     ))}
                 </div>

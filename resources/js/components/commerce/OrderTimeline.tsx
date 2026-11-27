@@ -1,6 +1,7 @@
-import { Check, Circle, X } from 'lucide-react';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
-import { cn } from '@/lib/utils';
+import styles from './commerce.module.css';
 
 type TimelineStep = {
     key: string;
@@ -16,70 +17,24 @@ type OrderTimelineProps = {
     className?: string;
 };
 
-const toneConfig = {
-    default: {
-        active: 'border-lacquer-red bg-lacquer-red text-warm-porcelain',
-        done: 'border-jade bg-jade-soft text-jade',
-        pending: 'border-border bg-warm-porcelain text-ink-faint',
-        line: 'bg-border',
-        label: 'text-ink',
-    },
-    cancelled: {
-        active: 'border-brick bg-brick-soft text-brick',
-        done: 'border-border bg-raw-linen text-ink-muted',
-        pending: 'border-border bg-warm-porcelain text-ink-faint',
-        line: 'bg-border',
-        label: 'text-ink-muted',
-    },
-    returned: {
-        active: 'border-turmeric bg-turmeric-soft text-turmeric',
-        done: 'border-border bg-raw-linen text-ink-muted',
-        pending: 'border-border bg-warm-porcelain text-ink-faint',
-        line: 'bg-border',
-        label: 'text-ink-muted',
-    },
-};
-
 export function OrderTimeline({ steps, current, tone = 'default', className }: OrderTimelineProps) {
-    const config = toneConfig[tone];
-    const isTerminal = tone !== 'default';
-
+    const { t } = useTranslation();
     return (
-        <ol className={cn('flex flex-col', className)} aria-label="Tiến trình đơn hàng">
+        <ol className={cx(styles.timeline, className)} data-tone={tone} aria-label={t('Order progress')}>
             {steps.map((step, index) => {
-                const done = index < current;
-                const active = index === current;
-                const state = done ? 'done' : active ? 'active' : 'pending';
+                const state = index < current ? 'done' : index === current ? 'active' : 'pending';
                 const isLast = index === steps.length - 1;
 
                 return (
-                    <li key={step.key} className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                            <span
-                                className={cn(
-                                    'flex size-7 shrink-0 items-center justify-center rounded-pill border font-mono text-label-micro',
-                                    config[state],
-                                )}
-                                aria-hidden="true"
-                            >
-                                {done ? (
-                                    <Check className="size-3.5" />
-                                ) : active ? (
-                                    isTerminal ? (
-                                        <X className="size-3.5" />
-                                    ) : (
-                                        <Circle className="size-2.5 fill-current" />
-                                    )
-                                ) : (
-                                    <span>{index + 1}</span>
-                                )}
-                            </span>
-                            {!isLast && <span className={cn('my-1 w-px flex-1', config.line)} aria-hidden="true" />}
+                    <li key={step.key} className={styles.timelineItem} data-state={state}>
+                        <div className={styles.timelineTrack} aria-hidden="true">
+                            <span className={styles.timelineMarker} />
+                            {!isLast && <span className={styles.timelineLine} />}
                         </div>
-                        <div className={cn('min-w-0 flex-1', isLast ? 'pb-0' : 'pb-5')}>
-                            <span className={cn('block text-body-sm font-semibold', active ? config.label : 'text-ink')}>{step.label}</span>
-                            {step.description && <span className="mt-0.5 block text-body-sm text-ink-muted">{step.description}</span>}
-                            {step.timestamp && <span className="mt-0.5 block font-mono text-label-micro text-ink-faint">{step.timestamp}</span>}
+                        <div className={styles.timelineContent}>
+                            <span className={styles.timelineLabel}>{step.label}</span>
+                            {step.description ? <span className={styles.timelineDescription}>{step.description}</span> : null}
+                            {step.timestamp ? <span className={styles.timelineTimestamp}>{step.timestamp}</span> : null}
                         </div>
                     </li>
                 );

@@ -66,17 +66,17 @@ class InventoryServiceTest extends TestCase
         $this->assertCount(2, InventoryLog::all());
     }
 
-    public function test_low_stock_notification_is_not_sent_in_testing(): void
+    public function test_low_stock_notification_is_sent_once_to_the_seller(): void
     {
         Notification::fake();
 
-        $admin = User::factory()->create();
+        $seller = User::factory()->create();
         $variant = ProductVariant::factory()->create([
             'stock_quantity' => InventoryService::LOW_STOCK_THRESHOLD + 5,
         ]);
 
         // Assign seller to product to receive notification
-        $variant->product->update(['seller_id' => $admin->id]);
+        $variant->product->update(['seller_id' => $seller->id]);
 
         $service = app(InventoryService::class);
         $service->adjustStock(
@@ -85,8 +85,12 @@ class InventoryServiceTest extends TestCase
             'Reduce to low stock'
         );
 
-        // Notifications are disabled in testing environment
-        Notification::assertNotSentTo($admin, LowStockNotification::class);
+        Notification::assertSentToTimes($seller, LowStockNotification::class, 1);
+
+        // Bán tiếp khi đã dưới ngưỡng không gửi lặp.
+        $service->adjustStock($variant->variant_id, -1, 'Another sale');
+
+        Notification::assertSentToTimes($seller, LowStockNotification::class, 1);
     }
 
     public function test_set_stock_updates_to_specific_quantity(): void

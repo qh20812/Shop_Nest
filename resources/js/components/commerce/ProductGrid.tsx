@@ -1,11 +1,13 @@
+import { useTranslation } from '@/lib/i18n';
 import { PackageSearch } from 'lucide-react';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 import type { ProductCardModel } from '@/types/commerce';
 
 import { ProductCard } from './ProductCard';
+import styles from './commerce.module.css';
 
 type ProductGridProps = {
     products: ProductCardModel[];
@@ -18,32 +20,29 @@ type ProductGridProps = {
     className?: string;
 };
 
-const columnClasses = {
-    2: 'sm:grid-cols-2',
-    3: 'sm:grid-cols-2 lg:grid-cols-3',
-    4: 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-};
-
 export function ProductGrid({
     products,
     columns = 3,
     loading = false,
-    emptyTitle = 'Không tìm thấy món phù hợp',
-    emptyDescription = 'Thử một từ khoá khác hoặc xoá bớt bộ lọc.',
+    emptyTitle,
+    emptyDescription,
     onAddToCart,
     onToggleWishlist,
     className,
 }: ProductGridProps) {
+    const { t } = useTranslation();
+    const resolvedEmptyTitle = emptyTitle ?? t('No matching products');
+    const resolvedEmptyDescription = emptyDescription ?? t('Try another keyword or remove some filters.');
     if (loading) {
         return (
-            <div className={cn('grid grid-cols-1 gap-5', columnClasses[columns], className)}>
+            <div className={cx(styles.productGrid, className)} data-columns={columns}>
                 {Array.from({ length: columns * 2 }).map((_, index) => (
-                    <div key={index} className="rounded-card border border-border bg-warm-porcelain p-3">
-                        <Skeleton className="aspect-[4/5] h-auto rounded-card" />
-                        <div className="mt-3 flex flex-col gap-2">
-                            <Skeleton className="h-3 w-1/3" />
-                            <Skeleton className="h-4 w-4/5" />
-                            <Skeleton className="h-4 w-1/2" />
+                    <div key={index} className={styles.skeletonCard}>
+                        <Skeleton className={styles.skeletonImage} />
+                        <div className={styles.skeletonBody}>
+                            <Skeleton className={styles.skeletonLineShort} />
+                            <Skeleton className={styles.skeletonLine} />
+                            <Skeleton className={styles.skeletonLineHalf} />
                         </div>
                     </div>
                 ))}
@@ -52,11 +51,11 @@ export function ProductGrid({
     }
 
     if (products.length === 0) {
-        return <EmptyState icon={PackageSearch} title={emptyTitle} description={emptyDescription} />;
+        return <EmptyState icon={PackageSearch} title={resolvedEmptyTitle} description={resolvedEmptyDescription} />;
     }
 
     return (
-        <div className={cn('grid grid-cols-1 gap-5', columnClasses[columns], className)}>
+        <div className={cx(styles.productGrid, className)} data-columns={columns}>
             {products.map((product, index) => (
                 <ProductCard key={product.id} product={product} priority={index < 4} onAddToCart={onAddToCart} onToggleWishlist={onToggleWishlist} />
             ))}

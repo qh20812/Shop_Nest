@@ -1,0 +1,255 @@
+/* Hallmark · component: admin inventory detail · genre: editorial · theme: project glass · states: n/a · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the module defines layout only · controls are Button, Select and table primitives whose states live in button.css and field.css */
+/* Hallmark · the stock rail and ledger carry the numbers; the timeline only reports what happened */
+
+.headerMeta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.summaryDate {
+    overflow-wrap: anywhere;
+    font-size: var(--sn-text-lg);
+    line-height: var(--sn-leading-snug);
+}
+
+.table {
+    min-width: 0;
+}
+
+/* DataTable owns a top margin; the stack gap already provides rhythm */
+.table > section {
+    margin-top: 0;
+}
+
+.variant {
+    display: flex;
+    max-width: 20rem;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.variantSku {
+    overflow: hidden;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.variantAttributes {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    line-height: var(--sn-leading-snug);
+}
+
+.priceCell,
+.stockCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+}
+
+.discount {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.reserved {
+    font-variant-numeric: tabular-nums;
+}
+
+.timelinePanel {
+    overflow: hidden;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.sectionHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sn-space-2);
+    padding: var(--sn-space-4) var(--sn-space-5);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    margin: 0;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-md);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-snug);
+}
+
+.sectionIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+    flex-shrink: 0;
+    color: var(--sn-color-text-muted);
+}
+
+.movementList {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.movement {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-1);
+    padding: var(--sn-space-3) var(--sn-space-5);
+    border-top: 1px solid var(--sn-color-border);
+}
+
+.movement:first-child {
+    border-top: 0;
+}
+
+.movementTime {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.movementDate {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+}
+
+.movementBody {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-1);
+}
+
+.movementTop {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sn-space-2);
+}
+
+.movementReason {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    line-height: var(--sn-leading-normal);
+    overflow-wrap: anywhere;
+}
+
+.movementMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    line-height: var(--sn-leading-snug);
+}
+
+.emptyNote {
+    margin: 0;
+    padding: var(--sn-space-5);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-4);
+    padding: var(--sn-space-5);
+}
+
+.filters :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.filterActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.time {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.timeDate {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+}
+
+.timeClock {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+}
+
+.reason {
+    display: block;
+    max-width: 24rem;
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    line-height: var(--sn-leading-normal);
+    overflow-wrap: anywhere;
+}
+
+.user {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+@media (min-width: 640px) {
+    .movement {
+        grid-template-columns: 7rem minmax(0, 1fr);
+        gap: var(--sn-space-4);
+    }
+
+    .movementTime {
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filterActions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 1024px) {
+    .filters {
+        grid-template-columns: minmax(14rem, 1fr) minmax(10rem, 0.7fr) auto;
+        align-items: end;
+    }
+
+    .filterActions {
+        grid-column: auto;
+    }
+}

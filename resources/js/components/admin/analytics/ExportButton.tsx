@@ -1,5 +1,7 @@
-import '@/../css/Page.css';
+import { Download } from 'lucide-react';
 import React from 'react';
+
+import { Button, type ButtonSurface } from '@/components/ui/button';
 
 export type ExportButtonVariant = 'primary' | 'secondary' | 'outline';
 
@@ -10,38 +12,39 @@ export interface ExportButtonProps {
     loading?: boolean;
     disabled?: boolean;
     variant?: ExportButtonVariant;
+    surface?: ButtonSurface;
     className?: string;
 }
 
-const variantClassMap: Record<ExportButtonVariant, string> = {
-    primary: 'analytics-export-button--primary',
-    secondary: 'analytics-export-button--secondary',
-    outline: 'analytics-export-button--outline',
-};
+const variantMap = {
+    primary: 'primary',
+    secondary: 'secondary',
+    outline: 'outline',
+} as const;
 
 const ExportButton: React.FC<ExportButtonProps> = ({
     label,
     onClick,
-    icon = 'bx bx-download',
     loading = false,
     disabled = false,
     variant = 'primary',
-    className = '',
+    surface = 'content',
+    className,
 }) => {
-    const isDisabled = disabled || loading;
-
     return (
-        <button
+        <Button
             type="button"
-            className={`analytics-export-button ${variantClassMap[variant]} ${className}`.trim()}
+            variant={variantMap[variant]}
+            size="md"
+            surface={surface}
+            className={className}
             onClick={onClick}
-            disabled={isDisabled}
+            disabled={disabled}
+            loading={loading}
         >
-            <span className="analytics-export-button__content">
-                {loading ? <i className="bx bx-loader-circle bx-spin"></i> : <i className={icon}></i>}
-                <span>{label}</span>
-            </span>
-        </button>
+            {!loading && <Download aria-hidden="true" />}
+            {label}
+        </Button>
     );
 };
 

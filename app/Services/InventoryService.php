@@ -21,6 +21,7 @@ use Throwable;
 class InventoryService
 {
     public const LOW_STOCK_THRESHOLD = 10;
+
     public const IN_STOCK_THRESHOLD = 10;
 
     private const REPORT_CACHE_KEYS = [
@@ -32,8 +33,132 @@ class InventoryService
         'forecast' => 'inventory_report_forecast',
     ];
 
-    public function __construct(private ProductCacheService $productCacheService)
+    public function __construct(private ProductCacheService $productCacheService) {}
+
+    /**
+     * Reserve stock for every item of an order.
+     *
+     * Reservations are created when the order is placed and later converted to
+     * a real stock decrement on successful payment, or released when the order
+     * is cancelled/failed.
+     */
+    public function reserveForOrder(Order $order): void
     {
+        if ($order->inventory_reserved_at !== null || $order->inventory_committed_at !== null) {
+            return;
+        }
+
+        DB::transaction(function () use ($order) {
+            $order->loadMissing('items.variant');
+
+            foreach ($order->items as $item) {
+                $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+
+                if (! $variant) {
+                    throw new InventoryException("Variant not found for order item {$item->order_item_id}");
+                }
+
+                $quantity = (int) $item->quantity;
+
+                if ($variant->track_inventory && ! $variant->allow_backorder) {
+                    $available = $variant->available_quantity
+                        ?? max(0, (int) $variant->stock_quantity - (int) $variant->reserved_quantity);
+
+                    if ($available < $quantity) {
+                        throw new InventoryException("Insufficient stock for variant {$variant->variant_id}");
+                    }
+                }
+
+                $variant->increment('reserved_quantity', $quantity);
+                $this->productCacheService->forgetProductDetailCaches((int) $variant->product_id);
+            }
+
+            $order->forceFill(['inventory_reserved_at' => now()])->save();
+        });
+    }
+
+    /**
+     * Convert an existing reservation (or a direct order line) into a real
+     * stock decrement. Safe to call more than once.
+     */
+    public function commitReservedForOrder(Order $order): void
+    {
+        if ($order->inventory_committed_at !== null) {
+            return;
+        }
+
+        DB::transaction(function () use ($order) {
+            $order->loadMissing('items.variant');
+
+            foreach ($order->items as $item) {
+                $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+
+                if (! $variant) {
+                    throw new RuntimeException("Variant not found for order item {$item->order_item_id}");
+                }
+
+                $quantity = (int) $item->quantity;
+
+                if ($variant->track_inventory && ! $variant->allow_backorder) {
+                    $available = $variant->available_quantity
+                        ?? max(0, (int) $variant->stock_quantity - (int) $variant->reserved_quantity);
+
+                    if ($available < $quantity) {
+                        throw new RuntimeException("Insufficient stock for variant {$variant->variant_id}");
+                    }
+                }
+
+                $this->reduceStock($variant, $quantity);
+            }
+
+            $order->forceFill(['inventory_committed_at' => now()])->save();
+        });
+    }
+
+    /**
+     * Release reservations without touching physical stock.
+     */
+    public function releaseReservedForOrder(Order $order): void
+    {
+        if ($order->inventory_committed_at !== null || $order->inventory_reserved_at === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($order) {
+            $order->loadMissing('items.variant');
+
+            foreach ($order->items as $item) {
+                $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+
+                if (! $variant) {
+                    continue;
+                }
+
+                $release = min((int) $item->quantity, (int) $variant->reserved_quantity);
+
+                if ($release > 0) {
+                    $variant->decrement('reserved_quantity', $release);
+                    $this->productCacheService->forgetProductDetailCaches((int) $variant->product_id);
+                }
+            }
+
+            $order->forceFill(['inventory_reserved_at' => null])->save();
+        });
+    }
+
+    /**
+     * Release whatever inventory state the order currently holds.
+     */
+    public function handleOrderRelease(Order $order): void
+    {
+        if ($order->inventory_committed_at !== null) {
+            $this->restoreInventoryForOrder($order);
+            $order->forceFill(['inventory_committed_at' => null, 'inventory_reserved_at' => null])->save();
+
+            return;
+        }
+
+        $this->releaseReservedForOrder($order);
     }
 
     /**
@@ -43,44 +168,29 @@ class InventoryService
      */
     public function adjustInventoryForOrder(Order $order): void
     {
-        $order->loadMissing('items.variant');
+        $this->commitReservedForOrder($order);
+    }
 
-        foreach ($order->items as $item) {
-            $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
+    /**
+     * Release reservations for orders whose payment was never completed.
+     */
+    public function releaseStaleReservations(int $hours = 24): int
+    {
+        $orders = Order::query()
+            ->whereNotNull('inventory_reserved_at')
+            ->whereNull('inventory_committed_at')
+            ->where('inventory_reserved_at', '<=', now()->subHours($hours))
+            ->where('status', 'pending_confirmation')
+            ->get();
 
-            if (!$variant) {
-                Log::error('inventory.variant_not_found', [
-                    'order_id' => $order->order_id,
-                    'order_item_id' => $item->order_item_id,
-                    'variant_id' => $item->variant_id,
-                ]);
-                throw new RuntimeException("Variant not found for order item {$item->order_item_id}");
-            }
-
-            if ($variant->track_inventory && !$variant->allow_backorder) {
-                $available = $variant->available_quantity
-                    ?? max(0, (int) $variant->stock_quantity - (int) $variant->reserved_quantity);
-
-                if ($available < $item->quantity) {
-                    Log::error('inventory.insufficient_stock', [
-                        'order_id' => $order->order_id,
-                        'variant_id' => $variant->variant_id,
-                        'available' => $available,
-                        'requested' => $item->quantity,
-                    ]);
-                    throw new RuntimeException("Insufficient stock for variant {$variant->variant_id}");
-                }
-            }
-
-            $this->reduceStock($variant, $item->quantity);
-
-            Log::info('inventory.adjusted', [
-                'order_id' => $order->order_id,
-                'variant_id' => $variant->variant_id,
-                'quantity_reduced' => $item->quantity,
-                'new_stock' => $variant->stock_quantity,
+        foreach ($orders as $order) {
+            $order->update([
+                'status' => 'cancelled',
+                'payment_status' => 'failed',
             ]);
         }
+
+        return $orders->count();
     }
 
     /**
@@ -94,11 +204,12 @@ class InventoryService
             foreach ($order->items as $item) {
                 $variant = ProductVariant::lockForUpdate()->find($item->variant_id);
 
-                if (!$variant) {
+                if (! $variant) {
                     Log::warning('inventory.restore_variant_not_found', [
                         'order_id' => $order->order_id,
                         'variant_id' => $item->variant_id,
                     ]);
+
                     continue;
                 }
 
@@ -146,7 +257,7 @@ class InventoryService
     /**
      * Bulk adjust multiple variants in a single transaction.
      *
-     * @param array<int, array<string, mixed>> $payload
+     * @param  array<int, array<string, mixed>>  $payload
      * @return Collection<int, InventoryLog>
      */
     public function bulkAdjust(array $payload, string $reason, ?int $userId = null): Collection
@@ -321,14 +432,36 @@ class InventoryService
 
     private function dispatchAlerts(?ProductVariant $variant): void
     {
-        if (!$variant || app()->environment('testing')) {
+        if (! $variant) {
             return;
         }
 
         $variant->refresh();
 
-        if ($variant->stock_quantity <= self::LOW_STOCK_THRESHOLD && $variant->product && $variant->product->seller) {
-            $variant->product->seller->notify(new LowStockNotification($variant));
+        $quantity = (int) $variant->stock_quantity;
+        $threshold = (int) self::LOW_STOCK_THRESHOLD;
+
+        // Đã nhập thêm hàng lên trên ngưỡng → mở lại chu kỳ cảnh báo.
+        if ($quantity > $threshold) {
+            if ($variant->low_stock_notified_at !== null) {
+                $variant->forceFill(['low_stock_notified_at' => null])->saveQuietly();
+            }
+
+            return;
         }
+
+        // Mỗi lần "sắp hết hàng" chỉ gửi 1 email (trước đây gửi mỗi đơn hàng).
+        if ($variant->low_stock_notified_at !== null) {
+            return;
+        }
+
+        $seller = $variant->product?->seller;
+
+        if (! $seller || ! $seller->email) {
+            return;
+        }
+
+        $variant->forceFill(['low_stock_notified_at' => now()])->saveQuietly();
+        $seller->notify(new LowStockNotification($variant));
     }
 }

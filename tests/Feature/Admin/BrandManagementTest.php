@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Brand;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -17,6 +18,7 @@ class BrandManagementTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     protected User $admin;
+
     protected User $customer;
 
     protected function setUp(): void
@@ -35,7 +37,7 @@ class BrandManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.brands.index'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('Admin/Brands/Index'));
+        $response->assertInertia(fn ($page) => $page->component('Admin/Brands/Index'));
     }
 
     public function test_admin_can_access_create_brand_page(): void
@@ -43,7 +45,7 @@ class BrandManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.brands.create'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('Admin/Brands/Create'));
+        $response->assertInertia(fn ($page) => $page->component('Admin/Brands/Create'));
     }
 
     public function test_admin_can_access_edit_brand_page(): void
@@ -53,7 +55,7 @@ class BrandManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.brands.edit', $brand));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->component('Admin/Brands/Edit'));
+        $response->assertInertia(fn ($page) => $page->component('Admin/Brands/Edit'));
     }
 
     public function test_admin_can_create_brand_without_logo(): void
@@ -162,7 +164,7 @@ class BrandManagementTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.brands.index', ['search' => 'Apple']));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('brands.data', 1)
             ->where('brands.data.0.name', 'Apple')
         );
@@ -170,13 +172,68 @@ class BrandManagementTest extends TestCase
 
     public function test_admin_can_filter_brands_by_status(): void
     {
-        $activeBrand = Brand::factory()->create(['is_active' => true]);
-        $inactiveBrand = Brand::factory()->create(['is_active' => false]);
+        Brand::factory()->create(['name' => 'Active Brand', 'is_active' => true]);
+        Brand::factory()->create(['name' => 'Inactive Brand', 'is_active' => false]);
+        $hiddenBrand = Brand::factory()->create(['name' => 'Hidden Brand']);
+        $hiddenBrand->delete();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.brands.index', ['status' => 'inactive']));
+        $this->actingAs($this->admin)
+            ->get(route('admin.brands.index', ['status' => 'active']))
+            ->assertInertia(fn ($page) => $page
+                ->has('brands.data', 1)
+                ->where('brands.data.0.name', 'Active Brand')
+            );
 
-        $response->assertStatus(200);
-        $response->assertInertia(fn($page) => $page->has('brands.data', 0)); // Assuming inactive means deleted, but controller uses deleted_at
+        $this->actingAs($this->admin)
+            ->get(route('admin.brands.index', ['status' => 'inactive']))
+            ->assertInertia(fn ($page) => $page
+                ->has('brands.data', 1)
+                ->where('brands.data.0.name', 'Inactive Brand')
+            );
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.brands.index', ['status' => 'trashed']))
+            ->assertInertia(fn ($page) => $page
+                ->has('brands.data', 1)
+                ->where('brands.data.0.name', 'Hidden Brand')
+            );
+    }
+
+    public function test_index_returns_status_counts(): void
+    {
+        Brand::factory()->create(['is_active' => true]);
+        Brand::factory()->create(['is_active' => false]);
+        $hiddenBrand = Brand::factory()->create();
+        $hiddenBrand->delete();
+
+        $response = $this->actingAs($this->admin)->get(route('admin.brands.index'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('totalBrands', 2)
+            ->where('statusCounts.total', 2)
+            ->where('statusCounts.active', 1)
+            ->where('statusCounts.inactive', 1)
+            ->where('statusCounts.trashed', 1)
+        );
+    }
+
+    public function test_edit_returns_normalized_logo_and_products_count(): void
+    {
+        $brand = Brand::factory()->create([
+            'logo_url' => 'brands/logos/acme.png',
+            'is_active' => true,
+        ]);
+        Product::factory()->create(['brand_id' => $brand->brand_id]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.brands.edit', $brand));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Brands/Edit')
+            ->where('brand.logo_url', Storage::url('brands/logos/acme.png'))
+            ->where('brand.products_count', 1)
+            ->where('brand.is_active', true)
+            ->has('brand.created_at')
+        );
     }
 
     public function test_customer_cannot_access_brand_management(): void
@@ -212,7 +269,7 @@ class BrandManagementTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('admin.brands.index'));
 
-        $response->assertInertia(fn($page) => $page
+        $response->assertInertia(fn ($page) => $page
             ->has('brands.data', 1)
             ->where('brands.data.0.name', 'Test Brand')
         );

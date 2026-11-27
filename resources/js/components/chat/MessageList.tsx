@@ -2,10 +2,14 @@ import { MessagesSquare } from 'lucide-react';
 import * as React from 'react';
 
 import { ChatMessage, type ChatMessageVariant } from '@/components/chat/ChatMessage';
+import type { ChatProduct } from '@/components/chat/types';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import type { OrderAnnouncementModel } from '@/components/commerce/OrderAnnouncementCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './chat.module.css';
 
 type MessageListItem = {
     id: number | string;
@@ -15,6 +19,7 @@ type MessageListItem = {
     status?: 'sending' | 'sent' | 'delivered' | 'failed';
     assistantName?: string;
     order?: OrderAnnouncementModel | null;
+    products?: ChatProduct[];
 };
 
 type MessageListProps = {
@@ -27,15 +32,10 @@ type MessageListProps = {
     className?: string;
 };
 
-export function MessageList({
-    messages,
-    loading = false,
-    typing = false,
-    typingLabel = 'Đang soạn tin',
-    emptyTitle = 'Chưa có tin nhắn',
-    emptyDescription = 'Gửi lời chào để bắt đầu cuộc trò chuyện.',
-    className,
-}: MessageListProps) {
+export function MessageList({ messages, loading = false, typing = false, typingLabel, emptyTitle, emptyDescription, className }: MessageListProps) {
+    const { t } = useTranslation();
+    const resolvedEmptyTitle = emptyTitle ?? t('No messages yet');
+    const resolvedEmptyDescription = emptyDescription ?? t('Say hello to start the conversation.');
     const endRef = React.useRef<HTMLDivElement | null>(null);
 
     React.useEffect(() => {
@@ -44,29 +44,29 @@ export function MessageList({
 
     if (loading) {
         return (
-            <div className={cn('flex flex-1 flex-col gap-4 overflow-hidden p-4', className)}>
-                <Skeleton className="h-14 w-2/3 rounded-surface" />
-                <Skeleton className="ml-auto h-12 w-1/2 rounded-surface" />
-                <Skeleton className="h-16 w-3/4 rounded-surface" />
+            <div className={cx(styles.messageListSkeleton, className)}>
+                <Skeleton className={styles.messageListSkeletonIncoming} />
+                <Skeleton className={styles.messageListSkeletonOutgoing} />
+                <Skeleton className={styles.messageListSkeletonWide} />
             </div>
         );
     }
 
     if (messages.length === 0 && !typing) {
         return (
-            <div className={cn('flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center', className)}>
-                <span className="flex size-12 items-center justify-center rounded-pill bg-lacquer-wash text-lacquer-red">
-                    <MessagesSquare aria-hidden="true" className="size-6" />
+            <div className={cx(styles.messagesEmpty, className)}>
+                <span className={styles.messagesEmptyIcon}>
+                    <MessagesSquare aria-hidden="true" className={styles.headerIconSvg} />
                 </span>
-                <span className="text-body-md font-semibold text-ink">{emptyTitle}</span>
-                <span className="max-w-xs text-body-sm text-ink-muted">{emptyDescription}</span>
+                <span className={styles.messagesEmptyTitle}>{resolvedEmptyTitle}</span>
+                <span className={styles.messagesEmptyText}>{resolvedEmptyDescription}</span>
             </div>
         );
     }
 
     return (
-        <div className={cn('flex-1 overflow-y-auto', className)}>
-            <div className="flex flex-col gap-4 p-4" role="log" aria-live="polite" aria-relevant="additions text">
+        <div className={cx(styles.messageList, className)}>
+            <div className={styles.messageListInner} role="log" aria-live="polite">
                 {messages.map((message) => (
                     <ChatMessage
                         key={message.id}
@@ -76,9 +76,10 @@ export function MessageList({
                         status={message.status}
                         assistantName={message.assistantName}
                         order={message.order}
+                        products={message.products}
                     />
                 ))}
-                {typing && <TypingIndicator label={typingLabel} />}
+                {typing ? <TypingIndicator label={typingLabel ?? t('Typing')} /> : null}
                 <div ref={endRef} />
             </div>
         </div>

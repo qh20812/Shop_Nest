@@ -1,9 +1,12 @@
 import { PageContainer } from '@/components/layout/PageContainer';
-import { Eyebrow, Heading, Text } from '@/components/ui/typography';
-import { cn } from '@/lib/utils';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { Heading, Text } from '@/components/ui/typography';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import styles from './storefront.module.css';
 
 type EditorialPillar = {
-    eyebrow: string;
     title: string;
     description: string;
     image?: string;
@@ -14,32 +17,25 @@ type EditorialPillarsProps = {
     className?: string;
 };
 
-const spans = ['lg:col-span-5', 'lg:col-span-3', 'lg:col-span-4'];
-
 export function EditorialPillars({ pillars, className }: EditorialPillarsProps) {
+    const { t } = useTranslation();
+
     return (
-        <section className={cn('py-10 md:py-16', className)}>
+        <section className={cx(styles.editorial, className)}>
             <PageContainer>
-                <div className="mb-8 flex flex-col gap-2">
-                    <Eyebrow tone="accent">Cách chợ vận hành</Eyebrow>
-                    <Heading level={2} size="headline-2">
-                        Tuyển chọn kỹ, sống thật êm
-                    </Heading>
-                </div>
-                <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
-                    {pillars.slice(0, 3).map((pillar, index) => (
-                        <article key={pillar.title} className={cn('flex flex-col gap-4 border-t border-border pt-5', spans[index])}>
-                            <span className="font-mono text-label-code text-lacquer-red">0{index + 1}</span>
+                <SectionHeader title={t('Chosen with care, lived with ease')} />
+                <div className={styles.editorialGrid}>
+                    {pillars.slice(0, 3).map((pillar) => (
+                        <article key={pillar.title} className={styles.editorialItem}>
                             {pillar.image && (
-                                <div className="aspect-[4/3] overflow-hidden rounded-card border border-border bg-raw-linen">
-                                    <img src={pillar.image} alt="" loading="lazy" className="size-full object-cover" />
+                                <div className={styles.editorialMedia}>
+                                    <img src={pillar.image} alt="" loading="lazy" className={styles.editorialImage} />
                                 </div>
                             )}
-                            <Eyebrow tone="muted">{pillar.eyebrow}</Eyebrow>
-                            <Heading level={3} size="headline-3">
+                            <Heading level={3} size="headline-3" className={styles.editorialTitle}>
                                 {pillar.title}
                             </Heading>
-                            <Text size="body-sm" tone="muted">
+                            <Text size="body-sm" tone="muted" className={styles.editorialText}>
                                 {pillar.description}
                             </Text>
                         </article>

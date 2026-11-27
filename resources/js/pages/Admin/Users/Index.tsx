@@ -1,19 +1,31 @@
-import '@/../css/Page.css';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Lock, LockOpen, Pencil, Search, Users as UsersIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import { PageHeader } from '@/components/layout/PageHeader';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
 import Avatar from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
-import { useTranslation } from '../../../lib/i18n';
+import { Select } from '@/components/ui/select';
+import StatusBadge from '@/components/ui/status-badge';
+import { cx } from '@/lib/cx';
+import { formatNumber } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
+
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Users.module.css';
 
 interface Role {
     id: number;
-    name: Record<string, string>; // Translation object with locale keys
+    name: Record<string, string>;
 }
 
 interface User {
@@ -39,6 +51,9 @@ interface PageProps {
     users: {
         data: User[];
         links: { url: string | null; label: string; active: boolean }[];
+        total?: number;
+        from?: number | null;
+        to?: number | null;
     };
     roles: string[];
     totalUsers: number;
@@ -52,28 +67,19 @@ interface PageProps {
 
 export default function Index() {
     const { t, locale } = useTranslation();
-    const { users, roles, totalUsers = 0, filters, flash, auth } = usePage<PageProps>().props;
+    const { users, roles, totalUsers = 0, filters = {}, flash, auth } = usePage<PageProps>().props;
     const currentUserId = auth.user.id;
 
     const [search, setSearch] = useState(filters.search || '');
     const [role, setRole] = useState(filters.role || '');
     const [status, setStatus] = useState(filters.status || '');
-
-    // Toast state
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-    // Confirmation modal state
-    const [confirmModal, setConfirmModal] = useState<{
-        isOpen: boolean;
-        userId: number | null;
-        userName: string;
-    }>({
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; userId: number | null; userName: string }>({
         isOpen: false,
         userId: null,
         userName: '',
     });
 
-    // Khi có flash từ backend thì hiển thị toast
     useEffect(() => {
         if (flash?.success) {
             setToast({ type: 'success', message: flash.success });
@@ -82,7 +88,6 @@ export default function Index() {
         }
     }, [flash]);
 
-    // Auto-apply search filter on typing (debounced)
     useEffect(() => {
         const delayTimer = setTimeout(() => {
             if (search !== filters.search) {
@@ -109,15 +114,11 @@ export default function Index() {
     };
 
     const handleStatusToggle = (id: number) => {
-        const user = users.data.find((u) => u.id === id);
+        const user = users.data.find((entry) => entry.id === id);
         const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '';
-        const userName = fullName || user?.username || 'Unknown User';
+        const userName = fullName || user?.username || t('Unknown User');
 
-        setConfirmModal({
-            isOpen: true,
-            userId: id,
-            userName: userName,
-        });
+        setConfirmModal({ isOpen: true, userId: id, userName });
     };
 
     const handleConfirmStatusToggle = () => {
@@ -127,99 +128,76 @@ export default function Index() {
     };
 
     const handleCloseModal = () => {
-        setConfirmModal({
-            isOpen: false,
-            userId: null,
-            userName: '',
-        });
+        setConfirmModal({ isOpen: false, userId: null, userName: '' });
     };
 
-    const handleCloseToast = () => {
-        setToast(null);
-    };
+    const breadcrumbs = [
+        { label: t('Dashboard'), href: '/admin/dashboard' },
+        { label: t('Users'), current: true },
+    ];
 
-    // Define columns for DataTable
+    const filteredTotal = users.total ?? totalUsers;
+    const rangeLabel =
+        filteredTotal > 0 ? `${formatNumber(users.from ?? 0)}-${formatNumber(users.to ?? 0)} / ${formatNumber(filteredTotal)}` : formatNumber(0);
+
     const userColumns = [
         {
-            header: 'ID',
-            cell: (user: User) => `#${user.id}`,
-        },
-        {
-            header: 'Full Name',
+            key: 'user',
+            header: t('User'),
             cell: (user: User) => {
                 const isCurrentUser = user.id === currentUserId;
                 const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-                const displayName = fullName || user.username || 'Unknown User';
-
-                // Normalize avatar_url for this user if backend returned a relative avatar path
+                const displayName = fullName || user.username || t('Unknown User');
                 const userForAvatar = { ...user } as User;
+
                 if (userForAvatar.avatar && !userForAvatar.avatar.startsWith('http') && !userForAvatar.avatar.startsWith('/')) {
                     userForAvatar.avatar_url = userForAvatar.avatar_url || `/storage/${userForAvatar.avatar}`;
                 }
 
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className={adminStyles.avatarCell}>
                         <Avatar user={userForAvatar} />
-                        <div>
-                            <p style={{ fontWeight: '500', margin: 0 }}>
-                                {displayName}
-                                {isCurrentUser && (
-                                    <span
-                                        style={{
-                                            fontSize: '12px',
-                                            padding: '2px 6px',
-                                            borderRadius: '8px',
-                                            background: 'var(--light-success)',
-                                            color: 'var(--success)',
-                                            fontWeight: '600',
-                                            marginLeft: '8px',
-                                        }}
-                                    >
-                                        ({t('You')})
-                                    </span>
-                                )}
-                            </p>
+                        <div className={styles.identity}>
+                            <span className={styles.identityName}>
+                                <span className={styles.identityNameText}>{displayName}</span>
+                                {isCurrentUser && <span className={styles.you}>({t('You')})</span>}
+                            </span>
+                            <span className={styles.identityMeta}>
+                                <span className={styles.identityId}>#{user.id}</span>
+                                <span className={styles.identityEmail} title={user.email}>
+                                    {user.email}
+                                </span>
+                            </span>
                         </div>
                     </div>
                 );
             },
         },
         {
-            header: 'Email',
-            accessorKey: 'email' as keyof User,
-        },
-        {
-            header: 'Role',
-            cell: (user: User) => {
-                return user.roles.map((role, index) => {
-                    const roleName = role.name[locale] || role.name['en'];
-                    return (
-                        <span
-                            key={role.id}
-                            style={{
-                                fontSize: '10px',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                background: roleName === 'Admin' || roleName === 'Quản trị viên' ? 'var(--light-danger)' : 'var(--light-primary)',
-                                color: roleName === 'Admin' || roleName === 'Quản trị viên' ? 'var(--danger)' : 'var(--primary)',
-                                fontWeight: '600',
-                                marginRight: index < user.roles.length - 1 ? '4px' : '0',
-                            }}
-                        >
-                            {roleName}
-                        </span>
-                    );
-                });
-            },
-        },
-        {
-            header: 'Status',
+            key: 'roles',
+            header: t('Role'),
             cell: (user: User) => (
-                <span className={`status ${user.is_active ? 'completed' : 'pending'}`}>{user.is_active ? t('Active') : t('Inactive')}</span>
+                <div className={styles.roles}>
+                    {user.roles.map((userRole) => {
+                        const roleName = userRole.name[locale] || userRole.name['en'];
+
+                        return (
+                            <Badge key={userRole.id} tone="neutral">
+                                {roleName}
+                            </Badge>
+                        );
+                    })}
+                </div>
             ),
         },
         {
-            header: 'Actions',
+            key: 'status',
+            header: t('Status'),
+            cell: (user: User) => <StatusBadge status={user.is_active ? 'active' : 'inactive'} />,
+        },
+        {
+            key: 'actions',
+            header: t('Actions'),
             cell: (user: User) => {
                 const isCurrentUser = user.id === currentUserId;
                 const actions: ActionConfig[] = [
@@ -227,31 +205,19 @@ export default function Index() {
                         type: 'link',
                         href: `/admin/users/${user.id}/edit`,
                         variant: 'primary',
-                        icon: 'bx bx-edit',
+                        icon: Pencil,
                         label: t('Edit'),
                     },
                 ];
 
-                // Add status toggle button based on user's current status
-                if (user.is_active) {
-                    actions.push({
-                        type: 'button',
-                        onClick: () => handleStatusToggle(user.id),
-                        variant: 'danger',
-                        icon: 'bx bx-lock',
-                        label: t('Deactivate'),
-                        disabled: isCurrentUser,
-                    });
-                } else {
-                    actions.push({
-                        type: 'button',
-                        onClick: () => handleStatusToggle(user.id),
-                        variant: 'primary',
-                        icon: 'bx bx-lock-open',
-                        label: t('Activate'),
-                        disabled: isCurrentUser,
-                    });
-                }
+                actions.push({
+                    type: 'button',
+                    onClick: () => handleStatusToggle(user.id),
+                    variant: user.is_active ? 'danger' : 'primary',
+                    icon: user.is_active ? Lock : LockOpen,
+                    label: user.is_active ? t('Deactivate') : t('Activate'),
+                    disabled: isCurrentUser,
+                });
 
                 return <ActionButtons actions={actions} />;
             },
@@ -259,63 +225,74 @@ export default function Index() {
     ];
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('User Management')} />
-            {/* Toast notification */}
-            {toast && <Toast type={toast.type} message={toast.message} onClose={handleCloseToast} />}
 
-            {/* Header và Bộ lọc */}
-            <FilterPanel
-                title="User Management"
-                breadcrumbs={[
-                    { label: 'Users', href: '#' },
-                    { label: 'Overview', href: '#', active: true },
-                ]}
-                searchConfig={{
-                    value: search,
-                    onChange: setSearch,
-                    placeholder: 'Search by name or email...',
-                }}
-                filterConfigs={[
-                    {
-                        value: role,
-                        onChange: setRole,
-                        label: t('-- All Roles --'),
-                        options: roles.map((r) => ({ value: r, label: r })),
-                    },
-                    {
-                        value: status,
-                        onChange: setStatus,
-                        label: t('-- All Statuses --'),
-                        options: [
-                            { value: '1', label: t('Active') },
-                            { value: '0', label: t('Inactive') },
-                        ],
-                    },
-                ]}
-                onApplyFilters={applyFilters}
-                reportButtonConfig={{
-                    label: 'Download CSV',
-                    icon: 'bx-cloud-download',
-                    onClick: () => {
-                        console.log('Download CSV clicked');
-                    },
-                }}
-            />
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Bảng dữ liệu */}
-            <DataTable
-                columns={userColumns}
-                data={users.data}
-                headerTitle={`User List (${totalUsers})`}
-                headerIcon="bx-receipt"
-                emptyMessage="No users found"
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader breadcrumbs={breadcrumbs} title={t('User Management')} count={formatNumber(totalUsers)} />
 
-            {/* Phân trang */}
-            <Pagination links={users.links} />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <FormField label={t('Search')} htmlFor="user-search">
+                        <Input
+                            id="user-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={t('Search by name or email...')}
+                            leadingIcon={Search}
+                            surface="glass"
+                        />
+                    </FormField>
 
-            {/* Confirmation Modal */}
+                    <FormField label={t('Role')} htmlFor="user-role">
+                        <Select id="user-role" value={role} onChange={(event) => setRole(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Roles --')}</option>
+                            {roles.map((roleName) => (
+                                <option key={roleName} value={roleName}>
+                                    {roleName}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Status')} htmlFor="user-status">
+                        <Select id="user-status" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Statuses --')}</option>
+                            <option value="1">{t('Active')}</option>
+                            <option value="0">{t('Inactive')}</option>
+                        </Select>
+                    </FormField>
+
+                    <div className={styles.filterActions}>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={userColumns}
+                        data={users.data}
+                        headerTitle={t('Users')}
+                        headerIcon={UsersIcon}
+                        headerMeta={rangeLabel}
+                        emptyMessage={t('No users found')}
+                    />
+                </div>
+
+                <Pagination links={users.links} />
+            </div>
+
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
                 onClose={handleCloseModal}
@@ -323,6 +300,6 @@ export default function Index() {
                 title={t('Confirm User Status Change')}
                 message={`${t('Are you sure you want to change the status of user')} "${confirmModal.userName}"?`}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }

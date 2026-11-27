@@ -113,4 +113,23 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | Theme "shopnest" nằm ở resources/views/vendor/mail/html/themes và dùng
+    | đúng palette của web (accent #c2410c). Mọi Mailable đều dùng markdown để
+    | Laravel tự inline CSS + sinh bản text/plain.
+    |
+    */
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'shopnest'),
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];

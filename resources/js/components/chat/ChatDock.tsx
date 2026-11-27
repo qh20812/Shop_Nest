@@ -3,17 +3,24 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as React from 'react';
 
 import { ChatbotLauncher } from '@/components/chat/ChatbotLauncher';
-import { ChatbotPanel } from '@/components/chat/ChatbotPanel';
+import { MarkdownText } from '@/components/chat/MarkdownText';
 import type { MessageListItem } from '@/components/chat/MessageList';
+import type { ChatbotHistoryTurn, ChatProduct } from '@/components/chat/types';
 import { DialogDescription, DialogRoot, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatChatTimestamp } from '@/hooks/useChatConversations';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
+
+import shellStyles from './chat-launcher.module.css';
+
+const ChatbotPanel = React.lazy(() => import('./ChatbotPanel'));
 
 type StoredMessage = {
     id: number;
     variant: 'incoming' | 'outgoing' | 'error';
     content: string;
     createdAt: string;
+    products?: ChatProduct[];
 };
 
 type ChatDockProps = {
@@ -29,6 +36,7 @@ type ChatDockPageProps = {
 
 const STORAGE_KEY = 'shopnest.chatbot.messages.v2';
 const MAX_STORED_MESSAGES = 40;
+const SEND_TIMEOUT_MS = 30000;
 
 const hiddenPrefixes = [
     '/login',
@@ -84,13 +92,76 @@ function loadStoredMessages(storageKey: string): StoredMessage[] {
                     typeof item.createdAt === 'string' &&
                     ['incoming', 'outgoing', 'error'].includes(item.variant),
             )
+            .map((item) => {
+                const products = sanitizeProducts((item as StoredMessage).products);
+
+                return products ? { ...item, products } : { ...item, products: undefined };
+            })
             .slice(-MAX_STORED_MESSAGES);
     } catch {
         return [greeting];
     }
 }
 
+function sanitizeProducts(value: unknown): ChatProduct[] | undefined {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+
+    const products = value.filter(
+        (product): product is ChatProduct =>
+            typeof product === 'object' &&
+            product !== null &&
+            typeof (product as ChatProduct).id === 'number' &&
+            typeof (product as ChatProduct).name === 'string' &&
+            typeof (product as ChatProduct).price === 'number',
+    );
+
+    return products.length > 0 ? products : undefined;
+}
+
+function mapHistoryTurns(turns: unknown): StoredMessage[] {
+    if (!Array.isArray(turns)) {
+        return [];
+    }
+
+    const restored: StoredMessage[] = [];
+
+    for (const turn of turns) {
+        if (typeof turn !== 'object' || turn === null) {
+            continue;
+        }
+
+        const record = turn as Partial<ChatbotHistoryTurn>;
+
+        if (typeof record.id !== 'number' || typeof record.user_content !== 'string' || typeof record.assistant_content !== 'string') {
+            continue;
+        }
+
+        const createdAt = typeof record.created_at === 'string' && record.created_at !== '' ? record.created_at : new Date().toISOString();
+        const products = sanitizeProducts(record.products);
+
+        restored.push({
+            id: record.id * 2,
+            variant: 'outgoing',
+            content: record.user_content,
+            createdAt,
+        });
+
+        restored.push({
+            id: record.id * 2 + 1,
+            variant: 'incoming',
+            content: record.assistant_content,
+            createdAt,
+            products,
+        });
+    }
+
+    return restored.slice(-MAX_STORED_MESSAGES);
+}
+
 export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 }: ChatDockProps) {
+    const { t } = useTranslation();
     const page = usePage<ChatDockPageProps>();
     const pathname = page.url.split('?')[0];
     const csrfToken = page.props.csrfToken;
@@ -102,8 +173,23 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const [typing, setTyping] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [resolvedUnread, setResolvedUnread] = React.useState(unreadCount);
+    const [clearing, setClearing] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(false);
+    const historySynced = React.useRef(false);
+    const inFlight = React.useRef(false);
+    const sendController = React.useRef<AbortController | null>(null);
+    const persistedStorageKey = React.useRef(storageKey);
+
+    React.useEffect(() => () => sendController.current?.abort(), []);
 
     React.useEffect(() => {
+        if (persistedStorageKey.current !== storageKey) {
+            // Vừa đổi user: không ghi messages của user cũ sang key mới.
+            persistedStorageKey.current = storageKey;
+
+            return;
+        }
+
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
         } catch {
@@ -111,9 +197,130 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
         }
     }, [messages, storageKey]);
 
+    // Đổi user (storageKey đổi) thì nạp lại đúng lịch sử của user đó.
+    React.useEffect(() => {
+        sendController.current?.abort();
+        historySynced.current = false;
+        setMessages(loadStoredMessages(storageKey));
+        setError(null);
+    }, [storageKey]);
+
+    // Đồng bộ tin nhắn giữa các tab đang mở.
+    React.useEffect(() => {
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key !== storageKey) {
+                return;
+            }
+
+            if (event.newValue === null) {
+                setMessages([greeting]);
+                return;
+            }
+
+            setMessages((current) => {
+                const currentSerialized = JSON.stringify(current.slice(-MAX_STORED_MESSAGES));
+
+                return currentSerialized === event.newValue ? current : loadStoredMessages(storageKey);
+            });
+        };
+
+        window.addEventListener('storage', handleStorage);
+
+        return () => window.removeEventListener('storage', handleStorage);
+    }, [storageKey]);
+
+    // Server là nguồn lịch sử chính: đăng nhập máy khác vẫn thấy hội thoại cũ.
+    React.useEffect(() => {
+        if (!open || !isAuthenticated || historySynced.current) {
+            return;
+        }
+
+        let cancelled = false;
+        const controller = new AbortController();
+
+        void (async () => {
+            try {
+                const response = await fetch('/chatbot/history?limit=20', {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    return; // Giữ bản localStorage và thử lại ở lần mở sau.
+                }
+
+                const payload = await response.json();
+
+                if (cancelled) {
+                    return;
+                }
+
+                const restored = mapHistoryTurns(payload?.data?.turns);
+
+                if (restored.length > 0) {
+                    setMessages(restored);
+                    setResolvedUnread(0);
+                }
+
+                historySynced.current = true;
+            } catch {
+                // Ngoại tuyến hoặc request bị huỷ: giữ lịch sử localStorage.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [open, isAuthenticated]);
+
     if (!enabled || !isAuthenticated || !isChatDockVisible(pathname)) {
         return null;
     }
+
+    const handleClearHistory = async () => {
+        if (clearing) {
+            return;
+        }
+
+        setClearing(true);
+
+        try {
+            const response = await fetch('/chatbot/history', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                throw new Error(t('Could not clear the conversation history.'));
+            }
+
+            historySynced.current = true;
+            setMessages([greeting]);
+            setResolvedUnread(0);
+            setError(null);
+
+            try {
+                window.localStorage.removeItem(storageKey);
+            } catch {
+                // localStorage có thể bị chặn; server đã xoá là đủ.
+            }
+        } catch (clearError) {
+            setError(clearError instanceof Error ? clearError.message : t('Could not clear the conversation history.'));
+        } finally {
+            setClearing(false);
+        }
+    };
 
     const handleOpenChange = (next: boolean) => {
         setOpen(next);
@@ -127,9 +334,11 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const handleSend = async (content: string) => {
         const trimmed = content.trim();
 
-        if (trimmed === '' || typing) {
+        if (trimmed === '' || typing || inFlight.current) {
             return;
         }
+
+        inFlight.current = true;
 
         const userMessage: StoredMessage = {
             id: Date.now(),
@@ -142,6 +351,10 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
         setTyping(true);
         setError(null);
 
+        const controller = new AbortController();
+        sendController.current = controller;
+        const timeoutId = window.setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+
         try {
             const response = await fetch('/chatbot/message', {
                 method: 'POST',
@@ -152,19 +365,21 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                     ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
                 },
                 credentials: 'same-origin',
+                signal: controller.signal,
                 body: JSON.stringify({ message: trimmed }),
             });
 
             const payload = await response.json();
 
             if (!response.ok) {
-                throw new Error(payload?.message ?? 'Không thể kết nối trợ lý.');
+                throw new Error(payload?.message ?? t('Could not connect to the assistant.'));
             }
 
             const reply = payload?.data?.reply ?? payload?.reply;
+            const products = sanitizeProducts(payload?.data?.products);
 
             if (typeof reply !== 'string' || reply.trim() === '') {
-                throw new Error('Trợ lý chưa có câu trả lời.');
+                throw new Error(t('The assistant did not reply.'));
             }
 
             setMessages((current) => [
@@ -174,10 +389,17 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                     variant: 'incoming',
                     content: reply,
                     createdAt: new Date().toISOString(),
+                    products,
                 },
             ]);
         } catch (requestError) {
-            const message = requestError instanceof Error ? requestError.message : 'Không thể kết nối trợ lý.';
+            const timedOut = requestError instanceof DOMException && requestError.name === 'AbortError';
+            const message = timedOut
+                ? t('The assistant took too long to respond. Please try again.')
+                : requestError instanceof Error
+                  ? requestError.message
+                  : t('Could not connect to the assistant.');
+
             setError(message);
             setMessages((current) => [
                 ...current,
@@ -189,6 +411,13 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
                 },
             ]);
         } finally {
+            window.clearTimeout(timeoutId);
+
+            if (sendController.current === controller) {
+                sendController.current = null;
+            }
+
+            inFlight.current = false;
             setTyping(false);
         }
     };
@@ -196,8 +425,10 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
     const panelMessages: MessageListItem[] = messages.map((message) => ({
         id: message.id,
         variant: message.variant,
-        content: message.content,
+        // Assistant replies are markdown; user input and errors stay plain text.
+        content: message.variant === 'incoming' ? <MarkdownText text={message.content} /> : message.content,
         timestamp: formatChatTimestamp(message.createdAt),
+        products: message.products,
     }));
 
     return (
@@ -207,24 +438,27 @@ export function ChatDock({ enabled = true, defaultOpen = false, unreadCount = 0 
             </DialogTrigger>
 
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Content
-                    className={cn(
-                        'z-chat fixed inset-x-0 top-auto bottom-0 h-chat-sheet-height w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-t-sheet border border-border bg-warm-porcelain p-0 shadow-float focus:outline-none',
-                        'md:inset-auto md:right-6 md:bottom-6 md:h-[var(--spacing-chat-panel-height)] md:w-chat-panel md:rounded-surface',
-                    )}
-                >
-                    <DialogTitle className="sr-only">Trợ lý ShopNest</DialogTitle>
-                    <DialogDescription className="sr-only">Cửa sổ trò chuyện với trợ lý ảo ShopNest. Nhấn Escape để đóng.</DialogDescription>
+                <DialogPrimitive.Content className={cx('sn-glass-surface', shellStyles.dockContent)} data-expanded={expanded ? 'true' : undefined}>
+                    <DialogTitle className="sn-visually-hidden">{t('ShopNest assistant')}</DialogTitle>
+                    <DialogDescription className="sn-visually-hidden">
+                        {t('Chat window with the ShopNest assistant. Press Escape to close.')}
+                    </DialogDescription>
 
-                    <ChatbotPanel
-                        messages={panelMessages}
-                        onSend={handleSend}
-                        onClose={() => handleOpenChange(false)}
-                        onMinimize={() => handleOpenChange(false)}
-                        typing={typing}
-                        error={error}
-                        onDismissError={() => setError(null)}
-                    />
+                    <React.Suspense fallback={<div className={shellStyles.dockLoading} aria-busy="true" />}>
+                        <ChatbotPanel
+                            messages={panelMessages}
+                            onSend={handleSend}
+                            onClose={() => handleOpenChange(false)}
+                            onMinimize={() => handleOpenChange(false)}
+                            typing={typing}
+                            error={error}
+                            onDismissError={() => setError(null)}
+                            onClearHistory={handleClearHistory}
+                            clearing={clearing}
+                            expanded={expanded}
+                            onToggleExpanded={() => setExpanded((current) => !current)}
+                        />
+                    </React.Suspense>
                 </DialogPrimitive.Content>
             </DialogPrimitive.Portal>
         </DialogRoot>

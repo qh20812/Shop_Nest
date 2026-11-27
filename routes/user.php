@@ -12,6 +12,7 @@ use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\WishlistController;
+use App\Http\Controllers\WalletTopupController;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -55,6 +56,17 @@ Route::middleware(['auth', 'verified.optional'])
 
         // Theo dõi đơn hàng
         Route::get('{order}/track', [OrderController::class, 'trackDelivery'])->name('track');
+    });
+
+Route::middleware(['auth', 'verified.optional'])
+    ->prefix('wallet/topups')
+    ->as('wallet.topups.')
+    ->group(function () {
+        Route::get('/', [WalletTopupController::class, 'index'])->name('index');
+        Route::post('/', [WalletTopupController::class, 'store'])->name('store');
+        Route::get('/{topup}', [WalletTopupController::class, 'show'])->name('show');
+        Route::post('/{topup}/transferred', [WalletTopupController::class, 'transferred'])->name('transferred');
+        Route::post('/{topup}/cancel', [WalletTopupController::class, 'cancel'])->name('cancel');
     });
 
 Route::middleware(['auth', 'verified.optional'])
@@ -127,13 +139,15 @@ Route::prefix('addresses')->as('addresses.')->group(function () {
     Route::get('/wards/{parentId}', [AddressController::class, 'wards'])->name('wards');
 });
 
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
-Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
-Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
-Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
-Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
+Route::middleware(['auth', 'verified.optional'])->group(function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/update/{itemId}', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/remove/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/apply-promotion', [CartController::class, 'applyPromotion'])->name('cart.applyPromotion');
+    Route::post('/cart/remove-promotion', [CartController::class, 'removePromotion'])->name('cart.removePromotion');
+});
 
 Route::middleware(['auth', 'verified.optional'])->group(function () {
     // Change password routes for customer

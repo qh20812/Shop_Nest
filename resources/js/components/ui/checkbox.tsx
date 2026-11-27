@@ -2,7 +2,7 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check, Minus } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 type CheckboxProps = React.ComponentProps<typeof CheckboxPrimitive.Root> & {
     label?: React.ReactNode;
@@ -21,17 +21,14 @@ const Checkbox = React.forwardRef<React.ElementRef<typeof CheckboxPrimitive.Root
                 id={checkboxId}
                 data-slot="checkbox"
                 aria-describedby={descriptionId}
-                className={cn(
-                    'peer size-4 shrink-0 rounded-checkbox border border-border bg-warm-porcelain text-warm-porcelain transition-colors duration-150 ease-nep focus-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-lacquer-red data-[state=checked]:bg-lacquer-red data-[state=indeterminate]:border-lacquer-red data-[state=indeterminate]:bg-lacquer-red',
-                    className,
-                )}
+                className={cx('sn-checkbox', className)}
                 {...props}
             >
-                <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
+                <CheckboxPrimitive.Indicator className="sn-checkbox__indicator">
                     {props.checked === 'indeterminate' ? (
-                        <Minus aria-hidden="true" className="size-3" strokeWidth={3} />
+                        <Minus aria-hidden="true" className="sn-checkbox__icon" strokeWidth={3} />
                     ) : (
-                        <Check aria-hidden="true" className="size-3" strokeWidth={3} />
+                        <Check aria-hidden="true" className="sn-checkbox__icon" strokeWidth={3} />
                     )}
                 </CheckboxPrimitive.Indicator>
             </CheckboxPrimitive.Root>
@@ -42,16 +39,16 @@ const Checkbox = React.forwardRef<React.ElementRef<typeof CheckboxPrimitive.Root
         }
 
         return (
-            <div className="flex items-start gap-3">
-                <div className="pt-0.5">{control}</div>
-                <div className="flex flex-col gap-0.5">
+            <div className="sn-checkbox-field">
+                <div className="sn-checkbox-field__control">{control}</div>
+                <div className="sn-checkbox-field__copy">
                     {label && (
-                        <label htmlFor={checkboxId} className="cursor-pointer text-body-sm font-medium text-ink">
+                        <label htmlFor={checkboxId} className="sn-checkbox-field__label">
                             {label}
                         </label>
                     )}
                     {description && (
-                        <span id={descriptionId} className="text-body-sm text-ink-muted">
+                        <span id={descriptionId} className="sn-checkbox-field__description">
                             {description}
                         </span>
                     )}

@@ -2,43 +2,46 @@ import { Head } from '@inertiajs/react';
 
 import { StorefrontLayout } from '@/components/layout/StorefrontLayout';
 import { LegalDocument } from '@/components/storefront/LegalDocument';
+import { useTranslation } from '@/lib/i18n';
 
 export default function SellingPolicy() {
+    const { t } = useTranslation();
+
     return (
         <StorefrontLayout compactFooter>
-            <Head title="Chính sách người bán" />
+            <Head title={t('Seller policy')} />
 
             <LegalDocument
-                title="Selling Policy"
-                description="Rules and guidelines for sellers using the ShopNest platform."
+                title={t('Seller policy')}
+                description={t('Rules for sellers operating on ShopNest.')}
                 sections={[
                     {
-                        heading: '1. Seller Eligibility',
-                        body: 'To become a seller on ShopNest, you must be at least 18 years old and have the legal right to conduct business in your jurisdiction.',
+                        heading: '1. Điều kiện mở shop',
+                        body: 'Người bán cần cung cấp hồ sơ hợp lệ, thông tin liên hệ chính xác và cam kết tuân thủ quy định của ShopNest.',
                     },
                     {
-                        heading: '2. Product Listings',
-                        body: 'All products must be accurately described, legally obtainable, and comply with our prohibited items policy.',
+                        heading: '2. Đăng sản phẩm',
+                        body: 'Sản phẩm phải được mô tả đúng thực tế, có nguồn gốc hợp pháp và không thuộc danh mục bị cấm.',
                     },
                     {
-                        heading: '3. Pricing and Fees',
-                        body: 'Sellers are responsible for setting competitive prices. ShopNest may charge fees for successful transactions.',
+                        heading: '3. Giá và phí',
+                        body: 'Người bán tự đặt giá bán và chịu trách nhiệm về các khoản phí phát sinh theo thỏa thuận với ShopNest.',
                     },
                     {
-                        heading: '4. Order Fulfillment',
-                        body: 'Sellers must fulfill orders promptly and accurately. Failure to do so may result in account suspension.',
+                        heading: '4. Xử lý đơn hàng',
+                        body: 'Đơn hàng cần được xác nhận và đóng gói đúng thời hạn. Chậm xử lý hoặc huỷ đơn không hợp lý có thể ảnh hưởng đến quyền bán hàng.',
                     },
                     {
-                        heading: '5. Customer Service',
-                        body: 'Sellers are expected to provide excellent customer service and handle returns and refunds professionally.',
+                        heading: '5. Chăm sóc khách hàng',
+                        body: 'Người bán cần phản hồi câu hỏi, xử lý đổi trả và hoàn tiền theo chính sách đã công bố.',
                     },
                     {
-                        heading: '6. Prohibited Activities',
-                        body: 'Sellers may not engage in fraudulent activities, spam, or violate intellectual property rights.',
+                        heading: '6. Hành vi bị cấm',
+                        body: 'Không gian lận, spam, bán hàng giả hoặc xâm phạm quyền sở hữu trí tuệ của bên khác.',
                     },
                     {
-                        heading: '7. Account Termination',
-                        body: 'ShopNest reserves the right to terminate seller accounts that violate these policies.',
+                        heading: '7. Chấm dứt hợp tác',
+                        body: 'ShopNest có thể tạm ngưng hoặc chấm dứt quyền bán hàng nếu phát hiện vi phạm nghiêm trọng hoặc lặp lại.',
                     },
                 ]}
             />

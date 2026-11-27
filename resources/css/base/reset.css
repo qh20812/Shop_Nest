@@ -1,0 +1,140 @@
+/*
+ * Bảng Hiệu — reset.
+ * Replaces Tailwind preflight + the six global blocks that lived in Page.css.
+ * Element rules are intentionally global; component visuals stay in primitives.
+ */
+
+@layer sn-reset {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        background-color: var(--sn-color-canvas);
+    }
+
+    body {
+        margin: 0;
+        min-height: 100dvh;
+        background-color: var(--sn-color-canvas);
+        color: var(--sn-color-text);
+        font-family: var(--sn-font-sans);
+        font-size: var(--sn-text-base);
+        line-height: var(--sn-leading-normal);
+    }
+
+    body,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    figure,
+    blockquote,
+    dl,
+    dd {
+        margin: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-size: inherit;
+        font-weight: inherit;
+    }
+
+    a {
+        color: inherit;
+        -webkit-text-decoration: inherit;
+        text-decoration: inherit;
+    }
+
+    ol,
+    ul,
+    menu {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    img,
+    picture,
+    video,
+    canvas,
+    svg {
+        display: block;
+        max-width: 100%;
+        vertical-align: middle;
+    }
+
+    input,
+    button,
+    textarea,
+    select,
+    optgroup {
+        margin: 0;
+        font: inherit;
+        color: inherit;
+    }
+
+    button,
+    [type='button'],
+    [type='reset'],
+    [type='submit'] {
+        appearance: button;
+        background-color: transparent;
+        background-image: none;
+    }
+
+    hr {
+        height: 0;
+        border-top-width: 1px;
+        color: inherit;
+    }
+
+    table {
+        border-color: inherit;
+        border-collapse: collapse;
+        text-indent: 0;
+    }
+
+    fieldset {
+        margin: 0;
+        padding: 0;
+    }
+
+    legend {
+        padding: 0;
+    }
+
+    summary {
+        display: list-item;
+    }
+
+    [hidden] {
+        display: none;
+    }
+
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        overflow-wrap: break-word;
+    }
+
+    :target {
+        scroll-margin-block: 5ex;
+    }
+}

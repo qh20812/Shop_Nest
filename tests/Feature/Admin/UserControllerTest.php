@@ -6,7 +6,6 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class UserControllerTest extends TestCase
@@ -14,6 +13,7 @@ class UserControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $customer;
 
     protected function setUp(): void
@@ -47,7 +47,7 @@ class UserControllerTest extends TestCase
     public function test_nguoi_dung_khong_phai_admin_khong_the_truy_cap_quan_ly_nguoi_dung(): void
     {
         $response = $this->actingAs($this->customer)->get(route('admin.users.index'));
-        
+
         $response->assertRedirect(route('home'));
         $response->assertSessionHas('error');
     }
@@ -73,7 +73,7 @@ class UserControllerTest extends TestCase
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email' => 'john.doe@example.com',
-            'username' => 'johndoe'
+            'username' => 'johndoe',
         ]);
 
         // Test tìm kiếm theo first_name
@@ -81,7 +81,7 @@ class UserControllerTest extends TestCase
             ->get(route('admin.users.index', ['search' => 'John']));
 
         $response->assertStatus(200);
-        
+
         // Test tìm kiếm theo email
         $response = $this->actingAs($this->admin)
             ->get(route('admin.users.index', ['search' => 'john.doe@example.com']));
@@ -139,7 +139,7 @@ class UserControllerTest extends TestCase
         $this->assertEquals('Updated Last', $this->customer->last_name);
         $this->assertEquals('updated@example.com', $this->customer->email);
         $this->assertTrue($this->customer->is_active);
-        
+
         // Kiểm tra role đã được cập nhật
         $this->customer->refresh();
         $this->customer->load('roles');
@@ -184,6 +184,68 @@ class UserControllerTest extends TestCase
             ->put(route('admin.users.update', $this->customer), $updateData);
 
         $response->assertSessionHasErrors(['first_name', 'email', 'is_active', 'role_id']);
+    }
+
+    /**
+     * Test admin không thể tự hạ vai trò của chính mình,
+     * đồng thời bảo vệ admin cuối cùng khỏi mất quyền quản trị.
+     */
+    public function test_admin_khong_the_tu_doi_vai_tro_cua_chinh_minh(): void
+    {
+        $sellerRole = Role::where('name->en', 'Seller')->first();
+        $adminRole = Role::where('name->en', 'Admin')->first();
+
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.users.update', $this->admin), [
+                'first_name' => 'Self',
+                'last_name' => 'Admin',
+                'email' => $this->admin->email,
+                'role_id' => $sellerRole->id,
+            ]);
+
+        $response->assertForbidden();
+
+        $this->admin->refresh();
+        $this->assertTrue($this->admin->roles()->where('roles.id', $adminRole->id)->exists());
+    }
+
+    /**
+     * Test admin không thể tự vô hiệu hóa tài khoản qua form cập nhật.
+     */
+    public function test_admin_khong_the_tu_doi_trang_thai_cua_chinh_minh(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.users.update', $this->admin), [
+                'first_name' => 'Self',
+                'last_name' => 'Admin',
+                'email' => $this->admin->email,
+                'is_active' => false,
+            ]);
+
+        $response->assertForbidden();
+
+        $this->admin->refresh();
+        $this->assertTrue($this->admin->is_active);
+    }
+
+    /**
+     * Test admin vẫn có thể tự cập nhật họ tên và email, không cần gửi role/status.
+     */
+    public function test_admin_co_the_cap_nhat_ho_ten_va_email_cua_chinh_minh(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->put(route('admin.users.update', $this->admin), [
+                'first_name' => 'Self',
+                'last_name' => 'Updated',
+                'email' => 'self.updated@example.com',
+            ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $this->admin->refresh();
+        $this->assertEquals('Self', $this->admin->first_name);
+        $this->assertEquals('Updated', $this->admin->last_name);
+        $this->assertEquals('self.updated@example.com', $this->admin->email);
     }
 
     /**

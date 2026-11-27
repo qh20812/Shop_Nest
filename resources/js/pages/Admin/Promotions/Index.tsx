@@ -1,15 +1,33 @@
-import '@/../css/Page.css';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Eye, Globe, Pencil, Plus, Search, Store, Tag, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
+import PromotionStatusBadge from '@/components/admin/promotions/PromotionStatusBadge';
+import {
+    promotionScopeLabel,
+    promotionStatusLabel,
+    promotionTypeLabel,
+    promotionValueLabel,
+    type PromotionSeller,
+} from '@/components/admin/promotions/promotion-display';
 import Toast from '@/components/admin/users/Toast';
-import ActionButtons, { ActionConfig } from '@/components/ui/action-buttons';
+import { PageHeader } from '@/components/layout/PageHeader';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import ActionButtons, { type ActionConfig } from '@/components/ui/action-buttons';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import DataTable from '@/components/ui/data-table';
-import FilterPanel from '@/components/ui/filter-panel';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import StatusBadge from '@/components/ui/status-badge';
+import { Select } from '@/components/ui/select';
+import { cx } from '@/lib/cx';
+import { formatDate, formatNumber, formatVnd } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router, usePage } from '@inertiajs/react';
-import React, { useEffect, useMemo, useState } from 'react';
-import AppLayout from '../../../layouts/app/AppLayout';
+
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from './Promotions.module.css';
 
 interface Promotion {
     promotion_id: number;
@@ -25,6 +43,9 @@ interface Promotion {
     spent_budget?: number | string | null;
     roi_percentage?: number | string | null;
     status: string;
+    created_by_type?: string | null;
+    seller_id?: number | null;
+    seller?: PromotionSeller | null;
 }
 
 interface PaginationLink {
@@ -36,12 +57,17 @@ interface PaginationLink {
 interface PromotionPaginator {
     data: Promotion[];
     links: PaginationLink[];
+    from?: number | null;
+    to?: number | null;
+    total?: number;
 }
 
 interface PageProps {
     promotions: PromotionPaginator;
     typeOptions: Record<string, string>;
     statusFilters: string[];
+    statusCounts: Record<string, number>;
+    totalPromotions: number;
     filters?: Record<string, string>;
     flash?: { success?: string; error?: string };
     [key: string]: unknown;
@@ -53,41 +79,19 @@ interface ConfirmState {
     promotionName: string;
 }
 
-type TableColumn = {
-    header: string;
-    accessorKey?: keyof Promotion;
-    cell?: (promotion: Promotion) => React.ReactNode;
-};
-
-const formatDate = (value?: string | null) => {
-    if (!value) {
-        return '—';
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString();
-};
-
-const formatCurrency = (value?: number | string | null) => {
+const formatBudget = (value?: number | string | null): string => {
     if (value === null || value === undefined || value === '') {
-        return '—';
+        return '-';
     }
 
-    const numeric = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (Number.isNaN(numeric)) {
-        return '—';
-    }
+    const numeric = Number(value);
 
-    return `${numeric.toLocaleString()} VND`;
+    return Number.isFinite(numeric) ? formatVnd(numeric) : '-';
 };
 
 export default function Index() {
     const { t } = useTranslation();
-    const { promotions, typeOptions, statusFilters, filters = {}, flash } = usePage<PageProps>().props;
+    const { promotions, typeOptions, statusFilters, statusCounts, totalPromotions, filters = {}, flash } = usePage<PageProps>().props;
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
@@ -109,6 +113,11 @@ export default function Index() {
         }
     }, [flash?.success, flash?.error]);
 
+    const total = promotions.total ?? totalPromotions;
+    const hasFilters = Boolean(filters.search || filters.status || filters.type);
+    const rangeLabel =
+        total > 0 ? `${formatNumber(promotions.from ?? 0)}-${formatNumber(promotions.to ?? 0)} / ${formatNumber(total)}` : formatNumber(0);
+
     const applyFilters = () => {
         router.get(
             '/admin/promotions',
@@ -125,11 +134,7 @@ export default function Index() {
     };
 
     const openDeleteModal = (promotion: Promotion) => {
-        setConfirmState({
-            open: true,
-            promotionId: promotion.promotion_id,
-            promotionName: promotion.name,
-        });
+        setConfirmState({ open: true, promotionId: promotion.promotion_id, promotionName: promotion.name });
     };
 
     const handleConfirmDelete = () => {
@@ -137,86 +142,101 @@ export default function Index() {
             return;
         }
 
-        router.delete(`/admin/promotions/${confirmState.promotionId}`, {
-            preserveScroll: true,
-        });
+        setConfirmState({ open: false, promotionId: null, promotionName: '' });
+        router.delete(`/admin/promotions/${confirmState.promotionId}`, { preserveScroll: true });
     };
 
-    const clearToast = () => {
-        setToast(null);
-    };
+    const summaryItems = [
+        { key: 'draft', label: t('Upcoming'), value: statusCounts.draft ?? 0 },
+        { key: 'active', label: t('Active'), value: statusCounts.active ?? 0 },
+        { key: 'paused', label: t('Paused'), value: statusCounts.paused ?? 0 },
+        { key: 'expired', label: t('Expired'), value: statusCounts.expired ?? 0 },
+    ];
 
-    const columns: TableColumn[] = useMemo(() => {
-        return [
+    const columns = useMemo(
+        () => [
             {
-                header: 'Promotion Name',
-                cell: (promotion) => (
-                    <div className="promotion-cell">
-                        <div className="promotion-name">{promotion.name || t('Unnamed Promotion')}</div>
-                        <div className="promotion-meta">
-                            {formatDate(promotion.start_date)} ⟶ {formatDate(promotion.end_date)}
+                key: 'promotion',
+                header: t('Promotion Name'),
+                cell: (promotion: Promotion) => {
+                    const isSeller = promotion.created_by_type === 'seller';
+                    const ScopeIcon = isSeller ? Store : Globe;
+
+                    return (
+                        <div className={styles.promotion}>
+                            <span className={styles.promotionName}>{promotion.name || t('Unnamed Promotion')}</span>
+                            <div className={styles.promotionMeta}>
+                                <Badge tone="neutral" size="sm" icon={ScopeIcon}>
+                                    {promotionScopeLabel(promotion, t)}
+                                </Badge>
+                                <span>{promotionTypeLabel(promotion.type, typeOptions, t)}</span>
+                            </div>
+                            <span className={styles.dateLine}>
+                                {formatDate(promotion.start_date)} - {formatDate(promotion.end_date)}
+                            </span>
                         </div>
+                    );
+                },
+            },
+            {
+                key: 'value',
+                header: t('Discount Value'),
+                cell: (promotion: Promotion) => <span className={styles.value}>{promotionValueLabel(promotion.type, promotion.value)}</span>,
+            },
+            {
+                key: 'budget',
+                header: t('Budget'),
+                align: 'right' as const,
+                cell: (promotion: Promotion) => (
+                    <div className={styles.budgetCell}>
+                        <span className={styles.value}>{formatBudget(promotion.allocated_budget)}</span>
+                        <span className={styles.spent}>
+                            {t('Spent')}: {formatBudget(promotion.spent_budget)}
+                        </span>
                     </div>
                 ),
             },
             {
-                header: 'Type',
-                cell: (promotion) => <div className="promotion-meta">{typeOptions[promotion.type] ?? promotion.type}</div>,
-            },
-            {
-                header: 'Discount Value',
-                cell: (promotion) => (
-                    <div className="promotion-discount">
-                        {promotion.type === 'percentage' ? `${Number(promotion.value).toLocaleString()}%` : formatCurrency(promotion.value)}
-                    </div>
+                key: 'usage',
+                header: t('Usage'),
+                align: 'right' as const,
+                cell: (promotion: Promotion) => (
+                    <span className={styles.usage}>
+                        {promotion.usage_limit
+                            ? `${formatNumber(promotion.used_count)} / ${formatNumber(promotion.usage_limit)}`
+                            : formatNumber(promotion.used_count)}
+                    </span>
                 ),
             },
             {
-                header: 'Budget',
-                cell: (promotion) => (
-                    <div className="promotion-budget">
-                        <div className="promotion-budget-amount">{formatCurrency(promotion.allocated_budget)}</div>
-                        <div className="promotion-meta">
-                            {t('Spent')}: {formatCurrency(promotion.spent_budget)}
-                        </div>
-                    </div>
-                ),
+                key: 'status',
+                header: t('Status'),
+                cell: (promotion: Promotion) => <PromotionStatusBadge status={promotion.status} />,
             },
             {
-                header: 'Usage',
-                cell: (promotion) => (
-                    <div className="promotion-meta">
-                        {promotion.usage_limit ? `${promotion.used_count} / ${promotion.usage_limit}` : `${promotion.used_count}`}
-                    </div>
-                ),
-            },
-            {
-                header: 'Status',
-                cell: (promotion) => <StatusBadge status={promotion.status} />,
-            },
-            {
-                header: 'Actions',
-                cell: (promotion) => {
+                key: 'actions',
+                header: t('Actions'),
+                cell: (promotion: Promotion) => {
                     const actions: ActionConfig[] = [
                         {
                             type: 'link',
                             label: t('View'),
                             href: `/admin/promotions/${promotion.promotion_id}`,
-                            icon: 'bx bx-show',
+                            icon: Eye,
                             variant: 'primary',
                         },
                         {
                             type: 'link',
                             label: t('Edit'),
                             href: `/admin/promotions/${promotion.promotion_id}/edit`,
-                            icon: 'bx bx-edit',
+                            icon: Pencil,
                             variant: 'primary',
                         },
                         {
                             type: 'button',
                             label: t('Delete'),
                             onClick: () => openDeleteModal(promotion),
-                            icon: 'bx bx-trash',
+                            icon: Trash2,
                             variant: 'danger',
                         },
                     ];
@@ -224,75 +244,113 @@ export default function Index() {
                     return <ActionButtons actions={actions} />;
                 },
             },
-        ];
-    }, [t, typeOptions]);
+        ],
+        [t, typeOptions],
+    );
 
     return (
-        <AppLayout>
+        <WorkspaceLayout>
             <Head title={t('Promotion Management')} />
 
-            {toast && <Toast type={toast.type} message={toast.message} onClose={clearToast} />}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            <FilterPanel
-                title="Promotion Management"
-                breadcrumbs={[
-                    { label: 'Dashboard', href: '/admin/dashboard' },
-                    { label: 'Promotions', href: '/admin/promotions', active: true },
-                ]}
-                onApplyFilters={applyFilters}
-                searchConfig={{
-                    value: search,
-                    onChange: setSearch,
-                    placeholder: 'Search promotions, sellers, products...',
-                }}
-                filterConfigs={[
-                    {
-                        value: status,
-                        onChange: setStatus,
-                        label: t('-- All Statuses --'),
-                        options: statusFilters.map((item) => ({ value: item, label: t(ucfirst(item)) })),
-                    },
-                    {
-                        value: type,
-                        onChange: setType,
-                        label: t('-- All Types --'),
-                        options: Object.keys(typeOptions).map((key) => ({ value: key, label: t(typeOptions[key]) })),
-                    },
-                ]}
-                buttonConfigs={[
-                    {
-                        href: '/admin/promotions/create',
-                        label: t('Create Promotion'),
-                        icon: 'bx bx-plus',
-                        color: 'primary',
-                    },
-                ]}
-            />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Promotions'), current: true },
+                    ]}
+                    title={t('Promotion Management')}
+                    count={formatNumber(total)}
+                    actions={
+                        <Button asChild variant="primary" size="sm">
+                            <Link href="/admin/promotions/create">
+                                <Plus aria-hidden="true" />
+                                {t('Create Promotion')}
+                            </Link>
+                        </Button>
+                    }
+                />
 
-            <DataTable<Promotion>
-                columns={columns}
-                data={promotions.data}
-                headerTitle={t('Promotions')}
-                headerIcon="bx-purchase-tag"
-                emptyMessage={t('No promotions found')}
-            />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <FormField label={t('Search')} htmlFor="promotion-search">
+                        <Input
+                            id="promotion-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={t('Search by promotion name...')}
+                            leadingIcon={Search}
+                            surface="glass"
+                        />
+                    </FormField>
 
-            <Pagination links={promotions.links} filters={{ search, status, type }} />
+                    <FormField label={t('Status')} htmlFor="promotion-status-filter">
+                        <Select id="promotion-status-filter" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Statuses --')}</option>
+                            {statusFilters.map((value) => (
+                                <option key={value} value={value}>
+                                    {promotionStatusLabel(value, t)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <FormField label={t('Type')} htmlFor="promotion-type-filter">
+                        <Select id="promotion-type-filter" value={type} onChange={(event) => setType(event.target.value)} surface="glass">
+                            <option value="">{t('-- All Types --')}</option>
+                            {Object.entries(typeOptions).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {t(label)}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+
+                    <div className={styles.filterActions}>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <dl className={styles.summaryRail}>
+                    {summaryItems.map((item) => (
+                        <div key={item.key} className={styles.summary}>
+                            <dt className={styles.summaryLabel}>{item.label}</dt>
+                            <dd className={styles.summaryValue}>{formatNumber(item.value)}</dd>
+                        </div>
+                    ))}
+                </dl>
+
+                <div className={styles.table}>
+                    <DataTable
+                        columns={columns}
+                        data={promotions.data}
+                        headerTitle={t('Promotions')}
+                        headerIcon={Tag}
+                        headerMeta={rangeLabel}
+                        emptyMessage={hasFilters ? t('No promotions match the filters.') : t('No promotions found')}
+                    />
+                </div>
+
+                <Pagination links={promotions.links} filters={{ search, status, type }} />
+            </div>
 
             <ConfirmationModal
                 isOpen={confirmState.open}
                 onClose={() => setConfirmState({ open: false, promotionId: null, promotionName: '' })}
                 onConfirm={handleConfirmDelete}
                 title={t('Delete Promotion')}
-                message={t('Are you sure you want to delete this promotion?')}
+                message={`${t('Are you sure you want to delete this promotion?')} "${confirmState.promotionName}"`}
             />
-        </AppLayout>
+        </WorkspaceLayout>
     );
 }
-
-const ucfirst = (value: string) => {
-    if (!value) {
-        return value;
-    }
-    return value.charAt(0).toUpperCase() + value.slice(1);
-};

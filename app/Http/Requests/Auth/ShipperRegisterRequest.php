@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules;
 
@@ -16,9 +17,19 @@ class ShipperRegisterRequest extends FormRequest
     }
 
     /**
+     * Chuẩn hoá email trước khi validate để không tạo tài khoản trùng.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => strtolower(trim((string) $this->input('email'))),
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -29,18 +40,18 @@ class ShipperRegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone_number' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
                 'regex:/^(\+84|0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-6|8|9]|9[0-4|6-9])[0-9]{7}$/', // Vietnamese phone format
-                'unique:users'
+                'unique:users',
             ],
-            
+
             // Shipper Information
             'id_card_number' => ['required', 'string', 'max:20'],
             'driver_license_number' => ['required', 'string', 'max:20'],
             'vehicle_type' => ['required', 'string', 'max:255'],
             'license_plate' => ['required', 'string', 'max:20'],
-            
+
             // Document Uploads
             'id_card_front' => ['required', 'image', 'mimes:jpg,png,jpeg', 'max:2048'], // 2MB max
             'id_card_back' => ['required', 'image', 'mimes:jpg,png,jpeg', 'max:2048'],

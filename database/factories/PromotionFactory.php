@@ -14,7 +14,7 @@ class PromotionFactory extends Factory
         $maxDiscount = ($type === 1) ? fake()->numberBetween(20000, 100000) : $value;
 
         return [
-            'name' => 'Khuyến mãi ' . fake()->words(3, true),
+            'name' => 'Khuyến mãi '.fake()->words(3, true),
             'description' => fake()->sentence(),
             'type' => $type,
             'value' => $value,

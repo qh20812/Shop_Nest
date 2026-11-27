@@ -3,7 +3,8 @@ import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+
+import styles from './feedback.module.css';
 
 type ConfirmDialogProps = {
     open: boolean;
@@ -35,14 +36,9 @@ export function ConfirmDialog({
     return (
         <DialogRoot open={open} onOpenChange={onOpenChange}>
             <DialogContent className={className}>
-                <div className="flex items-start gap-3">
-                    <span
-                        className={cn(
-                            'flex size-11 shrink-0 items-center justify-center rounded-pill',
-                            tone === 'danger' ? 'bg-brick-soft text-brick' : 'bg-turmeric-soft text-turmeric',
-                        )}
-                    >
-                        <Icon aria-hidden="true" className="size-5" />
+                <div className={styles.body}>
+                    <span className={styles.icon} data-tone={tone}>
+                        <Icon aria-hidden="true" />
                     </span>
                     <DialogHeader>
                         <DialogTitle>{title}</DialogTitle>

@@ -1,10 +1,12 @@
+import { useTranslation } from '@/lib/i18n';
 import { BadgeCheck } from 'lucide-react';
 
 import Avatar from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cx } from '@/lib/cx';
 
 import { Rating } from './Rating';
+import styles from './commerce.module.css';
 
 type ReviewModel = {
     id: number | string;
@@ -24,21 +26,22 @@ type ReviewCardProps = {
 };
 
 export function ReviewCard({ review, className }: ReviewCardProps) {
+    const { t } = useTranslation();
     return (
-        <article className={cn('flex items-start gap-3 border-t border-border py-5 first:border-t-0 first:pt-0', className)}>
+        <article className={cx(styles.reviewCard, className)}>
             <Avatar name={review.user.name} src={review.user.avatar} size="md" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-body-sm font-semibold text-ink">{review.user.name}</span>
+            <div className={styles.reviewBody}>
+                <div className={styles.reviewHead}>
+                    <span className={styles.reviewName}>{review.user.name}</span>
                     {review.verified && (
                         <Badge tone="success" size="sm" icon={BadgeCheck}>
-                            Đã mua
+                            {t('Verified purchase')}
                         </Badge>
                     )}
-                    <span className="ml-auto font-mono text-label-micro text-ink-faint">{review.createdAt}</span>
+                    <span className={styles.reviewDate}>{review.createdAt}</span>
                 </div>
                 <Rating value={review.rating} compact showValue={false} />
-                <p className="text-body-sm leading-relaxed text-ink-muted">{review.comment}</p>
+                {review.comment && <p className={styles.reviewText}>{review.comment}</p>}
             </div>
         </article>
     );

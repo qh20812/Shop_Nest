@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\InventoryLog;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Role;
@@ -223,6 +224,60 @@ class InventoryControllerTest extends TestCase
                 ->component('Admin/Inventory/History')
                 ->has('history.data', 1)
                 ->where('history.data.0.reason', 'Stock In: Log for history test')
+                ->where('product.seller.id', $this->seller->id)
+                ->where('summary.total', 1)
+                ->where('summary.in', 1)
+                ->where('summary.out', 0)
+            );
+    }
+
+    public function test_admin_can_filter_inventory_history_by_type_and_variant(): void
+    {
+        $secondVariant = ProductVariant::factory()->create([
+            'product_id' => $this->product->product_id,
+            'stock_quantity' => 10,
+        ]);
+
+        InventoryLog::create([
+            'variant_id' => $this->variant->variant_id,
+            'quantity_change' => 5,
+            'reason' => 'Stock In: test in',
+            'user_id' => $this->admin->id,
+        ]);
+
+        InventoryLog::create([
+            'variant_id' => $this->variant->variant_id,
+            'quantity_change' => -2,
+            'reason' => 'Stock Out: test out',
+            'user_id' => $this->admin->id,
+        ]);
+
+        InventoryLog::create([
+            'variant_id' => $secondVariant->variant_id,
+            'quantity_change' => 7,
+            'reason' => 'Stock In: second variant',
+            'user_id' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.inventory.history', $this->product->product_id).'?type=out')
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->has('history.data', 1)
+                ->where('history.data.0.quantity_change', -2)
+                ->where('summary.total', 1)
+                ->where('summary.in', 0)
+                ->where('summary.out', 1)
+            );
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.inventory.history', $this->product->product_id).'?variant='.$secondVariant->variant_id)
+            ->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->has('history.data', 1)
+                ->where('history.data.0.variant_id', $secondVariant->variant_id)
+                ->where('summary.total', 1)
+                ->where('summary.in', 1)
             );
     }
 }

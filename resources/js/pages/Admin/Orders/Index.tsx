@@ -1,12 +1,24 @@
+import { Head, router } from '@inertiajs/react';
+import { RotateCcw, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import OrderFilterPanel from '@/components/admin/orders/OrderFilterPanel';
 import OrderSummaryCards from '@/components/admin/orders/OrderSummaryCards';
 import OrderTable from '@/components/admin/orders/OrderTable';
-import FilterPanel from '@/components/ui/filter-panel';
+import Toast from '@/components/admin/users/Toast';
+import { PageHeader } from '@/components/layout/PageHeader';
+import WorkspaceLayout from '@/components/layout/WorkspaceLayout';
+import { Button } from '@/components/ui/button';
+import FormField from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
 import Pagination from '@/components/ui/pagination';
-import AppLayout from '@/layouts/app/AppLayout';
+import { Select } from '@/components/ui/select';
+import { cx } from '@/lib/cx';
+import { formatNumber } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+
+import adminStyles from '@/components/admin/admin.module.css';
+import styles from '@/components/admin/orders/Orders.module.css';
 
 interface Customer {
     id: number;
@@ -61,22 +73,39 @@ interface PageProps {
         completedCount: number;
         cancelledCount: number;
     };
+    flash?: { success?: string; error?: string };
     currencyCode?: string;
     conversionRate?: number;
+    [key: string]: unknown;
 }
 
-export default function Index({ orders, filters, statusOptions, paymentStatusOptions, orderSummary }: PageProps) {
+export default function Index({ orders, filters = {}, statusOptions = {}, paymentStatusOptions = {}, orderSummary, flash }: PageProps) {
     const { t } = useTranslation();
 
-    // Filter states
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
     const [paymentStatus, setPaymentStatus] = useState(filters.payment_status || '');
     const [fromDate, setFromDate] = useState(filters.from_date || '');
     const [toDate, setToDate] = useState(filters.to_date || '');
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-    // Apply filters
-    const handleApplyFilters = () => {
+    useEffect(() => {
+        setSearch(filters.search || '');
+        setStatus(filters.status || '');
+        setPaymentStatus(filters.payment_status || '');
+        setFromDate(filters.from_date || '');
+        setToDate(filters.to_date || '');
+    }, [filters.search, filters.status, filters.payment_status, filters.from_date, filters.to_date]);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setToast({ type: 'success', message: flash.success });
+        } else if (flash?.error) {
+            setToast({ type: 'error', message: flash.error });
+        }
+    }, [flash?.success, flash?.error]);
+
+    const applyFilters = () => {
         router.get(
             '/admin/orders',
             {
@@ -93,153 +122,128 @@ export default function Index({ orders, filters, statusOptions, paymentStatusOpt
         );
     };
 
-    // Date range filter handlers
-    const handleDateRangeApply = (from: string, to: string) => {
-        setFromDate(from);
-        setToDate(to);
-        router.get(
-            '/admin/orders',
-            {
-                search: search || undefined,
-                status: status || undefined,
-                payment_status: paymentStatus || undefined,
-                from_date: from || undefined,
-                to_date: to || undefined,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    };
-
-    const handleDateRangeReset = () => {
+    const resetFilters = () => {
+        setSearch('');
+        setStatus('');
+        setPaymentStatus('');
         setFromDate('');
         setToDate('');
-        router.get(
-            '/admin/orders',
-            {
-                search: search || undefined,
-                status: status || undefined,
-                payment_status: paymentStatus || undefined,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
+
+        router.get('/admin/orders', {}, { preserveState: true, preserveScroll: true });
     };
 
-    // Order action handlers
-    const handleViewDetails = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}`);
-    };
-
-    const handleAssignShipper = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}/assign-shipper`);
-    };
-
-    const handleUpdateStatus = (orderId: number) => {
-        router.get(`/admin/orders/${orderId}/update-status`);
-    };
-
-    const handleProcessRefund = (orderId: number) => {
-        router.post(`/admin/orders/${orderId}/refund`);
-    };
-
-    const handlePrintInvoice = (orderId: number) => {
-        window.open(`/admin/orders/${orderId}/invoice`, '_blank');
-    };
-
-    const handleCancelOrder = (orderId: number) => {
-        if (confirm(t('Are you sure you want to cancel this order?'))) {
-            router.post(`/admin/orders/${orderId}/cancel`);
-        }
-    };
-
-    // Breadcrumb configuration
-    const breadcrumbs = [
-        { label: 'Dashboard', href: '/admin/dashboard' },
-        { label: 'Orders', href: '/admin/orders', active: true },
-    ];
-
-    // Search configuration
-    const searchConfig = {
-        value: search,
-        onChange: setSearch,
-        placeholder: t('Search by order number, customer name or email...'),
-    };
-
-    // Filter configurations
-    const filterConfigs = [
-        {
-            value: status,
-            onChange: setStatus,
-            label: t('-- All Statuses --'),
-            options: Object.entries(statusOptions).map(([value, label]) => ({
-                value: value,
-                label: label,
-            })),
-        },
-        {
-            value: paymentStatus,
-            onChange: setPaymentStatus,
-            label: t('-- All Payment Statuses --'),
-            options: Object.entries(paymentStatusOptions).map(([value, label]) => ({
-                value: value,
-                label: label,
-            })),
-        },
-    ];
+    const visibleTotal = orders.total ?? 0;
+    const hasFilters = Boolean(filters.search || filters.status || filters.payment_status || filters.from_date || filters.to_date);
+    const rangeLabel =
+        visibleTotal > 0 ? `${formatNumber(orders.from ?? 0)}-${formatNumber(orders.to ?? 0)} / ${formatNumber(visibleTotal)}` : formatNumber(0);
 
     return (
-        <AppLayout>
-            <Head title="Orders Management" />
+        <WorkspaceLayout>
+            <Head title={t('Orders Management')} />
 
-            {/* Header with filters */}
-            <FilterPanel
-                title="Orders Management"
-                breadcrumbs={breadcrumbs}
-                onApplyFilters={handleApplyFilters}
-                searchConfig={searchConfig}
-                filterConfigs={filterConfigs}
-                reportButtonConfig={{
-                    label: t('Export Orders'),
-                    icon: 'bx-export',
-                    onClick: () => alert('Export functionality - to be implemented'),
-                }}
-            />
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-            {/* Date Range Filters */}
-            <OrderFilterPanel fromDate={fromDate} toDate={toDate} onApply={handleDateRangeApply} onReset={handleDateRangeReset} />
+            <div className={adminStyles.stack}>
+                <PageHeader
+                    breadcrumbs={[
+                        { label: t('Dashboard'), href: '/admin/dashboard' },
+                        { label: t('Orders'), current: true },
+                    ]}
+                    title={t('Orders Management')}
+                    count={formatNumber(visibleTotal)}
+                />
 
-            {/* Orders Summary Cards */}
-            <OrderSummaryCards orderSummary={orderSummary} />
+                <form
+                    className={cx(styles.filters, 'sn-glass-surface')}
+                    aria-label={t('Filters')}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        applyFilters();
+                    }}
+                >
+                    <div className={styles.searchField}>
+                        <FormField label={t('Search')} htmlFor="order-search">
+                            <Input
+                                id="order-search"
+                                type="search"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder={t('Search by order number, customer name or email...')}
+                                leadingIcon={Search}
+                                surface="glass"
+                            />
+                        </FormField>
+                    </div>
 
-            {/* Orders DataTable */}
-            <OrderTable
-                orders={orders.data}
-                onViewDetails={handleViewDetails}
-                onAssignShipper={handleAssignShipper}
-                onUpdateStatus={handleUpdateStatus}
-                onProcessRefund={handleProcessRefund}
-                onPrintInvoice={handlePrintInvoice}
-                onCancelOrder={handleCancelOrder}
-            />
+                    <div className={styles.statusField}>
+                        <FormField label={t('Status')} htmlFor="order-status-filter">
+                            <Select id="order-status-filter" value={status} onChange={(event) => setStatus(event.target.value)} surface="glass">
+                                <option value="">{t('All Statuses')}</option>
+                                {Object.entries(statusOptions).map(([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {t(label)}
+                                    </option>
+                                ))}
+                            </Select>
+                        </FormField>
+                    </div>
 
-            {/* Pagination */}
-            <Pagination
-                links={orders.links}
-                filters={{
-                    search,
-                    status,
-                    payment_status: paymentStatus,
-                    from_date: fromDate,
-                    to_date: toDate,
-                }}
-                preserveState={true}
-                preserveScroll={true}
-            />
-        </AppLayout>
+                    <div className={styles.paymentField}>
+                        <FormField label={t('Payment Status')} htmlFor="order-payment-filter">
+                            <Select
+                                id="order-payment-filter"
+                                value={paymentStatus}
+                                onChange={(event) => setPaymentStatus(event.target.value)}
+                                surface="glass"
+                            >
+                                <option value="">{t('All Payment Statuses')}</option>
+                                {Object.entries(paymentStatusOptions).map(([value, label]) => (
+                                    <option key={value} value={value}>
+                                        {t(label)}
+                                    </option>
+                                ))}
+                            </Select>
+                        </FormField>
+                    </div>
+
+                    <div className={styles.dates}>
+                        <OrderFilterPanel fromDate={fromDate} toDate={toDate} onFromDateChange={setFromDate} onToDateChange={setToDate} />
+                    </div>
+
+                    <div className={styles.filterActions}>
+                        <Button type="button" variant="secondary" onClick={resetFilters}>
+                            <RotateCcw aria-hidden="true" />
+                            {t('Reset')}
+                        </Button>
+                        <Button type="submit" variant="primary" leftIcon={Search}>
+                            {t('Apply')}
+                        </Button>
+                    </div>
+                </form>
+
+                <OrderSummaryCards orderSummary={orderSummary} />
+
+                <div className={styles.table}>
+                    <OrderTable
+                        orders={orders.data}
+                        headerMeta={rangeLabel}
+                        emptyMessage={hasFilters ? t('No orders match the filters.') : t('No orders found')}
+                    />
+                </div>
+
+                <Pagination
+                    links={orders.links}
+                    filters={{
+                        search,
+                        status,
+                        payment_status: paymentStatus,
+                        from_date: fromDate,
+                        to_date: toDate,
+                    }}
+                    preserveState
+                    preserveScroll
+                />
+            </div>
+        </WorkspaceLayout>
     );
 }

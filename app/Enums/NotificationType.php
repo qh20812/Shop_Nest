@@ -38,6 +38,11 @@ enum NotificationType: int
     // Seller account
     case SELLER_ACCOUNT_STATUS = 20;
 
+    // Wallet top-up
+    case ADMIN_WALLET_TOPUP = 21;
+    case WALLET_TOPUP_APPROVED = 22;
+    case WALLET_TOPUP_REJECTED = 23;
+
     /**
      * Get the label for the notification type
      */
@@ -68,6 +73,9 @@ enum NotificationType: int
             self::ADMIN_USER_MODERATION => 'User Moderation',
             self::ADMIN_CATALOG_MANAGEMENT => 'Catalog Update',
             self::SELLER_ACCOUNT_STATUS => 'Account Status Update',
+            self::ADMIN_WALLET_TOPUP => 'Wallet Top-up',
+            self::WALLET_TOPUP_APPROVED => 'Wallet Top-up Approved',
+            self::WALLET_TOPUP_REJECTED => 'Wallet Top-up Rejected',
         };
     }
 
@@ -101,6 +109,9 @@ enum NotificationType: int
             self::ADMIN_USER_MODERATION => 'Administrative actions related to user accounts',
             self::ADMIN_CATALOG_MANAGEMENT => 'Changes to catalog content such as categories or brands',
             self::SELLER_ACCOUNT_STATUS => 'Important updates about shop or seller account status',
+            self::ADMIN_WALLET_TOPUP => 'Wallet top-up requests waiting for manual review',
+            self::WALLET_TOPUP_APPROVED => 'Confirmations that a wallet top-up was credited',
+            self::WALLET_TOPUP_REJECTED => 'Notices that a wallet top-up was rejected',
         };
     }
 
@@ -119,6 +130,9 @@ enum NotificationType: int
                 self::SECURITY_ALERT,
                 self::ADMIN_USER_MODERATION,
                 self::ADMIN_CATALOG_MANAGEMENT,
+                self::ADMIN_WALLET_TOPUP,
+                self::WALLET_TOPUP_APPROVED,
+                self::WALLET_TOPUP_REJECTED,
             ],
             'seller' => [
                 self::SELLER_ORDER_UPDATE,
@@ -127,12 +141,16 @@ enum NotificationType: int
                 self::SELLER_REVIEW_RECEIVED,
                 self::SYSTEM_MAINTENANCE,
                 self::SELLER_ACCOUNT_STATUS,
+                self::WALLET_TOPUP_APPROVED,
+                self::WALLET_TOPUP_REJECTED,
             ],
             'shipper' => [
                 self::SHIPPER_ORDER_ASSIGNED,
                 self::SHIPPER_DELIVERY_UPDATE,
                 self::SHIPPER_PAYMENT_UPDATE,
                 self::SYSTEM_MAINTENANCE,
+                self::WALLET_TOPUP_APPROVED,
+                self::WALLET_TOPUP_REJECTED,
             ],
             'customer' => [
                 self::CUSTOMER_ORDER_STATUS,
@@ -141,6 +159,8 @@ enum NotificationType: int
                 self::CUSTOMER_REVIEW_REMINDER,
                 self::SYSTEM_MAINTENANCE,
                 self::SECURITY_ALERT,
+                self::WALLET_TOPUP_APPROVED,
+                self::WALLET_TOPUP_REJECTED,
             ],
             default => [],
         };
@@ -176,6 +196,9 @@ enum NotificationType: int
             self::ADMIN_USER_MODERATION,
             self::ADMIN_CATALOG_MANAGEMENT => 'admin',
             self::SELLER_ACCOUNT_STATUS => 'seller',
+            self::ADMIN_WALLET_TOPUP => 'admin',
+            self::WALLET_TOPUP_APPROVED,
+            self::WALLET_TOPUP_REJECTED => 'all',
         };
     }
 
@@ -196,6 +219,7 @@ enum NotificationType: int
         foreach (self::cases() as $case) {
             $options[$case->value] = $case->label();
         }
+
         return $options;
     }
 }

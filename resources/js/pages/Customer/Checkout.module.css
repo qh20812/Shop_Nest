@@ -1,0 +1,164 @@
+/* Hallmark · app: checkout · shape: app screen · genre: editorial · theme: bảng hiệu (locked by DESIGN.md) · states: empty, processing, promo error, full · contrast: pass · v2.0.0
+ * Hallmark · pre-emit critique: P4 H5 E4 S4 R4 V3 · weakest: V, first checkout in the log; led with the order slip and a persistent mobile action, not a form stack
+ */
+
+.page {
+    padding-block: var(--sn-space-8);
+}
+
+.pageTight {
+    padding-block: var(--sn-section-tight);
+}
+
+.stepperOffset {
+    margin-top: var(--sn-space-5);
+}
+
+.checkoutGrid {
+    display: grid;
+    gap: var(--sn-space-6);
+    margin-top: var(--sn-space-6);
+}
+
+.checkoutMain {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-8);
+}
+
+.checkoutAside {
+    min-width: 0;
+}
+
+.checkSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-4);
+    scroll-margin-top: calc(var(--sn-header-stuck) + var(--sn-space-4));
+}
+
+.sectionHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sn-space-3);
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.sectionHeadSimple {
+    padding-bottom: var(--sn-space-3);
+    border-bottom: 1px solid var(--sn-color-border);
+}
+
+.addressList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sn-space-3);
+}
+
+.addressTitle {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.addressPhone {
+    color: var(--sn-color-text-muted);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-2xs);
+}
+
+.shipRow {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-3);
+    padding-block: var(--sn-space-3);
+}
+
+.shipIcon {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+    flex-shrink: 0;
+    color: var(--sn-color-success);
+}
+
+.shipBody {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.shipTitle {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-semibold);
+}
+
+.shipText {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.shipPrice {
+    color: var(--sn-color-text);
+    font-family: var(--sn-font-numeric);
+    font-size: var(--sn-text-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.secureNote {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-2);
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.secureIcon {
+    width: var(--sn-icon-sm);
+    height: var(--sn-icon-sm);
+    flex-shrink: 0;
+    color: var(--sn-color-success);
+}
+
+.checkoutMain :focus-visible,
+.checkoutAside :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.checkoutMain button:active,
+.checkoutMain a:active,
+.checkoutAside button:active,
+.checkoutAside a:active,
+.checkoutAside summary:active {
+    opacity: 0.86;
+}
+
+@media (min-width: 1024px) {
+    .page {
+        padding-block: var(--sn-space-10);
+    }
+
+    .checkoutGrid {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .checkoutMain {
+        grid-column: span 7;
+    }
+
+    .checkoutAside {
+        grid-column: span 5;
+    }
+}
+
+@media (max-width: 1023px) {
+    .footerWithBar {
+        padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+}

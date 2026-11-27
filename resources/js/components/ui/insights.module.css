@@ -1,0 +1,84 @@
+/* KPI strip used by Seller dashboard and promotions. Tokens only. */
+
+.list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-space-3);
+    padding: var(--sn-space-4) var(--sn-space-5);
+    border: 1px solid var(--sn-glass-hairline);
+    border-radius: var(--sn-radius-card);
+    background: var(--sn-glass-control);
+    box-shadow:
+        inset 0 1px 0 var(--sn-glass-highlight),
+        var(--sn-shadow-card);
+}
+
+.iconWrap {
+    display: flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--sn-radius-md);
+    background: var(--sn-color-accent-wash);
+    color: var(--sn-color-accent-text);
+}
+
+.iconWrap :global(svg) {
+    width: var(--sn-icon-md);
+    height: var(--sn-icon-md);
+}
+
+.iconWrap :global(i) {
+    font-size: var(--sn-icon-md);
+}
+
+.info {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.value {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-xl);
+    font-weight: var(--sn-weight-semibold);
+    line-height: var(--sn-leading-tight);
+    font-variant-numeric: tabular-nums;
+}
+
+.label {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-2xs);
+    font-weight: var(--sn-weight-medium);
+    letter-spacing: var(--sn-tracking-wider);
+    line-height: var(--sn-leading-snug);
+    text-transform: uppercase;
+}
+
+@media (min-width: 640px) {
+    .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .list {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .list[data-columns='3'] {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

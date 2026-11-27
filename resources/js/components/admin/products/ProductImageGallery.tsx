@@ -1,7 +1,8 @@
 import { ImageOff } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from '../../../lib/i18n';
+import { cx } from '@/lib/cx';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './products.module.css';
 
@@ -12,31 +13,39 @@ interface ProductImage {
 }
 
 interface ProductImageGalleryProps {
-    images: ProductImage[];
+    images?: ProductImage[];
+    productName: string;
 }
 
-export default function ProductImageGallery({ images }: ProductImageGalleryProps) {
+const resolveSrc = (url?: string) => {
+    if (!url) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
+        return url;
+    }
+
+    return `/storage/${url}`;
+};
+
+export default function ProductImageGallery({ images = [], productName }: ProductImageGalleryProps) {
     const { t } = useTranslation();
-    const resolveSrc = (url?: string) => {
-        if (!url) return '/image/ShopnestLogo.png';
-        if (/^https?:\/\//i.test(url) || url.startsWith('/')) {
-            return url;
-        }
-        return `/storage/${url}`;
-    };
+    const primaryImage = useMemo(() => images.find((image) => image.is_primary) ?? images[0] ?? null, [images]);
+    const [selectedId, setSelectedId] = useState<number | null>(primaryImage?.image_id ?? null);
 
-    const primaryImage = images.find((image) => image.is_primary) || images[0];
-    const [selectedImage, setSelectedImage] = useState<ProductImage | null>(primaryImage || null);
+    useEffect(() => {
+        setSelectedId(primaryImage?.image_id ?? null);
+    }, [primaryImage?.image_id]);
 
-    if (!images || images.length === 0) {
+    const selectedImage = images.find((image) => image.image_id === selectedId) ?? primaryImage;
+    const selectedSrc = resolveSrc(selectedImage?.image_url);
+
+    if (images.length === 0 || !selectedSrc) {
         return (
-            <div className={styles.gallery}>
-                <div className={styles.mainImage}>
-                    <div className={styles.noImage}>
-                        <ImageOff aria-hidden="true" className={styles.noImageIcon} />
-                        <span>{t('No images available')}</span>
-                    </div>
-                </div>
+            <div className={styles.galleryEmpty}>
+                <ImageOff aria-hidden="true" className={styles.galleryEmptyIcon} />
+                <span>{t('No images available')}</span>
             </div>
         );
     }
@@ -44,24 +53,25 @@ export default function ProductImageGallery({ images }: ProductImageGalleryProps
     return (
         <div className={styles.gallery}>
             <div className={styles.mainImage}>
-                {selectedImage && <img src={resolveSrc(selectedImage.image_url)} alt={t('Product Image')} className={styles.mainImg} />}
+                <img src={selectedSrc} alt={productName} className={styles.mainImageTag} />
             </div>
 
             {images.length > 1 && (
                 <div className={styles.thumbnails}>
-                    {images.map((image) => {
-                        const active = selectedImage?.image_id === image.image_id;
+                    {images.map((image, index) => {
+                        const active = image.image_id === selectedImage?.image_id;
+                        const src = resolveSrc(image.image_url);
 
                         return (
                             <button
                                 key={image.image_id}
                                 type="button"
-                                className={`${styles.thumbnail} ${active ? styles.thumbnailActive : ''}`.trim()}
-                                onClick={() => setSelectedImage(image)}
+                                className={cx(styles.thumbnail, active && styles.thumbnailActive)}
+                                onClick={() => setSelectedId(image.image_id)}
                                 aria-pressed={active}
-                                aria-label={`${t('Product Image')} ${image.image_id}`}
+                                aria-label={`${t('Product Image')} ${index + 1}`}
                             >
-                                <img src={resolveSrc(image.image_url)} alt="" className={styles.thumbnailImg} />
+                                {src && <img src={src} alt="" className={styles.thumbnailImg} />}
                             </button>
                         );
                     })}

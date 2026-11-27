@@ -281,7 +281,31 @@ class ProductManagementTest extends TestCase
             ->component('Admin/Products/Show')
             ->has('product')
             ->where('product.product_id', $product->product_id)
+            ->where('product.seller.id', $this->seller->id)
+            ->where('product.status', $product->status->value)
         );
+    }
+
+    public function test_admin_can_return_to_product_detail_after_status_update(): void
+    {
+        $product = Product::factory()->create([
+            'seller_id' => $this->seller->id,
+            'status' => 'pending_approval',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->patch(route('admin.products.updateStatus', $product), [
+                'status' => 'published',
+                'redirect_to' => 'show',
+            ]);
+
+        $response->assertRedirect(route('admin.products.show', $product));
+        $response->assertSessionHas('success', 'Product approved and activated successfully.');
+
+        $this->assertDatabaseHas('products', [
+            'product_id' => $product->product_id,
+            'status' => 'published',
+        ]);
     }
 
     public function test_index_displays_translated_product_names(): void

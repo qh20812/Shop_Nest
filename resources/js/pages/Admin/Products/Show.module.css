@@ -1,0 +1,82 @@
+/* Hallmark · component: admin product detail · genre: editorial · theme: project glass · states: n/a · contrast: pass · v2.0.0 */
+/* Hallmark · waive 26b · the module defines layout only · every control is a Button or dialog primitive whose states live in button.css and overlay.css */
+/* Hallmark · the plate and rail carry the facts; the variant ledger carries the numbers */
+
+.headerMeta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sn-space-2);
+}
+
+.layout :focus-visible {
+    outline: 2px solid var(--sn-color-focus);
+    outline-offset: 2px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sn-space-5);
+    align-items: start;
+}
+
+.main {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--sn-space-5);
+}
+
+.mediaPanel,
+.rail {
+    min-width: 0;
+    border: 1px solid var(--sn-color-border);
+    border-radius: var(--sn-radius-lg);
+    background: var(--sn-color-surface);
+}
+
+.mediaPanel {
+    padding: var(--sn-space-4);
+}
+
+.table {
+    min-width: 0;
+}
+
+/* DataTable owns a top margin; the stack gap already provides rhythm */
+.table > section {
+    margin-top: 0;
+}
+
+.variantSku {
+    color: var(--sn-color-text);
+    font-size: var(--sn-text-sm);
+    font-weight: var(--sn-weight-medium);
+    font-variant-numeric: tabular-nums;
+}
+
+.variantAttributes {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-sm);
+}
+
+.priceCell,
+.stockCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+}
+
+.discount {
+    color: var(--sn-color-text-muted);
+    font-size: var(--sn-text-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1024px) {
+    .layout {
+        grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 0.85fr);
+    }
+}

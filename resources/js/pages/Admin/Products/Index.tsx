@@ -228,6 +228,13 @@ export default function Index() {
                 if (product.status === 'draft' || product.status === 'pending_approval') {
                     actions.push(
                         {
+                            type: 'link',
+                            href: `/admin/products/${product.product_id}`,
+                            variant: 'primary',
+                            icon: Eye,
+                            label: t('View'),
+                        },
+                        {
                             type: 'button',
                             onClick: () => handleStatusAction(product, 'approve'),
                             variant: 'primary',

@@ -143,6 +143,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(array_merge(ProductStatus::values(), ['1', '2', '3', '4', 1, 2, 3, 4]))],
+            'redirect_to' => ['sometimes', 'string', Rule::in(['index', 'show'])],
         ]);
 
         $status = is_numeric($validated['status'])
@@ -160,8 +161,11 @@ class ProductController extends Controller
             ProductStatus::DRAFT->value => 'Product status changed to draft.',
         ];
 
-        return redirect()->route('admin.products.index')
-            ->with('success', $statusMessages[$status->value]);
+        $redirect = ($validated['redirect_to'] ?? 'index') === 'show'
+            ? redirect()->route('admin.products.show', $product)
+            : redirect()->route('admin.products.index');
+
+        return $redirect->with('success', $statusMessages[$status->value]);
     }
 
     /**
@@ -173,13 +177,14 @@ class ProductController extends Controller
         $product->load([
             'category',
             'brand',
+            'seller' => fn ($query) => $query->select('id', 'username', 'first_name', 'last_name', 'email', 'avatar'),
             'images',
             'variants' => function ($query) {
                 $query->with(['attributeValues' => function ($subQuery) {
                     $subQuery->with('attribute');
-                }]);
+                }])->orderBy('variant_id');
             },
-            'reviews.user',
+            'reviews' => fn ($query) => $query->with('user')->latest('created_at'),
         ]);
 
         // Normalize image urls for client (convert storage paths to public URLs)

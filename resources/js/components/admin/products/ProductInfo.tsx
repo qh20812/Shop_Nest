@@ -1,189 +1,157 @@
-import { useState } from 'react';
+import { Link } from '@inertiajs/react';
+import { ArrowUpRight, Boxes, Info, Store } from 'lucide-react';
 
-import { formatVnd } from '../../../lib/format';
-import { useTranslation } from '../../../lib/i18n';
-import { Select } from '../../ui/select';
+import { Avatar } from '@/components/ui/avatar';
+import { formatDate, formatNumber, formatVnd } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 
 import styles from './products.module.css';
 
-interface AttributeValue {
-    attribute_value_id: number;
-    value: string;
-    attribute: {
-        attribute_id: number;
-        name: string;
-    };
+interface Seller {
+    id: number;
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    avatar?: string | null;
 }
 
-interface ProductVariant {
+interface NamedRecord {
+    name?: string | Record<string, string>;
+}
+
+interface Variant {
     variant_id: number;
-    price: number;
-    stock_quantity: number;
-    attributeValues?: AttributeValue[];
+    price?: number | string | null;
+    stock_quantity?: number | string | null;
 }
 
 interface Product {
     product_id: number;
-    name: { en: string; vi: string };
-    description: { en: string; vi: string };
-    status: string;
-    category: {
-        category_id: number;
-        name: { en: string; vi: string };
-    };
-    brand: {
-        brand_id: number;
-        name: string;
-    };
-    variants: ProductVariant[];
+    category?: NamedRecord | null;
+    brand?: NamedRecord | null;
+    seller?: Seller | null;
+    variants?: Variant[];
+    created_at?: string | null;
+    updated_at?: string | null;
 }
 
 interface ProductInfoProps {
     product: Product;
-    currentLocale?: 'en' | 'vi';
 }
 
-export default function ProductInfo({ product, currentLocale }: ProductInfoProps) {
+const resolveText = (value: string | Record<string, string> | undefined, locale: string, fallback: string): string => {
+    if (!value) {
+        return fallback;
+    }
+
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    return value[locale] ?? value.en ?? Object.values(value)[0] ?? fallback;
+};
+
+export default function ProductInfo({ product }: ProductInfoProps) {
     const { t, locale } = useTranslation();
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants?.[0] || null);
+    const seller = product.seller;
+    const variants = product.variants ?? [];
 
-    const activeLocale = currentLocale || (locale as 'en' | 'vi');
+    const sellerName = [seller?.first_name, seller?.last_name].filter(Boolean).join(' ').trim();
+    const categoryName = resolveText(product.category?.name, locale, t('No Category'));
+    const brandName = resolveText(product.brand?.name, locale, t('No Brand'));
 
-    const getProductName = (): string => {
-        if (!product.name) return t('Unnamed Product');
+    const totalStock = variants.reduce((total, variant) => total + Number(variant.stock_quantity ?? 0), 0);
+    const prices = variants
+        .map((variant) => (variant.price === null || variant.price === undefined || variant.price === '' ? null : Number(variant.price)))
+        .filter((price): price is number => price !== null && Number.isFinite(price));
 
-        if (typeof product.name === 'string') return product.name;
-
-        if (typeof product.name === 'object' && product.name !== null) {
-            return product.name[activeLocale] || product.name.en || product.name.vi || t('Unnamed Product');
-        }
-
-        return t('Unnamed Product');
-    };
-
-    const getCategoryName = (): string => {
-        if (!product.category?.name) return t('No Category');
-
-        if (typeof product.category.name === 'string') return product.category.name;
-
-        if (typeof product.category.name === 'object' && product.category.name !== null) {
-            return product.category.name[activeLocale] || product.category.name.en || product.category.name.vi || t('No Category');
-        }
-
-        return t('No Category');
-    };
-
-    const getPrice = () => {
-        if (!product.variants || product.variants.length === 0) {
-            return t('Price not available');
-        }
-
-        if (selectedVariant) {
-            return formatVnd(selectedVariant.price);
-        }
-
-        const prices = product.variants.map((variant) => variant.price);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-
-        if (minPrice === maxPrice) {
-            return formatVnd(minPrice);
-        }
-
-        return `${formatVnd(minPrice)} - ${formatVnd(maxPrice)}`;
-    };
-
-    const getStock = () => {
-        if (selectedVariant) {
-            return selectedVariant.stock_quantity;
-        }
-
-        return product.variants?.reduce((total, variant) => total + variant.stock_quantity, 0) || 0;
-    };
-
-    const getGroupedAttributes = () => {
-        if (!product.variants || product.variants.length === 0) return {};
-
-        const grouped: Record<string, AttributeValue[]> = {};
-
-        product.variants.forEach((variant) => {
-            if (variant.attributeValues && Array.isArray(variant.attributeValues)) {
-                variant.attributeValues.forEach((attrValue) => {
-                    const attrName = attrValue.attribute.name;
-                    if (!grouped[attrName]) {
-                        grouped[attrName] = [];
-                    }
-                    const exists = grouped[attrName].some((entry) => entry.attribute_value_id === attrValue.attribute_value_id);
-                    if (!exists) {
-                        grouped[attrName].push(attrValue);
-                    }
-                });
-            }
-        });
-
-        return grouped;
-    };
-
-    const groupedAttributes = getGroupedAttributes();
-    const stock = getStock();
+    const priceRange =
+        prices.length === 0
+            ? t('Price not available')
+            : Math.min(...prices) === Math.max(...prices)
+              ? formatVnd(Math.min(...prices))
+              : `${formatVnd(Math.min(...prices))} - ${formatVnd(Math.max(...prices))}`;
 
     return (
         <div className={styles.info}>
-            <h1 className={styles.title}>{getProductName()}</h1>
+            <section className={styles.infoSection} aria-labelledby="product-seller-heading">
+                <h2 id="product-seller-heading" className={styles.infoTitle}>
+                    <Store aria-hidden="true" className={styles.infoTitleIcon} />
+                    {t('Seller')}
+                </h2>
 
-            <div className={styles.meta}>
-                <span className={styles.metaItem}>
-                    <strong>{t('Brand')}: </strong>
-                    {product.brand?.name || t('Unknown Brand')}
-                </span>
-                <span className={styles.metaItem}>
-                    <strong>{t('Category')}: </strong>
-                    {getCategoryName()}
-                </span>
-            </div>
-
-            <div className={styles.price}>{getPrice()}</div>
-
-            <div>
-                <span className={`${styles.stock} ${stock > 0 ? styles.stockIn : styles.stockOut}`.trim()}>
-                    {stock > 0 ? `${t('In Stock')}: ${stock} ${t('units')}` : t('Out of Stock')}
-                </span>
-            </div>
-
-            {Object.keys(groupedAttributes).length > 0 && (
-                <div className={styles.variants}>
-                    <h3 className={styles.variantsTitle}>{t('Select Options')}</h3>
-                    {Object.entries(groupedAttributes).map(([attributeName, attributeValues]) => (
-                        <div key={attributeName} className={styles.variantGroup}>
-                            <span className={styles.variantsTitle}>{attributeName}</span>
-                            <Select
-                                defaultValue=""
-                                aria-label={attributeName}
-                                onChange={(event) => {
-                                    const selectedValueId = Number.parseInt(event.target.value, 10);
-                                    const variant = product.variants.find(
-                                        (entry) =>
-                                            entry.attributeValues &&
-                                            entry.attributeValues.some((attrValue) => attrValue.attribute_value_id === selectedValueId),
-                                    );
-                                    if (variant) {
-                                        setSelectedVariant(variant);
-                                    }
-                                }}
-                            >
-                                <option value="">
-                                    {t('Select')} {attributeName}
-                                </option>
-                                {attributeValues.map((attrValue) => (
-                                    <option key={attrValue.attribute_value_id} value={attrValue.attribute_value_id}>
-                                        {attrValue.value}
-                                    </option>
-                                ))}
-                            </Select>
+                {seller ? (
+                    <>
+                        <div className={styles.seller}>
+                            <Avatar user={seller} size="lg" />
+                            <div className={styles.sellerBody}>
+                                <span className={styles.sellerName}>{sellerName || seller.username || t('Unknown Seller')}</span>
+                                {seller.username && <span className={styles.sellerMeta}>@{seller.username}</span>}
+                                {seller.email && <span className={styles.sellerMeta}>{seller.email}</span>}
+                            </div>
                         </div>
-                    ))}
-                </div>
-            )}
+                        <Link href={`/admin/shops/${seller.id}`} className={styles.infoLink}>
+                            {t('View shop')}
+                            <ArrowUpRight aria-hidden="true" className={styles.infoLinkIcon} />
+                        </Link>
+                    </>
+                ) : (
+                    <p className={styles.infoNote}>{t('Unknown Seller')}</p>
+                )}
+            </section>
+
+            <section className={styles.infoSection} aria-labelledby="product-overview-heading">
+                <h2 id="product-overview-heading" className={styles.infoTitle}>
+                    <Info aria-hidden="true" className={styles.infoTitleIcon} />
+                    {t('Product Overview')}
+                </h2>
+
+                <dl className={styles.facts}>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Product ID')}</dt>
+                        <dd className={styles.factValue}>#{product.product_id}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Category')}</dt>
+                        <dd className={styles.factValue}>{categoryName}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Brand')}</dt>
+                        <dd className={styles.factValue}>{brandName}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Created At')}</dt>
+                        <dd className={styles.factValue}>{product.created_at ? formatDate(product.created_at) : '-'}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Updated At')}</dt>
+                        <dd className={styles.factValue}>{product.updated_at ? formatDate(product.updated_at) : '-'}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section className={styles.infoSection} aria-labelledby="product-inventory-heading">
+                <h2 id="product-inventory-heading" className={styles.infoTitle}>
+                    <Boxes aria-hidden="true" className={styles.infoTitleIcon} />
+                    {t('Inventory')}
+                </h2>
+
+                <dl className={styles.facts}>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Total Variants')}</dt>
+                        <dd className={styles.factValue}>{formatNumber(variants.length)}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Total Stock')}</dt>
+                        <dd className={styles.factValue}>{formatNumber(totalStock)}</dd>
+                    </div>
+                    <div className={styles.fact}>
+                        <dt className={styles.factLabel}>{t('Price Range')}</dt>
+                        <dd className={styles.factValue}>{priceRange}</dd>
+                    </div>
+                </dl>
+            </section>
         </div>
     );
 }
